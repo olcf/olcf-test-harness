@@ -225,6 +225,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
+        self.__write_system_log('build', 'start', event_time=currenttime.isoformat())
+
     def logBuildEndTime(self):
         currenttime = datetime.datetime.now()
 
@@ -245,6 +247,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+
+        self.__write_system_log('build', 'end', event_time=currenttime.isoformat())
 
     def logSubmitStartTime(self):
         currenttime = datetime.datetime.now()
@@ -267,6 +271,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
+        self.__write_system_log('submit', 'start', event_time=currenttime.isoformat())
+
     def logSubmitEndTime(self):
         currenttime = datetime.datetime.now()
 
@@ -287,6 +293,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+
+        self.__write_system_log('submit', 'end', event_time=currenttime.isoformat())
 
     ###################
     # Private methods #
@@ -319,8 +327,48 @@ class rgt_status_file:
         fmt1 =  rgt_status_file.line_format % (currenttime.isoformat(), self.__unique_id, "***" , "***" , "***" , "***" )
         file_obj.write(fmt1)
         file_obj.close()
-  
 
+    def __write_system_log(self, event_name, event_status, event_time=''):
+        """
+        """
+        if event_time == '':
+            event_time = datetime.datetime.now().isoformat()
+
+        rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
+            if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
+
+        if rgt_system_log_tag == '':
+            return
+
+        user = os.environ['USER']
+
+        wd = os.getcwd()
+        (dir_head1, dir_scripts) = os.path.split(wd)
+        (dir_head2, test) = os.path.split(dir_head1)
+        (dir_head3, application) = os.path.split(dir_head2)
+
+        test_id_string = self.__unique_id
+
+        rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
+
+        rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
+
+        path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
+
+        os.system('logger "' +
+                  'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
+                  'user=\\"' + user + '\\" ' +
+                  'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
+                  'rgt_path_to_sspace=\\"' + rgt_path_to_sspace + '\\" ' +
+                  'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
+                  'wd=\\"' + wd + '\\" ' +
+                  'application=\\"' + application + '\\" ' +
+                  'test=\\"' + test + '\\" ' +
+                  'test_id_string=\\"' + test_id_string + '\\" ' +
+                  'event_time=\\"' + event_time + '\\" ' +
+                  'event_name=\\"' + event_name + '\\" ' +
+                  'event_status=\\"' + event_status + '\\" ' +
+                  '"')
 
 class JobExitStatus:
     def __init__(self):
