@@ -94,6 +94,7 @@ class rgt_status_file:
         file_obj = open(self.__path_to_file,"r")
         records1 = file_obj.readlines()
         file_obj.close()
+        event_time = datetime.datetime.now().isoformat()
 
         ip = -1
         for line in records1:
@@ -123,12 +124,15 @@ class rgt_status_file:
 
                     if mode == "Add_Build_Result":
                         words1[3] = exit_value
+                        self.__write_system_log('build_result', str(exit_value), event_time)
 
                     if mode == "Add_Submit_Result":
                         words1[4] = exit_value
+                        self.__write_system_log('submit_result', str(exit_value), event_time)
 
                     if mode == "Add_Run_Result":
                         words1[5] = exit_value
+                        self.__write_system_log('run_result', str(exit_value), event_time)
 
                     if mode == "Add_Binary_Running":
                         binary_running_value = exit_value
@@ -141,6 +145,7 @@ class rgt_status_file:
                         file_obj2 = open(path2,"w")
                         file_obj2.write(binary_running_value)
                         file_obj2.close()
+                        self.__write_system_log('binary_running', str(exit_value), event_time)
 
                     if mode == "Add_Run_Aborning":
                         abornining_run_value = exit_value
@@ -153,6 +158,7 @@ class rgt_status_file:
                         file_obj2 = open(path2,"w")
                         file_obj2.write(abornining_run_value)
                         file_obj2.close()
+                        self.__write_system_log('run_aborning', str(exit_value), event_time)
    
                     records1[ip] = rgt_status_file.line_format  % (words1[0], words1[1], words1[2], words1[3], words1[4], words1[5])
 
@@ -181,6 +187,9 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
+        event_time = currenttime.isoformat()
+        self.__write_system_log('binary_execute', 'start', event_time)
+
     def logFinalExecutionTime(self):
         currenttime = datetime.datetime.now()
 
@@ -203,6 +212,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
+        event_time = currenttime.isoformat()
+        self.__write_system_log('binary_execute', 'end', event_time)
 
     def logBuildStartTime(self):
         currenttime = datetime.datetime.now()
@@ -225,7 +236,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
-        self.__write_system_log('build', 'start', event_time=currenttime.isoformat())
+        event_time = currenttime.isoformat()
+        self.__write_system_log('build', 'start', event_time)
 
     def logBuildEndTime(self):
         currenttime = datetime.datetime.now()
@@ -248,7 +260,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
-        self.__write_system_log('build', 'end', event_time=currenttime.isoformat())
+        event_time = currenttime.isoformat()
+        self.__write_system_log('build', 'end', event_time)
 
     def logSubmitStartTime(self):
         currenttime = datetime.datetime.now()
@@ -271,7 +284,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
-        self.__write_system_log('submit', 'start', event_time=currenttime.isoformat())
+        event_time = currenttime.isoformat()
+        self.__write_system_log('submit', 'start', event_time)
 
     def logSubmitEndTime(self):
         currenttime = datetime.datetime.now()
@@ -294,7 +308,8 @@ class rgt_status_file:
         file_obj.write(currenttime.isoformat())
         file_obj.close()
 
-        self.__write_system_log('submit', 'end', event_time=currenttime.isoformat())
+        event_time = currenttime.isoformat()
+        self.__write_system_log('submit', 'end', event_time)
 
     ###################
     # Private methods #
@@ -328,7 +343,7 @@ class rgt_status_file:
         file_obj.write(fmt1)
         file_obj.close()
 
-    def __write_system_log(self, event_name, event_status, event_time=''):
+    def __write_system_log(self, event_name, event_value, event_time=''):
         """
         """
         if event_time == '':
@@ -367,7 +382,7 @@ class rgt_status_file:
                   'test_id_string=\\"' + test_id_string + '\\" ' +
                   'event_time=\\"' + event_time + '\\" ' +
                   'event_name=\\"' + event_name + '\\" ' +
-                  'event_status=\\"' + event_status + '\\" ' +
+                  'event_value=\\"' + event_value + '\\" ' +
                   '"')
 
 class JobExitStatus:
