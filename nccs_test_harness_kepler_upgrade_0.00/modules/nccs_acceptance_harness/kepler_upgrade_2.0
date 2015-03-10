@@ -1,0 +1,76 @@
+#%Module
+
+#-----------------------------------------------------
+# This module is for the Titan 1A partition          -
+# acceptance.                                        -
+#                                                    -
+#-----------------------------------------------------
+
+proc ModulesHelp { } {
+    puts stderr "Sets up environment to use nccs_test_harness for the Kepler Titan acceptance" 
+  }
+
+  #-----------------------------------------------------
+  # Base path to test harness python scripts.          -
+  #                                                    -
+  #-----------------------------------------------------
+  set apppath  /ccs/proj/scgs/TestHarnessDevelopment/trunk
+
+  #-----------------------------------------------------
+  # URL to svn repository of acceptance test harness   -
+  # applications.                                      -
+  #-----------------------------------------------------
+  set apprep file:///ccs/sys/adm/data/svn-acceptance/acceptance_project/trunk
+
+  set sys [ uname machine ]
+  if { $sys == "x86_64" } {
+    #-----------------------------------------------------
+    # Load the python module.                            -
+    #                                                    -
+    #-----------------------------------------------------
+    module load python/2.7.2
+
+    #-----------------------------------------------------
+    # Load subversion.                                   -
+    #                                                    -
+    #-----------------------------------------------------
+    module load subversion/1.6.17
+
+    #-----------------------------------------------------
+    # Load hdf5 module.                                  -
+    #                                                    -
+    #-----------------------------------------------------
+    #module load hdf5/1.8.6
+
+    #-----------------------------------------------------
+    # Set path to boost library. This is needed for LSMS.-
+    #                                                    -
+    #-----------------------------------------------------
+    setenv BOOST_ROOT "/ccs/proj/scgs/AcceptanceSoftware/boost_1_35_0"
+
+    #-----------------------------------------------------
+    #Set path to harness driver programs, binaries, ...  -
+    #-----------------------------------------------------
+    setenv PATH_TO_RGT_PACKAGE    $apppath
+    prepend-path PATH             $apppath/bin
+    prepend-path PATH             $apppath/utilities
+    prepend-path LD_LIBRARY_PATH  $apppath/lib
+    prepend-path LIBRARY_PATH     $apppath/lib
+    prepend-path PYTHONPATH       $apppath/utilities
+    prepend-path PYTHONPATH       $apppath/bin
+    prepend-path PYTHONPATH       $apppath
+
+
+    #-----------------------------------------------------
+    # Set path to the svn repository that contains the   -
+    # applications and tests.                            -
+    #-----------------------------------------------------
+    setenv RGT_PATH_TO_SVN_REPS $apprep
+    setenv RGT_ORGANIZATION "nccs"
+    setenv RGT_MACHINE_NAME "Titan/Kepler_Upgrade"
+
+
+  } else {
+    puts stderr "Module can not be loaded on this system. It is the wrong system."
+  } 
+
