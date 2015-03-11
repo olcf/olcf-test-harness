@@ -357,6 +357,15 @@ class rgt_status_file:
         if rgt_system_log_tag == '':
             return
 
+        rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_TAG'] \
+            if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+
+        if rgt_system_log_dir == '':
+            return
+
+        if not os.path.exists(rgt_system_log_dir):
+            return
+
         user = os.environ['USER']
 
         wd = os.getcwd()
@@ -396,10 +405,10 @@ class rgt_status_file:
 
         log_file = application + '_#_' + \
                    test + '_#_' + \
-                   test_id_string
+                   test_id_string +
+                   '.txt'
 
-        log_dir = '/ccs/proj/stf006/acc_logs'
-        log_path = os.path.join(log_dir, log_file)
+        log_path = os.path.join(rgt_system_log_dir, log_file)
 
         log_string = 'rgt_system_log_tag="' + rgt_system_log_tag + '" ' + \
                      'user="' + user + '" ' + \
