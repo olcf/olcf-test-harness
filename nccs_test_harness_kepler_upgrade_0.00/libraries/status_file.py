@@ -366,7 +366,7 @@ class rgt_status_file:
 
         test_id_string = self.__unique_id
 
-        dir_status_test = os.path.join(dir_test, 'Status', self.__unique_id)
+        dir_status_test = os.path.join(dir_head1, 'Status', self.__unique_id)
 
         file_job_id = os.path.join(dir_status_test, 'job_id.txt')
         if os.path.exists(file_job_id):
