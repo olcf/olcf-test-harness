@@ -4,6 +4,8 @@ import string
 import os
 import string
 import datetime
+import re
+import uuid
 from libraries import computers_1
 
 #
@@ -364,26 +366,76 @@ class rgt_status_file:
 
         test_id_string = self.__unique_id
 
+        dir_status_test = os.path.join(dir_test, 'Status', self.__unique_id)
+
+        file_job_id = os.path.join(dir_status_test, 'job_id.txt')
+        if os.path.exists(file_job_id):
+            file_ = open(file_job_id, 'r')
+            job_id = file_.read()
+            file_.close()
+            job_id = re.sub(' ', '', job_id.split('\n'))
+        else:
+            job_id = ''
+
+        file_job_status = os.path.join(dir_status_test, 'job_status.txt')
+        if os.path.exists(file_job_status):
+            file_ = open(file_job_status, 'r')
+            job_status = file_.read()
+            file_.close()
+            job_status = re.sub(' ', '', job_status.split('\n'))
+        else:
+            job_status = ''
+
         rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
 
         rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
 
         path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
 
-        os.system('logger "' +
-                  'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
-                  'user=\\"' + user + '\\" ' +
-                  'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
-                  'rgt_path_to_sspace=\\"' + rgt_path_to_sspace + '\\" ' +
-                  'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
-                  'wd=\\"' + wd + '\\" ' +
-                  'application=\\"' + application + '\\" ' +
-                  'test=\\"' + test + '\\" ' +
-                  'test_id_string=\\"' + test_id_string + '\\" ' +
-                  'event_time=\\"' + event_time + '\\" ' +
-                  'event_name=\\"' + event_name + '\\" ' +
-                  'event_value=\\"' + event_value + '\\" ' +
-                  '"')
+        #---Alt: could append uuid.uuid1()
+
+        log_file = application + '_#_' + \
+                   test + '_#_' + \
+                   test_id_string
+
+        log_dir = '/ccs/proj/stf006/acc_logs'
+        log_path = os.path.join(log_dir, log_file)
+
+        log_string = 'rgt_system_log_tag="' + rgt_system_log_tag + '" ' + \
+                     'user="' + user + '" ' + \
+                     'rgt_pbs_job_accnt_id="' + rgt_pbs_job_accnt_id + '" ' + \
+                     'rgt_path_to_sspace="' + rgt_path_to_sspace + '" ' + \
+                     'path_to_rgt_package="' + path_to_rgt_package + '" ' + \
+                     'wd="' + wd + '" ' + \
+                     'application="' + application + '" ' + \
+                     'test="' + test + '" ' + \
+                     'test_id_string="' + test_id_string + '" ' + \
+                     'job_id="' + job_id + '" ' + \
+                     'job_status="' + job_status + '" ' + \
+                     'event_time="' + event_time + '" ' + \
+                     'event_name="' + event_name + '" ' + \
+                     'event_value="' + event_value '" '
+
+        file_ = open(log_path, 'a')
+        file.write(log_string)
+        file.close()
+
+#        os.system('logger "' +
+#                  'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
+#                  'user=\\"' + user + '\\" ' +
+#                  'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
+#                  'rgt_path_to_sspace=\\"' + rgt_path_to_sspace + '\\" ' +
+#                  'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
+#                  'wd=\\"' + wd + '\\" ' +
+#                  'application=\\"' + application + '\\" ' +
+#                  'test=\\"' + test + '\\" ' +
+#                  'test_id_string=\\"' + test_id_string + '\\" ' +
+#                  'job_id=\\"' + job_id + '\\" ' +
+#                  'job_status=\\"' + job_status + '\\" ' +
+#                  'event_time=\\"' + event_time + '\\" ' +
+#                  'event_name=\\"' + event_name + '\\" ' +
+#                  'event_value=\\"' + event_value + '\\" ' +
+#                  '"')
 
 class JobExitStatus:
     def __init__(self):
