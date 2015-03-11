@@ -373,7 +373,7 @@ class rgt_status_file:
             file_ = open(file_job_id, 'r')
             job_id = file_.read()
             file_.close()
-            job_id = re.sub(' ', '', job_id.split('\n'))
+            job_id = re.sub(' ', '', job_id.split('\n')[0])
         else:
             job_id = ''
 
@@ -382,7 +382,7 @@ class rgt_status_file:
             file_ = open(file_job_status, 'r')
             job_status = file_.read()
             file_.close()
-            job_status = re.sub(' ', '', job_status.split('\n'))
+            job_status = re.sub(' ', '', job_status.split('\n')[0])
         else:
             job_status = ''
 
