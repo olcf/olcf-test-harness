@@ -405,7 +405,7 @@ class rgt_status_file:
 
         log_file = application + '_#_' + \
                    test + '_#_' + \
-                   test_id_string +
+                   test_id_string + \
                    '.txt'
 
         log_path = os.path.join(rgt_system_log_dir, log_file)
