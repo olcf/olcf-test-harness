@@ -357,7 +357,7 @@ class rgt_status_file:
         if rgt_system_log_tag == '':
             return
 
-        rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_TAG'] \
+        rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
             if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
 
         if rgt_system_log_dir == '':
