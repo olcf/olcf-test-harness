@@ -417,8 +417,8 @@ class rgt_status_file:
                      'event_value="' + event_value + '" '
 
         file_ = open(log_path, 'a')
-        file.write(log_string)
-        file.close()
+        file_.write(log_string)
+        file_.close()
 
 #        os.system('logger "' +
 #                  'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
