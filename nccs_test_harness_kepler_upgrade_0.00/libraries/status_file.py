@@ -414,7 +414,7 @@ class rgt_status_file:
                      'job_status="' + job_status + '" ' + \
                      'event_time="' + event_time + '" ' + \
                      'event_name="' + event_name + '" ' + \
-                     'event_value="' + event_value '" '
+                     'event_value="' + event_value + '" '
 
         file_ = open(log_path, 'a')
         file.write(log_string)
