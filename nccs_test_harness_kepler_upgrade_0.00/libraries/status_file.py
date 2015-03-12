@@ -420,7 +420,7 @@ class rgt_status_file:
                   'job_id=\\"' + job_id + '\\" ' +
                   'job_status=\\"' + job_status + '\\" ' +
                   'event_time=\\"' + event_time + '\\" ' +
-                  event_name + '=\\"' + event_value + '\\" ' +
+                  event_name + '_event_value=\\"' + event_value + '\\" ' +
                   '"' )
 
 #                  'event_name=\\"' + event_name + '\\" ' +
@@ -450,7 +450,7 @@ class rgt_status_file:
                      'job_id="' + job_id + '" ' + \
                      'job_status="' + job_status + '" ' + \
                      'event_time="' + event_time + '" ' + \
-                     event_name + '="' + event_value + '" ' + \
+                     event_name + '_event_value="' + event_value + '" ' + \
                      '\n'
 
 #                     'event_name="' + event_name + '" ' + \
