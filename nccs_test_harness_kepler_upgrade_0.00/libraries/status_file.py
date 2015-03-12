@@ -420,9 +420,11 @@ class rgt_status_file:
                   'job_id=\\"' + job_id + '\\" ' +
                   'job_status=\\"' + job_status + '\\" ' +
                   'event_time=\\"' + event_time + '\\" ' +
-                  'event_name=\\"' + event_name + '\\" ' +
-                  'event_value=\\"' + event_value + '\\" ' +
+                  event_name + '=\\"' + event_value + '\\" ' +
                   '"' )
+
+#                  'event_name=\\"' + event_name + '\\" ' +
+#                  'event_value=\\"' + event_value + '\\" ' +
 
         else:
 
@@ -448,9 +450,12 @@ class rgt_status_file:
                      'job_id="' + job_id + '" ' + \
                      'job_status="' + job_status + '" ' + \
                      'event_time="' + event_time + '" ' + \
-                     'event_name="' + event_name + '" ' + \
-                     'event_value="' + event_value + '" ' + \
+                     event_name + '="' + event_value + '" ' + \
                      '\n'
+
+#                     'event_name="' + event_name + '" ' + \
+#                     'event_value="' + event_value + '" ' + \
+
 
             file_ = open(log_path, 'a')
             file_.write(log_string)
