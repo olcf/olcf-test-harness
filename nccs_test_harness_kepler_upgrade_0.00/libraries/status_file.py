@@ -349,7 +349,6 @@ class rgt_status_file:
     def write_system_log(test_id_string, event_name, event_value, event_time):
         """
         """
-
         #---Get tag.
 
         rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
@@ -360,16 +359,15 @@ class rgt_status_file:
 
         #---Determine whether to use Unix logger command.
 
-        is_using_unix_logger = True
+        is_using_unix_logger = False
 
         rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
             if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
 
         if rgt_system_log_dir == '':
-            is_using_unix_logger = False
-
-        if not os.path.exists(rgt_system_log_dir):
-            is_using_unix_logger = False
+            is_using_unix_logger = True
+        elif not os.path.exists(rgt_system_log_dir):
+            is_using_unix_logger = True
 
         #---Construct fields for log entry.
 
@@ -404,16 +402,15 @@ class rgt_status_file:
 
         dir_run_archive = os.path.join(dir_head1, 'Run_Archive')
 
-        dir_run_archive_this_test = os.path.join(dir_run_archive,
-                                                 test_id_string)
+        run_archive = os.path.join(dir_run_archive, test_id_string)
 
         rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
 
-        dir_build_this_test = os.path.join(rgt_path_to_sspace, application,
-                                 test, test_id_string, 'build_directory')
+        build_directory = os.path.join(rgt_path_to_sspace, application, test,
+                                       test_id_string, 'build_directory')
 
-        dir_work_this_test = os.path.join(rgt_path_to_sspace, application,
-                                 test, test_id_string, 'workdir')
+        workdir = os.path.join(rgt_path_to_sspace, application, test,
+                               test_id_string, 'workdir')
 
         rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
 
@@ -423,14 +420,15 @@ class rgt_status_file:
 
         if is_using_unix_logger:
 
-            os.system(
+            log_string = (
                   'logger -p local0.notice "' +
                   'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
                   'user=\\"' + user + '\\" ' +
                   'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
-                  'rgt_path_to_sspace=\\"' + rgt_path_to_sspace + '\\" ' +
                   'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
-                  'wd=\\"' + wd + '\\" ' +
+                  'build_directory=\\"' + build_directory + '\\" ' +
+                  'workdir=\\"' + workdir + '\\" ' +
+                  'run_archive=\\"' + run_archive + '\\" ' +
                   'application=\\"' + application + '\\" ' +
                   'test=\\"' + test + '\\" ' +
                   'test_id_string=\\"' + test_id_string + '\\" ' +
@@ -442,6 +440,8 @@ class rgt_status_file:
 
 #                  'event_name=\\"' + event_name + '\\" ' +
 #                  'event_value=\\"' + event_value + '\\" ' +
+
+            os.system(log_string)
 
         else:
 
@@ -481,7 +481,6 @@ class rgt_status_file:
     def __write_system_log(self, event_name, event_value, event_time):
         """
         """
-
         rgt_status_file.write_system_log(self.__unique_id, event_name,
                                          event_value, event_time)
 
