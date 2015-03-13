@@ -345,13 +345,12 @@ class rgt_status_file:
         file_obj.write(fmt1)
         file_obj.close()
 
-    def __write_system_log(self, event_name, event_value, event_time=''):
+    @staticmethod
+    def write_system_log(test_id_string, event_name, event_value, event_time):
         """
         """
-        if event_time == '':
-            event_time = datetime.datetime.now().isoformat()
 
-        is_using_logger = True
+        #---Get tag.
 
         rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
             if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
@@ -359,15 +358,20 @@ class rgt_status_file:
         if rgt_system_log_tag == '':
             return
 
-        if not is_using_logger:
-            rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
-                if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+        #---Determine whether to use Unix logger command.
 
-            if rgt_system_log_dir == '':
-                is_using_logger = False
+        is_using_unix_logger = True
 
-            if not os.path.exists(rgt_system_log_dir):
-                is_using_logger = False
+        rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
+            if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+
+        if rgt_system_log_dir == '':
+            is_using_unix_logger = False
+
+        if not os.path.exists(rgt_system_log_dir):
+            is_using_unix_logger = False
+
+        #---Construct fields for log entry.
 
         user = os.environ['USER']
 
@@ -376,11 +380,11 @@ class rgt_status_file:
         (dir_head2, test) = os.path.split(dir_head1)
         (dir_head3, application) = os.path.split(dir_head2)
 
-        test_id_string = self.__unique_id
+        dir_status = os.path.join(dir_head1, 'Status')
 
-        dir_status_test = os.path.join(dir_head1, 'Status', self.__unique_id)
+        dir_status_this_test = os.path.join(dir_status, test_id_string)
 
-        file_job_id = os.path.join(dir_status_test, 'job_id.txt')
+        file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
         if os.path.exists(file_job_id):
             file_ = open(file_job_id, 'r')
             job_id = file_.read()
@@ -389,7 +393,7 @@ class rgt_status_file:
         else:
             job_id = ''
 
-        file_job_status = os.path.join(dir_status_test, 'job_status.txt')
+        file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
         if os.path.exists(file_job_status):
             file_ = open(file_job_status, 'r')
             job_status = file_.read()
@@ -398,13 +402,26 @@ class rgt_status_file:
         else:
             job_status = ''
 
+        dir_run_archive = os.path.join(dir_head1, 'Run_Archive')
+
+        dir_run_archive_this_test = os.path.join(dir_run_archive,
+                                                 test_id_string)
+
         rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
+
+        dir_build_this_test = os.path.join(rgt_path_to_sspace, application,
+                                 test, test_id_string, 'build_directory')
+
+        dir_work_this_test = os.path.join(rgt_path_to_sspace, application,
+                                 test, test_id_string, 'workdir')
 
         rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
 
         path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
 
-        if is_using_logger:
+        #---Write log.
+
+        if is_using_unix_logger:
 
             os.system(
                   'logger -p local0.notice "' +
@@ -460,6 +477,13 @@ class rgt_status_file:
             file_ = open(log_path, 'a')
             file_.write(log_string)
             file_.close()
+
+    def __write_system_log(self, event_name, event_value, event_time):
+        """
+        """
+
+        rgt_status_file.write_system_log(self.__unique_id, event_name,
+                                         event_value, event_time)
 
 class JobExitStatus:
     def __init__(self):
