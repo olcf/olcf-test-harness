@@ -6,21 +6,21 @@
 #-----------------------------------------------------
 
 proc ModulesHelp { } {
-    puts stderr "Sets up environment to use nccs_test_harness for the Kepler Titan acceptance" 
+    puts stderr "Sets up environment to use nccs_test_harness for the atlas file system tests" 
   }
 
   #-----------------------------------------------------
   # Base path to test harness python scripts.          -
   #                                                    -
   #-----------------------------------------------------
-  #set apppath /ccs/proj/scgs/sw/xk7/nccs_test_harness_kepler_upgrade_0.00 
-  set apppath /ccs/proj/stf006/joubert/harness_with_logging/nccs_test_harness_kepler_upgrade_0.00 
+  #set apppath /ccs/proj/scgs/sw/xk7/nccs_test_harness_kepler_upgrade 
+  set apppath /ccs/proj/stf006/joubert/harness_with_logging/nccs_test_harness_kepler_upgrade
 
   #-----------------------------------------------------
   # URL to svn repository of acceptance test harness   -
   # applications.                                      -
   #-----------------------------------------------------
-  set apprep file:///ccs/sys/adm/data/svn-acceptance/acceptance_project/trunk
+  set apprep https://svn.ccs.ornl.gov/svn/fsacceptance/trunk
 
   set sys [ uname machine ]
   if { $sys == "x86_64" } {
@@ -34,13 +34,7 @@ proc ModulesHelp { } {
     # Load subversion.                                   -
     #                                                    -
     #-----------------------------------------------------
-    module load subversion/1.8.3
-
-    #-----------------------------------------------------
-    # Set path to boost library. This is needed for LSMS.-
-    #                                                    -
-    #-----------------------------------------------------
-    setenv BOOST_ROOT "/ccs/proj/scgs/AcceptanceSoftware/boost_1_35_0"
+    module load subversion
 
     #-----------------------------------------------------
     #Set path to harness driver programs, binaries, ...  -
@@ -62,7 +56,7 @@ proc ModulesHelp { } {
     #-----------------------------------------------------
     setenv RGT_PATH_TO_SVN_REPS $apprep
     setenv RGT_ORGANIZATION "nccs"
-    setenv RGT_MACHINE_NAME "Titan/Kepler_Upgrade"
+    setenv RGT_MACHINE_NAME "Titan"
 
 
   } else {

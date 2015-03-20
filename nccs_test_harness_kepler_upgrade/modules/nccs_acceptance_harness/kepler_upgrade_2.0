@@ -1,7 +1,8 @@
 #%Module
 
 #-----------------------------------------------------
-# This module is for the Titan acceptance.           -
+# This module is for the Titan 1A partition          -
+# acceptance.                                        -
 #                                                    -
 #-----------------------------------------------------
 
@@ -13,8 +14,7 @@ proc ModulesHelp { } {
   # Base path to test harness python scripts.          -
   #                                                    -
   #-----------------------------------------------------
-  #set apppath /ccs/proj/scgs/sw/xk7/nccs_test_harness_kepler_upgrade_0.00 
-  set apppath /ccs/proj/stf006/joubert/harness_with_logging/nccs_test_harness_kepler_upgrade_0.00 
+  set apppath  /ccs/proj/scgs/TestHarnessDevelopment/trunk
 
   #-----------------------------------------------------
   # URL to svn repository of acceptance test harness   -
@@ -28,13 +28,19 @@ proc ModulesHelp { } {
     # Load the python module.                            -
     #                                                    -
     #-----------------------------------------------------
-    module load python/2.7.3
+    module load python/2.7.2
 
     #-----------------------------------------------------
     # Load subversion.                                   -
     #                                                    -
     #-----------------------------------------------------
-    module load subversion/1.8.3
+    module load subversion/1.6.17
+
+    #-----------------------------------------------------
+    # Load hdf5 module.                                  -
+    #                                                    -
+    #-----------------------------------------------------
+    #module load hdf5/1.8.6
 
     #-----------------------------------------------------
     # Set path to boost library. This is needed for LSMS.-
@@ -48,11 +54,10 @@ proc ModulesHelp { } {
     setenv PATH_TO_RGT_PACKAGE    $apppath
     prepend-path PATH             $apppath/bin
     prepend-path PATH             $apppath/utilities
-    prepend-path LD_LIBRARY_PATH  $apppath/libraries
-    prepend-path LIBRARY_PATH     $apppath/libraries
+    prepend-path LD_LIBRARY_PATH  $apppath/lib
+    prepend-path LIBRARY_PATH     $apppath/lib
     prepend-path PYTHONPATH       $apppath/utilities
     prepend-path PYTHONPATH       $apppath/bin
-    prepend-path PYTHONPATH       $apppath/libraries
     prepend-path PYTHONPATH       $apppath
 
 
