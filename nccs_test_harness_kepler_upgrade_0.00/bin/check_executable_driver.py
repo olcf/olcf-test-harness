@@ -70,7 +70,7 @@ def main():
     check_job.wait()
 
     #
-    # Run report_executabe.x, if it exists.
+    # Run report_executable.x, if it exists.
     #
 
     report_command = './report_executable.x'

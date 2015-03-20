@@ -4,6 +4,8 @@ import string
 import os
 import string
 import datetime
+import re
+import uuid
 from libraries import computers_1
 
 #
@@ -79,6 +81,7 @@ class rgt_status_file:
         file_obj = open(self.__path_to_file,"r")
         records1 = file_obj.readlines()
         file_obj.close()
+        event_time = datetime.datetime.now().isoformat()
 
         ip = -1
         for line in records1:
@@ -98,12 +101,15 @@ class rgt_status_file:
 
                     if mode == "Add_Build_Result":
                         words1[3] = exit_value
+                        self.__write_system_log('build_result', str(exit_value), event_time)
 
                     if mode == "Add_Submit_Result":
                         words1[4] = exit_value
+                        self.__write_system_log('submit_result', str(exit_value), event_time)
 
                     if mode == "Add_Run_Result":
                         words1[5] = exit_value
+                        self.__write_system_log('run_result', str(exit_value), event_time)
 
                     if mode == "Add_Run_Aborning":
                         words1[5] = "17"
@@ -114,6 +120,7 @@ class rgt_status_file:
                         file_obj2 = open(path2,"w")
                         file_obj2.write("17")
                         file_obj2.close()
+                        self.__write_system_log('run_aborning', str(exit_value), event_time)
    
                     records1[ip] = rgt_status_file.line_format  % (words1[0], words1[1], words1[2], words1[3], words1[4], words1[5])
 
@@ -141,6 +148,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+        event_time = currenttime.isoformat()
+        self.__write_system_log('binary_execute', 'start', event_time)
 
     def logFinalExecutionTime(self):
         currenttime = datetime.datetime.now()
@@ -163,6 +172,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+        event_time = currenttime.isoformat()
+        self.__write_system_log('binary_execute', 'end', event_time)
 
 
     def logBuildStartTime(self):
@@ -185,6 +196,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+        event_time = currenttime.isoformat()
+        self.__write_system_log('build', 'start', event_time)
 
     def logBuildEndTime(self):
         currenttime = datetime.datetime.now()
@@ -206,6 +219,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+        event_time = currenttime.isoformat()
+        self.__write_system_log('build', 'end', event_time)
 
     def logSubmitStartTime(self):
         currenttime = datetime.datetime.now()
@@ -227,6 +242,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+        event_time = currenttime.isoformat()
+        self.__write_system_log('submit', 'start', event_time)
 
     def logSubmitEndTime(self):
         currenttime = datetime.datetime.now()
@@ -248,6 +265,8 @@ class rgt_status_file:
         file_obj = open(path_to_file,"a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
+        event_time = currenttime.isoformat()
+        self.__write_system_log('submit', 'end', event_time)
 
     ###################
     # Private methods #
@@ -281,6 +300,144 @@ class rgt_status_file:
         file_obj.write(fmt1)
         file_obj.close()
   
+    @staticmethod
+    def write_system_log(test_id_string, event_name, event_value, event_time):
+        """
+        """
+        #---Get tag.
+
+        rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
+            if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
+
+        if rgt_system_log_tag == '':
+            return
+
+        #---Determine whether to use Unix logger command.
+
+        is_using_unix_logger = False
+
+        rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
+            if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+
+        if rgt_system_log_dir == '':
+            is_using_unix_logger = True
+        elif not os.path.exists(rgt_system_log_dir):
+            is_using_unix_logger = True
+
+        #---Construct fields for log entry.
+
+        user = os.environ['USER']
+
+        wd = os.getcwd()
+        (dir_head1, dir_scripts) = os.path.split(wd)
+        (dir_head2, test) = os.path.split(dir_head1)
+        (dir_head3, application) = os.path.split(dir_head2)
+
+        dir_status = os.path.join(dir_head1, 'Status')
+
+        dir_status_this_test = os.path.join(dir_status, test_id_string)
+
+        file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
+        if os.path.exists(file_job_id):
+            file_ = open(file_job_id, 'r')
+            job_id = file_.read()
+            file_.close()
+            job_id = re.sub(' ', '', job_id.split('\n')[0])
+        else:
+            job_id = ''
+
+        file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
+        if os.path.exists(file_job_status):
+            file_ = open(file_job_status, 'r')
+            job_status = file_.read()
+            file_.close()
+            job_status = re.sub(' ', '', job_status.split('\n')[0])
+        else:
+            job_status = ''
+
+        dir_run_archive = os.path.join(dir_head1, 'Run_Archive')
+
+        run_archive = os.path.join(dir_run_archive, test_id_string)
+
+        rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
+
+        build_directory = os.path.join(rgt_path_to_sspace, application, test,
+                                       test_id_string, 'build_directory')
+
+        workdir = os.path.join(rgt_path_to_sspace, application, test,
+                               test_id_string, 'workdir')
+
+        rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
+
+        path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
+
+        #---Write log.
+
+        if is_using_unix_logger:
+
+            log_string = (
+                  'logger -p local0.notice "' +
+                  'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
+                  'user=\\"' + user + '\\" ' +
+                  'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
+                  'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
+                  'build_directory=\\"' + build_directory + '\\" ' +
+                  'workdir=\\"' + workdir + '\\" ' +
+                  'run_archive=\\"' + run_archive + '\\" ' +
+                  'application=\\"' + application + '\\" ' +
+                  'test=\\"' + test + '\\" ' +
+                  'test_id_string=\\"' + test_id_string + '\\" ' +
+                  'job_id=\\"' + job_id + '\\" ' +
+                  'job_status=\\"' + job_status + '\\" ' +
+                  'event_time=\\"' + event_time + '\\" ' +
+                  event_name + '_event_value=\\"' + event_value + '\\" ' +
+                  '"' )
+
+#                  'event_name=\\"' + event_name + '\\" ' +
+#                  'event_value=\\"' + event_value + '\\" ' +
+
+            os.system(log_string)
+
+        else:
+
+            #---Alt: could use uuid.uuid1()
+
+            log_file = application + '_#_' + \
+                       test + '_#_' + \
+                       test_id_string + \
+                       '.txt'
+
+            log_path = os.path.join(rgt_system_log_dir, log_file)
+
+            log_string = \
+                     'rgt_system_log_tag="' + rgt_system_log_tag + '" ' + \
+                     'user="' + user + '" ' + \
+                     'rgt_pbs_job_accnt_id="' + rgt_pbs_job_accnt_id + '" ' + \
+                     'rgt_path_to_sspace="' + rgt_path_to_sspace + '" ' + \
+                     'path_to_rgt_package="' + path_to_rgt_package + '" ' + \
+                     'wd="' + wd + '" ' + \
+                     'application="' + application + '" ' + \
+                     'test="' + test + '" ' + \
+                     'test_id_string="' + test_id_string + '" ' + \
+                     'job_id="' + job_id + '" ' + \
+                     'job_status="' + job_status + '" ' + \
+                     'event_time="' + event_time + '" ' + \
+                     event_name + '_event_value="' + event_value + '" ' + \
+                     '\n'
+
+#                     'event_name="' + event_name + '" ' + \
+#                     'event_value="' + event_value + '" ' + \
+
+
+            file_ = open(log_path, 'a')
+            file_.write(log_string)
+            file_.close()
+
+    def __write_system_log(self, event_name, event_value, event_time):
+        """
+        """
+        rgt_status_file.write_system_log(self.__unique_id, event_name,
+                                         event_value, event_time)
 
 
 #-----------------------------------------------------

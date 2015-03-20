@@ -70,6 +70,17 @@ def main():
     check_job.wait()
 
     #
+    # Run report_executable.x, if it exists.
+    #
+
+    report_command = './report_executable.x'
+    if os.path.exists(report_command):
+        for args1 in sys.argv[1:] :
+            report_command = report_command + " " + args1
+        report_job = popen2.Popen3(report_command)
+        report_job.wait()
+
+    #
     # Now read the result to the job_status.txt file.
     #
     path2 = os.path.join(dir_head1,"Status",test_id_string,"job_status.txt")

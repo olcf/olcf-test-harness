@@ -14,7 +14,7 @@ proc ModulesHelp { } {
   #                                                    -
   #-----------------------------------------------------
   #set apppath /ccs/proj/scgs/sw/xk7/nccs_test_harness_kepler_upgrade_0.00 
-  set apppath /ccs/proj/stf006/joubert/harness_with_logging/nccs_test_harness_kepler_upgrade_0.00 
+  set apppath /ccs/proj/stf006/harness_with_logging/nccs_test_harness_kepler_upgrade_0.00 
 
   #-----------------------------------------------------
   # URL to svn repository of acceptance test harness   -
