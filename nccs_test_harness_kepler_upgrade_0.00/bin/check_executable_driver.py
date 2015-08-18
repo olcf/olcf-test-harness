@@ -9,8 +9,9 @@ from libraries import status_file
 
 #
 # Author: Arnold Tharrington
-# Email: arnoldt@ornl.gov
-# National Center of Computational Science, Scientifc Computing Group.
+# Modified: Wayne Joubert
+# National Center for Computational Sciences, Scientific Computing Group.
+# Oak Ridge National Laboratory
 #
 
 #

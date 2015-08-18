@@ -3,9 +3,9 @@ from libraries import input_files
 from libraries import regression_test
 
 #
-# Author: Arnold Tharrington
-# Email: arnoldt@ornl.gov
-# National Center of Computational Science, Scientifc Computing Group.
+# Author: Arnold Tharrington  (arnoldt@ornl.gov)
+# National Center for Computational Sciences, Scientific Computing Group.
+# Oak Ridge National Laboratory
 #
 
 def main():

@@ -2,9 +2,9 @@
 import string
 
 #
-# Author: Arnold Tharrington
-# Email: arnoldt@ornl.gov
-# National Center of Computational Science, Scientifc Computing Group.
+# Author: Arnold Tharrington (arnoldt@ornl.gov)
+# National Center for Computational Sciences, Scientific Computing Group.
+# Oak Ridge National Laboratory
 #
 
 class rgt_input_file:
