@@ -25,7 +25,7 @@ class rgt_status_file:
 
     #Header lines for status.
     header1 = line_format % (" "," "," "," "," "," ")
-    header2 = string.replace(header1," ","#")
+    header2 = str.replace(header1," ","#")
     header3 = line_format % ("#Start Time", "Unique ID","Batch ID", "Build Status","Submit Status", "Correct Results")
 
     header = header2
@@ -107,13 +107,13 @@ class rgt_status_file:
             # then ignore record.                                -
             #                                                    -
             #-----------------------------------------------------
-            line0 = string.strip(line)
+            line0 = str.strip(line)
             if 1 :
                 pass
 
             #Get the uid for this run instance
-            line1 = string.rstrip(line) 
-            words1 = string.split(line1)
+            line1 = str.rstrip(line) 
+            words1 = str.split(line1)
 
 
             if len(words1) >= 6:
@@ -583,7 +583,7 @@ def parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_even
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
-    print "parsing status file: ", path_to_status_file
+    print ("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
         if  not rgt_status_file.ignoreLine(tmpline):
@@ -664,7 +664,7 @@ def parse_status_file2(path_to_status_file):
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
-    print "parsing status file: ", path_to_status_file
+    print ("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
         if not rgt_status_file.ignoreLine(tmpline):
@@ -706,8 +706,8 @@ def parse_status_file2(path_to_status_file):
              "number_of_failed_tests" : number_of_failed_tests,
              "number_of_inconclusive_tests" : number_of_inconclusive_tests}
 
-    print "shash=",shash
-    print "failed_jobs=",failed_jobs
+    print ("shash=" + shash)
+    print ("failed_jobs=" + failed_jobs)
     return shash,failed_jobs
 
 
@@ -724,7 +724,7 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
 
     flist = []
     ilist = []
-    print "parsing status file: ", path_to_status_file
+    print ("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
         if len(tmpline) >0 and tmpline[0] != rgt_status_file.comment_line_entry:
@@ -735,9 +735,9 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
             pbsid2 = pbsid1.split(".")
             pbsid = pbsid2[0]
 
-            print "===="
-            print "Test instance: ", tmpline
-            print "pbs job id: ",pbsid 
+            print ("====")
+            print ("Test instance: " + tmpline)
+            print ("pbs job id: " + pbsid) 
 
             #Get the creation time.
             creationtime = words[0]
@@ -750,7 +750,7 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
             # Get the number of passed tests.
             #Conservative check
             if (mycomputer_with_events_record.in_time_range(pbsid,creationtime,startdate,enddate)):
-                print "In range"
+                print ("In range")
 
                 number_of_tests = number_of_tests + 1
 
@@ -770,13 +770,13 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
                     number_of_inconclusive_tests = number_of_inconclusive_tests + 1
 
             elif (startdate <= creationdate) and (creationdate <= enddate) and  (pbsid == "***"):
-                print "In range"
+                print ("In range")
                 number_of_tests = number_of_tests + 1
                 number_of_inconclusive_tests = number_of_inconclusive_tests + 1
                 ilist = ilist + [words[1]]
                 
-            print "number of  tests = ",number_of_tests 
-            print "===="
+            print ("number of  tests = " + number_of_tests )
+            print ("====")
             print
             print
 

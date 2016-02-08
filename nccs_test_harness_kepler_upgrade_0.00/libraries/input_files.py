@@ -36,7 +36,7 @@ class rgt_input_file:
         
         for tmpline in lines:
 
-            words = string.split(tmpline)
+            words = str.split(tmpline)
 
             #If there are no words, then continue to next line.
             if len(words) == 0:
@@ -47,7 +47,7 @@ class rgt_input_file:
                 continue
 
             #Convert the first word to lower case.
-            firstword = string.lower(words[0])
+            firstword = str.lower(words[0])
 
             # Parse the line,depending upon what type of entry it is.
             if firstword == rgt_input_file.test_entry:
@@ -73,7 +73,8 @@ class rgt_input_file:
                 elif (len(words) == 5):
                     self.__harness_task = self.__harness_task + [[words[2],words[3],words[4]]]
             else:
-                print "Undefined entry:  ", tmpline
+                log_message = "Undefined entry:  " + tmpline
+                print(log_message)
 
     def __is_comment_line(self,word):
         if word[0] == rgt_input_file.comment_line_entry:

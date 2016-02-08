@@ -165,7 +165,7 @@ def create_computer():
         return titan_computer(hostname)
     else:
         string1 =  "Computer " + hostname + " not defined as a class."
-        print string1
+        print(string1)
 
 
 

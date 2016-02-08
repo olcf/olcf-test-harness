@@ -155,7 +155,7 @@ def test_harness_driver(argv=None):
     #
     jstatus.add_result(exit_value="-1",mode="Add_Run_Aborning")
     
-    return
+    return build_exit_value and submit_exit_value
 
 def create_parser():
     my_parser = argparse.ArgumentParser(description="Driver for Application and tests")
@@ -167,27 +167,27 @@ def create_parser():
     return my_parser
 
 def usage():
-    print "There are two modes of usage as a main program or as a function call"
+    print ("There are two modes of usage as a main program or as a function call")
     print
     print
-    print "Usage as a main program: test_harness_driver.py [-h] [-r]"
-    print "A driver program that orchestates the build and submit"
-    print "scripts."
+    print ("Usage as a main program: test_harness_driver.py [-h] [-r]")
+    print ("A driver program that orchestates the build and submit")
+    print ("scripts.")
     print
-    print "-h, --help           Prints usage information."                              
-    print "-r                   The batch script for the next test will resubmit"
-    print "                     itself, otherwise the batch script for the next "
-    print "                     test won't resubmit itself."
+    print ("-h, --help           Prints usage information.")                              
+    print ("-r                   The batch script for the next test will resubmit")
+    print ("                     itself, otherwise the batch script for the next ")
+    print ("                     test won't resubmit itself.")
     print 
     print
-    print "Usage as a function: test_harness_driver()"
-    print "A driver program that orchestates the build and submit"
-    print "scripts."
+    print ("Usage as a function: test_harness_driver()")
+    print ("A driver program that orchestates the build and submit")
+    print ("scripts.")
     print
-    print "-h, --help           Prints usage information."                              
-    print "-r                   The batch script for the next test will resubmit"
-    print "                     itself, otherwise the batch script for the next "
-    print "                     test won't resubmit itself."
+    print ("-h, --help           Prints usage information.")
+    print ("-r                   The batch script for the next test will resubmit")
+    print ("                     itself, otherwise the batch script for the next ")
+    print ("                     test won't resubmit itself.")
          
 def get_path_to_tmp_workspace(path_to_workspace,test_id_string):
     #
@@ -294,7 +294,7 @@ def read_job_id(test_id_string):
     job_id = file_obj.readline()
     file_obj.close()
 
-    job_id = string.strip(job_id)
+    job_id = str.strip(job_id)
 
     return job_id
 

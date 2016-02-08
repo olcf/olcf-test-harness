@@ -52,21 +52,21 @@ class  apps_test_directory_layout(object):
     # Debug function.
     #
     def debug_layout(self):
-        print "\n\n"
-        print "================================================================"
-        print "Debugging svn layout ", self.__name_of_application, self.__name_of_subtest
-        print "================================================================"
+        print( "\n\n")
+        print ("================================================================")
+        print ("Debugging svn layout " + self.__name_of_application + self.__name_of_subtest)
+        print ("================================================================")
         for key in self.__svn_app_test_directory_structure.keys():
-            print "%-20s = %-20s" % (key, self.__svn_app_test_directory_structure[key])
-        print "================================================================\n\n"
+            print ("%-20s = %-20s" % (key, self.__svn_app_test_directory_structure[key]))
+        print ("================================================================\n\n")
 
-        print "\n\n"
-        print "================================================================"
-        print "Debugging local layout ", self.__name_of_application, self.__name_of_subtest
-        print "================================================================"
+        print ("\n\n")
+        print ("================================================================")
+        print ("Debugging local layout " + self.__name_of_application + self.__name_of_subtest)
+        print ("================================================================")
         for key in self.__local_app_test_directory_structure.keys():
-            print "%-20s = %-20s" % (key, self.__local_app_test_directory_structure[key])
-        print "================================================================\n\n"
+            print ("%-20s = %-20s" % (key, self.__local_app_test_directory_structure[key]))
+        print ("================================================================\n\n")
     #
     # Returns the path to the top level of the application
     #

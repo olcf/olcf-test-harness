@@ -299,7 +299,8 @@ class  subtest(base_apptest,apps_test_directory_layout):
     #
     def display_status(self):
         failed_jobs = []
-        print "Testing status of: ",self.getNameOfApplication(), self.getNameOfSubtest()
+        log_message = "Testing status of: " + self.getNameOfApplication() + self.getNameOfSubtest()
+        print(log_message)
 
         #Parse the status file.
         path_to_status_file = self.get_path_to_status_file()
@@ -343,21 +344,24 @@ class  subtest(base_apptest,apps_test_directory_layout):
     #
     def display_status2(self,taskwords,mycomputer_with_events_record):
         failed_jobs = []
-        print "Testing status of: ",self.getNameOfApplication(), self.getNameOfSubtest()
+        log_message =  "Testing status of: " + self.getNameOfApplication() +self.getNameOfSubtest()
+        print(log_message)
 
         starttimestring = taskwords[0]
         starttimestring = starttimestring.strip()
         starttimewords = starttimestring.split("_")
         startdate = datetime.datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
                                       int(starttimewords[3]),int(starttimewords[4]))
-        print "The startdate is ", startdate.ctime()
+        log_message =  "The startdate is " + startdate.ctime()
+        print (log_message)
 
         endtimestring = taskwords[1]
         endtimestring = endtimestring.strip()
         endtimewords = endtimestring.split("_")
         enddate = datetime.datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
                                       int(endtimewords[3]),int(endtimewords[4]))
-        print "The enddate is ", enddate.ctime()
+        log_message = "The enddate is " + enddate.ctime()
+        print(log_message)
 
         #Parse the status file.
         path_to_status_file = self.get_path_to_status_file()
@@ -405,14 +409,16 @@ class  subtest(base_apptest,apps_test_directory_layout):
         starttimewords = starttimestring.split("_")
         startdate = datetime.datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
                                       int(starttimewords[3]),int(starttimewords[4]))
-        print "The startdate is ", startdate.ctime()
+        log_message = "The startdate is " + startdate.ctime()
+        print(log_message)
 
         endtimestring = taskwords[1]
         endtimestring = endtimestring.strip()
         endtimewords = endtimestring.split("_")
         enddate = datetime.datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
                                       int(endtimewords[3]),int(endtimewords[4]))
-        print "The enddate is ", enddate.ctime()
+        log_message = "The enddate is " + enddate.ctime()
+        print(log_message)
 
         #Parse the status file.
         path_to_status_file = self.get_path_to_status_file()
@@ -463,20 +469,20 @@ class  subtest(base_apptest,apps_test_directory_layout):
     # Debug apptest.
     #
     def debug_apptest(self):
-        print "\n\n"
-        print "================================================================"
-        print "Debugging apptest "
-        print "================================================================"
+        print ("\n\n")
+        print ("================================================================")
+        print ("Debugging apptest ")
+        print ("================================================================")
         for tmp_test in self.__apps_test_checked_out:
-            print "%-20s  %-20s %-20s" % (tmp_test[0],tmp_test[1], tmp_test[2])
-        print "================================================================\n\n"
+            print( "%-20s  %-20s %-20s" % (tmp_test[0],tmp_test[1], tmp_test[2]))
+        print( "================================================================\n\n")
 
     @classmethod
     def reorderTaskList(cls,tasks):
         taskwords1 = []
         for taskwords in tasks:
             task = None
-            if type(taskwords) == ListType:
+            if type(taskwords) == list:
                 task = taskwords[0]
             else:
                 task = taskwords

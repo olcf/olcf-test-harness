@@ -145,7 +145,7 @@ class run_me:
 
     def __display_status(self,apptest1,taskwords,mycomputer_with_events_record):
         #Display the test status.
-        print "In display_status"
+        print("In display_status")
         if mycomputer_with_events_record == None:
             apptest1.display_status()
         else:
@@ -188,11 +188,13 @@ class run_me:
 
             if app_status["Number_failed"] > 0:
                 for tmpjob in app_status["Failed_jobs"]:
-                    print "Failed job: ", tmpjob
+                    log_message = "Failed job: " + tmpjob
+                    print(log_message)
 
             if app_status["Number_inconclusive"] > 0:
                 for tmpjob in app_status["Inconclusive_jobs"]:
-                    print "Inconclusive job: ", tmpjob
+                    log_message = "Inconclusive job: " + tmpjob
+                    print(log_message)
 
 
             for key in app_status.keys():
