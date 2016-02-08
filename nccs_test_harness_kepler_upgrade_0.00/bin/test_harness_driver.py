@@ -6,6 +6,9 @@ import string
 import getopt
 import shutil
 import datetime
+from shlex import split
+import argparse
+
 from libraries.rgt_utilities import unique_text_string
 from libraries.rgt_utilities import test_work_space
 from libraries.layout_of_apps_directory import apps_test_directory_layout
@@ -23,8 +26,9 @@ from libraries import status_file
 # and is designed such that it will be called from the Scripts directory.
 #
 #
-def main():
-
+def test_harness_driver(argv=None):
+    if argv == None:
+        argv = sys.argv
     #
     # Check for the existence of the file "kill_test".
     # If the file exists then the program will exit
@@ -55,33 +59,13 @@ def main():
             file_obj.close()
             
 
-    #
-    # Get the command line arguments.
-    #
-    try:
-        opts,args = getopt.getopt(sys.argv[1:],"hr")
-
-    except getopt.GetoptError:
-            usage()
-            sys.exit(2)
-
-    #
-    # Initialize some variables.
-    #
-    resubmit_me = False
-
-    #
-    # Parse the command line arguments.
-    #
-    for o, a in opts:
-        if o == "-r":
-            resubmit_me = True
-        elif o == ("-h", "--help"):
-            usage()
-            sys.exit()
-        else:
-            usage()
-            sys.exit()
+    my_parser = create_parser()
+    Vargs = None
+    if argv == None:
+        Vargs = my_parser.parse_args()
+    else:
+        Vargs = my_parser.parse_args(argv)
+    resubmit_me = Vargs.r
 
     #
     # Make backup of status file.
@@ -173,18 +157,38 @@ def main():
     
     return
 
+def create_parser():
+    my_parser = argparse.ArgumentParser(description="Driver for Application and tests")
+        
+    my_parser.add_argument("-r",  
+                         help="The batch script for the next test will resubmititself",
+                         action="store_true")
+
+    return my_parser
 
 def usage():
-    print "Usage: test_harness_driver.py [-h] [-r]"
+    print "There are two modes of usage as a main program or as a function call"
+    print
+    print
+    print "Usage as a main program: test_harness_driver.py [-h] [-r]"
     print "A driver program that orchestates the build and submit"
     print "scripts."
     print
     print "-h, --help           Prints usage information."                              
     print "-r                   The batch script for the next test will resubmit"
     print "                     itself, otherwise the batch script for the next "
-    print "                     test won't resubmit itself.                     "
-
-
+    print "                     test won't resubmit itself."
+    print 
+    print
+    print "Usage as a function: test_harness_driver()"
+    print "A driver program that orchestates the build and submit"
+    print "scripts."
+    print
+    print "-h, --help           Prints usage information."                              
+    print "-r                   The batch script for the next test will resubmit"
+    print "                     itself, otherwise the batch script for the next "
+    print "                     test won't resubmit itself."
+         
 def get_path_to_tmp_workspace(path_to_workspace,test_id_string):
     #
     # Get the current working directory.
@@ -296,4 +300,4 @@ def read_job_id(test_id_string):
 
 
 if __name__ == "__main__":
-    main()
+    test_harness_driver()

@@ -21,6 +21,7 @@ from libraries.layout_of_apps_directory import apps_test_directory_layout
 from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
 from libraries.status_file import summarize_status_file
+from bin.test_harness_driver import test_harness_driver
 
 #
 # Inherits "apps_test_directory_layout".
@@ -268,14 +269,18 @@ class  subtest(base_apptest,apps_test_directory_layout):
         start_test_log_files = self.getPathToStartTestLogFiles()
         stdout_path = start_test_log_files["stdout"]
         stderr_path = start_test_log_files["stderr"]
-        starttestcomand = "cd " + pathtoscripts + " && test_harness_driver.py -r " + " && cd " + cwd  
+        arguments = "-r"
+        starttestcomand = "test_harness_driver('-r')"
+        os.chdir(pathtoscripts) 
         with open(stdout_path,"a") as out:
             with open(stderr_path,"a") as err:
-                exit_status = subprocess.call(args=starttestcomand ,shell=True,stdout=out,stderr=err)
+                arguments="-r"
+                my_argv = shlex.split(arguments)
+                exit_status = test_harness_driver(my_argv)
                 if exit_status > 0:
                     string1 = "Command failed: " + starttestcomand
                     sys.exit(string1)
-
+        os.chdir(cwd)
 
     #
     # Stops the test.
