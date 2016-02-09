@@ -2,7 +2,7 @@
 
 import os
 import sys
-import popen2
+import subprocess
 import getopt
 import string
 from libraries import status_file
@@ -57,29 +57,28 @@ def main():
         file_obj = open(path1,"r")
         job_id = file_obj.readline()
         file_obj.close()
-        job_id = string.strip(job_id)
+        job_id = str.strip(job_id)
 
         
 
     #
     # Call the check_executable.x script only after the job_id.txt file is created.
     #
-    check_command = "./check_executable.x"
+    check_command_argv = ["./check_executable.x"]
     for args1 in sys.argv[1:] :
-        check_command = check_command + " " + args1
-    check_job = popen2.Popen3(check_command)
-    check_job.wait()
+        check_command_argv = check_command_argv + [args1]
+        
+    check_cmd_process = subprocess.call(check_command_argv)
 
     #
     # Run report_executable.x, if it exists.
     #
 
-    report_command = './report_executable.x'
-    if os.path.exists(report_command):
+    report_command_argv = ['./report_executable.x']
+    if os.path.exists(report_command_argv[0]):
         for args1 in sys.argv[1:] :
-            report_command = report_command + " " + args1
-        report_job = popen2.Popen3(report_command)
-        report_job.wait()
+            report_command_argv = report_command_argv + [args1]
+        report_command_argv = subprocess.call(report_command_argv)
 
     #
     # Now read the result to the job_status.txt file.
@@ -88,7 +87,7 @@ def main():
     file_obj2 = open(path2,"r")
     job_correctness = file_obj2.readline()
     file_obj2.close()
-    job_correctness = string.strip(job_correctness)
+    job_correctness = str.strip(job_correctness)
 
     #
     # Create an instance of the job status and add the correct result to the status file.
@@ -100,12 +99,12 @@ def main():
 
 
 def usage():
-    print "Usage: check_executable_driver.py [-h|--help] [-i <test_id_string>] [-p <path_to_results>]"
-    print "A driver program that calls check_executable.x"
+    print ("Usage: check_executable_driver.py [-h|--help] [-i <test_id_string>] [-p <path_to_results>]")
+    print ("A driver program that calls check_executable.x")
     print
-    print "-h, --help            Prints usage information."                              
-    print "-p <path_to_results>  The absoulte path to the results of a test."
-    print "-i <test_id_string>   The test string unique id."
+    print ("-h, --help            Prints usage information.")                              
+    print ("-p <path_to_results>  The absoulte path to the results of a test.")
+    print ("-i <test_id_string>   The test string unique id.")
 
 
 
