@@ -27,8 +27,8 @@ from libraries import status_file
 #
 #
 def test_harness_driver(argv=None):
-    if argv == None:
-        argv = sys.argv
+        
+    
     #
     # Check for the existence of the file "kill_test".
     # If the file exists then the program will exit
