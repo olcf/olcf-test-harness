@@ -27,7 +27,8 @@ def create_a_parser():
     parser = argparse.ArgumentParser(description="Runs the harness tasks of the selected Application and tests",
                                      add_help=True)
         
-    parser.add_argument("--concurrency", required=True,choices=["serial","threaded"],
+    parser.add_argument("--concurrency", 
+                        required=True,choices=["serial","threaded"],
                         help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Threaded is concurrency over the Application/Subtest.")
 
     return parser
