@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 from libraries import input_files
 from libraries import regression_test
+
+import shlex
 import argparse
 import sys
 import string
@@ -30,11 +32,13 @@ def create_a_parser():
 
     return parser
 
-def main(argv=None):
-    if argv == None:
+def runtests(my_arg_string=None):
+    argv = None
+    if my_arg_string == None:
         argv = sys.argv[1:]
     else:
-        argv = argv.split()
+        argv = shlex.split(my_arg_string)
+       
 
     #
     # Parse command line arguments
@@ -46,12 +50,11 @@ def main(argv=None):
     #
     # Read the input
     #    
-    ifile = input_files.rgt_input_file()
-
-
-    rgt = regression_test.run_me(ifile,concurrency)
+    #ifile = input_files.rgt_input_file()
+    
+    #rgt = regression_test.run_me(ifile,concurrency)
     
     
 if __name__ == "__main__":
-    main()
+    runtests()
 
