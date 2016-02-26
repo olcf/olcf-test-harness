@@ -29,24 +29,53 @@ class Test_runtests(unittest.TestCase):
         # Path to environmental variables file. 
         my_rgt_env_file='/ccs/home/arnoldt/Harness_Unit_Testing/rgt_environmental_variables.bash.x'
         os.putenv("RGT_ENVIRONMENTAL_FILE",my_rgt_env_file)
-        print("Setting up tests.")
+
+        # Path to my input file directory.
+        my_rgt_input_diretcory = "/ccs/home/arnoldt/Harness_Unit_Testing_Input"
+
+        # File name of rgt input file.
+        my_rgt_input_file_name = "rgt.input"
+
       
         # Create the input directory along with its input files. 
-        self.__createInputDirectory()
+        self.__createInputDirectoryAndFiles(my_path_to_sspace,
+                                    my_rgt_env_file,
+                                    my_rgt_input_diretcory,
+                                    my_rgt_input_file_name)
 
     def tearDown(self):
         """ Stud doc for tear down """
-        print("Tearing down tests.")
 
         
     def test_good_comnand_line_args(self):
+        """ Test main program for checking validity of command line arguments. """
+
         argument_string = "--concurrency serial"
         runtests.runtests(argument_string)
         
         self.assertEqual(101,101,"Command line arguments good.")
 
-    def __createInputDirectory(self):
-        pass
+    def __createInputDirectoryAndFiles(self,
+                               path_to_scratch_space,
+                               path_to_rgt_env_file,
+                               path_to_input_directory,
+                               rgt_input_file_name):
+        
+        # Create the input directory.
+        if not os.path.isdir(path_to_input_directory):
+            os.makedirs(path_to_input_directory)
+
+        # Create the rgt environmental file.
+        self.__createRgtEnvFile(path_to_rgt_env_file,
+                                path_to_input_directory)
+
+    def __createRgtEnvFile(self,
+                           path_to_rgt_env_file,
+                           path_to_input_directory):
+
+
+        print("Creating rgt environmental file.")
+
 
 if __name__ == "__main__":
     unittest.main()
