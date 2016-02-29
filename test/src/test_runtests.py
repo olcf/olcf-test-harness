@@ -38,11 +38,18 @@ class Test_runtests(unittest.TestCase):
         # The path to the rgt module file
         my_rgt_module_file = os.getenv("RGT_NCCS_TEST_HARNESS_MODULE")
 
+        # The tests to run
+        my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"} ]
+        my_harness_tasks = ["check_out_tests",
+                            "start_tests"]
+
         # Create the input directory along with the input files. 
         self.__createInputDirectoryAndFiles(my_path_to_sspace,
                                             my_rgt_input_directory,
                                             my_rgt_input_file_name,
-                                            my_rgt_module_file)
+                                            my_rgt_module_file,
+                                            my_tests,
+                                            my_harness_tasks)
 
     def tearDown(self):
         """ Stud doc for tear down """
@@ -61,7 +68,9 @@ class Test_runtests(unittest.TestCase):
         path_to_scratch_space,
         path_to_input_directory,
         rgt_input_file_name,
-        path_to_module_file):
+        path_to_module_file,
+        harness_tests,
+        harness_tasks):
         
         # Create the input directory.
         if not os.path.isdir(path_to_input_directory):
@@ -73,7 +82,9 @@ class Test_runtests(unittest.TestCase):
                                 path_to_module_file)
 
         # Create the rgt input file.
-        self.__createRgtInputFile(path_to_input_directory)
+        self.__createRgtInputFile(path_to_input_directory,
+                                  harness_tests,
+                                  harness_tasks)
 
     def __createRgtEnvFile(
         self,
@@ -136,14 +147,59 @@ class Test_runtests(unittest.TestCase):
 
     def __createRgtInputFile(
         self,
-        path_to_input_directory):
+        path_to_input_directory,
+        harness_tests,
+        harness_tasks):
+
+        # Define a comment format 
+        comment_frmt =  "#---------------------------------------------------------------\n"
+        comment_frmt += "# {rgt_comment:<60}"
+        comment_frmt += "{rgt_space:<1}-\n"
+        comment_frmt += "#---------------------------------------------------------------\n"
+
+        #Define a ??? format.
+        top_level_frmt = "Path_to_tests = {}\n\n"
+
+        #Define a test format.
+        test_frmt =  "Test = {Application} {test}\n"
+        
+        #Define a task format.
+        task_frmt =  "Harness_task = {harness_task}\n"
 
         rgt_input_file_name = "rgt.input"
         test_rgt_input_file_path = os.path.join(path_to_input_directory,
                                                 rgt_input_file_name )
 
         rgt_file_obj = open(test_rgt_input_file_path,"w")
-        rgt_file_obj.write("Stud for writing rgt input file data.")
+        path_to_tests_comment = comment_frmt.format(rgt_comment="Set the path to the top level of the application directory.",
+                                                    rgt_space=" ")
+
+        # Write to file  the top level path to tests.
+        rgt_file_obj.write(path_to_tests_comment)
+
+        my_top_level_path_to_tests = os.path.join(path_to_input_directory,"Applications")
+        path_to_tests = top_level_frmt.format(my_top_level_path_to_tests) 
+        rgt_file_obj.write(path_to_tests)
+
+        # Write to file tests to be run.
+        my_tests = ""
+        for a_test in harness_tests:
+            my_tests += test_frmt.format(Application = a_test["Application"],
+                                         test = a_test["Test"])
+        rgt_file_obj.write(my_tests)
+
+        #Write to file the harness tasks.
+        harness_task_comments = comment_frmt.format(rgt_comment="Harness tasks",
+                                                    rgt_space=" ")
+        rgt_file_obj.write("\n" + harness_task_comments)
+
+
+        my_harness_tasks = ""
+        for a_task in harness_tasks:
+            my_harness_tasks += task_frmt.format(harness_task=a_task)
+        rgt_file_obj.write(my_harness_tasks + "\n" + "\n")
+
+
         rgt_file_obj.close()
 
 if __name__ == "__main__":
