@@ -32,6 +32,7 @@ class run_me:
         self.__appsubtest = []
         self.__concurrency = concurrency
         mycomputer_with_events_record = None
+        self.__returnStatus = None
 
         #
         # Store the applications and subtest in a defaultdict container.
@@ -81,54 +82,6 @@ class run_me:
                                                                                          app_test.getNameOfSubtest()) 
                         out.write(message)
                         app_test.doTasks(tasks=self.__tasks)
-
-
-
-        #for test in self.__tests:
-        #    #Instantiate an instance of the test.
-        #    tmp_app = apptest.subtest(name_of_application=test[0],
-        #                              name_of_subtest=test[1],
-        #                              local_path_to_tests=self.__local_path_to_tests,
-        #                              number_of_iterations=test[2])
-
-
-
-        #for test in self.__tests:
-        #    #Instantiate an instance of the test.
-        #    self.__appsubtest  = self.__appsubtest + [apptest.subtest(name_of_application=test[0],
-        #                                              name_of_subtest=test[1],
-        #                                              local_path_to_tests=self.__local_path_to_tests,
-        #                                              number_of_iterations=test[2]) ]
-
-
-        ##Perform the tasks for each test.
-        #for appsubtest1 in self.__appsubtest:
-
-        #    #Perform each task
-        #    for taskwords in self.__tasks:
-        #        task = None
-        #        if type(taskwords) == ListType:
-        #            task = taskwords[0]
-        #            if mycomputer_with_events_record == None:
-        #                mycomputer_with_events_record = rgt_utilities.return_my_computer_with_events_record(taskwords[1:])
-        #        else:
-        #            task = taskwords
-
-        #        if task == run_me.checkout:
-        #            appsubtest1.checkout_test()
-
-        #        if task == run_me.starttest:
-        #            self.__start_test(appsubtest1)
-
-        #        if task == run_me.stoptest:
-        #            self.__stop_test(appsubtest1)
-
-        #        if (task == run_me.displaystatus) and (type(taskwords) == ListType):
-        #            self.__display_status(appsubtest1,taskwords[1:],mycomputer_with_events_record)
-        #        elif (task == run_me.displaystatus):
-        #            self.__display_status(appsubtest1,None,None)
-
-
 
 
     def __check_out_test(self,apptest1):

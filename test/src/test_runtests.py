@@ -51,16 +51,22 @@ class Test_runtests(unittest.TestCase):
                                             my_tests,
                                             my_harness_tasks)
 
+        self.__startingDirectory = os.getcwd()
+        self.__inputDirectory = my_rgt_input_directory 
+
+        os.chdir(self.__inputDirectory)
+
     def tearDown(self):
         """ Stud doc for tear down """
+        os.chdir(self.__startingDirectory)
 
         
     def test_good_comnand_line_args(self):
         """ Test main program for checking validity of command line arguments. """
 
         argument_string = "--concurrency serial"
-        runtests.runtests(argument_string)
-        
+        my_rgt_tests = runtests.runtests(argument_string)
+
         self.assertEqual(101,101,"Command line arguments good.")
 
     def __createInputDirectoryAndFiles(

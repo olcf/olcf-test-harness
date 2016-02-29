@@ -51,10 +51,10 @@ def runtests(my_arg_string=None):
     #
     # Read the input
     #    
-    #ifile = input_files.rgt_input_file()
+    ifile = input_files.rgt_input_file()
     
-    #rgt = regression_test.run_me(ifile,concurrency)
-    
+    rgt = regression_test.run_me(ifile,concurrency)
+    return rgt
     
 if __name__ == "__main__":
     runtests()
