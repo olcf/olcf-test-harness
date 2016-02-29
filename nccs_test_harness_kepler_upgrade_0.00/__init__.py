@@ -1,7 +1,8 @@
 __all__ = [
             "bin",
             "libraries",
-            "utilities"
+            "utilities",
+            "fundamental_types"
           ]
 
 version = 2.0

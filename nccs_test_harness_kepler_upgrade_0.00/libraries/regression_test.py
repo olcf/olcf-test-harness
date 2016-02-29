@@ -4,9 +4,11 @@ import time
 import datetime
 import collections
 from types import *
+
 from libraries import apptest
 from libraries import rgt_utilities
 from libraries import threadedDecorator
+from fundamental_types.rgt_state import RgtState
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
 # National Center for Computational Sciences, Scientific Computing Group.
@@ -23,7 +25,8 @@ class run_me:
     summarize_results = "summarize_results"
     status_file = "applications_status.txt"
 
-    LOG_FILE_NAME= "harness_log_file.txt"
+    # Defines the harness log file name.
+    LOG_FILE_NAME = "harness_log_file.txt"
     
     def __init__(self,rgt_input_file,concurrency):
         self.__tests = rgt_input_file.get_tests()
@@ -83,6 +86,7 @@ class run_me:
                         out.write(message)
                         app_test.doTasks(tasks=self.__tasks)
 
+        self.__returnStatus = True
 
     def __check_out_test(self,apptest1):
         # Check out the files.
