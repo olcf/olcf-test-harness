@@ -6,6 +6,7 @@ import shlex
 import os
 
 from bin import runtests
+from fundamental_types.rgt_state import RgtState
 
 class Test_runtests(unittest.TestCase):
     """ Tests for main program runtests.py """
@@ -41,7 +42,8 @@ class Test_runtests(unittest.TestCase):
         # The tests to run
         my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"} ]
         my_harness_tasks = ["check_out_tests",
-                            "start_tests"]
+                            "start_tests",
+                            "stop_tests"]
 
         # Create the input directory along with the input files. 
         self.__createInputDirectoryAndFiles(my_path_to_sspace,
@@ -61,13 +63,21 @@ class Test_runtests(unittest.TestCase):
         os.chdir(self.__startingDirectory)
 
         
-    def test_good_comnand_line_args(self):
-        """ Test main program for checking validity of command line arguments. """
+    def test_hello_world(self):
+        """ Test of harness if it can launch a MPI hello world on 1 node. """ 
 
         argument_string = "--concurrency serial"
-        my_rgt_tests = runtests.runtests(argument_string)
+        my_rgt_test = runtests.runtests(argument_string)
 
-        self.assertEqual(101,101,"Command line arguments good.")
+        # Get the state of my_rgt_test
+        state_of_rgt = my_rgt_test.getState()
+
+        # The state of my_rgt_test should be "ALL_TASKS_COMPLETED".
+        correct_state = RgtState.ALL_TASKS_COMPLETED
+        
+        # Compare results.
+        error_message = "Hello world program did not complete all tasks."
+        self.assertEqual(state_of_rgt,correct_state,error_message)
 
     def __createInputDirectoryAndFiles(
         self,

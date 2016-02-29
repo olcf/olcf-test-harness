@@ -35,7 +35,9 @@ class run_me:
         self.__appsubtest = []
         self.__concurrency = concurrency
         mycomputer_with_events_record = None
-        self.__returnStatus = None
+
+        # Mark status as tasks not completed.
+        self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
         #
         # Store the applications and subtest in a defaultdict container.
@@ -86,7 +88,11 @@ class run_me:
                         out.write(message)
                         app_test.doTasks(tasks=self.__tasks)
 
-        self.__returnStatus = True
+        # If we get to this point mark all task as completed.
+        self.__returnState = RgtState.ALL_TASKS_COMPLETED
+
+    def getState(self):
+        return self.__returnState
 
     def __check_out_test(self,apptest1):
         # Check out the files.
