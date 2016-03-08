@@ -7,11 +7,11 @@
 class BaseMachine:
     
     """ BaseMachine represents a compute resource and has the following
-    properties:
+        properties:
     
     Attributes:
         name: string representing the system's name
-        scheduler: an object of the baseScheduler class
+        scheduler: an object of the BaseScheduler class
 
     Methods:
         print_machine_info:
@@ -21,7 +21,6 @@ class BaseMachine:
 
     def __init__(self,name):
         self.__name = name 
-        self.__scheduler = scheduler
 
     def get_machine_name(self):
         """ Return a string with the system's name."""
