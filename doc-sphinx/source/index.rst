@@ -11,11 +11,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   harness_unit_test_usage_instructions
    harness_unit_tests_documentation
 
 Indices and tables
 ==================
-
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
