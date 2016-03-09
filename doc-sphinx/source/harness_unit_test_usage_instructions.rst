@@ -2,6 +2,12 @@
  Harness Unit Testing Usage
 ============================
 
+---------------------------
+Terminology and Conventions
+---------------------------
+
+<harness-top-level>
+
 --------
 Overview
 --------
@@ -24,4 +30,9 @@ as you the user. Step 3 is to execute the python command which lauches the
 harness unit tests.
 
 
+------
+Step 1 
+------
+Create a temporary working directory and copy the file
+<harness-top-level>/test/input_file/Titan/rgt_environmental_variables.bash.x.
 
