@@ -5,6 +5,7 @@
 #
 
 from scheduler_factory import SchedulerFactory
+from jobLauncher_factory import JobLauncherFactory
 
 class BaseMachine:
     
@@ -24,11 +25,11 @@ class BaseMachine:
         set_numNodes:
     """
 
-    def __init__(self,name,scheduler_type,jobLauncher,numNodes,
+    def __init__(self,name,scheduler_type,jobLauncher_type,numNodes,
                  numSockets,numCoresPerSocket):
         self.__name = name 
         self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
-        self.__jobLauncher = jobLauncher
+        self.__jobLauncher = JobLauncherFactory.create_jobLauncher(jobLauncher_type)
         self.__numNodes = numNodes
         self.__numSockets = numSockets
         self.__numCoresPerSocket = numCoresPerSocket
