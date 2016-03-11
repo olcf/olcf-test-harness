@@ -8,6 +8,8 @@ from base_scheduler import BaseScheduler
 
 class LSF(BaseScheduler):
 
+    """ LSF class represents an LSF scheduler. """
+
     def __init__(self):
         self.__name = 'LSF'
         self.__submitCmd = 'bsub'
