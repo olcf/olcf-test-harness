@@ -8,12 +8,17 @@ from base_scheduler import BaseScheduler
 
 class LSF(BaseScheduler):
 
-    def __init__(self,name='LSF',jobLauncher=None):
-        BaseScheduler.__init__(self,name)
-        self.__jobLauncher = jobLauncher
-
-    def print_jobLauncher(self):
-        print(str(self.__jobLauncher))
+    def __init__(self):
+        self.__name = 'LSF'
+        self.__submitCmd = 'bsub'
+        self.__statusCmd = 'bjobs'
+        self.__deleteCmd = 'bkill'
+        self.__walltimeOpt = '-W'
+        self.__numTasksOpt = '-n'
+        self.__jobNameOpt = '-N'
+        BaseScheduler.__init__(self,self.__name,self.__submitCmd,self.__statusCmd,
+                               self.__deleteCmd,self.__walltimeOpt,self.__numTasksOpt,
+                               self.__jobNameOpt)
 
 if __name__ == '__main__':
     print 'This is the LSF scheduler class'
