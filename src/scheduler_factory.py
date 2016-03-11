@@ -1,12 +1,21 @@
+import os
+from lsf import LSF
+
 class SchedulerFactory:
 
     @staticmethod
-    def create_scheduler(scheduler_name=None,
-                       scheduler_type=None,
-                       jobLauncher_type=None):
-        print("Creating machine")
+    def create_scheduler(scheduler_type):
+        print("Creating scheduler")
 
-    def __init__(self,name,scheduler,jobLauncher):
+        tmp_scheduler = None
+        if scheduler_type == "LSF":
+            tmp_scheduler = LSF()
+        else:
+            print("Scheduler not supported. Good bye!")
+
+        return tmp_scheduler
+
+
+    def __init__(self):
         pass
-
 
