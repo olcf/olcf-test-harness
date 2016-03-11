@@ -8,12 +8,11 @@ from poe import Poe
 
 my_machine = CrayXK7('Chester','PBS','aprun',80,1,16)
 print my_machine.get_machine_name()
-my_machine.print_scheduler_info()
 my_machine.print_machine_info()
 
 my_machine = IBMpower8('Crest','LSF','poe',4,1,22)
 print my_machine.get_machine_name()
-my_machine.print_scheduler_info()
+my_machine.print_machine_info()
 
 #fc = MachineFactory.create_machine('Chester','XK7','PBS')
 fc = MachineFactory.create_machine()
