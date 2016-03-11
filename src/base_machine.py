@@ -4,6 +4,8 @@
 # 
 #
 
+from scheduler_factory import SchedulerFactory
+
 class BaseMachine:
     
     """ BaseMachine represents a compute resource and has the following
@@ -22,10 +24,10 @@ class BaseMachine:
         set_numNodes:
     """
 
-    def __init__(self,name,scheduler,jobLauncher,numNodes,
+    def __init__(self,name,scheduler_type,jobLauncher,numNodes,
                  numSockets,numCoresPerSocket):
         self.__name = name 
-        self.__scheduler = scheduler
+        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
         self.__jobLauncher = jobLauncher
         self.__numNodes = numNodes
         self.__numSockets = numSockets
