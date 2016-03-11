@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from cray_xk7 import CrayXK7 
 from ibm_power8 import IBMpower8
 from machine_factory import MachineFactory
