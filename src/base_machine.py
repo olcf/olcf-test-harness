@@ -36,18 +36,13 @@ class BaseMachine:
     def print_machine_info(self):
         """ Print information about the machine"""
         print("Machine name:\n"+self.get_machine_name())
-        self.print_scheduler_info()
+        self.__scheduler.print_scheduler_info()
         print("Job Launcher info: ")
         self.print_jobLauncher_info()
 
     def get_machine_name(self):
         """ Return a string with the system's name."""
         return self.__name
-
-    def print_scheduler_info(self):
-        """ Print information about the machine's scheduler."""
-        print("Scheduler Information")
-        print(str(self.__scheduler))
 
     def print_jobLauncher_info(self):
         """ Print information about the machine's job launcher."""
