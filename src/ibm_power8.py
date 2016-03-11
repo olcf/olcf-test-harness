@@ -8,12 +8,10 @@ from base_machine import BaseMachine
 
 class IBMpower8(BaseMachine):
     
-    def __init__(self,name='IBM Power8',scheduler=None):
-        BaseMachine.__init__(self,name)
-        self.__scheduler = scheduler
-
-    def print_scheduler_info(self):
-        print(str(self.__scheduler))
+    def __init__(self,name='IBM Power8',scheduler=None,jobLauncher=None,
+                 numNodes=0,numSocketsPerNode=0,numCoresPerSocket=0):
+        BaseMachine.__init__(self,name,scheduler,jobLauncher,numNodes,
+                             numSocketsPerNode,numCoresPerSocket)
 
 if __name__ == "__main__":
     print 'This is the IBM Power8 class'
