@@ -30,27 +30,23 @@ class StatusFile:
     header3 = line_format % ('#Start Time', 'Unique ID', 'Batch ID',
                              'Build Status', 'Submit Status', 'Correct Results')
     header = header2
-    header = header + header1
-    header = header + header3
-    header = header + header1
-    header = header + header2
+    header += header1
+    header += header3
+    header += header1
+    header += header2
 
     # Name of the input file.
     filename = 'rgt_status.txt'
 
-    # The execution start and stop timestamp log file.
-    start_execution_timestamp_filename = 'start_binary_execution_timestamp.txt'
-    final_execution_timestamp_filename = 'final_binary_execution_timestamp.txt'
+    # The timestamp log file names.
+    filename_exec_beg_timestamp = 'start_binary_execution_timestamp.txt'
+    filename_exec_end_timestamp = 'final_binary_execution_timestamp.txt'
 
-    build_start_execution_timestamp_filename = (
-        'start_build_execution_timestamp.txt')
-    build_final_execution_timestamp_filename = (
-        'final_build_execution_timestamp.txt')
+    filename_build_beg_timestamp = 'start_build_execution_timestamp.txt'
+    filename_build_end_timestamp = 'final_build_execution_timestamp.txt'
 
-    submit_start_execution_timestamp_filename = (
-        'start_submit_execution_timestamp.txt')
-    submit_final_execution_timestamp_filename = (
-        'final_submit_execution_timestamp.txt')
+    filename_submit_beg_timestamp = 'start_submit_execution_timestamp.txt'
+    filename_submit_end_timestamp = 'final_submit_execution_timestamp.txt'
 
     # These are the entries in the input file.
     comment_line_entry = '#'
@@ -93,7 +89,7 @@ class StatusFile:
         self.__unique_id = unique_id
 
         # Make the status file.
-        self.__makeStatusFiles()
+        self.__make_status_file()
 
         # Add job to status file.
         if mode == 'New':
@@ -114,9 +110,7 @@ class StatusFile:
         file_obj.close()
         event_time = datetime.datetime.now().isoformat()
 
-        ip = -1
-        for line in records1:
-            ip = ip + 1
+        for index, line in enumerate(records1):
 
             # If the first character is a "#" then ignore record.
             #line0 = str.strip(line)
@@ -183,7 +177,7 @@ class StatusFile:
                         self.__write_system_log('run_aborning',
                                                 str(exit_value), event_time)
 
-                    records1[ip] = StatusFile.line_format % (
+                    records1[index] = StatusFile.line_format % (
                         (words1[0], words1[1], words1[2], words1[3],
                          words1[4], words1[5]))
 
@@ -204,7 +198,7 @@ class StatusFile:
 
         path_to_file = os.path.join(
             dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.start_execution_timestamp_filename)
+            StatusFile.filename_exec_beg_timestamp)
         file_obj = open(path_to_file, 'a')
         file_obj.write(currenttime.isoformat())
         file_obj.close()
@@ -225,7 +219,7 @@ class StatusFile:
 
         path_to_file = os.path.join(
             dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.final_execution_timestamp_filename)
+            StatusFile.filename_exec_end_timestamp)
 
         file_obj = open(path_to_file, 'a')
         file_obj.write(currenttime.isoformat())
@@ -247,7 +241,7 @@ class StatusFile:
 
         path_to_file = os.path.join(
             dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.build_start_execution_timestamp_filename)
+            StatusFile.filename_build_beg_timestamp)
         file_obj = open(path_to_file, 'a')
         file_obj.write(currenttime.isoformat())
         file_obj.close()
@@ -268,7 +262,7 @@ class StatusFile:
 
         path_to_file = os.path.join(
             dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.build_final_execution_timestamp_filename)
+            StatusFile.filename_build_end_timestamp)
         file_obj = open(path_to_file, 'a')
         file_obj.write(currenttime.isoformat())
         file_obj.close()
@@ -289,7 +283,7 @@ class StatusFile:
 
         path_to_file = os.path.join(
             dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.submit_start_execution_timestamp_filename)
+            StatusFile.filename_submit_beg_timestamp)
         file_obj = open(path_to_file, 'a')
         file_obj.write(currenttime.isoformat())
         file_obj.close()
@@ -310,7 +304,7 @@ class StatusFile:
 
         path_to_file = os.path.join(
             dir_head1, "Status", str(self.__unique_id),
-            StatusFile.submit_final_execution_timestamp_filename)
+            StatusFile.filename_submit_end_timestamp)
         file_obj = open(path_to_file, "a")
         file_obj.write(currenttime.isoformat())
         file_obj.close()
@@ -322,37 +316,35 @@ class StatusFile:
     # Private methods #
     ###################
 
-    def __makeStatusFiles(self):
-        """
-        """
-        cwd = os.getcwd()
+    def __make_status_file(self):
+        """Create the master status file for this app/test if doesn't exist."""
 
         # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
+        cwd = os.getcwd()
         dir_head1 = os.path.split(cwd)[0]
 
-        # Now join dirhead1 to form path to rgt status file.
+        # Form path to rgt status file.
         self.__path_to_file = os.path.join(dir_head1, "Status",
                                            StatusFile.filename)
+
+        # Create.
         if not os.path.lexists(self.__path_to_file):
             file_obj = open(self.__path_to_file, "w")
             file_obj.write(StatusFile.header)
             file_obj.close()
 
     def __add_job(self):
-        """
-        """
+        """Start new line in master status file for app/test."""
         currenttime = datetime.datetime.now()
         file_obj = open(self.__path_to_file, "a")
-        fmt1 = StatusFile.line_format % (
+        format_ = StatusFile.line_format % (
             (currenttime.isoformat(), self.__unique_id,
              "***", "***", "***", "***"))
-        file_obj.write(fmt1)
+        file_obj.write(format_)
         file_obj.close()
 
     def __write_system_log(self, event_name, event_value, event_time):
-        """
-        """
+        """Write a system log entry for an event."""
         write_system_log(self.__unique_id, event_name, event_value, event_time)
 
 #------------------------------------------------------------------------------
@@ -364,9 +356,9 @@ class rgt_status_file(StatusFile):
 #------------------------------------------------------------------------------
 
 def write_system_log(test_id_string, event_name, event_value, event_time):
-    """
-    """
-    #---Get tag from environment, if set.
+    """Write a system log entry for an event."""
+
+    #---Get tag from environment, if set by user.
 
     rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
         if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
@@ -386,12 +378,12 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
     elif not os.path.exists(rgt_system_log_dir):
         is_using_unix_logger = True
 
-    #---Construct fields for log entry.
+    #---Construct fields to be used for log entry.
 
     user = os.environ['USER']
 
-    wd = os.getcwd()
-    (dir_head1, dir_scripts) = os.path.split(wd)
+    cwd = os.getcwd()
+    (dir_head1, dir_scripts) = os.path.split(cwd)
     assert dir_scripts == 'Scripts', (
         'write_syatem_log function being executed from wrong directory.')
     (dir_head2, test) = os.path.split(dir_head1)
@@ -434,84 +426,47 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
 
     path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
 
-#    #---Construct log string.
-#
-#    quote = '\\"' if is_using_unix_logger else '"'
-#
-#    log_string = (
-#        'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ' +
-#        'user=' + quote + user + quote + ' ' +
-#        'rgt_pbs_job_accnt_id=' + quote + rgt_pbs_job_accnt_id + quote + ' ' +
-#        'rgt_path_to_sspace=' + quote + rgt_path_to_sspace + quote + ' ' +
-#        'path_to_rgt_package=' + quote + path_to_rgt_package + quote + ' ' +
-#        'wd=' + quote + wd + quote + ' ' +
-#        'application=' + quote + application + quote + ' ' +
-#        'test=' + quote + test + quote + ' ' +
-#        'test_id_string=' + quote + test_id_string + quote + ' ' +
-#        'job_id=' + quote + job_id + quote + ' ' +
-#        'job_status=' + quote + job_status + quote + ' ' +
-#        'event_time=' + quote + event_time + quote + ' ' +
-#        event_name + '_event_value=' + quote + event_value + quote + ' ')
+    #---Construct log string.
+
+    quote = '\\"' if is_using_unix_logger else '"'
+
+    log_string = (
+        'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ' +
+        'user=' + quote + user + quote + ' ' +
+        'rgt_pbs_job_accnt_id=' + quote + rgt_pbs_job_accnt_id + quote + ' ' +
+        'rgt_path_to_sspace=' + quote + rgt_path_to_sspace + quote + ' ' +
+        'path_to_rgt_package=' + quote + path_to_rgt_package + quote + ' ' +
+        'build_directory=' + quote + build_directory + quote + ' ' +
+        'workdir=' + quote + workdir + quote + ' ' +
+        'run_archive=' + quote + dir_run_archive_this_test + quote + ' ' +
+        'wd=' + quote + cwd + quote + ' ' +
+        'application=' + quote + application + quote + ' ' +
+        'test=' + quote + test + quote + ' ' +
+        'test_id_string=' + quote + test_id_string + quote + ' ' +
+        'job_id=' + quote + job_id + quote + ' ' +
+        'job_status=' + quote + job_status + quote + ' ' +
+        'event_time=' + quote + event_time + quote + ' ' +
+        event_name + '_event_value=' + quote + event_value + quote + ' '
+        '')
+#       'event_name=' + quote + event_name + quote + ' ' +
+#       'event_value=' + quote + event_value + quote + ' ' +
 
     #---Write log.
 
     if is_using_unix_logger:
 
-        log_string = (
-            'logger -p local0.notice "' +
-            'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
-            'user=\\"' + user + '\\" ' +
-            'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
-            'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
-            'build_directory=\\"' + build_directory + '\\" ' +
-            'workdir=\\"' + workdir + '\\" ' +
-            'run_archive=\\"' + dir_run_archive_this_test + '\\" ' +
-            'application=\\"' + application + '\\" ' +
-            'test=\\"' + test + '\\" ' +
-            'test_id_string=\\"' + test_id_string + '\\" ' +
-            'job_id=\\"' + job_id + '\\" ' +
-            'job_status=\\"' + job_status + '\\" ' +
-            'event_time=\\"' + event_time + '\\" ' +
-            event_name + '_event_value=\\"' + event_value + '\\" ' +
-            '"')
-
-#              'event_name=\\"' + event_name + '\\" ' +
-#              'event_value=\\"' + event_value + '\\" ' +
-
-        os.system(log_string)
+        os.system('logger -p local0.notice "' + log_string + '"')
 
     else:
 
-        #---Alt: could use uuid.uuid1()
-
-        log_string = (
-            'rgt_system_log_tag="' + rgt_system_log_tag + '" ' +
-            'user="' + user + '" ' +
-            'rgt_pbs_job_accnt_id="' + rgt_pbs_job_accnt_id + '" ' +
-            'rgt_path_to_sspace="' + rgt_path_to_sspace + '" ' +
-            'path_to_rgt_package="' + path_to_rgt_package + '" ' +
-            'wd="' + wd + '" ' +
-            'application="' + application + '" ' +
-            'test="' + test + '" ' +
-            'test_id_string="' + test_id_string + '" ' +
-            'job_id="' + job_id + '" ' +
-            'job_status="' + job_status + '" ' +
-            'event_time="' + event_time + '" ' +
-            event_name + '_event_value="' + event_value + '" ' +
-            '\n')
-
-#                 'event_name="' + event_name + '" ' + \
-#                 'event_value="' + event_value + '" ' + \
-
-
         log_file = (application + '_#_' +
                     test + '_#_' +
-                    test_id_string +
+                    test_id_string + #---Alt: could use uuid.uuid1()
                     '.txt')
         log_path = os.path.join(rgt_system_log_dir, log_file)
 
         file_ = open(log_path, 'a')
-        file_.write(log_string)
+        file_.write(log_string + '\n')
         file_.close()
 
 #------------------------------------------------------------------------------
@@ -718,7 +673,7 @@ def parse_status_file2(path_to_status_file):
 
             # Get the number of passed tests.
             #Conservative check
-            if  (words[3].isdigit())  and (words[4].isdigit()) and (words[5].isdigit()):
+            if words[3].isdigit() and words[4].isdigit() and words[5].isdigit():
                 if int(words[5]) == 0:
                     number_of_passed_tests = number_of_passed_tests + 1
 
@@ -726,7 +681,8 @@ def parse_status_file2(path_to_status_file):
                     number_of_failed_tests = number_of_failed_tests + 1
 
                 if int(words[5]) >= 2:
-                    number_of_inconclusive_tests = number_of_inconclusive_tests + 1
+                    number_of_inconclusive_tests = (
+                        number_of_inconclusive_tests + 1)
             else:
                 number_of_tests = number_of_tests - 1
 
