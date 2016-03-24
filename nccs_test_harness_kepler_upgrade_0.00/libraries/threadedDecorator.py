@@ -21,7 +21,7 @@ import copy
 import random
 import sys
 import os
-from queue import *
+#from queue import *
 
 
 class BaseAppThreadDecorator(threading.Thread,base_apptest):
