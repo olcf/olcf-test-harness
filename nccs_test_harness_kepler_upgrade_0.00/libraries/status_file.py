@@ -36,7 +36,7 @@ class StatusFile:
     header += header2
 
     # Name of the input file.
-    filename = 'rgt_status.txt'
+    FILENAME = 'rgt_status.txt'
 
     # The timestamp log file names.
     filename_exec_beg_timestamp = 'start_binary_execution_timestamp.txt'
@@ -82,8 +82,7 @@ class StatusFile:
     ###################
 
     def __init__(self, unique_id, mode):
-        """
-        """
+        """Constructor."""
         self.__job_id = ''
         self.__path_to_file = ''
         self.__unique_id = unique_id
@@ -103,11 +102,12 @@ class StatusFile:
     ###################
 
     def add_result(self, exit_value, mode):
-        """
-        """
-        file_obj = open(self.__path_to_file, 'r')
-        records1 = file_obj.readlines()
-        file_obj.close()
+        """Update the status file to reflect new event."""
+
+        #---Initial read of status file.
+        status_file = open(self.__path_to_file, 'r')
+        records1 = status_file.readlines()
+        status_file.close()
         event_time = datetime.datetime.now().isoformat()
 
         for index, line in enumerate(records1):
@@ -125,6 +125,9 @@ class StatusFile:
             if len(words1) >= 6:
                 #stime1 = words1[0]
                 uid1 = words1[1]
+
+                #if uid1 != self.__unique_id:
+                #    continue
 
                 if uid1 == self.__unique_id:
                     if mode == 'Add_Job_ID':
@@ -181,13 +184,93 @@ class StatusFile:
                         (words1[0], words1[1], words1[2], words1[3],
                          words1[4], words1[5]))
 
-        file_obj = open(self.__path_to_file, 'w')
-        file_obj.writelines(records1)
+        #---Update the status file.
+        status_file = open(self.__path_to_file, 'w')
+        status_file.writelines(records1)
+        status_file.close()
+
+    def log_build_start_time(self):
+        """Write log message to denote app build has started."""
+        currenttime = datetime.datetime.now()
+
+        cwd = os.getcwd()
+
+        # Get the head dir in cwd.
+        #(dir_head1, dir_tail1) = os.path.split(cwd)
+        dir_head1 = os.path.split(cwd)[0]
+
+        path_to_file = os.path.join(
+            dir_head1, 'Status', str(self.__unique_id),
+            StatusFile.filename_build_beg_timestamp)
+        file_obj = open(path_to_file, 'a')
+        file_obj.write(currenttime.isoformat())
         file_obj.close()
 
-    def logStartExecutionTime(self):
-        """
-        """
+        event_time = currenttime.isoformat()
+        self.__write_system_log('build', 'start', event_time)
+
+    def log_build_end_time(self):
+        """Write log message to denote app build has ended."""
+        currenttime = datetime.datetime.now()
+
+        cwd = os.getcwd()
+
+        # Get the head dir in cwd.
+        #(dir_head1, dir_tail1) = os.path.split(cwd)
+        dir_head1 = os.path.split(cwd)[0]
+
+        path_to_file = os.path.join(
+            dir_head1, 'Status', str(self.__unique_id),
+            StatusFile.filename_build_end_timestamp)
+        file_obj = open(path_to_file, 'a')
+        file_obj.write(currenttime.isoformat())
+        file_obj.close()
+
+        event_time = currenttime.isoformat()
+        self.__write_system_log('build', 'end', event_time)
+
+    def log_submit_start_time(self):
+        """Write log message to denote job submission has started."""
+        currenttime = datetime.datetime.now()
+
+        cwd = os.getcwd()
+
+        # Get the head dir in cwd.
+        #(dir_head1, dir_tail1) = os.path.split(cwd)
+        dir_head1 = os.path.split(cwd)[0]
+
+        path_to_file = os.path.join(
+            dir_head1, 'Status', str(self.__unique_id),
+            StatusFile.filename_submit_beg_timestamp)
+        file_obj = open(path_to_file, 'a')
+        file_obj.write(currenttime.isoformat())
+        file_obj.close()
+
+        event_time = currenttime.isoformat()
+        self.__write_system_log('submit', 'start', event_time)
+
+    def log_submit_end_time(self):
+        """Write log message to denote job submission has ended."""
+        currenttime = datetime.datetime.now()
+
+        cwd = os.getcwd()
+
+        # Get the head dir in cwd.
+        #(dir_head1, dir_tail1) = os.path.split(cwd)
+        dir_head1 = os.path.split(cwd)[0]
+
+        path_to_file = os.path.join(
+            dir_head1, "Status", str(self.__unique_id),
+            StatusFile.filename_submit_end_timestamp)
+        file_obj = open(path_to_file, "a")
+        file_obj.write(currenttime.isoformat())
+        file_obj.close()
+
+        event_time = currenttime.isoformat()
+        self.__write_system_log('submit', 'end', event_time)
+
+    def log_start_execution_time(self):
+        """Write log message to denote execution of app binary has started."""
         currenttime = datetime.datetime.now()
 
         cwd = os.getcwd()
@@ -206,9 +289,8 @@ class StatusFile:
         event_time = currenttime.isoformat()
         self.__write_system_log('binary_execute', 'start', event_time)
 
-    def logFinalExecutionTime(self):
-        """
-        """
+    def log_final_execution_time(self):
+        """Write log message to denote execution of app binary has ended."""
         currenttime = datetime.datetime.now()
 
         cwd = os.getcwd()
@@ -228,90 +310,6 @@ class StatusFile:
         event_time = currenttime.isoformat()
         self.__write_system_log('binary_execute', 'end', event_time)
 
-    def logBuildStartTime(self):
-        """
-        """
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_build_beg_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('build', 'start', event_time)
-
-    def logBuildEndTime(self):
-        """
-        """
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_build_end_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('build', 'end', event_time)
-
-    def logSubmitStartTime(self):
-        """
-        """
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_submit_beg_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('submit', 'start', event_time)
-
-    def logSubmitEndTime(self):
-        """
-        """
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, "Status", str(self.__unique_id),
-            StatusFile.filename_submit_end_timestamp)
-        file_obj = open(path_to_file, "a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('submit', 'end', event_time)
-
     ###################
     # Private methods #
     ###################
@@ -325,7 +323,7 @@ class StatusFile:
 
         # Form path to rgt status file.
         self.__path_to_file = os.path.join(dir_head1, "Status",
-                                           StatusFile.filename)
+                                           StatusFile.FILENAME)
 
         # Create.
         if not os.path.lexists(self.__path_to_file):
@@ -346,12 +344,6 @@ class StatusFile:
     def __write_system_log(self, event_name, event_value, event_time):
         """Write a system log entry for an event."""
         write_system_log(self.__unique_id, event_name, event_value, event_time)
-
-#------------------------------------------------------------------------------
-
-class rgt_status_file(StatusFile):
-    """Replica of StatusFile for legacy purposes for use outside this file. """
-    pass
 
 #------------------------------------------------------------------------------
 
@@ -476,30 +468,30 @@ class JobExitStatus:
     """
 
     def __init__(self):
-        """
-        """
+        """Constructor."""
         self.status = {"Pass_Fail": 0,
                        "Hardware_Failure": 0,
                        "Performance_Failure": 0,
                        "Incorrect_Result": 0}
 
-    def changeJobExitStatus(self, category="Pass_Fail", new_status="FAILURE"):
+    def change_job_exit_status(self, category="Pass_Fail",
+                               new_status="FAILURE"):
         """Change the exit status for a specific failure."""
 
         if category == "Pass_Fail":
-            self.addPassFail(pf_failure=new_status)
+            self.add_pass_fail(pf_failure=new_status)
         elif category == "Hardware_Failure":
-            self.addHardwareFailure(hw_failure=new_status)
+            self.add_hardware_failure(hw_failure=new_status)
         elif category == "Performance_Failure":
-            self.addPerformanceFailure(pf_failure=new_status)
+            self.add_performance_failure(pf_failure=new_status)
         elif category == "Incorrect_Result":
-            self.addIncorrectResultFailure(ir_failure=new_status)
+            self.add_incorrect_result_failure(ir_failure=new_status)
         else:
             print("Warning! The category " + category + " is not defined.")
             print("The failure will be categorized a general Pass_Fail.")
-            self.addPassFail(pf_failure=new_status)
+            self.add_pass_fail(pf_failure=new_status)
 
-    def addPassFail(self, pf_failure="NO_FAILURE"):
+    def add_pass_fail(self, pf_failure="NO_FAILURE"):
         """
         """
         if pf_failure == "FAILURE":
@@ -507,7 +499,7 @@ class JobExitStatus:
         elif pf_failure == "NO_FAILURE":
             self.status["Pass_Fail"] = 0
 
-    def addHardwareFailure(self, hw_failure="NO_FAILURE"):
+    def add_hardware_failure(self, hw_failure="NO_FAILURE"):
         """
         """
         if hw_failure == "FAILURE":
@@ -515,7 +507,7 @@ class JobExitStatus:
         elif hw_failure == "NO_FAILURE":
             self.status["Hardware_Failure"] = 0
 
-    def addPerformanceFailure(self, pf_failure="NO_FAILURE"):
+    def add_performance_failure(self, pf_failure="NO_FAILURE"):
         """
         """
         if pf_failure == "FAILURE":
@@ -523,7 +515,7 @@ class JobExitStatus:
         elif pf_failure == "NO_FAILURE":
             self.status["Performance_Failure"] = 0
 
-    def addIncorrectResultFailure(self, ir_failure="NO_FAILURE"):
+    def add_incorrect_result_failure(self, ir_failure="NO_FAILURE"):
         """
         """
         if ir_failure == "FAILURE":

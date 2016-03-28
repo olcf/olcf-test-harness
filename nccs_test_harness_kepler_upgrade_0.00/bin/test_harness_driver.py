@@ -101,7 +101,7 @@ def test_harness_driver(argv=None):
     #
     # Add entry to status file.
     #
-    jstatus = status_file.rgt_status_file(unique_id,mode="New")
+    jstatus = status_file.StatusFile(unique_id,mode="New")
 
     #
     # Add to environment the path to the Scripts directory.
@@ -115,9 +115,9 @@ def test_harness_driver(argv=None):
     build_command = "./build_executable.x "
     build_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
     command1 = build_command + build_command_args
-    jstatus.logBuildStartTime()
+    jstatus.log_build_start_time()
     build_exit_value = os.system(command1)
-    jstatus.logBuildEndTime()
+    jstatus.log_build_end_time()
 
     #
     # Add build exit status.
@@ -135,9 +135,9 @@ def test_harness_driver(argv=None):
         submit_command = "./submit_executable.x "
         submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
     command2 = submit_command + submit_command_args
-    jstatus.logSubmitStartTime()
+    jstatus.log_submit_start_time()
     submit_exit_value = os.system(command2)
-    jstatus.logSubmitEndTime()
+    jstatus.log_submit_end_time()
 
     #
     # Add submit exit status.
@@ -244,13 +244,13 @@ def backup_status_file():
     #
     # Set the name of the source file, the file being backed up.
     #
-    src = os.path.join(dir_head1,"Status",status_file.rgt_status_file.filename)
+    src = os.path.join(dir_head1,"Status",status_file.StatusFile.FILENAME)
 
     #
     # Set the name of the destination file, the name of the backup file.
     #
     currenttime = datetime.datetime.now()
-    backup_status_filename = ".backup." + status_file.rgt_status_file.filename + "." +  currenttime.isoformat() 
+    backup_status_filename = ".backup." + status_file.StatusFile.FILENAME + "." +  currenttime.isoformat() 
     dest = os.path.join(dir_head1,"Status",backup_status_filename)
 
     #

@@ -92,7 +92,7 @@ def main():
     #
     # Create an instance of the job status and add the correct result to the status file.
     #
-    jstatus = status_file.rgt_status_file(test_id_string,mode="Old")
+    jstatus = status_file.StatusFile(test_id_string,mode="Old")
     jstatus.add_result(job_correctness,mode="Add_Run_Result")
 
     return
