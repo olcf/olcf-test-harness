@@ -22,13 +22,16 @@ class StatusFile:
     # Class variables #
     ###################
 
-    line_format = "%-30s %-21s %-20s %-15s %-15s %-15s\n"
+    __LINE_FORMAT = "%-30s %-21s %-20s %-15s %-15s %-15s\n"
+
+    #---TODO: upcase/underscore these as needed.
 
     # Header lines for status.
-    header1 = line_format % (' ', ' ', ' ', ' ', ' ', ' ')
+    header1 = __LINE_FORMAT % (' ', ' ', ' ', ' ', ' ', ' ')
     header2 = str.replace(header1, ' ', '#')
-    header3 = line_format % ('#Start Time', 'Unique ID', 'Batch ID',
-                             'Build Status', 'Submit Status', 'Correct Results')
+    header3 = __LINE_FORMAT % ('#Start Time', 'Unique ID', 'Batch ID',
+                               'Build Status', 'Submit Status',
+                               'Correct Results')
     header = header2
     header += header1
     header += header3
@@ -49,28 +52,63 @@ class StatusFile:
     filename_submit_end_timestamp = 'final_submit_execution_timestamp.txt'
 
     # These are the entries in the input file.
-    comment_line_entry = '#'
+    COMMENT_LINE_INDICATOR = '#'
 
-    FAILURE_CODES = {'Pass_Fail': 0,
-                     'Hardware_Failure': 1,
-                     'Performance_Failure': 2,
-                     'Incorrect_Result': 3
-                    }
+    #FAILURE_CODES = {'Pass_Fail': 0,
+    #                 'Hardware_Failure': 1,
+    #                 'Performance_Failure': 2,
+    #                 'Incorrect_Result': 3
+    #                }
+
+    #---Event names.
+
+    EVENT_LOGGING_START = 'LOGGING_START'
+    EVENT_BUILD_START = 'BUILD_START'
+    EVENT_BUILD_END = 'BUILD_END'
+    EVENT_SUBMIT_START = 'SUBMIT_START'
+    EVENT_SUBMIT_END = 'SUBMIT_END'
+    EVENT_JOB_QUEUED = 'JOB_QUEUED'
+    EVENT_BINARY_EXECUTE_START = 'BINARY_EXECUTE_START'
+    EVENT_BINARY_EXECUTE_END = 'BINARY_EXECUTE_END'
+    EVENT_CHECK_START = 'CHECK_START'
+    EVENT_CHECK_END = 'CHECK_END'
+
+    EVENT_DICT = {
+        EVENT_LOGGING_START:
+            ['Event_110_logging_start.txt', 'logging', 'start'],
+        EVENT_BUILD_START:
+            ['Event_120_build_start.txt', 'build', 'start'],
+        EVENT_BUILD_END:
+            ['Event_130_build_end.txt', 'build', 'end'],
+        EVENT_SUBMIT_START:
+            ['Event_140_submit_start.txt', 'submit', 'start'],
+        EVENT_SUBMIT_END:
+            ['Event_150_submit_end.txt', 'submit', 'end'],
+        EVENT_JOB_QUEUED:
+            ['Event_160_job_queued.txt', 'job', 'queued'],
+        EVENT_BINARY_EXECUTE_START:
+            ['Event_170_binary_execute_start.txt', 'binary_execute', 'start'],
+        EVENT_BINARY_EXECUTE_END:
+            ['Event_180_binary_execute_end.txt', 'binary_execute', 'end'],
+        EVENT_CHECK_START:
+            ['Event_190_check_start.txt', 'check', 'start'],
+        EVENT_CHECK_END:
+            ['Event_200_check_end.txt', 'check', 'end']
+    }
 
     #################
     # Class methods #
     #################
 
     @staticmethod
-    def ignore_line(a_line):
-        """
-        """
+    def ignore_line(line):
+        """Indicate whether parser should ignore a line (e.g., is comment)."""
         result = False
 
-        tmpline = a_line.strip()
+        tmpline = line.strip()
 
         if len(tmpline) > 0:
-            if tmpline[0] == StatusFile.comment_line_entry:
+            if tmpline[0] == StatusFile.COMMENT_LINE_INDICATOR:
                 result = True
         else:
             result = True
@@ -81,18 +119,20 @@ class StatusFile:
     # Special methods #
     ###################
 
-    def __init__(self, unique_id, mode):
+    def __init__(self, test_id, mode):
         """Constructor."""
         self.__job_id = ''
         self.__path_to_file = ''
-        self.__unique_id = unique_id
+        self.__test_id = test_id
 
         # Make the status file.
         self.__make_status_file()
 
         # Add job to status file.
         if mode == 'New':
-            self.__add_job()
+            event_time = self.log_event(StatusFile.EVENT_LOGGING_START)
+            #currenttime = datetime.datetime.now()
+            self.__add_test_instance(event_time)
 
         elif mode == 'Old':
             pass
@@ -102,220 +142,138 @@ class StatusFile:
     ###################
 
     def add_result(self, exit_value, mode):
-        """Update the status file to reflect new event."""
+        """Update the status file to reflect a new event."""
 
-        #---Initial read of status file.
+        #---Read the status file.
         status_file = open(self.__path_to_file, 'r')
-        records1 = status_file.readlines()
+        records = status_file.readlines()
         status_file.close()
-        event_time = datetime.datetime.now().isoformat()
+        #event_time = datetime.datetime.now().isoformat()
 
-        for index, line in enumerate(records1):
-
-            # If the first character is a "#" then ignore record.
-            #line0 = str.strip(line)
-            #if True:
-            #    pass
+        for index, line in enumerate(records):
 
             # Get the uid for this run instance
 
-            line1 = str.rstrip(line)
-            words1 = str.split(line1)
+            words = line.rstrip().split()
 
-            if len(words1) >= 6:
-                #stime1 = words1[0]
-                uid1 = words1[1]
+            if len(words) < 6:
+                continue
 
-                #if uid1 != self.__unique_id:
-                #    continue
+            test_id = words[1]
 
-                if uid1 == self.__unique_id:
-                    if mode == 'Add_Job_ID':
-                        words1[2] = exit_value
+            if test_id != self.__test_id:
+                continue
 
-                    if mode == 'Add_Build_Result':
-                        words1[3] = exit_value
-                        self.__write_system_log('build_result',
-                                                str(exit_value), event_time)
+            if mode == 'Add_Job_ID':
+                words[2] = exit_value
 
-                    if mode == 'Add_Submit_Result':
-                        words1[4] = exit_value
-                        self.__write_system_log('submit_result',
-                                                str(exit_value), event_time)
+            if mode == 'Add_Build_Result':
+                words[3] = exit_value
+                #self.__write_system_log('build_result',
+                #                        str(exit_value), event_time)
 
-                    if mode == 'Add_Run_Result':
-                        words1[5] = exit_value
-                        self.__write_system_log('run_result',
-                                                str(exit_value), event_time)
+            if mode == 'Add_Submit_Result':
+                words[4] = exit_value
+                #self.__write_system_log('submit_result',
+                #                        str(exit_value), event_time)
 
-                    if mode == 'Add_Binary_Running':
-                        binary_running_value = exit_value
+            if mode == 'Add_Run_Result':
+                words[5] = exit_value
+                #self.__write_system_log('run_result',
+                #                        str(exit_value), event_time)
 
-                        words1[5] = binary_running_value
+            if mode == 'Add_Binary_Running':
+                binary_running_value = exit_value
 
-                        cwd = os.getcwd()
-                        #(dir_head1, dir_tail1) = os.path.split(cwd)
-                        dir_head1 = os.path.split(cwd)[0]
-                        path2 = os.path.join(dir_head1, 'Status', uid1,
-                                             'job_status.txt')
-                        file_obj2 = open(path2, 'w')
-                        file_obj2.write(binary_running_value)
-                        file_obj2.close()
-                        self.__write_system_log('binary_running',
-                                                str(exit_value), event_time)
+                words[5] = binary_running_value
 
-                    if mode == 'Add_Run_Aborning':
-                        abornining_run_value = exit_value
+                dir_head = os.path.split(os.getcwd())[0]
+                path2 = os.path.join(dir_head, 'Status', test_id, 'job_status.txt')
+                file_obj2 = open(path2, 'w')
+                file_obj2.write(binary_running_value)
+                file_obj2.close()
+                #self.__write_system_log('binary_running',
+                #                        str(exit_value), event_time)
 
-                        words1[5] = abornining_run_value
+            if mode == 'Add_Run_Aborning':
+                aborning_run_value = exit_value
+                words[5] = aborning_run_value
 
-                        cwd = os.getcwd()
-                        #(dir_head1, dir_tail1) = os.path.split(cwd)
-                        dir_head1 = os.path.split(cwd)[0]
-                        path2 = os.path.join(dir_head1, 'Status', uid1,
-                                             'job_status.txt')
-                        file_obj2 = open(path2, 'w')
-                        file_obj2.write(abornining_run_value)
-                        file_obj2.close()
-                        self.__write_system_log('run_aborning',
-                                                str(exit_value), event_time)
+                dir_head = os.path.split(os.getcwd())[0]
+                path2 = os.path.join(dir_head, 'Status', test_id, 'job_status.txt')
+                file_obj2 = open(path2, 'w')
+                file_obj2.write(aborning_run_value)
+                file_obj2.close()
+                #self.__write_system_log('run_aborning',
+                #                        str(exit_value), event_time)
 
-                    records1[index] = StatusFile.line_format % (
-                        (words1[0], words1[1], words1[2], words1[3],
-                         words1[4], words1[5]))
+            records[index] = StatusFile.__LINE_FORMAT % (
+                (words[0], words[1], words[2], words[3], words[4], words[5]))
 
         #---Update the status file.
         status_file = open(self.__path_to_file, 'w')
-        status_file.writelines(records1)
+        status_file.writelines(records)
         status_file.close()
 
-    def log_build_start_time(self):
-        """Write log message to denote app build has started."""
-        currenttime = datetime.datetime.now()
+    def log_event(self, event, event_status=None):
+        """Official entrypoint to log a harness execution event."""
+        #---THE OFFICIAL TIMESTAMP FOR THE EVENT.
+        event_time = datetime.datetime.now().isoformat()
 
-        cwd = os.getcwd()
+        if event in StatusFile.EVENT_DICT:
+            event_file_name = StatusFile.EVENT_DICT[event][0]
+            event_name = StatusFile.EVENT_DICT[event][1]
+            event_value = StatusFile.EVENT_DICT[event][2]
+        else:
+            print('Warning: event not recognized. ' + event)
+            #TODO: figure out how to treat warnings, assertions, etc.
 
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
+        dir_head = os.path.split(os.getcwd())[0]
+        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
+                                 event_file_name)
 
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_build_beg_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
+        if os.path.exists(file_path):
+            print('Warning: event log file already exists. ' + file_path)
+        #---THE OFFICIAL RECORD OF THE OCCURRENCE OF AN EVENT.
+        file_obj = open(file_path, 'w')
+        file_obj.write(event_time + '\t')
+        file_obj.write((str(event_status) if event_status is not None else '') +
+                       '\n')
         file_obj.close()
 
-        event_time = currenttime.isoformat()
-        self.__write_system_log('build', 'start', event_time)
+        self.__write_system_log(event_name, event_value, event_status,
+                                event_time)
 
-    def log_build_end_time(self):
-        """Write log message to denote app build has ended."""
-        currenttime = datetime.datetime.now()
+        #elif event == StatusFile.EVENT_BUILD_START:
+        #    pass
+        if event == StatusFile.EVENT_BUILD_END:
+            self.add_result(event_status, mode="Add_Build_Result")
+        #elif event == StatusFile.EVENT_SUBMIT_START:
+        #    pass
+        elif event == StatusFile.EVENT_SUBMIT_END:
+            self.add_result(event_status, mode="Add_Submit_Result")
+        elif event == StatusFile.EVENT_JOB_QUEUED:
+            self.add_result(event_status, mode="Add_Job_ID")
+            self.add_result('-1', mode="Add_Run_Aborning")
+        elif event == StatusFile.EVENT_BINARY_EXECUTE_START:
+            self.add_result(event_status, mode="Add_Binary_Running")
+        #elif event == StatusFile.EVENT_BINARY_EXECUTE_END:
+        #    pass
+        #elif event == StatusFile.EVENT_CHECK_START:
+        #    pass
+        elif event == StatusFile.EVENT_CHECK_END:
+            self.add_result(event_status, mode="Add_Run_Result")
 
-        cwd = os.getcwd()
+        return event_time
 
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_build_end_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('build', 'end', event_time)
-
-    def log_submit_start_time(self):
-        """Write log message to denote job submission has started."""
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_submit_beg_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('submit', 'start', event_time)
-
-    def log_submit_end_time(self):
-        """Write log message to denote job submission has ended."""
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, "Status", str(self.__unique_id),
-            StatusFile.filename_submit_end_timestamp)
-        file_obj = open(path_to_file, "a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('submit', 'end', event_time)
-
-    def log_start_execution_time(self):
-        """Write log message to denote execution of app binary has started."""
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_exec_beg_timestamp)
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('binary_execute', 'start', event_time)
-
-    def log_final_execution_time(self):
-        """Write log message to denote execution of app binary has ended."""
-        currenttime = datetime.datetime.now()
-
-        cwd = os.getcwd()
-
-        # Get the head dir in cwd.
-        #(dir_head1, dir_tail1) = os.path.split(cwd)
-        dir_head1 = os.path.split(cwd)[0]
-
-        path_to_file = os.path.join(
-            dir_head1, 'Status', str(self.__unique_id),
-            StatusFile.filename_exec_end_timestamp)
-
-        file_obj = open(path_to_file, 'a')
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('binary_execute', 'end', event_time)
+#TODO: put symlinks in status dir (here or elsewhere)
 
     ###################
     # Private methods #
     ###################
 
     def __make_status_file(self):
-        """Create the master status file for this app/test if doesn't exist."""
+        """Create the status file for this app/test if doesn't exist."""
 
         # Get the head dir in cwd.
         cwd = os.getcwd()
@@ -331,23 +289,24 @@ class StatusFile:
             file_obj.write(StatusFile.header)
             file_obj.close()
 
-    def __add_job(self):
+    def __add_test_instance(self, event_time):
         """Start new line in master status file for app/test."""
-        currenttime = datetime.datetime.now()
         file_obj = open(self.__path_to_file, "a")
-        format_ = StatusFile.line_format % (
-            (currenttime.isoformat(), self.__unique_id,
-             "***", "***", "***", "***"))
+        format_ = StatusFile.__LINE_FORMAT % (
+            (event_time, self.__test_id, "***", "***", "***", "***"))
         file_obj.write(format_)
         file_obj.close()
 
-    def __write_system_log(self, event_name, event_value, event_time):
+    def __write_system_log(self, event_name, event_value, event_status,
+                           event_time):
         """Write a system log entry for an event."""
-        write_system_log(self.__unique_id, event_name, event_value, event_time)
+        write_system_log(self.__test_id, event_name, event_value,
+                         event_status, event_time)
 
 #------------------------------------------------------------------------------
 
-def write_system_log(test_id_string, event_name, event_value, event_time):
+def write_system_log(test_id, event_name, event_value,
+                     event_status, event_time):
     """Write a system log entry for an event."""
 
     #---Get tag from environment, if set by user.
@@ -360,11 +319,10 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
 
     #---Use Unix logger command unless (valid) directory requested.
 
-    is_using_unix_logger = False
-
     rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
         if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
 
+    is_using_unix_logger = False
     if rgt_system_log_dir == '':
         is_using_unix_logger = True
     elif not os.path.exists(rgt_system_log_dir):
@@ -377,13 +335,12 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
     cwd = os.getcwd()
     (dir_head1, dir_scripts) = os.path.split(cwd)
     assert dir_scripts == 'Scripts', (
-        'write_syatem_log function being executed from wrong directory.')
+        'write_system_log function being executed from wrong directory.')
     (dir_head2, test) = os.path.split(dir_head1)
-    #(dir_head3, application) = os.path.split(dir_head2)
     application = os.path.split(dir_head2)[1]
 
     dir_status = os.path.join(dir_head1, 'Status')
-    dir_status_this_test = os.path.join(dir_status, test_id_string)
+    dir_status_this_test = os.path.join(dir_status, test_id)
 
     file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
     if os.path.exists(file_job_id):
@@ -404,15 +361,15 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
         job_status = ''
 
     dir_run_archive = os.path.join(dir_head1, 'Run_Archive')
-    dir_run_archive_this_test = os.path.join(dir_run_archive, test_id_string)
+    dir_run_archive_this_test = os.path.join(dir_run_archive, test_id)
 
     rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
 
     build_directory = os.path.join(rgt_path_to_sspace, application, test,
-                                   test_id_string, 'build_directory')
+                                   test_id, 'build_directory')
 
     workdir = os.path.join(rgt_path_to_sspace, application, test,
-                           test_id_string, 'workdir')
+                           test_id, 'workdir')
 
     rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
 
@@ -420,7 +377,13 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
 
     #---Construct log string.
 
+    #TODO: make quote a function ...
+
     quote = '\\"' if is_using_unix_logger else '"'
+
+    event_status_string = ('event_status=' + quote +
+                           str(event_status) + quote + ' '
+                           if event_status is not None else '')
 
     log_string = (
         'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ' +
@@ -434,26 +397,23 @@ def write_system_log(test_id_string, event_name, event_value, event_time):
         'wd=' + quote + cwd + quote + ' ' +
         'application=' + quote + application + quote + ' ' +
         'test=' + quote + test + quote + ' ' +
-        'test_id_string=' + quote + test_id_string + quote + ' ' +
+        'test_id_string=' + quote + test_id + quote + ' ' +
         'job_id=' + quote + job_id + quote + ' ' +
         'job_status=' + quote + job_status + quote + ' ' +
         'event_time=' + quote + event_time + quote + ' ' +
-        event_name + '_event_value=' + quote + event_value + quote + ' '
+        event_name + '_event_value=' + quote + event_value + quote + ' ' +
+        event_status_string +
         '')
-#       'event_name=' + quote + event_name + quote + ' ' +
-#       'event_value=' + quote + event_value + quote + ' ' +
 
     #---Write log.
 
     if is_using_unix_logger:
-
         os.system('logger -p local0.notice "' + log_string + '"')
 
     else:
-
         log_file = (application + '_#_' +
                     test + '_#_' +
-                    test_id_string + #---Alt: could use uuid.uuid1()
+                    test_id + #---Alt: could use uuid.uuid1()
                     '.txt')
         log_path = os.path.join(rgt_system_log_dir, log_file)
 
@@ -724,7 +684,7 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
     print("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
-        if len(tmpline) > 0 and tmpline[0] != StatusFile.comment_line_entry:
+        if len(tmpline) > 0 and tmpline[0] != StatusFile.COMMENT_LINE_INDICATOR:
             words = tmpline.split()
 
             #Get the pbs id.

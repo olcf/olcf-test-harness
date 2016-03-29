@@ -68,7 +68,7 @@ def test_harness_driver(argv=None):
     resubmit_me = Vargs.r
 
     #
-    # Make backup of status file.
+    # Make backup of master status file.
     #
     backup_status_file()
 
@@ -76,6 +76,16 @@ def test_harness_driver(argv=None):
     # Get the unique id for this test instance.
     #
     unique_id = unique_text_string()
+
+    #
+    # Make the Status directory.
+    #
+    make_path_to_status_dir(unique_id)
+
+    #
+    # Add entry to status file.
+    #
+    jstatus = status_file.StatusFile(unique_id,mode="New")
 
     #
     # Get the path to workspace for this test instance. 
@@ -87,21 +97,10 @@ def test_harness_driver(argv=None):
     # 
     path_to_tmp_workspace = get_path_to_tmp_workspace(workspace,unique_id)
 
-
     #
     # Make the Run_Archive directory.
     #
     make_path_to_Run_Archive_dir(unique_id)
-
-    #
-    # Make the Status directory.
-    #
-    make_path_to_status_dir(unique_id)
-
-    #
-    # Add entry to status file.
-    #
-    jstatus = status_file.StatusFile(unique_id,mode="New")
 
     #
     # Add to environment the path to the Scripts directory.
@@ -115,15 +114,9 @@ def test_harness_driver(argv=None):
     build_command = "./build_executable.x "
     build_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
     command1 = build_command + build_command_args
-    jstatus.log_build_start_time()
+    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
     build_exit_value = os.system(command1)
-    jstatus.log_build_end_time()
-
-    #
-    # Add build exit status.
-    #
-    jstatus.add_result(build_exit_value,mode="Add_Build_Result")
-        
+    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
 
     #
     # Execute the submit script.
@@ -135,26 +128,16 @@ def test_harness_driver(argv=None):
         submit_command = "./submit_executable.x "
         submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
     command2 = submit_command + submit_command_args
-    jstatus.log_submit_start_time()
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
     submit_exit_value = os.system(command2)
-    jstatus.log_submit_end_time()
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
 
     #
-    # Add submit exit status.
-    #
-    jstatus.add_result(submit_exit_value,mode="Add_Submit_Result") 
-    
-    #
-    # Add PBS job id.
+    # Log the PBS job id.
     #
     job_id = read_job_id(unique_id)
-    jstatus.add_result(job_id,mode="Add_Job_ID")
+    jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
 
-    #
-    # Modify check result to indicate that the job is aborning in the queue. 
-    #
-    jstatus.add_result(exit_value="-1",mode="Add_Run_Aborning")
-    
     return build_exit_value and submit_exit_value
 
 def create_parser():
