@@ -235,11 +235,17 @@ class StatusFile:
         if os.path.exists(file_path):
             print('Warning: event log file already exists. ' + file_path)
         #---THE OFFICIAL RECORD OF THE OCCURRENCE OF AN EVENT.
-        file_obj = open(file_path, 'w')
-        file_obj.write(event_time + '\t')
-        file_obj.write((str(event_status) if event_status is not None else '') +
-                       '\n')
-        file_obj.close()
+        file_ = open(file_path, 'w')
+        file_.write(event_time)
+        file_.write('\t' + (str(event_status) if event_status is not None
+                            else ''))
+        status_info = get_verbose_status_info(self.__test_id, event_name,
+                                              event_value, event_status,
+                                              event_time)
+        for pair in status_info:
+            file_.write('\t' + pair[0] + '=' + pair[1])
+        file_.write('\n')
+        file_.close()
 
         self.__write_system_log(event_name, event_value, event_status,
                                 event_time)
@@ -305,6 +311,85 @@ class StatusFile:
 
 #------------------------------------------------------------------------------
 
+def get_verbose_status_info(test_id, event_name, event_value,
+                            event_status, event_time):
+    """Create a data structure with verbose info for an event."""
+
+    #---Construct fields to be used for log entry.
+
+    user = os.environ['USER']
+
+    cwd = os.getcwd()
+    (dir_head1, dir_scripts) = os.path.split(cwd)
+    assert dir_scripts == 'Scripts', (
+        'write_system_log function being executed from wrong directory.')
+    (dir_head2, test) = os.path.split(dir_head1)
+    app = os.path.split(dir_head2)[1]
+
+    dir_status = os.path.join(dir_head1, 'Status')
+    dir_status_this_test = os.path.join(dir_status, test_id)
+
+    file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
+    if os.path.exists(file_job_id):
+        file_ = open(file_job_id, 'r')
+        job_id = file_.read()
+        file_.close()
+        job_id = re.sub(' ', '', job_id.split('\n')[0])
+    else:
+        job_id = ''
+
+    file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
+    if os.path.exists(file_job_status):
+        file_ = open(file_job_status, 'r')
+        job_status = file_.read()
+        file_.close()
+        job_status = re.sub(' ', '', job_status.split('\n')[0])
+    else:
+        job_status = ''
+
+    run_archive_all = os.path.join(dir_head1, 'Run_Archive')
+    run_archive = os.path.join(run_archive_all, test_id)
+
+    rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
+
+    build_directory = os.path.join(rgt_path_to_sspace, app, test,
+                                   test_id, 'build_directory')
+
+    workdir = os.path.join(rgt_path_to_sspace, app, test,
+                           test_id, 'workdir')
+
+    rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
+
+    path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
+
+    #---Construct status_info.
+
+    event_status_string = str(event_status) if event_status is not None else ''
+
+    status_info = []
+
+    status_info.append(['user', user])
+    status_info.append(['rgt_pbs_job_accnt_id', rgt_pbs_job_accnt_id])
+    status_info.append(['rgt_path_to_sspace', rgt_path_to_sspace])
+    status_info.append(['path_to_rgt_package', path_to_rgt_package])
+    status_info.append(['build_directory', build_directory])
+    status_info.append(['workdir', workdir])
+    status_info.append(['run_archive', run_archive])
+    status_info.append(['cwd', cwd])
+    status_info.append(['app', app])
+    status_info.append(['test', test])
+    status_info.append(['test_id', test_id])
+    status_info.append(['job_id', job_id])
+    status_info.append(['job_status', job_status])
+    status_info.append(['event_time', event_time])
+    status_info.append(['event_name', event_name])
+    status_info.append(['event_value', event_value])
+    status_info.append(['event_status', event_status_string])
+
+    return status_info
+
+#------------------------------------------------------------------------------
+
 def write_system_log(test_id, event_name, event_value,
                      event_status, event_time):
     """Write a system log entry for an event."""
@@ -328,82 +413,20 @@ def write_system_log(test_id, event_name, event_value,
     elif not os.path.exists(rgt_system_log_dir):
         is_using_unix_logger = True
 
-    #---Construct fields to be used for log entry.
-
-    user = os.environ['USER']
-
-    cwd = os.getcwd()
-    (dir_head1, dir_scripts) = os.path.split(cwd)
-    assert dir_scripts == 'Scripts', (
-        'write_system_log function being executed from wrong directory.')
-    (dir_head2, test) = os.path.split(dir_head1)
-    application = os.path.split(dir_head2)[1]
-
-    dir_status = os.path.join(dir_head1, 'Status')
-    dir_status_this_test = os.path.join(dir_status, test_id)
-
-    file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
-    if os.path.exists(file_job_id):
-        file_ = open(file_job_id, 'r')
-        job_id = file_.read()
-        file_.close()
-        job_id = re.sub(' ', '', job_id.split('\n')[0])
-    else:
-        job_id = ''
-
-    file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
-    if os.path.exists(file_job_status):
-        file_ = open(file_job_status, 'r')
-        job_status = file_.read()
-        file_.close()
-        job_status = re.sub(' ', '', job_status.split('\n')[0])
-    else:
-        job_status = ''
-
-    dir_run_archive = os.path.join(dir_head1, 'Run_Archive')
-    dir_run_archive_this_test = os.path.join(dir_run_archive, test_id)
-
-    rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
-
-    build_directory = os.path.join(rgt_path_to_sspace, application, test,
-                                   test_id, 'build_directory')
-
-    workdir = os.path.join(rgt_path_to_sspace, application, test,
-                           test_id, 'workdir')
-
-    rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
-
-    path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
-
     #---Construct log string.
+
+    status_info = get_verbose_status_info(test_id, event_name, event_value,
+                                          event_status, event_time)
 
     #TODO: make quote a function ...
 
     quote = '\\"' if is_using_unix_logger else '"'
 
-    event_status_string = ('event_status=' + quote +
-                           str(event_status) + quote + ' '
-                           if event_status is not None else '')
-
     log_string = (
-        'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ' +
-        'user=' + quote + user + quote + ' ' +
-        'rgt_pbs_job_accnt_id=' + quote + rgt_pbs_job_accnt_id + quote + ' ' +
-        'rgt_path_to_sspace=' + quote + rgt_path_to_sspace + quote + ' ' +
-        'path_to_rgt_package=' + quote + path_to_rgt_package + quote + ' ' +
-        'build_directory=' + quote + build_directory + quote + ' ' +
-        'workdir=' + quote + workdir + quote + ' ' +
-        'run_archive=' + quote + dir_run_archive_this_test + quote + ' ' +
-        'wd=' + quote + cwd + quote + ' ' +
-        'application=' + quote + application + quote + ' ' +
-        'test=' + quote + test + quote + ' ' +
-        'test_id_string=' + quote + test_id + quote + ' ' +
-        'job_id=' + quote + job_id + quote + ' ' +
-        'job_status=' + quote + job_status + quote + ' ' +
-        'event_time=' + quote + event_time + quote + ' ' +
-        event_name + '_event_value=' + quote + event_value + quote + ' ' +
-        event_status_string +
-        '')
+        'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ')
+
+    for pair in status_info:
+        log_string += pair[0] + '=' + quote + pair[1] + quote
 
     #---Write log.
 
@@ -411,7 +434,11 @@ def write_system_log(test_id, event_name, event_value,
         os.system('logger -p local0.notice "' + log_string + '"')
 
     else:
-        log_file = (application + '_#_' +
+        dir_head1 = os.path.split(os.getcwd())[0]
+        (dir_head2, test) = os.path.split(dir_head1)
+        app = os.path.split(dir_head2)[1]
+
+        log_file = (app + '_#_' +
                     test + '_#_' +
                     test_id + #---Alt: could use uuid.uuid1()
                     '.txt')
