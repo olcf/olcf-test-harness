@@ -1,4 +1,5 @@
-from enum import Enum
+#from enum import Enum
+class Enum: pass
 
 class RgtState(Enum):
     ALL_TASKS_COMPLETED = 1

@@ -64,6 +64,9 @@ def main():
     #
     # Call the check_executable.x script only after the job_id.txt file is created.
     #
+    jstatus = status_file.StatusFile(test_id_string,mode="Old")
+    jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
+
     check_command_argv = ["./check_executable.x"]
     for args1 in sys.argv[1:] :
         check_command_argv = check_command_argv + [args1]
@@ -92,8 +95,8 @@ def main():
     #
     # Create an instance of the job status and add the correct result to the status file.
     #
-    jstatus = status_file.rgt_status_file(test_id_string,mode="Old")
-    jstatus.add_result(job_correctness,mode="Add_Run_Result")
+    jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END, job_correctness)
+    #jstatus.add_result(job_correctness,mode="Add_Run_Result")
 
     return
 

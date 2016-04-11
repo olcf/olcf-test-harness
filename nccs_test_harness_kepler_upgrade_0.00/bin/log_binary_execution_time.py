@@ -31,13 +31,16 @@ def main():
     #
     os.chdir(scriptsdir) 
 
-    jstatus = status_file.rgt_status_file(unique_id,mode="Old")
+    jstatus = status_file.StatusFile(unique_id,mode="Old")
 
     if log_mode == "start":
-        jstatus.logStartExecutionTime()
-        jstatus.add_result("17",mode="Add_Binary_Running")
+        jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_START,
+                          '17')
+        #jstatus.log_start_execution_time()
+        #jstatus.add_result("17",mode="Add_Binary_Running")
     else:
-        jstatus.logFinalExecutionTime()
+        jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_END)
+        #jstatus.log_final_execution_time()
 
     #
     # Change back to the starting directory of the test,

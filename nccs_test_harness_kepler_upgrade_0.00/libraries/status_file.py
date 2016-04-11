@@ -1,576 +1,550 @@
 #! /usr/bin/env python
+"""
+-------------------------------------------------------------------------------
+File:   status_file.py
+Author: Arnold Tharrington (arnoldt@ornl.gov)
+National Center for Computational Sciences, Scientific Computing Group.
+Oak Ridge National Laboratory
+Copyright (C) 2015 Oak Ridge National Laboratory, UT-Battelle, LLC.
+-------------------------------------------------------------------------------
+"""
 
-import string
 import os
-import string
 import datetime
 import re
-import uuid
-from libraries import computers_1
 
-#
-# Author: Arnold Tharrington (arnoldt@ornl.gov)
-# National Center for Computational Sciences, Scientific Computing Group.
-# Oak Ridge National Laboratory
-#
+#from libraries import computers_1
 
-#-----------------------------#
-# Class: parse_status_file    #
-#-----------------------------#
-class rgt_status_file:
+class StatusFile:
+    """Class: parse_status_file."""
+
     ###################
     # Class variables #
     ###################
-    line_format = "%-30s %-21s %-20s %-15s %-15s %-15s\n"
 
-    #Header lines for status.
-    header1 = line_format % (" "," "," "," "," "," ")
-    header2 = str.replace(header1," ","#")
-    header3 = line_format % ("#Start Time", "Unique ID","Batch ID", "Build Status","Submit Status", "Correct Results")
+    __LINE_FORMAT = "%-30s %-21s %-20s %-15s %-15s %-15s\n"
 
+    #---TODO: upcase/underscore these as needed.
+
+    # Header lines for status.
+    header1 = __LINE_FORMAT % (' ', ' ', ' ', ' ', ' ', ' ')
+    header2 = str.replace(header1, ' ', '#')
+    header3 = __LINE_FORMAT % ('#Start Time', 'Unique ID', 'Batch ID',
+                               'Build Status', 'Submit Status',
+                               'Correct Results')
     header = header2
-    header = header + header1
-    header = header + header3
-    header = header + header1
-    header = header + header2
+    header += header1
+    header += header3
+    header += header1
+    header += header2
 
-    #Name of the input file.
-    filename = "rgt_status.txt"
-    
-    # The execution start and stop timestamp log file.
-    start_execution_timestamp_filename = "start_binary_execution_timestamp.txt"
-    final_execution_timestamp_filename = "final_binary_execution_timestamp.txt"
+    # Name of the input file.
+    FILENAME = 'rgt_status.txt'
 
-    build_start_execution_timestamp_filename = "start_build_execution_timestamp.txt"
-    build_final_execution_timestamp_filename = "final_build_execution_timestamp.txt"
+    # The timestamp log file names.
+    filename_exec_beg_timestamp = 'start_binary_execution_timestamp.txt'
+    filename_exec_end_timestamp = 'final_binary_execution_timestamp.txt'
 
-    submit_start_execution_timestamp_filename = "start_submit_execution_timestamp.txt"
-    submit_final_execution_timestamp_filename = "final_submit_execution_timestamp.txt"
+    filename_build_beg_timestamp = 'start_build_execution_timestamp.txt'
+    filename_build_end_timestamp = 'final_build_execution_timestamp.txt'
 
-    #These are the entries in the input file.
-    comment_line_entry = "#"
+    filename_submit_beg_timestamp = 'start_submit_execution_timestamp.txt'
+    filename_submit_end_timestamp = 'final_submit_execution_timestamp.txt'
 
+    # These are the entries in the input file.
+    COMMENT_LINE_INDICATOR = '#'
 
-    FAILURE_CODES = { "Pass_Fail": 0,
-                      "Hardware_Failure": 1,
-                      "Performance_Failure": 2,
-                      "Incorrect_Result": 3
-                     }
+    #FAILURE_CODES = {'Pass_Fail': 0,
+    #                 'Hardware_Failure': 1,
+    #                 'Performance_Failure': 2,
+    #                 'Incorrect_Result': 3
+    #                }
+
+    #---Event names.
+
+    EVENT_LOGGING_START = 'LOGGING_START'
+    EVENT_BUILD_START = 'BUILD_START'
+    EVENT_BUILD_END = 'BUILD_END'
+    EVENT_SUBMIT_START = 'SUBMIT_START'
+    EVENT_SUBMIT_END = 'SUBMIT_END'
+    EVENT_JOB_QUEUED = 'JOB_QUEUED'
+    EVENT_BINARY_EXECUTE_START = 'BINARY_EXECUTE_START'
+    EVENT_BINARY_EXECUTE_END = 'BINARY_EXECUTE_END'
+    EVENT_CHECK_START = 'CHECK_START'
+    EVENT_CHECK_END = 'CHECK_END'
+
+    EVENT_DICT = {
+        EVENT_LOGGING_START:
+            ['Event_110_logging_start.txt', 'logging', 'start'],
+        EVENT_BUILD_START:
+            ['Event_120_build_start.txt', 'build', 'start'],
+        EVENT_BUILD_END:
+            ['Event_130_build_end.txt', 'build', 'end'],
+        EVENT_SUBMIT_START:
+            ['Event_140_submit_start.txt', 'submit', 'start'],
+        EVENT_SUBMIT_END:
+            ['Event_150_submit_end.txt', 'submit', 'end'],
+        EVENT_JOB_QUEUED:
+            ['Event_160_job_queued.txt', 'job', 'queued'],
+        EVENT_BINARY_EXECUTE_START:
+            ['Event_170_binary_execute_start.txt', 'binary_execute', 'start'],
+        EVENT_BINARY_EXECUTE_END:
+            ['Event_180_binary_execute_end.txt', 'binary_execute', 'end'],
+        EVENT_CHECK_START:
+            ['Event_190_check_start.txt', 'check', 'start'],
+        EVENT_CHECK_END:
+            ['Event_200_check_end.txt', 'check', 'end']
+    }
+
+    #################
+    # Class methods #
+    #################
 
     @staticmethod
-    def ignoreLine(a_line):
-        ignore_line  = False
+    def ignore_line(line):
+        """Indicate whether parser should ignore a line (e.g., is comment)."""
+        result = False
 
-        tmpline = a_line.strip()
+        tmpline = line.strip()
 
         if len(tmpline) > 0:
-            if tmpline[0] == rgt_status_file.comment_line_entry:
-                ignore_line  = True
+            if tmpline[0] == StatusFile.COMMENT_LINE_INDICATOR:
+                result = True
         else:
-            ignore_line = True
+            result = True
 
-        return ignore_line
+        return result
 
     ###################
     # Special methods #
     ###################
-    def __init__(self,unique_id,mode):
-        self.__job_id = ""
-        self.__path_to_file = ""
-        self.__unique_id = unique_id
+
+    def __init__(self, test_id, mode):
+        """Constructor."""
+        self.__job_id = ''
+        self.__path_to_file = ''
+        self.__test_id = test_id
 
         # Make the status file.
-        self.__makeStatusFiles()
+        self.__make_status_file()
 
         # Add job to status file.
-        if mode == "New":
-            self.__add_job()
+        if mode == 'New':
+            event_time = self.log_event(StatusFile.EVENT_LOGGING_START)
+            #currenttime = datetime.datetime.now()
+            self.__add_test_instance(event_time)
 
-        elif mode == "Old":
+        elif mode == 'Old':
             pass
 
     ###################
     # Public methods  #
     ###################
-    def add_result(self,exit_value,mode):
-        file_obj = open(self.__path_to_file,"r")
-        records1 = file_obj.readlines()
-        file_obj.close()
+
+    def add_result(self, exit_value, mode):
+        """Update the status file to reflect a new event."""
+
+        #---Read the status file.
+        status_file = open(self.__path_to_file, 'r')
+        records = status_file.readlines()
+        status_file.close()
+        #event_time = datetime.datetime.now().isoformat()
+
+        for index, line in enumerate(records):
+
+            # Get the uid for this run instance
+
+            words = line.rstrip().split()
+
+            if len(words) < 6:
+                continue
+
+            test_id = words[1]
+
+            if test_id != self.__test_id:
+                continue
+
+            if mode == 'Add_Job_ID':
+                words[2] = exit_value
+
+            if mode == 'Add_Build_Result':
+                words[3] = exit_value
+                #self.__write_system_log('build_result',
+                #                        str(exit_value), event_time)
+
+            if mode == 'Add_Submit_Result':
+                words[4] = exit_value
+                #self.__write_system_log('submit_result',
+                #                        str(exit_value), event_time)
+
+            if mode == 'Add_Run_Result':
+                words[5] = exit_value
+                #self.__write_system_log('run_result',
+                #                        str(exit_value), event_time)
+
+            if mode == 'Add_Binary_Running':
+                binary_running_value = exit_value
+
+                words[5] = binary_running_value
+
+                dir_head = os.path.split(os.getcwd())[0]
+                path2 = os.path.join(dir_head, 'Status', test_id, 'job_status.txt')
+                file_obj2 = open(path2, 'w')
+                file_obj2.write(binary_running_value)
+                file_obj2.close()
+                #self.__write_system_log('binary_running',
+                #                        str(exit_value), event_time)
+
+            if mode == 'Add_Run_Aborning':
+                aborning_run_value = exit_value
+                words[5] = aborning_run_value
+
+                dir_head = os.path.split(os.getcwd())[0]
+                path2 = os.path.join(dir_head, 'Status', test_id, 'job_status.txt')
+                file_obj2 = open(path2, 'w')
+                file_obj2.write(aborning_run_value)
+                file_obj2.close()
+                #self.__write_system_log('run_aborning',
+                #                        str(exit_value), event_time)
+
+            records[index] = StatusFile.__LINE_FORMAT % (
+                (words[0], words[1], words[2], words[3], words[4], words[5]))
+
+        #---Update the status file.
+        status_file = open(self.__path_to_file, 'w')
+        status_file.writelines(records)
+        status_file.close()
+
+    def log_event(self, event, event_status=None):
+        """Official entrypoint to log a harness execution event."""
+        #---THE OFFICIAL TIMESTAMP FOR THE EVENT.
         event_time = datetime.datetime.now().isoformat()
 
-        ip = -1
-        for line in records1:
-            ip = ip + 1
+        if event in StatusFile.EVENT_DICT:
+            event_file_name = StatusFile.EVENT_DICT[event][0]
+            event_name = StatusFile.EVENT_DICT[event][1]
+            event_value = StatusFile.EVENT_DICT[event][2]
+        else:
+            print('Warning: event not recognized. ' + event)
+            #TODO: figure out how to treat warnings, assertions, etc.
 
-            #-----------------------------------------------------
-            # If the first character is a "#"                    -
-            # then ignore record.                                -
-            #                                                    -
-            #-----------------------------------------------------
-            line0 = str.strip(line)
-            if 1 :
-                pass
+        dir_head = os.path.split(os.getcwd())[0]
+        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
+                                 event_file_name)
 
-            #Get the uid for this run instance
-            line1 = str.rstrip(line) 
-            words1 = str.split(line1)
+        if os.path.exists(file_path):
+            print('Warning: event log file already exists. ' + file_path)
+        #---THE OFFICIAL RECORD OF THE OCCURRENCE OF AN EVENT.
+        file_ = open(file_path, 'w')
+        file_.write(event_time)
+        file_.write('\t' + (str(event_status) if event_status is not None
+                            else ''))
+        status_info = get_verbose_status_info(self.__test_id, event_name,
+                                              event_value, event_status,
+                                              event_time)
+        for pair in status_info:
+            file_.write('\t' + pair[0] + '=' + pair[1])
+        file_.write('\n')
+        file_.close()
 
+        self.__write_system_log(event_name, event_value, event_status,
+                                event_time)
 
-            if len(words1) >= 6:
-                stime1 = words1[0]
-                uid1 = words1[1]
+        #elif event == StatusFile.EVENT_BUILD_START:
+        #    pass
+        if event == StatusFile.EVENT_BUILD_END:
+            self.add_result(event_status, mode="Add_Build_Result")
+        #elif event == StatusFile.EVENT_SUBMIT_START:
+        #    pass
+        elif event == StatusFile.EVENT_SUBMIT_END:
+            self.add_result(event_status, mode="Add_Submit_Result")
+        elif event == StatusFile.EVENT_JOB_QUEUED:
+            self.add_result(event_status, mode="Add_Job_ID")
+            self.add_result('-1', mode="Add_Run_Aborning")
+        elif event == StatusFile.EVENT_BINARY_EXECUTE_START:
+            self.add_result(event_status, mode="Add_Binary_Running")
+        #elif event == StatusFile.EVENT_BINARY_EXECUTE_END:
+        #    pass
+        #elif event == StatusFile.EVENT_CHECK_START:
+        #    pass
+        elif event == StatusFile.EVENT_CHECK_END:
+            self.add_result(event_status, mode="Add_Run_Result")
 
-                if uid1 == self.__unique_id:
-                    if mode == "Add_Job_ID":
-                        words1[2] = exit_value
+        return event_time
 
-                    if mode == "Add_Build_Result":
-                        words1[3] = exit_value
-                        self.__write_system_log('build_result', str(exit_value), event_time)
-
-                    if mode == "Add_Submit_Result":
-                        words1[4] = exit_value
-                        self.__write_system_log('submit_result', str(exit_value), event_time)
-
-                    if mode == "Add_Run_Result":
-                        words1[5] = exit_value
-                        self.__write_system_log('run_result', str(exit_value), event_time)
-
-                    if mode == "Add_Binary_Running":
-                        binary_running_value = exit_value
-
-                        words1[5] = binary_running_value
-
-                        cwd = os.getcwd()
-                        (dir_head1, dir_tail1) = os.path.split(cwd)
-                        path2 = os.path.join(dir_head1,"Status",uid1,"job_status.txt")
-                        file_obj2 = open(path2,"w")
-                        file_obj2.write(binary_running_value)
-                        file_obj2.close()
-                        self.__write_system_log('binary_running', str(exit_value), event_time)
-
-                    if mode == "Add_Run_Aborning":
-                        abornining_run_value = exit_value
-
-                        words1[5] = abornining_run_value
-
-                        cwd = os.getcwd()
-                        (dir_head1, dir_tail1) = os.path.split(cwd)
-                        path2 = os.path.join(dir_head1,"Status",uid1,"job_status.txt")
-                        file_obj2 = open(path2,"w")
-                        file_obj2.write(abornining_run_value)
-                        file_obj2.close()
-                        self.__write_system_log('run_aborning', str(exit_value), event_time)
-   
-                    records1[ip] = rgt_status_file.line_format  % (words1[0], words1[1], words1[2], words1[3], words1[4], words1[5])
-
-        file_obj = open(self.__path_to_file,"w")
-        file_obj.writelines(records1)
-        file_obj.close()
-
-    def logStartExecutionTime(self):
-        currenttime = datetime.datetime.now()
-
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        path_to_file = os.path.join(dir_head1,
-                                    "Status",
-                                     str(self.__unique_id),
-                                     rgt_status_file.start_execution_timestamp_filename )
-        file_obj = open(path_to_file,"a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('binary_execute', 'start', event_time)
-
-    def logFinalExecutionTime(self):
-        currenttime = datetime.datetime.now()
-
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        path_to_file = os.path.join(dir_head1,
-                                    "Status",
-                                     str(self.__unique_id),
-                                     rgt_status_file.final_execution_timestamp_filename )
-
-        file_obj = open(path_to_file,"a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('binary_execute', 'end', event_time)
-
-    def logBuildStartTime(self):
-        currenttime = datetime.datetime.now()
-
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        path_to_file = os.path.join(dir_head1,
-                                    "Status",
-                                    str(self.__unique_id),
-                                    rgt_status_file.build_start_execution_timestamp_filename )
-        file_obj = open(path_to_file,"a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('build', 'start', event_time)
-
-    def logBuildEndTime(self):
-        currenttime = datetime.datetime.now()
-
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        path_to_file = os.path.join(dir_head1,
-                                    "Status",
-                                    str(self.__unique_id),
-                                    rgt_status_file.build_final_execution_timestamp_filename )
-        file_obj = open(path_to_file,"a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('build', 'end', event_time)
-
-    def logSubmitStartTime(self):
-        currenttime = datetime.datetime.now()
-
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        path_to_file = os.path.join(dir_head1,
-                                    "Status",
-                                    str(self.__unique_id),
-                                    rgt_status_file.submit_start_execution_timestamp_filename )
-        file_obj = open(path_to_file,"a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('submit', 'start', event_time)
-
-    def logSubmitEndTime(self):
-        currenttime = datetime.datetime.now()
-
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        path_to_file = os.path.join(dir_head1,
-                                    "Status",
-                                    str(self.__unique_id),
-                                    rgt_status_file.submit_final_execution_timestamp_filename )
-        file_obj = open(path_to_file,"a")
-        file_obj.write(currenttime.isoformat())
-        file_obj.close()
-
-        event_time = currenttime.isoformat()
-        self.__write_system_log('submit', 'end', event_time)
+#TODO: put symlinks in status dir (here or elsewhere)
 
     ###################
     # Private methods #
     ###################
-    def __makeStatusFiles(self):  
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
 
-        #
+    def __make_status_file(self):
+        """Create the status file for this app/test if doesn't exist."""
+
         # Get the head dir in cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
+        cwd = os.getcwd()
+        dir_head1 = os.path.split(cwd)[0]
 
-        #
-        # Now join dirhead1 to form path to rgt status file.
-        #
-        self.__path_to_file = os.path.join(dir_head1,"Status",rgt_status_file.filename)
-        if (not os.path.lexists(self.__path_to_file)):
-            file_obj = open(self.__path_to_file,"w")
-            file_obj.write(rgt_status_file.header)
+        # Form path to rgt status file.
+        self.__path_to_file = os.path.join(dir_head1, "Status",
+                                           StatusFile.FILENAME)
+
+        # Create.
+        if not os.path.lexists(self.__path_to_file):
+            file_obj = open(self.__path_to_file, "w")
+            file_obj.write(StatusFile.header)
             file_obj.close()
-             
- 
 
-    def __add_job(self):
-        currenttime = datetime.datetime.now()
-        file_obj = open(self.__path_to_file,"a")
-        fmt1 =  rgt_status_file.line_format % (currenttime.isoformat(), self.__unique_id, "***" , "***" , "***" , "***" )
-        file_obj.write(fmt1)
+    def __add_test_instance(self, event_time):
+        """Start new line in master status file for app/test."""
+        file_obj = open(self.__path_to_file, "a")
+        format_ = StatusFile.__LINE_FORMAT % (
+            (event_time, self.__test_id, "***", "***", "***", "***"))
+        file_obj.write(format_)
         file_obj.close()
 
-    @staticmethod
-    def write_system_log(test_id_string, event_name, event_value, event_time):
-        """
-        """
-        #---Get tag.
+    def __write_system_log(self, event_name, event_value, event_status,
+                           event_time):
+        """Write a system log entry for an event."""
+        write_system_log(self.__test_id, event_name, event_value,
+                         event_status, event_time)
 
-        rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
-            if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
+#------------------------------------------------------------------------------
 
-        if rgt_system_log_tag == '':
-            return
+def get_verbose_status_info(test_id, event_name, event_value,
+                            event_status, event_time):
+    """Create a data structure with verbose info for an event."""
 
-        #---Determine whether to use Unix logger command.
+    #---Construct fields to be used for log entry.
 
-        is_using_unix_logger = False
+    user = os.environ['USER']
 
-        rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
-            if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+    cwd = os.getcwd()
+    (dir_head1, dir_scripts) = os.path.split(cwd)
+    assert dir_scripts == 'Scripts', (
+        'write_system_log function being executed from wrong directory.')
+    (dir_head2, test) = os.path.split(dir_head1)
+    app = os.path.split(dir_head2)[1]
 
-        if rgt_system_log_dir == '':
-            is_using_unix_logger = True
-        elif not os.path.exists(rgt_system_log_dir):
-            is_using_unix_logger = True
+    dir_status = os.path.join(dir_head1, 'Status')
+    dir_status_this_test = os.path.join(dir_status, test_id)
 
-        #---Construct fields for log entry.
+    file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
+    if os.path.exists(file_job_id):
+        file_ = open(file_job_id, 'r')
+        job_id = file_.read()
+        file_.close()
+        job_id = re.sub(' ', '', job_id.split('\n')[0])
+    else:
+        job_id = ''
 
-        user = os.environ['USER']
+    file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
+    if os.path.exists(file_job_status):
+        file_ = open(file_job_status, 'r')
+        job_status = file_.read()
+        file_.close()
+        job_status = re.sub(' ', '', job_status.split('\n')[0])
+    else:
+        job_status = ''
 
-        wd = os.getcwd()
-        (dir_head1, dir_scripts) = os.path.split(wd)
+    run_archive_all = os.path.join(dir_head1, 'Run_Archive')
+    run_archive = os.path.join(run_archive_all, test_id)
+
+    rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
+
+    build_directory = os.path.join(rgt_path_to_sspace, app, test,
+                                   test_id, 'build_directory')
+
+    workdir = os.path.join(rgt_path_to_sspace, app, test,
+                           test_id, 'workdir')
+
+    rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
+
+    path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
+
+    #---Construct status_info.
+
+    event_status_string = str(event_status) if event_status is not None else ''
+
+    status_info = []
+
+    status_info.append(['user', user])
+    status_info.append(['rgt_pbs_job_accnt_id', rgt_pbs_job_accnt_id])
+    status_info.append(['rgt_path_to_sspace', rgt_path_to_sspace])
+    status_info.append(['path_to_rgt_package', path_to_rgt_package])
+    status_info.append(['build_directory', build_directory])
+    status_info.append(['workdir', workdir])
+    status_info.append(['run_archive', run_archive])
+    status_info.append(['cwd', cwd])
+    status_info.append(['app', app])
+    status_info.append(['test', test])
+    status_info.append(['test_id', test_id])
+    status_info.append(['job_id', job_id])
+    status_info.append(['job_status', job_status])
+    status_info.append(['event_time', event_time])
+    status_info.append(['event_name', event_name])
+    status_info.append(['event_value', event_value])
+    status_info.append(['event_status', event_status_string])
+
+    return status_info
+
+#------------------------------------------------------------------------------
+
+def write_system_log(test_id, event_name, event_value,
+                     event_status, event_time):
+    """Write a system log entry for an event."""
+
+    #---Get tag from environment, if set by user.
+
+    rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
+        if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
+
+    if rgt_system_log_tag == '':
+        return
+
+    #---Use Unix logger command unless (valid) directory requested.
+
+    rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
+        if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+
+    is_using_unix_logger = False
+    if rgt_system_log_dir == '':
+        is_using_unix_logger = True
+    elif not os.path.exists(rgt_system_log_dir):
+        is_using_unix_logger = True
+
+    #---Construct log string.
+
+    status_info = get_verbose_status_info(test_id, event_name, event_value,
+                                          event_status, event_time)
+
+    #TODO: make quote a function ...
+
+    quote = '\\"' if is_using_unix_logger else '"'
+
+    log_string = (
+        'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ')
+
+    for pair in status_info:
+        log_string += pair[0] + '=' + quote + pair[1] + quote
+
+    #---Write log.
+
+    if is_using_unix_logger:
+        os.system('logger -p local0.notice "' + log_string + '"')
+
+    else:
+        dir_head1 = os.path.split(os.getcwd())[0]
         (dir_head2, test) = os.path.split(dir_head1)
-        (dir_head3, application) = os.path.split(dir_head2)
+        app = os.path.split(dir_head2)[1]
 
-        dir_status = os.path.join(dir_head1, 'Status')
+        log_file = (app + '_#_' +
+                    test + '_#_' +
+                    test_id + #---Alt: could use uuid.uuid1()
+                    '.txt')
+        log_path = os.path.join(rgt_system_log_dir, log_file)
 
-        dir_status_this_test = os.path.join(dir_status, test_id_string)
+        file_ = open(log_path, 'a')
+        file_.write(log_string + '\n')
+        file_.close()
 
-        file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
-        if os.path.exists(file_job_id):
-            file_ = open(file_job_id, 'r')
-            job_id = file_.read()
-            file_.close()
-            job_id = re.sub(' ', '', job_id.split('\n')[0])
-        else:
-            job_id = ''
+#------------------------------------------------------------------------------
 
-        file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
-        if os.path.exists(file_job_status):
-            file_ = open(file_job_status, 'r')
-            job_status = file_.read()
-            file_.close()
-            job_status = re.sub(' ', '', job_status.split('\n')[0])
-        else:
-            job_status = ''
+#class JobExitStatus:
+#    """Class to tally different kinds of job errors."""
+#
+#    def __init__(self):
+#        """Constructor."""
+#        self.status = {"Pass_Fail": 0,
+#                       "Hardware_Failure": 0,
+#                       "Performance_Failure": 0,
+#                       "Incorrect_Result": 0}
+#
+#    def change_job_exit_status(self, category="Pass_Fail",
+#                               new_status="FAILURE"):
+#        """Change the exit status for a specific failure."""
+#
+#        if category == "Pass_Fail":
+#            self.add_pass_fail(pf_failure=new_status)
+#        elif category == "Hardware_Failure":
+#            self.add_hardware_failure(hw_failure=new_status)
+#        elif category == "Performance_Failure":
+#            self.add_performance_failure(pf_failure=new_status)
+#        elif category == "Incorrect_Result":
+#            self.add_incorrect_result_failure(ir_failure=new_status)
+#        else:
+#            print("Warning! The category " + category + " is not defined.")
+#            print("The failure will be categorized a general Pass_Fail.")
+#            self.add_pass_fail(pf_failure=new_status)
+#
+#    def add_pass_fail(self, pf_failure="NO_FAILURE"):
+#        """
+#        """
+#        if pf_failure == "FAILURE":
+#            self.status["Pass_Fail"] = 1
+#        elif pf_failure == "NO_FAILURE":
+#            self.status["Pass_Fail"] = 0
+#
+#    def add_hardware_failure(self, hw_failure="NO_FAILURE"):
+#        """
+#        """
+#        if hw_failure == "FAILURE":
+#            self.status["Hardware_Failure"] = 1
+#        elif hw_failure == "NO_FAILURE":
+#            self.status["Hardware_Failure"] = 0
+#
+#    def add_performance_failure(self, pf_failure="NO_FAILURE"):
+#        """
+#        """
+#        if pf_failure == "FAILURE":
+#            self.status["Performance_Failure"] = 1
+#        elif pf_failure == "NO_FAILURE":
+#            self.status["Performance_Failure"] = 0
+#
+#    def add_incorrect_result_failure(self, ir_failure="NO_FAILURE"):
+#        """
+#        """
+#        if ir_failure == "FAILURE":
+#            self.status["Incorrect_Result"] = 1
+#        elif ir_failure == "NO_FAILURE":
+#            self.status["Incorrect_Result"] = 0
+#
+##------------------------------------------------------------------------------
+#
+#def convert_to_job_status(job_exit_status):
+#    """Convert job status to numerical value. """
+#
+#    tmpsum = 0
+#
+#    ival = job_exit_status.status["Pass_Fail"]
+#    tmpsum = tmpsum + ival*1
+#
+#    ival = job_exit_status.status["Hardware_Failure"]
+#    tmpsum = tmpsum + ival*2
+#
+#    ival = job_exit_status.status["Performance_Failure"]
+#    tmpsum = tmpsum + ival*4
+#
+#    ival = job_exit_status.status["Incorrect_Result"]
+#    tmpsum = tmpsum + ival*8
+#
+#    return tmpsum
+#
+#------------------------------------------------------------------------------
 
-        dir_run_archive = os.path.join(dir_head1, 'Run_Archive')
-
-        run_archive = os.path.join(dir_run_archive, test_id_string)
-
-        rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
-
-        build_directory = os.path.join(rgt_path_to_sspace, application, test,
-                                       test_id_string, 'build_directory')
-
-        workdir = os.path.join(rgt_path_to_sspace, application, test,
-                               test_id_string, 'workdir')
-
-        rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
-
-        path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
-
-        #---Write log.
-
-        if is_using_unix_logger:
-
-            log_string = (
-                  'logger -p local0.notice "' +
-                  'rgt_system_log_tag=\\"' + rgt_system_log_tag + '\\" ' +
-                  'user=\\"' + user + '\\" ' +
-                  'rgt_pbs_job_accnt_id=\\"' + rgt_pbs_job_accnt_id + '\\" ' +
-                  'path_to_rgt_package=\\"' + path_to_rgt_package + '\\" ' +
-                  'build_directory=\\"' + build_directory + '\\" ' +
-                  'workdir=\\"' + workdir + '\\" ' +
-                  'run_archive=\\"' + run_archive + '\\" ' +
-                  'application=\\"' + application + '\\" ' +
-                  'test=\\"' + test + '\\" ' +
-                  'test_id_string=\\"' + test_id_string + '\\" ' +
-                  'job_id=\\"' + job_id + '\\" ' +
-                  'job_status=\\"' + job_status + '\\" ' +
-                  'event_time=\\"' + event_time + '\\" ' +
-                  event_name + '_event_value=\\"' + event_value + '\\" ' +
-                  '"' )
-
-#                  'event_name=\\"' + event_name + '\\" ' +
-#                  'event_value=\\"' + event_value + '\\" ' +
-
-            os.system(log_string)
-
-        else:
-
-            #---Alt: could use uuid.uuid1()
-
-            log_file = application + '_#_' + \
-                       test + '_#_' + \
-                       test_id_string + \
-                       '.txt'
-
-            log_path = os.path.join(rgt_system_log_dir, log_file)
-
-            log_string = \
-                     'rgt_system_log_tag="' + rgt_system_log_tag + '" ' + \
-                     'user="' + user + '" ' + \
-                     'rgt_pbs_job_accnt_id="' + rgt_pbs_job_accnt_id + '" ' + \
-                     'rgt_path_to_sspace="' + rgt_path_to_sspace + '" ' + \
-                     'path_to_rgt_package="' + path_to_rgt_package + '" ' + \
-                     'wd="' + wd + '" ' + \
-                     'application="' + application + '" ' + \
-                     'test="' + test + '" ' + \
-                     'test_id_string="' + test_id_string + '" ' + \
-                     'job_id="' + job_id + '" ' + \
-                     'job_status="' + job_status + '" ' + \
-                     'event_time="' + event_time + '" ' + \
-                     event_name + '_event_value="' + event_value + '" ' + \
-                     '\n'
-
-#                     'event_name="' + event_name + '" ' + \
-#                     'event_value="' + event_value + '" ' + \
-
-
-            file_ = open(log_path, 'a')
-            file_.write(log_string)
-            file_.close()
-
-    def __write_system_log(self, event_name, event_value, event_time):
-        """
-        """
-        rgt_status_file.write_system_log(self.__unique_id, event_name,
-                                         event_value, event_time)
-
-class JobExitStatus:
-    def __init__(self):
-        self.status = {"Pass_Fail":0,
-                       "Hardware_Failure":0,
-                       "Performance_Failure":0,
-                       "Incorrect_Result":0 }
-
-    def changeJobExitStatus(self, category="Pass_Fail", new_status="FAILURE"):
-        #-----------------------------------------------------
-        # Change the exit status for a specific failure.     -
-        #                                                    -
-        #-----------------------------------------------------
-        if category == "Pass_Fail":
-            self.addPassFail(pf_failure=new_status)
-        elif category == "Hardware_Failure":
-            self.addHardwareFailure(hw_failure=new_status)
-        elif category == "Performance_Failure":
-            self.addPerformanceFailure(pf_failure=new_status)
-        elif category == "Incorrect_Result":
-            self.addIncorrectResultFailure(ir_failure=new_status)
-        else:
-            print("Warning! The category " + category + " is not defined.")
-            print("The failure will be categorized a general Pass_Fail.")
-            self.addPassFail(pf_failure=new_status)
-
-    def addPassFail(self, pf_failure="NO_FAILURE"):
-        if pf_failure == "FAILURE": 
-            self.status["Pass_Fail"] = 1 
-        elif pf_failure == "NO_FAILURE" :  
-            self.status["Pass_Fail"] = 0 
-
-    def addHardwareFailure(self, hw_failure="NO_FAILURE"):
-        if hw_failure == "FAILURE" : 
-            self.status["Hardware_Failure"] = 1 
-        elif hw_failure == "NO_FAILURE" :  
-            self.status["Hardware_Failure"] = 0 
-
-    def addPerformanceFailure(self, pf_failure="NO_FAILURE"):
-        if pf_failure == "FAILURE": 
-            self.status["Performance_Failure"] = 1 
-        elif pf_failure == "NO_FAILURE" :  
-            self.status["Performance_Failure"] = 0 
-
-    def addIncorrectResultFailure(self, ir_failure="NO_FAILURE"):
-        if ir_failure == "FAILURE": 
-            self.status["Incorrect_Result"] = 1 
-        elif ir_failure == "NO_FAILURE" :  
-            self.status["Incorrect_Result"] = 0 
-
-
-#-----------------------------------------------------
-# Convert job status to numerical value              -
-#                                                    -
-#-----------------------------------------------------
-def convert_to_job_status(job_exit_status):
-    tmpsum = 0
-
-    ival = job_exit_status.status["Pass_Fail"]
-    tmpsum = tmpsum + ival*1
-
-    ival = job_exit_status.status["Hardware_Failure"]
-    tmpsum = tmpsum + ival*2
-
-    ival = job_exit_status.status["Performance_Failure"]
-    tmpsum = tmpsum + ival*4
-
-    ival = job_exit_status.status["Incorrect_Result"]
-    tmpsum = tmpsum + ival*8
-
-    return tmpsum
-
-
-
-#-----------------------------#
-# Function: parse_status_file #
-#-----------------------------#
-def parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_events_record):
+def parse_status_file(path_to_status_file, startdate, enddate,
+                      mycomputer_with_events_record):
+    """Function: parse_status_file. Parser for rgt_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
     number_of_failed_tests = 0
     number_of_inconclusive_tests = 0
 
-    shash = {"number_of_tests" : number_of_tests,
-             "number_of_passed_tests" : number_of_passed_tests,
-             "number_of_failed_tests" : number_of_failed_tests,
-             "number_of_inconclusive_tests" : number_of_inconclusive_tests}
+    shash = {"number_of_tests": number_of_tests,
+             "number_of_passed_tests": number_of_passed_tests,
+             "number_of_failed_tests": number_of_failed_tests,
+             "number_of_inconclusive_tests": number_of_inconclusive_tests}
 
     failed_jobs = []
 
@@ -579,14 +553,14 @@ def parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_even
     else:
         return shash
 
-    sfile_obj = open(path_to_status_file,'r')
+    sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
-    print ("parsing status file: " + path_to_status_file)
+    print("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
-        if  not rgt_status_file.ignoreLine(tmpline):
+        if  not StatusFile.ignore_line(tmpline):
             number_of_tests = number_of_tests + 1
             words = tmpline.split()
 
@@ -600,7 +574,10 @@ def parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_even
 
             # Get the number of passed tests.
             #Conservative check
-            if  (mycomputer_with_events_record.in_time_range(pbsid,creationtime,startdate,enddate)) and (words[3].isdigit())  and (words[4].isdigit()) and (words[5].isdigit()) :
+            if (mycomputer_with_events_record.
+                    in_time_range(pbsid, creationtime, startdate, enddate) and
+                    words[3].isdigit() and words[4].isdigit() and
+                    words[5].isdigit()):
                 if int(words[5]) == 0:
                     number_of_passed_tests = number_of_passed_tests + 1
 
@@ -608,50 +585,51 @@ def parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_even
                     number_of_failed_tests = number_of_failed_tests + 1
 
                 if int(words[5]) >= 2:
-                    number_of_inconclusive_tests = number_of_inconclusive_tests + 1
+                    number_of_inconclusive_tests = (
+                        number_of_inconclusive_tests + 1)
             else:
                 number_of_tests = number_of_tests - 1
 
             #Agressive check
-            #if (words[2].find('.nid') >= 0) :
+            #if (words[2].find('.nid') >= 0):
             #    if words[5].isdigit():
             #        if int(words[5]) == 0:
             #            number_of_passed_tests = number_of_passed_tests + 1
 
             #    if words[5].isdigit():
-            #        if (int(words[5])==1) or (words[3].find('***') >= 0) or (words[4].find('***') >= 0) or ( words[5].find('***') >= 0):
+            #        if (int(words[5])==1 or words[3].find('***') >= 0 or
+            #          words[4].find('***') >= 0 or words[5].find('***') >= 0):
             #            number_of_failed_tests = number_of_failed_tests + 1
             #    elif words[5].find('***') >= 0:
-            #        if (words[3].find('***') >= 0) or (words[4].find('***') >= 0) or ( words[5].find('***') >= 0):
+            #        if (words[3].find('***') >= 0 or
+            #    words[4].find('***') >= 0 or words[5].find('***') >= 0):
             #            number_of_failed_tests = number_of_failed_tests + 1
             #else:
             #    number_of_tests = number_of_tests - 1
 
 
-    shash = {"number_of_tests" : number_of_tests,
-             "number_of_passed_tests" : number_of_passed_tests,
-             "number_of_failed_tests" : number_of_failed_tests,
-             "number_of_inconclusive_tests" : number_of_inconclusive_tests}
+    shash = {"number_of_tests": number_of_tests,
+             "number_of_passed_tests": number_of_passed_tests,
+             "number_of_failed_tests": number_of_failed_tests,
+             "number_of_inconclusive_tests": number_of_inconclusive_tests}
 
 
-    return shash,failed_jobs
+    return shash, failed_jobs
 
+#------------------------------------------------------------------------------
 
-
-#-----------------------------#
-# Function: parse_status_file #
-#-----------------------------#
 def parse_status_file2(path_to_status_file):
+    """Function: parse_status_file2. Parser for rgt_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
     number_of_failed_tests = 0
     number_of_inconclusive_tests = 0
 
-    shash = {"number_of_tests" : number_of_tests,
-             "number_of_passed_tests" : number_of_passed_tests,
-             "number_of_failed_tests" : number_of_failed_tests,
-             "number_of_inconclusive_tests" : number_of_inconclusive_tests}
+    shash = {"number_of_tests": number_of_tests,
+             "number_of_passed_tests": number_of_passed_tests,
+             "number_of_failed_tests": number_of_failed_tests,
+             "number_of_inconclusive_tests": number_of_inconclusive_tests}
 
     failed_jobs = []
 
@@ -660,20 +638,20 @@ def parse_status_file2(path_to_status_file):
     else:
         return shash
 
-    sfile_obj = open(path_to_status_file,'r')
+    sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
-    print ("parsing status file: " + path_to_status_file)
+    print("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
-        if not rgt_status_file.ignoreLine(tmpline):
+        if not StatusFile.ignore_line(tmpline):
             number_of_tests = number_of_tests + 1
             words = tmpline.split()
 
             # Get the number of passed tests.
             #Conservative check
-            if  (words[3].isdigit())  and (words[4].isdigit()) and (words[5].isdigit()) :
+            if words[3].isdigit() and words[4].isdigit() and words[5].isdigit():
                 if int(words[5]) == 0:
                     number_of_passed_tests = number_of_passed_tests + 1
 
@@ -681,39 +659,43 @@ def parse_status_file2(path_to_status_file):
                     number_of_failed_tests = number_of_failed_tests + 1
 
                 if int(words[5]) >= 2:
-                    number_of_inconclusive_tests = number_of_inconclusive_tests + 1
+                    number_of_inconclusive_tests = (
+                        number_of_inconclusive_tests + 1)
             else:
                 number_of_tests = number_of_tests - 1
 
             #Agressive check
-            #if (words[2].find('.nid') >= 0) :
+            #if (words[2].find('.nid') >= 0):
             #    if words[5].isdigit():
             #        if int(words[5]) == 0:
             #            number_of_passed_tests = number_of_passed_tests + 1
-
             #    if words[5].isdigit():
-            #        if (int(words[5])==1) or (words[3].find('***') >= 0) or (words[4].find('***') >= 0) or ( words[5].find('***') >= 0):
+            #        if (int(words[5])==1 or (words[3].find('***') >= 0) or
+            #     (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
             #            number_of_failed_tests = number_of_failed_tests + 1
             #    elif words[5].find('***') >= 0:
-            #        if (words[3].find('***') >= 0) or (words[4].find('***') >= 0) or ( words[5].find('***') >= 0):
+            #        if ((words[3].find('***') >= 0) or
+            #  (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
             #            number_of_failed_tests = number_of_failed_tests + 1
             #else:
             #    number_of_tests = number_of_tests - 1
 
 
-    shash = {"number_of_tests" : number_of_tests,
-             "number_of_passed_tests" : number_of_passed_tests,
-             "number_of_failed_tests" : number_of_failed_tests,
-             "number_of_inconclusive_tests" : number_of_inconclusive_tests}
+    shash = {"number_of_tests": number_of_tests,
+             "number_of_passed_tests": number_of_passed_tests,
+             "number_of_failed_tests": number_of_failed_tests,
+             "number_of_inconclusive_tests": number_of_inconclusive_tests}
 
-    print ("shash=" + shash)
-    print ("failed_jobs=" + failed_jobs)
-    return shash,failed_jobs
+    print("shash=" + shash)
+    print("failed_jobs=" + failed_jobs)
+    return shash, failed_jobs
 
+#------------------------------------------------------------------------------
 
-
-def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_events_record):
-    sfile_obj = open(path_to_status_file,'r')
+def summarize_status_file(path_to_status_file, startdate, enddate,
+                          mycomputer_with_events_record):
+    """Parse, collect summary info from rgt_status.txt."""
+    sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
@@ -724,10 +706,10 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
 
     flist = []
     ilist = []
-    print ("parsing status file: " + path_to_status_file)
+    print("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
-        if len(tmpline) >0 and tmpline[0] != rgt_status_file.comment_line_entry:
+        if len(tmpline) > 0 and tmpline[0] != StatusFile.COMMENT_LINE_INDICATOR:
             words = tmpline.split()
 
             #Get the pbs id.
@@ -735,26 +717,29 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
             pbsid2 = pbsid1.split(".")
             pbsid = pbsid2[0]
 
-            print ("====")
-            print ("Test instance: " + tmpline)
-            print ("pbs job id: " + pbsid) 
+            print("====")
+            print("Test instance: " + tmpline)
+            print("pbs job id: " + pbsid)
 
             #Get the creation time.
             creationtime = words[0]
-            (creationtime1, creationtime2) = creationtime.split("T")
-            (year,month,day) = creationtime1.split("-")
-            (time1,time2) = creationtime2.split(".")
-            (hour,min,sec) = time1.split(":")
-            creationdate = datetime.datetime(int(year),int(month),int(day))
+            #(creationtime1, creationtime2) = creationtime.split("T")
+            creationtime1 = creationtime.split("T")[0]
+            (year, month, day) = creationtime1.split("-")
+            #(time1, time2) = creationtime2.split(".")
+            #(hour, min, sec) = time1.split(":")
+            creationdate = datetime.datetime(int(year), int(month), int(day))
 
             # Get the number of passed tests.
             #Conservative check
-            if (mycomputer_with_events_record.in_time_range(pbsid,creationtime,startdate,enddate)):
-                print ("In range")
+            if (mycomputer_with_events_record.
+                    in_time_range(pbsid, creationtime, startdate, enddate)):
+                print("In range")
 
                 number_of_tests = number_of_tests + 1
 
-                if (words[2].isdigit()) and (words[3].isdigit())  and (words[4].isdigit()) and (words[5].isdigit()) :
+                if (words[2].isdigit() and words[3].isdigit() and
+                        words[4].isdigit() and words[5].isdigit()):
                     if int(words[5]) == 0:
                         number_of_passed_tests = number_of_passed_tests + 1
 
@@ -763,44 +748,50 @@ def summarize_status_file(path_to_status_file,startdate,enddate,mycomputer_with_
                         flist = flist + [words[1]]
 
                     if int(words[5]) == -1:
-                        number_of_inconclusive_tests = number_of_inconclusive_tests + 1
+                        number_of_inconclusive_tests = (
+                            number_of_inconclusive_tests + 1)
                         ilist = ilist + [words[1]]
 
-                elif (words[3] == "***")  or (words[4] == "***") or (words[5] == "***"):
-                    number_of_inconclusive_tests = number_of_inconclusive_tests + 1
+                elif (words[3] == "***" or words[4] == "***" or
+                      words[5] == "***"):
+                    number_of_inconclusive_tests = (
+                        number_of_inconclusive_tests + 1)
 
-            elif (startdate <= creationdate) and (creationdate <= enddate) and  (pbsid == "***"):
-                print ("In range")
+            elif (startdate <= creationdate and creationdate <= enddate and
+                  pbsid == "***"):
+                print("In range")
                 number_of_tests = number_of_tests + 1
                 number_of_inconclusive_tests = number_of_inconclusive_tests + 1
                 ilist = ilist + [words[1]]
-                
-            print ("number of  tests = " + number_of_tests )
-            print ("====")
-            print
-            print
+
+            print("number of  tests = " + number_of_tests)
+            print("====")
+            print()
+            print()
 
             #Agressive check
-            #if (words[2].find('.nid') >= 0) :
+            #if (words[2].find('.nid') >= 0):
             #    if words[5].isdigit():
             #        if int(words[5]) == 0:
             #            number_of_passed_tests = number_of_passed_tests + 1
-
             #    if words[5].isdigit():
-            #        if (int(words[5])==1) or (words[3].find('***') >= 0) or (words[4].find('***') >= 0) or ( words[5].find('***') >= 0):
+            #        if ((int(words[5])==1) or (words[3].find('***') >= 0) or
+            #  (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
             #            number_of_failed_tests = number_of_failed_tests + 1
             #    elif words[5].find('***') >= 0:
-            #        if (words[3].find('***') >= 0) or (words[4].find('***') >= 0) or ( words[5].find('***') >= 0):
+            #        if ((words[3].find('***') >= 0) or
+            #      (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
             #            number_of_failed_tests = number_of_failed_tests + 1
             #else:
             #    number_of_tests = number_of_tests - 1
 
-    shash = {"number_of_tests" : number_of_tests,
-             "number_of_passed_tests" : number_of_passed_tests,
-             "number_of_failed_tests" : number_of_failed_tests,
-             "number_of_inconclusive_tests" : number_of_inconclusive_tests,
-             "failed_jobs" : flist,
-             "inconclusive_jobs" : ilist}
+    shash = {"number_of_tests": number_of_tests,
+             "number_of_passed_tests": number_of_passed_tests,
+             "number_of_failed_tests": number_of_failed_tests,
+             "number_of_inconclusive_tests": number_of_inconclusive_tests,
+             "failed_jobs": flist,
+             "inconclusive_jobs": ilist}
 
     return shash
 
+#------------------------------------------------------------------------------
