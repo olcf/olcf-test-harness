@@ -450,92 +450,91 @@ def write_system_log(test_id, event_name, event_value,
 
 #------------------------------------------------------------------------------
 
-class JobExitStatus:
-    """
-    """
-
-    def __init__(self):
-        """Constructor."""
-        self.status = {"Pass_Fail": 0,
-                       "Hardware_Failure": 0,
-                       "Performance_Failure": 0,
-                       "Incorrect_Result": 0}
-
-    def change_job_exit_status(self, category="Pass_Fail",
-                               new_status="FAILURE"):
-        """Change the exit status for a specific failure."""
-
-        if category == "Pass_Fail":
-            self.add_pass_fail(pf_failure=new_status)
-        elif category == "Hardware_Failure":
-            self.add_hardware_failure(hw_failure=new_status)
-        elif category == "Performance_Failure":
-            self.add_performance_failure(pf_failure=new_status)
-        elif category == "Incorrect_Result":
-            self.add_incorrect_result_failure(ir_failure=new_status)
-        else:
-            print("Warning! The category " + category + " is not defined.")
-            print("The failure will be categorized a general Pass_Fail.")
-            self.add_pass_fail(pf_failure=new_status)
-
-    def add_pass_fail(self, pf_failure="NO_FAILURE"):
-        """
-        """
-        if pf_failure == "FAILURE":
-            self.status["Pass_Fail"] = 1
-        elif pf_failure == "NO_FAILURE":
-            self.status["Pass_Fail"] = 0
-
-    def add_hardware_failure(self, hw_failure="NO_FAILURE"):
-        """
-        """
-        if hw_failure == "FAILURE":
-            self.status["Hardware_Failure"] = 1
-        elif hw_failure == "NO_FAILURE":
-            self.status["Hardware_Failure"] = 0
-
-    def add_performance_failure(self, pf_failure="NO_FAILURE"):
-        """
-        """
-        if pf_failure == "FAILURE":
-            self.status["Performance_Failure"] = 1
-        elif pf_failure == "NO_FAILURE":
-            self.status["Performance_Failure"] = 0
-
-    def add_incorrect_result_failure(self, ir_failure="NO_FAILURE"):
-        """
-        """
-        if ir_failure == "FAILURE":
-            self.status["Incorrect_Result"] = 1
-        elif ir_failure == "NO_FAILURE":
-            self.status["Incorrect_Result"] = 0
-
-#------------------------------------------------------------------------------
-
-def convert_to_job_status(job_exit_status):
-    """Convert job status to numerical value. """
-
-    tmpsum = 0
-
-    ival = job_exit_status.status["Pass_Fail"]
-    tmpsum = tmpsum + ival*1
-
-    ival = job_exit_status.status["Hardware_Failure"]
-    tmpsum = tmpsum + ival*2
-
-    ival = job_exit_status.status["Performance_Failure"]
-    tmpsum = tmpsum + ival*4
-
-    ival = job_exit_status.status["Incorrect_Result"]
-    tmpsum = tmpsum + ival*8
-
-    return tmpsum
-
+#class JobExitStatus:
+#    """Class to tally different kinds of job errors."""
+#
+#    def __init__(self):
+#        """Constructor."""
+#        self.status = {"Pass_Fail": 0,
+#                       "Hardware_Failure": 0,
+#                       "Performance_Failure": 0,
+#                       "Incorrect_Result": 0}
+#
+#    def change_job_exit_status(self, category="Pass_Fail",
+#                               new_status="FAILURE"):
+#        """Change the exit status for a specific failure."""
+#
+#        if category == "Pass_Fail":
+#            self.add_pass_fail(pf_failure=new_status)
+#        elif category == "Hardware_Failure":
+#            self.add_hardware_failure(hw_failure=new_status)
+#        elif category == "Performance_Failure":
+#            self.add_performance_failure(pf_failure=new_status)
+#        elif category == "Incorrect_Result":
+#            self.add_incorrect_result_failure(ir_failure=new_status)
+#        else:
+#            print("Warning! The category " + category + " is not defined.")
+#            print("The failure will be categorized a general Pass_Fail.")
+#            self.add_pass_fail(pf_failure=new_status)
+#
+#    def add_pass_fail(self, pf_failure="NO_FAILURE"):
+#        """
+#        """
+#        if pf_failure == "FAILURE":
+#            self.status["Pass_Fail"] = 1
+#        elif pf_failure == "NO_FAILURE":
+#            self.status["Pass_Fail"] = 0
+#
+#    def add_hardware_failure(self, hw_failure="NO_FAILURE"):
+#        """
+#        """
+#        if hw_failure == "FAILURE":
+#            self.status["Hardware_Failure"] = 1
+#        elif hw_failure == "NO_FAILURE":
+#            self.status["Hardware_Failure"] = 0
+#
+#    def add_performance_failure(self, pf_failure="NO_FAILURE"):
+#        """
+#        """
+#        if pf_failure == "FAILURE":
+#            self.status["Performance_Failure"] = 1
+#        elif pf_failure == "NO_FAILURE":
+#            self.status["Performance_Failure"] = 0
+#
+#    def add_incorrect_result_failure(self, ir_failure="NO_FAILURE"):
+#        """
+#        """
+#        if ir_failure == "FAILURE":
+#            self.status["Incorrect_Result"] = 1
+#        elif ir_failure == "NO_FAILURE":
+#            self.status["Incorrect_Result"] = 0
+#
+##------------------------------------------------------------------------------
+#
+#def convert_to_job_status(job_exit_status):
+#    """Convert job status to numerical value. """
+#
+#    tmpsum = 0
+#
+#    ival = job_exit_status.status["Pass_Fail"]
+#    tmpsum = tmpsum + ival*1
+#
+#    ival = job_exit_status.status["Hardware_Failure"]
+#    tmpsum = tmpsum + ival*2
+#
+#    ival = job_exit_status.status["Performance_Failure"]
+#    tmpsum = tmpsum + ival*4
+#
+#    ival = job_exit_status.status["Incorrect_Result"]
+#    tmpsum = tmpsum + ival*8
+#
+#    return tmpsum
+#
 #------------------------------------------------------------------------------
 
 def parse_status_file(path_to_status_file, startdate, enddate,
                       mycomputer_with_events_record):
-    """Function: parse_status_file."""
+    """Function: parse_status_file. Parser for rgt_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
@@ -620,7 +619,7 @@ def parse_status_file(path_to_status_file, startdate, enddate,
 #------------------------------------------------------------------------------
 
 def parse_status_file2(path_to_status_file):
-    """Function: parse_status_file. """
+    """Function: parse_status_file2. Parser for rgt_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
@@ -695,8 +694,7 @@ def parse_status_file2(path_to_status_file):
 
 def summarize_status_file(path_to_status_file, startdate, enddate,
                           mycomputer_with_events_record):
-    """
-    """
+    """Parse, collect summary info from rgt_status.txt."""
     sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
