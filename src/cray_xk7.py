@@ -5,6 +5,9 @@
 #
 
 from base_machine import BaseMachine
+from aprun import Aprun
+from lsf import LSF
+from pbs import PBS
 
 class CrayXK7(BaseMachine):
 
