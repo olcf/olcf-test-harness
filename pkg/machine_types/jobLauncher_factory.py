@@ -1,5 +1,5 @@
-from aprun import Aprun
-from poe import Poe
+from .aprun import Aprun
+from .poe import Poe
 
 class JobLauncherFactory:
 

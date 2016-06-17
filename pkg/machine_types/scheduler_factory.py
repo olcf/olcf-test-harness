@@ -1,6 +1,6 @@
 import os
-from lsf import LSF
-from pbs import PBS
+from .lsf import LSF
+from .pbs import PBS
 
 class SchedulerFactory:
 

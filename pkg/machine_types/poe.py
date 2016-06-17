@@ -4,7 +4,7 @@
 #
 #
 
-from base_jobLauncher import BaseJobLauncher
+from .base_jobLauncher import BaseJobLauncher
 
 class Poe(BaseJobLauncher):
 
