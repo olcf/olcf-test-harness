@@ -4,8 +4,8 @@
 # 
 #
 
-from scheduler_factory import SchedulerFactory
-from jobLauncher_factory import JobLauncherFactory
+from .scheduler_factory import SchedulerFactory
+from .jobLauncher_factory import JobLauncherFactory
 
 class BaseMachine:
     
