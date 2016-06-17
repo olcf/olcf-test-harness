@@ -18,7 +18,7 @@ from machine_types.poe import Poe
 
 #fc = MachineFactory.create_machine('Chester','XK7','PBS')
 fc = MachineFactory.create_machine()
-print fc
+print(fc)
 
 #my_scheduler = LSF()
 #print my_scheduler.get_scheduler_name()
