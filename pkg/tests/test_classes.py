@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from machine_types.cray_xk7 import CrayXK7 
+from ..machine_types.cray_xk7 import CrayXK7 
 from machine_types.ibm_power8 import IBMpower8
 from machine_types.machine_factory import MachineFactory
 from machine_types.lsf import LSF
