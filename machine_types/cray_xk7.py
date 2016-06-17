@@ -4,7 +4,7 @@
 #
 #
 
-from machine_types.machines.base_machine import BaseMachine
+from base_machine import BaseMachine
 
 class CrayXK7(BaseMachine):
 

@@ -4,7 +4,7 @@
 #
 #
 
-from machine_types.schedulers.base_scheduler import BaseScheduler
+from base_scheduler import BaseScheduler
 
 class LSF(BaseScheduler):
 

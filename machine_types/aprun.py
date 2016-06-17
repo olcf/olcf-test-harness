@@ -4,7 +4,7 @@
 #
 #
 
-from machine_types.job_launchers.base_jobLauncher import BaseJobLauncher
+from base_jobLauncher import BaseJobLauncher
 
 class Aprun(BaseJobLauncher):
 

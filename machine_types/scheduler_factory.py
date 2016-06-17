@@ -1,6 +1,6 @@
 import os
-from machine_types.schedulers.lsf import LSF
-from machine_types.schedulers.pbs import PBS
+from lsf import LSF
+from pbs import PBS
 
 class SchedulerFactory:
 
