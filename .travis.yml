@@ -6,4 +6,4 @@ python:
 # command to install dependencies
 # install: "pip install -r requirements.txt"
 # command to run tests
-script: python tests/test_classes.py
+script: python -m pkg.tests.test_classes
