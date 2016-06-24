@@ -60,7 +60,7 @@ class StatusFile:
     #                 'Incorrect_Result': 3
     #                }
 
-    #---Event names.
+    #---Event identifiers.
 
     EVENT_LOGGING_START = 'LOGGING_START'
     EVENT_BUILD_START = 'BUILD_START'
@@ -72,6 +72,18 @@ class StatusFile:
     EVENT_BINARY_EXECUTE_END = 'BINARY_EXECUTE_END'
     EVENT_CHECK_START = 'CHECK_START'
     EVENT_CHECK_END = 'CHECK_END'
+
+    EVENT_LIST = [
+        EVENT_LOGGING_START,
+        EVENT_BUILD_START,
+        EVENT_BUILD_END,
+        EVENT_SUBMIT_START,
+        EVENT_SUBMIT_END,
+        EVENT_JOB_QUEUED,
+        EVENT_BINARY_EXECUTE_START,
+        EVENT_BINARY_EXECUTE_END,
+        EVENT_CHECK_START,
+        EVENT_CHECK_END]
 
     EVENT_DICT = {
         EVENT_LOGGING_START:
@@ -95,6 +107,45 @@ class StatusFile:
         EVENT_CHECK_END:
             ['Event_200_check_end.txt', 'check', 'end']
     }
+
+#    @staticmethod
+#    def event_name_from_event_filename(event_filename):
+#        """
+#        """
+#        assert isinstance(event_filename, str)
+#        return re.subst(r'^Event_[^_]+_', '',
+#               re.subst(r'.txt$', '', event_filename))
+
+    #---Field identifiers.
+
+    FIELDS_PER_TEST_INSTANCE = [
+        'rgt_system_log_tag',
+        'user',
+        'rgt_pbs_job_accnt_id',
+        'rgt_path_to_sspace',
+        'path_to_rgt_package',
+        'build_directory',
+        'workdir',
+        'run_archive',
+        'cwd',
+        'app',
+        'test',
+        'test_id',
+        'test_instance']
+    
+    FIELDS_PER_EVENT = [
+        'job_id',
+        'event_filename',
+        'job_status',
+        'event_time',
+        'event_name',
+        'event_type',
+        'event_subtype',
+        'event_value']
+
+    FIELDS_SPLUNK_SPECIAL = ['job_status']
+
+    NO_VALUE = '[NO_VALUE]'
 
     #################
     # Class methods #
@@ -215,60 +266,65 @@ class StatusFile:
         status_file.writelines(records)
         status_file.close()
 
-    def log_event(self, event, event_status=None):
-        """Official entrypoint to log a harness execution event."""
-        #---THE OFFICIAL TIMESTAMP FOR THE EVENT.
+    #----------
+
+    def log_event(self, event_id, event_value=None):
+        """Official function to log a harness execution event."""
+
+        #---THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
         event_time = datetime.datetime.now().isoformat()
 
-        if event in StatusFile.EVENT_DICT:
-            event_file_name = StatusFile.EVENT_DICT[event][0]
-            event_name = StatusFile.EVENT_DICT[event][1]
-            event_value = StatusFile.EVENT_DICT[event][2]
+        if event_id in StatusFile.EVENT_DICT:
+            event_filename = StatusFile.EVENT_DICT[event_id][0]
+            event_type = StatusFile.EVENT_DICT[event_id][1]
+            event_subtype = StatusFile.EVENT_DICT[event_id][2]
         else:
-            print('Warning: event not recognized. ' + event)
+            print('Warning: event not recognized. ' + event_id)
             #TODO: figure out how to treat warnings, assertions, etc.
 
         dir_head = os.path.split(os.getcwd())[0]
         file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
-                                 event_file_name)
-
+                                 event_filename)
         if os.path.exists(file_path):
             print('Warning: event log file already exists. ' + file_path)
-        #---THE OFFICIAL RECORD OF THE OCCURRENCE OF AN EVENT.
+
+        #---THE FOLLOWING CREATES THE OFFICIAL RECORD OF
+        #---THE OCCURRENCE OF AN EVENT.
+        status_info = get_verbose_status_info(self.__test_id, event_type,
+                                              event_subtype, event_value,
+                                              event_time, event_filename)
+        event_record_string = event_time + '\t' + (
+            str(event_value) if event_value is not None else '')
+        for key_value in status_info:
+            event_record_string += '\t' + key_value[0] + '=' + key_value[1]
+        event_record_string += '\n'
+
         file_ = open(file_path, 'w')
-        file_.write(event_time)
-        file_.write('\t' + (str(event_status) if event_status is not None
-                            else ''))
-        status_info = get_verbose_status_info(self.__test_id, event_name,
-                                              event_value, event_status,
-                                              event_time)
-        for pair in status_info:
-            file_.write('\t' + pair[0] + '=' + pair[1])
-        file_.write('\n')
+        file_.write(event_record_string)
         file_.close()
 
-        self.__write_system_log(event_name, event_value, event_status,
-                                event_time)
+        self.__write_system_log(event_type, event_subtype, event_value,
+                                event_time, event_filename)
 
-        #elif event == StatusFile.EVENT_BUILD_START:
+        #elif event_id == StatusFile.EVENT_BUILD_START:
         #    pass
-        if event == StatusFile.EVENT_BUILD_END:
-            self.add_result(event_status, mode="Add_Build_Result")
-        #elif event == StatusFile.EVENT_SUBMIT_START:
+        if event_id == StatusFile.EVENT_BUILD_END:
+            self.add_result(event_value, mode="Add_Build_Result")
+        #elif event_id == StatusFile.EVENT_SUBMIT_START:
         #    pass
-        elif event == StatusFile.EVENT_SUBMIT_END:
-            self.add_result(event_status, mode="Add_Submit_Result")
-        elif event == StatusFile.EVENT_JOB_QUEUED:
-            self.add_result(event_status, mode="Add_Job_ID")
+        elif event_id == StatusFile.EVENT_SUBMIT_END:
+            self.add_result(event_value, mode="Add_Submit_Result")
+        elif event_id == StatusFile.EVENT_JOB_QUEUED:
+            self.add_result(event_value, mode="Add_Job_ID")
             self.add_result('-1', mode="Add_Run_Aborning")
-        elif event == StatusFile.EVENT_BINARY_EXECUTE_START:
-            self.add_result(event_status, mode="Add_Binary_Running")
-        #elif event == StatusFile.EVENT_BINARY_EXECUTE_END:
+        elif event_id == StatusFile.EVENT_BINARY_EXECUTE_START:
+            self.add_result(event_value, mode="Add_Binary_Running")
+        #elif event_id == StatusFile.EVENT_BINARY_EXECUTE_END:
         #    pass
-        #elif event == StatusFile.EVENT_CHECK_START:
+        #elif event_id == StatusFile.EVENT_CHECK_START:
         #    pass
-        elif event == StatusFile.EVENT_CHECK_END:
-            self.add_result(event_status, mode="Add_Run_Result")
+        elif event_id == StatusFile.EVENT_CHECK_END:
+            self.add_result(event_value, mode="Add_Run_Result")
 
         return event_time
 
@@ -295,6 +351,8 @@ class StatusFile:
             file_obj.write(StatusFile.header)
             file_obj.close()
 
+    #----------
+
     def __add_test_instance(self, event_time):
         """Start new line in master status file for app/test."""
         file_obj = open(self.__path_to_file, "a")
@@ -303,104 +361,129 @@ class StatusFile:
         file_obj.write(format_)
         file_obj.close()
 
+    #----------
+
     def __write_system_log(self, event_name, event_value, event_status,
-                           event_time):
+                           event_time, event_filename):
         """Write a system log entry for an event."""
         write_system_log(self.__test_id, event_name, event_value,
-                         event_status, event_time)
+                         event_status, event_time, event_filename)
 
 #------------------------------------------------------------------------------
 
-def get_verbose_status_info(test_id, event_name, event_value,
-                            event_status, event_time):
+def get_verbose_status_info(test_id, event_type, event_subtype,
+                            event_value, event_time, event_filename):
     """Create a data structure with verbose info for an event."""
+
+    NO_VALUE = StatusFile.NO_VALUE
+
+    #---Set up dicts to capture info.
+
+    test_instance_info = {}
+    event_info = {}
 
     #---Construct fields to be used for log entry.
 
-    user = os.environ['USER']
+    test_instance_info['user'] = os.environ['USER']
+    test_instance_info['cwd'] = os.getcwd()
 
-    cwd = os.getcwd()
-    (dir_head1, dir_scripts) = os.path.split(cwd)
+    (dir_head1, dir_scripts) = os.path.split(test_instance_info['cwd'])
     assert dir_scripts == 'Scripts', (
-        'write_system_log function being executed from wrong directory.')
-    (dir_head2, test) = os.path.split(dir_head1)
-    app = os.path.split(dir_head2)[1]
+        'harness function being executed from wrong directory.')
+    (dir_head2, test_) = os.path.split(dir_head1)
+    test_instance_info['test'] = test_
+    test_instance_info['app'] = os.path.split(dir_head2)[1]
+    test_instance_info['test_id'] = test_id
+    test_instance_info['test_instance'] = (
+        test_instance_info['app'] + ',' +
+        test_instance_info['test'] + ',' +
+        test_instance_info['test_id'])
 
     dir_status = os.path.join(dir_head1, 'Status')
     dir_status_this_test = os.path.join(dir_status, test_id)
 
+    run_archive_all = os.path.join(dir_head1, 'Run_Archive')
+    test_instance_info['run_archive'] = os.path.join(run_archive_all, test_id)
+
+    test_instance_info['rgt_path_to_sspace'] = os.environ['RGT_PATH_TO_SSPACE']
+
+    test_instance_info['build_directory'] = os.path.join(
+        test_instance_info['rgt_path_to_sspace'],
+        test_instance_info['app'],
+        test_instance_info['test'],
+        test_instance_info['test_id'], 'build_directory')
+
+    test_instance_info['workdir'] = os.path.join(
+        test_instance_info['rgt_path_to_sspace'],
+        test_instance_info['app'],
+        test_instance_info['test'],
+        test_instance_info['test_id'], 'workdir')
+
+    test_instance_info['rgt_pbs_job_accnt_id'] = (
+        os.environ['RGT_PBS_JOB_ACCNT_ID'])
+
+    test_instance_info['path_to_rgt_package'] = (
+        os.environ['PATH_TO_RGT_PACKAGE'])
+
+    test_instance_info['rgt_system_log_tag'] = (os.environ['RGT_SYSTEM_LOG_TAG']
+               if 'RGT_SYSTEM_LOG_TAG' in os.environ else NO_VALUE)
+
+    #---
+
+    event_info['event_name'] = event_type + '_' + event_subtype
+    event_info['event_type'] = event_type
+    event_info['event_subtype'] = event_subtype
+    event_info['event_time'] = event_time
+    event_info['event_filename'] = event_filename
+    event_info['event_value'] = (
+        str(event_value) if event_value is not None else NO_VALUE)
+
     file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
     if os.path.exists(file_job_id):
         file_ = open(file_job_id, 'r')
-        job_id = file_.read()
+        job_id_ = file_.read()
         file_.close()
-        job_id = re.sub(' ', '', job_id.split('\n')[0])
+        event_info['job_id'] = re.sub(' ', '', job_id_.split('\n')[0])
     else:
-        job_id = ''
+        event_info['job_id'] = NO_VALUE
 
     file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
     if os.path.exists(file_job_status):
         file_ = open(file_job_status, 'r')
-        job_status = file_.read()
+        job_status_ = file_.read()
         file_.close()
-        job_status = re.sub(' ', '', job_status.split('\n')[0])
+        event_info['job_status'] = re.sub(' ', '', job_status_.split('\n')[0])
     else:
-        job_status = ''
-
-    run_archive_all = os.path.join(dir_head1, 'Run_Archive')
-    run_archive = os.path.join(run_archive_all, test_id)
-
-    rgt_path_to_sspace = os.environ['RGT_PATH_TO_SSPACE']
-
-    build_directory = os.path.join(rgt_path_to_sspace, app, test,
-                                   test_id, 'build_directory')
-
-    workdir = os.path.join(rgt_path_to_sspace, app, test,
-                           test_id, 'workdir')
-
-    rgt_pbs_job_accnt_id = os.environ['RGT_PBS_JOB_ACCNT_ID']
-
-    path_to_rgt_package = os.environ['PATH_TO_RGT_PACKAGE']
+        event_info['job_status'] = NO_VALUE
 
     #---Construct status_info.
 
-    event_status_string = str(event_status) if event_status is not None else ''
-
     status_info = []
 
-    status_info.append(['user', user])
-    status_info.append(['rgt_pbs_job_accnt_id', rgt_pbs_job_accnt_id])
-    status_info.append(['rgt_path_to_sspace', rgt_path_to_sspace])
-    status_info.append(['path_to_rgt_package', path_to_rgt_package])
-    status_info.append(['build_directory', build_directory])
-    status_info.append(['workdir', workdir])
-    status_info.append(['run_archive', run_archive])
-    status_info.append(['cwd', cwd])
-    status_info.append(['app', app])
-    status_info.append(['test', test])
-    status_info.append(['test_id', test_id])
-    status_info.append(['job_id', job_id])
-    status_info.append(['job_status', job_status])
-    status_info.append(['event_time', event_time])
-    status_info.append(['event_name', event_name])
-    status_info.append(['event_value', event_value])
-    status_info.append(['event_status', event_status_string])
+    #---NOTE: order matters here.  It is assumed (by Splunk) that
+    #---all items strictly after test_instance will be invariant
+    #---across all events for a given test instance.
+    assert StatusFile.FIELDS_PER_TEST_INSTANCE[-1] == 'test_instance'
+
+    for field in StatusFile.FIELDS_PER_TEST_INSTANCE:
+        status_info.append([field, test_instance_info[field]])
+
+    for field in StatusFile.FIELDS_PER_EVENT:
+        status_info.append([field, event_info[field]])
+
+
+    for f in StatusFile.FIELDS_SPLUNK_SPECIAL:
+        #---Something extra to help Splunk:
+        status_info.append([event_info['event_name']+'_'+f,
+                            event_info[f]])
 
     return status_info
 
 #------------------------------------------------------------------------------
 
-def write_system_log(test_id, event_name, event_value,
-                     event_status, event_time):
+def write_system_log(test_id, event_type, event_subtype,
+                     event_value, event_time, event_filename):
     """Write a system log entry for an event."""
-
-    #---Get tag from environment, if set by user.
-
-    rgt_system_log_tag = os.environ['RGT_SYSTEM_LOG_TAG'] \
-        if 'RGT_SYSTEM_LOG_TAG' in os.environ else ''
-
-    if rgt_system_log_tag == '':
-        return
 
     #---Use Unix logger command unless (valid) directory requested.
 
@@ -415,20 +498,27 @@ def write_system_log(test_id, event_name, event_value,
 
     #---Construct log string.
 
-    status_info = get_verbose_status_info(test_id, event_name, event_value,
-                                          event_status, event_time)
+    status_info = get_verbose_status_info(test_id, event_type, event_subtype,
+                                          event_value, event_time,
+                                          event_filename)
 
     #TODO: make quote a function ...
 
     quote = '\\"' if is_using_unix_logger else '"'
 
-    log_string = (
-        'rgt_system_log_tag=' + quote + rgt_system_log_tag + quote + ' ')
+    log_string = ''
 
-    for pair in status_info:
-        log_string += pair[0] + '=' + quote + pair[1] + quote
+    for i, key_value in enumerate(status_info):
+        if i != 0:
+            log_string += ' '
+        log_string += key_value[0] + '=' + quote + key_value[1] + quote
+        if key_value[0] == 'rgt_system_log_tag':
+            rgt_system_log_tag = key_value[1]
 
     #---Write log.
+
+    if rgt_system_log_tag == '':
+        return
 
     if is_using_unix_logger:
         os.system('logger -p local0.notice "' + log_string + '"')
