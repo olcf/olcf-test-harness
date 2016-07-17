@@ -6,12 +6,14 @@
 
 from .scheduler_factory import SchedulerFactory
 from .jobLauncher_factory import JobLauncherFactory
+from abc import abstractmethod, ABCMeta
+import os
 
-class BaseMachine:
+class BaseMachine(metaclass=ABCMeta):
     
     """ BaseMachine represents a compute resource and has the following
         properties:
-    
+
     Attributes:
         name: string representing the system's name
         scheduler: an object of the BaseScheduler class
@@ -26,13 +28,14 @@ class BaseMachine:
     """
 
     def __init__(self,name,scheduler_type,jobLauncher_type,numNodes,
-                 numSockets,numCoresPerSocket):
+                 numSockets,numCoresPerSocket,rgt_test_input_file):
         self.__name = name 
         self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
         self.__jobLauncher = JobLauncherFactory.create_jobLauncher(jobLauncher_type)
         self.__numNodes = numNodes
         self.__numSockets = numSockets
         self.__numCoresPerSocket = numCoresPerSocket
+        self.__rgt_test_input_file = rgt_test_input_file
 
     def print_machine_info(self):
         """ Print information about the machine"""
@@ -45,6 +48,10 @@ class BaseMachine:
         """ Return a string with the system's name."""
         return self.__name
 
+    def get_rgt_input_file_name(self):
+        """ Return a string with the system's name."""
+        return self.__rgt_test_input_file
+
     def get_scheduler_type(self):
         """ Return a string with the system's name."""
         return self.__scheduler.get_scheduler_type()
@@ -56,6 +63,23 @@ class BaseMachine:
 
     def set_numNodes(self,numNodes):
         self.__numNodes = numNodes
+
+    @abstractmethod
+    def read_rgt_test_input(self):
+        if os.path.isfile(self.get_rgt_input_file_name()):
+            print("Reading input file")
+        else:
+            print("No input found. Provide your own scripts")
+
+    @abstractmethod
+    def make_batch_script(self):
+        print("I'm making a batch script in the base class")
+        return
+
+    @abstractmethod
+    def submit_batch_script(self):
+        return
+
 
 if __name__ == "__main__":
     print("This is the BaseMachine class!")
