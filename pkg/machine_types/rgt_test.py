@@ -36,6 +36,9 @@ class RgtTest():
     def get_batchqueue(self):
         return self.__batchqueue
 
+    def get_total_processes(self):
+        return str(self.__total_processes)
+
     def print_test_parameters(self):
         print("RGT Test parameters")
         print("===================")
