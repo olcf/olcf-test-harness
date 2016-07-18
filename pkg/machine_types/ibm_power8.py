@@ -153,6 +153,7 @@ class IBMpower8(BaseMachine):
             (re.compile("__jobname__"),self.__rgt_test.get_jobname()),
             (re.compile("__walltime__"),self.__rgt_test.get_walltime()),
             (re.compile("__batchqueue__"),self.__rgt_test.get_batchqueue()),
+            (re.compile("__total_processes__"),self.__rgt_test.get_total_processes()),
            ]
 
         fileobj = open(self.__rgt_test.get_batchfilename(),"w")
@@ -166,6 +167,7 @@ class IBMpower8(BaseMachine):
 
     def submit_batch_script(self):
         print("Submitting batch script for Power8")
+        self.submit_to_scheduler(self.__rgt_test.get_batchfilename())
         return
 
 if __name__ == "__main__":
