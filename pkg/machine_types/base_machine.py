@@ -49,12 +49,16 @@ class BaseMachine(metaclass=ABCMeta):
         return self.__name
 
     def get_rgt_input_file_name(self):
-        """ Return a string with the system's name."""
+        """ Return a string with the test input file name."""
         return self.__rgt_test_input_file
 
     def get_scheduler_type(self):
         """ Return a string with the system's name."""
         return self.__scheduler.get_scheduler_type()
+
+    def get_scheduler_template_file_name(self):
+        """ Return a string with the name of the scheduler's template file."""
+        return self.__scheduler.get_scheduler_template_file_name()
 
     def print_jobLauncher_info(self):
         """ Print information about the machine's job launcher."""
