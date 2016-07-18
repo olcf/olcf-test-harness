@@ -60,6 +60,11 @@ class BaseMachine(metaclass=ABCMeta):
         """ Return a string with the name of the scheduler's template file."""
         return self.__scheduler.get_scheduler_template_file_name()
 
+    def submit_to_scheduler(self,batchfilename):
+        """ Return the scheduler object."""
+        self.__scheduler.submit_job(batchfilename)
+        return
+
     def print_jobLauncher_info(self):
         """ Print information about the machine's job launcher."""
         print("Job Launcher Information")
