@@ -18,9 +18,10 @@ class LSF(BaseScheduler):
         self.__walltimeOpt = '-W'
         self.__numTasksOpt = '-n'
         self.__jobNameOpt = '-N'
+        self.__templateFile = 'lsf.template.x'
         BaseScheduler.__init__(self,self.__name,self.__submitCmd,self.__statusCmd,
                                self.__deleteCmd,self.__walltimeOpt,self.__numTasksOpt,
-                               self.__jobNameOpt)
+                               self.__jobNameOpt,self.__templateFile)
 
 if __name__ == '__main__':
     print('This is the LSF scheduler class')
