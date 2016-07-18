@@ -16,7 +16,7 @@ class BaseScheduler:
     """
     
     def __init__(self,type,submitCmd,statusCmd,deleteCmd,
-                 walltimeOpt,numTasksOpt,jobNameOpt):
+                 walltimeOpt,numTasksOpt,jobNameOpt,templateFile):
         self.__type = type
         self.__submitCmd = submitCmd
         self.__statusCmd = statusCmd
@@ -24,9 +24,13 @@ class BaseScheduler:
         self.__walltimeOpt = walltimeOpt
         self.__numTasksOpt = numTasksOpt
         self.__jobNameOpt = jobNameOpt
+        self.__templateFile = templateFile
 
     def get_scheduler_type(self):
         return self.__type
+
+    def get_scheduler_template_file_name(self):
+        return self.__templateFile
 
     def print_scheduler_info(self):
         print("--------------------------------------")
@@ -37,6 +41,7 @@ class BaseScheduler:
         print("Walltime Option = " + self.__walltimeOpt)
         print("Number of tasks Option = " + self.__numTasksOpt)
         print("Job Name Option = " + self.__jobNameOpt)
+        print("Template File = " + self.__templateFile)
         print("--------------------------------------")
 
 if __name__ == "__main__":
