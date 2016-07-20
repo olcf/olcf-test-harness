@@ -17,12 +17,12 @@ from libraries.status_file import StatusFile
 
 #------------------------------------------------------------------------------
 
-def usage():
+def command_usage():
     """Return string describing usage."""
 
-    SF = StatusFile #---Convenience.
+    stf = StatusFile #---Convenience.
 
-    EVENTS = ['_'.join(SF.EVENT_DICT[event][1:3]) for event in SF.EVENT_LIST]
+    events = ['_'.join(stf.EVENT_DICT[event][1:3]) for event in stf.EVENT_LIST]
 
     usage = """
 Using the rgt_status command
@@ -40,16 +40,16 @@ event - an occurrence during the execution of a test_instance that is recorded
 
   For the database, for consistency all missing events that did not trigger
   for a test_instance are represented as a record with fields filled out
-  with the value """ + ('"' + SF.NO_VALUE + '"') + """.
+  with the value """ + ('"' + stf.NO_VALUE + '"') + """.
 
   The currently defined events are:
-  """ + ' '.join(EVENTS) + """
+  """ + ' '.join(events) + """
 
 field - the name of a piece of information recorded for an event.  The
   event file consist of a string containing "<field>=<value>" pairs.
 
   For the database, all missing fields of an event record are filled out
-  with the value """ + ('"' + SF.NO_VALUE + '"') + """.
+  with the value """ + ('"' + stf.NO_VALUE + '"') + """.
 
 per-test_instance field, per-event field - some fields are expected to have
   possibly different values across the events for a single test_instance
@@ -57,15 +57,15 @@ per-test_instance field, per-event field - some fields are expected to have
   events (per-tes_instance fields).
 
   The currently defined per-test_instance fields are:
-  """ + ' '.join(SF.FIELDS_PER_TEST_INSTANCE) + """
+  """ + ' '.join(stf.FIELDS_PER_TEST_INSTANCE) + """
 
   The currently defined per-event fields are:
-  """ + ' '.join(SF.FIELDS_PER_EVENT) + """
+  """ + ' '.join(stf.FIELDS_PER_EVENT) + """
 
 event fields - the set of all fields associated with any event.
 
   The currently defined event fields are:
-  """ + ' '.join(SF.FIELDS_PER_TEST_INSTANCE + SF.FIELDS_PER_EVENT) + """
+  """ + ' '.join(stf.FIELDS_PER_TEST_INSTANCE + stf.FIELDS_PER_EVENT) + """
 
 test_instance fields - to represent all the fields represented by all events
   for a single test_instance, it is necessary to do some consolidation of field
@@ -75,8 +75,8 @@ test_instance fields - to represent all the fields represented by all events
     event, of the form "<new_field_name> = <event_name>_<original_field_name>.
 
   The currently defined test_instance fields are:
-  """ + ' '.join(SF.FIELDS_PER_TEST_INSTANCE +
-                 [e+'_'+f for e in EVENTS for f in SF.FIELDS_PER_EVENT]) + """
+  """ + ' '.join(stf.FIELDS_PER_TEST_INSTANCE +
+                 [e+'_'+f for e in events for f in stf.FIELDS_PER_EVENT]) + """
 
 
 Usage
@@ -86,7 +86,7 @@ The typical usage is
 
   rgt_status --query "<querystring>"
 
-Note that when in the bash shell, "<querystring>" can run multiple lines.
+Note that when in the bash shell, "<querystring>" can span multiple lines.
 Also, multiple queries can be performed in one invocation; this amortizes the
 time required to load the event data:
 
@@ -96,7 +96,15 @@ Use of this command assumes the harness module is loaded and
 rgt_environmental_variables.bash.x is sourced.  It uses the current active
 rgt.input to get the app/test list it uses.
 
-the current active 
+An invocation of this command does a single "ingest" of all the
+status/event files available for all runs specified in the rgt.input file.
+From this it builds an in-memory sqlite3 database and then processes
+the queries and prints the results in order.
+
+Most of the time is spent in the ingestion process.  As an example,
+using a mockup dataset to reproduce the Titan stability test with
+~5000 test instances, it takes ~30-45 seconds to ingest from a file
+system mounted as a the NFS filesystem in NCCS.
 
 
 Sample Queries and Results
@@ -293,25 +301,22 @@ WHERE datetime(check_end_event_time)
 
     return usage
 
-
 #------------------------------------------------------------------------------
 
 def main():
-    """Main program to process rgt_status command."""
+    """Main program to process rgt_status command.
+       This is the command line interface to the StatusDatabase class
+       and its functionality."""
 
     parser = argparse.ArgumentParser(
         description='Query the RGT status database.')
     parser.add_argument('--query',
-        help='perform query using this string, in sqlite syntax',
-        action='append')
+                        help='perform query using this string (sqlite syntax)',
+                        action='append')
     parser.add_argument('--usage', help='print detailed usage information',
-        action='store_const', const=True)
+                        action='store_const', const=True)
     args = parser.parse_args()
 
-    if args.usage:
-        print(usage())
-        return
-    
     if args.query:
         sdb = StatusDatabase().load()
 
@@ -321,7 +326,11 @@ def main():
             sdb.print_query(query)
         return
 
-    print('usage: rgt_status [-h] [--query QUERY] [--usage]')
+    if args.usage:
+        print(command_usage())
+        return
+
+    parser.print_help()
 
 #------------------------------------------------------------------------------
 

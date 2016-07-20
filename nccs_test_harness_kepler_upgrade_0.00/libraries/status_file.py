@@ -12,6 +12,7 @@ Copyright (C) 2015 Oak Ridge National Laboratory, UT-Battelle, LLC.
 import os
 import datetime
 import re
+import socket
 
 #from libraries import computers_1
 
@@ -41,24 +42,24 @@ class StatusFile:
     # Name of the input file.
     FILENAME = 'rgt_status.txt'
 
-    # The timestamp log file names.
-    filename_exec_beg_timestamp = 'start_binary_execution_timestamp.txt'
-    filename_exec_end_timestamp = 'final_binary_execution_timestamp.txt'
-
-    filename_build_beg_timestamp = 'start_build_execution_timestamp.txt'
-    filename_build_end_timestamp = 'final_build_execution_timestamp.txt'
-
-    filename_submit_beg_timestamp = 'start_submit_execution_timestamp.txt'
-    filename_submit_end_timestamp = 'final_submit_execution_timestamp.txt'
+#    # The timestamp log file names.
+#    filename_exec_beg_timestamp = 'start_binary_execution_timestamp.txt'
+#    filename_exec_end_timestamp = 'final_binary_execution_timestamp.txt'
+#
+#    filename_build_beg_timestamp = 'start_build_execution_timestamp.txt'
+#    filename_build_end_timestamp = 'final_build_execution_timestamp.txt'
+#
+#    filename_submit_beg_timestamp = 'start_submit_execution_timestamp.txt'
+#    filename_submit_end_timestamp = 'final_submit_execution_timestamp.txt'
 
     # These are the entries in the input file.
     COMMENT_LINE_INDICATOR = '#'
 
-    #FAILURE_CODES = {'Pass_Fail': 0,
-    #                 'Hardware_Failure': 1,
-    #                 'Performance_Failure': 2,
-    #                 'Incorrect_Result': 3
-    #                }
+#    FAILURE_CODES = {'Pass_Fail': 0,
+#                     'Hardware_Failure': 1,
+#                     'Performance_Failure': 2,
+#                     'Incorrect_Result': 3
+#                    }
 
     #---Event identifiers.
 
@@ -121,6 +122,7 @@ class StatusFile:
     FIELDS_PER_TEST_INSTANCE = [
         'rgt_system_log_tag',
         'user',
+        'hostname',
         'rgt_pbs_job_accnt_id',
         'rgt_path_to_sspace',
         'path_to_rgt_package',
@@ -132,7 +134,7 @@ class StatusFile:
         'test',
         'test_id',
         'test_instance']
-    
+
     FIELDS_PER_EVENT = [
         'job_id',
         'event_filename',
@@ -239,7 +241,8 @@ class StatusFile:
                 words[5] = binary_running_value
 
                 dir_head = os.path.split(os.getcwd())[0]
-                path2 = os.path.join(dir_head, 'Status', test_id, 'job_status.txt')
+                path2 = os.path.join(dir_head, 'Status', test_id,
+                                     'job_status.txt')
                 file_obj2 = open(path2, 'w')
                 file_obj2.write(binary_running_value)
                 file_obj2.close()
@@ -251,7 +254,8 @@ class StatusFile:
                 words[5] = aborning_run_value
 
                 dir_head = os.path.split(os.getcwd())[0]
-                path2 = os.path.join(dir_head, 'Status', test_id, 'job_status.txt')
+                path2 = os.path.join(dir_head, 'Status', test_id,
+                                     'job_status.txt')
                 file_obj2 = open(path2, 'w')
                 file_obj2.write(aborning_run_value)
                 file_obj2.close()
@@ -269,7 +273,7 @@ class StatusFile:
     #----------
 
     def log_event(self, event_id, event_value=None):
-        """Official function to log a harness execution event."""
+        """Official function to log the occurrence of a harness event."""
 
         #---THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
         event_time = datetime.datetime.now().isoformat()
@@ -282,14 +286,7 @@ class StatusFile:
             print('Warning: event not recognized. ' + event_id)
             #TODO: figure out how to treat warnings, assertions, etc.
 
-        dir_head = os.path.split(os.getcwd())[0]
-        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
-                                 event_filename)
-        if os.path.exists(file_path):
-            print('Warning: event log file already exists. ' + file_path)
-
-        #---THE FOLLOWING CREATES THE OFFICIAL RECORD OF
-        #---THE OCCURRENCE OF AN EVENT.
+        #---THE FOLLOWING FORMS THE OFFICIAL TEXT DESCRIBING THE EVENT.
         status_info = get_verbose_status_info(self.__test_id, event_type,
                                               event_subtype, event_value,
                                               event_time, event_filename)
@@ -299,12 +296,34 @@ class StatusFile:
             event_record_string += '\t' + key_value[0] + '=' + key_value[1]
         event_record_string += '\n'
 
-        file_ = open(file_path, 'w')
+        #---Write a temporary file with the event info, then
+        #---(atomically) rename it to the permanent file,
+        #---to avoid possibility of a partially completed file.
+
+        dir_head = os.path.split(os.getcwd())[0]
+        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
+                                 event_filename)
+        if os.path.exists(file_path):
+            print('Warning: event log file already exists. ' + file_path)
+
+        file_path_partial = os.path.join(dir_head, 'Status',
+                                         str(self.__test_id),
+                                         'partial.' + event_filename)
+
+        file_ = open(file_path_partial, 'w')
         file_.write(event_record_string)
         file_.close()
 
+        #---THE FOLLOWING CREATES THE OFFICIAL MASTER INDICATOR OF THE
+        #---EVENT OCCURRING.
+        os.rename(file_path_partial, file_path)
+
+        #---Put the same event data on the system log.
+
         self.__write_system_log(event_type, event_subtype, event_value,
                                 event_time, event_filename)
+
+        #---Update the status file appropriately.
 
         #elif event_id == StatusFile.EVENT_BUILD_START:
         #    pass
@@ -375,7 +394,7 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
                             event_value, event_time, event_filename):
     """Create a data structure with verbose info for an event."""
 
-    NO_VALUE = StatusFile.NO_VALUE
+    no_value = StatusFile.NO_VALUE
 
     #---Set up dicts to capture info.
 
@@ -385,6 +404,7 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
     #---Construct fields to be used for log entry.
 
     test_instance_info['user'] = os.environ['USER']
+    test_instance_info['hostname'] = socket.gethostname()
     test_instance_info['cwd'] = os.getcwd()
 
     (dir_head1, dir_scripts) = os.path.split(test_instance_info['cwd'])
@@ -425,8 +445,9 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
     test_instance_info['path_to_rgt_package'] = (
         os.environ['PATH_TO_RGT_PACKAGE'])
 
-    test_instance_info['rgt_system_log_tag'] = (os.environ['RGT_SYSTEM_LOG_TAG']
-               if 'RGT_SYSTEM_LOG_TAG' in os.environ else NO_VALUE)
+    test_instance_info['rgt_system_log_tag'] = (
+        os.environ['RGT_SYSTEM_LOG_TAG']
+        if 'RGT_SYSTEM_LOG_TAG' in os.environ else no_value)
 
     #---
 
@@ -436,7 +457,7 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
     event_info['event_time'] = event_time
     event_info['event_filename'] = event_filename
     event_info['event_value'] = (
-        str(event_value) if event_value is not None else NO_VALUE)
+        str(event_value) if event_value is not None else no_value)
 
     file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
     if os.path.exists(file_job_id):
@@ -445,7 +466,7 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
         file_.close()
         event_info['job_id'] = re.sub(' ', '', job_id_.split('\n')[0])
     else:
-        event_info['job_id'] = NO_VALUE
+        event_info['job_id'] = no_value
 
     file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
     if os.path.exists(file_job_status):
@@ -454,7 +475,7 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
         file_.close()
         event_info['job_status'] = re.sub(' ', '', job_status_.split('\n')[0])
     else:
-        event_info['job_status'] = NO_VALUE
+        event_info['job_status'] = no_value
 
     #---Construct status_info.
 
@@ -472,10 +493,10 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
         status_info.append([field, event_info[field]])
 
 
-    for f in StatusFile.FIELDS_SPLUNK_SPECIAL:
+    for field in StatusFile.FIELDS_SPLUNK_SPECIAL:
         #---Something extra to help Splunk:
-        status_info.append([event_info['event_name']+'_'+f,
-                            event_info[f]])
+        status_info.append([event_info['event_name']+'_'+field,
+                            event_info[field]])
 
     return status_info
 
