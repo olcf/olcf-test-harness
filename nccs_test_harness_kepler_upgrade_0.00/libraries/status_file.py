@@ -17,7 +17,7 @@ import socket
 #from libraries import computers_1
 
 class StatusFile:
-    """Class: parse_status_file."""
+    """Perform operations pertaining to logging the status of jobs."""
 
     ###################
     # Class variables #
@@ -42,17 +42,6 @@ class StatusFile:
     # Name of the input file.
     FILENAME = 'rgt_status.txt'
 
-#    # The timestamp log file names.
-#    filename_exec_beg_timestamp = 'start_binary_execution_timestamp.txt'
-#    filename_exec_end_timestamp = 'final_binary_execution_timestamp.txt'
-#
-#    filename_build_beg_timestamp = 'start_build_execution_timestamp.txt'
-#    filename_build_end_timestamp = 'final_build_execution_timestamp.txt'
-#
-#    filename_submit_beg_timestamp = 'start_submit_execution_timestamp.txt'
-#    filename_submit_end_timestamp = 'final_submit_execution_timestamp.txt'
-
-    # These are the entries in the input file.
     COMMENT_LINE_INDICATOR = '#'
 
 #    FAILURE_CODES = {'Pass_Fail': 0,
@@ -145,9 +134,12 @@ class StatusFile:
         'event_subtype',
         'event_value']
 
-    FIELDS_SPLUNK_SPECIAL = ['job_status']
+    FIELDS_SPLUNK_SPECIAL = ['job_status', 'event_value']
 
     NO_VALUE = '[NO_VALUE]'
+
+    MODE_NEW = 'New'
+    MODE_OLD = 'Old'
 
     #################
     # Class methods #
@@ -175,30 +167,158 @@ class StatusFile:
     def __init__(self, test_id, mode):
         """Constructor."""
         self.__job_id = ''
-        self.__path_to_file = ''
+        self.__status_file_path = ''
         self.__test_id = test_id
 
         # Make the status file.
-        self.__make_status_file()
+        self.__status_file_make()
 
         # Add job to status file.
-        if mode == 'New':
+        if mode == StatusFile.MODE_NEW:
             event_time = self.log_event(StatusFile.EVENT_LOGGING_START)
             #currenttime = datetime.datetime.now()
-            self.__add_test_instance(event_time)
+            self.__status_file_add_test_instance(event_time)
 
-        elif mode == 'Old':
+        elif mode == StatusFile.MODE_OLD:
             pass
 
     ###################
     # Public methods  #
     ###################
 
-    def add_result(self, exit_value, mode):
+    def log_event(self, event_id, event_value=NO_VALUE):
+        """Log the occurrence of a harness event.
+           This version logs a predefined event specified in the dictionary.
+        """
+
+        if event_id in StatusFile.EVENT_DICT:
+            event_filename = StatusFile.EVENT_DICT[event_id][0]
+            event_type = StatusFile.EVENT_DICT[event_id][1]
+            event_subtype = StatusFile.EVENT_DICT[event_id][2]
+        else:
+            print('Warning: event not recognized. ' + event_id)
+            event_filename = 'Event__UNKNOWN_EVENT_ENCOUNTERED_'
+            event_type = ''
+            event_subtype = ''
+
+        return self.__log_event(event_id, event_filename,
+                                event_type, event_subtype, str(event_value))
+
+
+    def log_custom_event(self, event_type, event_subtype, event_value=NO_VALUE):
+        """Log the occurrence of a harness event.
+           This version logs a custom user event not in the dictionary.
+        """
+
+        event_name = (event_type + '_' + event_subtype
+                      if event_type != '' and event_subtype != ''
+                      else event_type + event_subtype)
+
+        event_id = 'EVENT_CUSTOM'
+
+        event_filename = 'Event_' + event_name + '.txt'
+
+        return self.__log_event(event_id, event_filename,
+                                event_type, event_subtype, str(event_value))
+
+    ###################
+    # Private methods #
+    ###################
+
+    def __log_event(self, event_id, event_filename, event_type, event_subtype,
+                    event_value):
+        """Official function to log the occurrence of a harness event.
+        """
+
+        # THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
+        event_time = datetime.datetime.now().isoformat()
+
+        # THE FOLLOWING FORMS THE OFFICIAL TEXT DESCRIBING THE EVENT.
+        status_info = get_status_info(self.__test_id, event_type,
+                                      event_subtype, event_value,
+                                      event_time, event_filename)
+        event_record_string = event_time + '\t' + event_value
+        for key_value in status_info:
+            event_record_string += '\t' + key_value[0] + '=' + key_value[1]
+        event_record_string += '\n'
+
+        # Write a temporary file with the event info, then
+        # (atomically) rename it to the permanent file,
+        # to avoid possibility of a partially completed file.
+
+        dir_head = os.path.split(os.getcwd())[0]
+        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
+                                 event_filename)
+        if os.path.exists(file_path):
+            print('Warning: event log file already exists. ' + file_path)
+
+        file_path_partial = os.path.join(dir_head, 'Status',
+                                         str(self.__test_id),
+                                         'partial.' + event_filename)
+
+        file_ = open(file_path_partial, 'w')
+        file_.write(event_record_string)
+        file_.close()
+
+        # THE FOLLOWING CREATES THE OFFICIAL MASTER INDICATOR DENOTING
+        # THAT THE EVENT OCCURRED.
+        os.rename(file_path_partial, file_path)
+
+        # Put the same event data on the system log.
+
+        write_system_log(self.__test_id, status_info)
+
+        # Update the status file appropriately.
+
+        #elif event_id == StatusFile.EVENT_BUILD_START:
+        #    pass
+        if event_id == StatusFile.EVENT_BUILD_END:
+            self.__status_file_add_result(event_value, mode="Add_Build_Result")
+        #elif event_id == StatusFile.EVENT_SUBMIT_START:
+        #    pass
+        elif event_id == StatusFile.EVENT_SUBMIT_END:
+            self.__status_file_add_result(event_value, mode="Add_Submit_Result")
+        elif event_id == StatusFile.EVENT_JOB_QUEUED:
+            self.__status_file_add_result(event_value, mode="Add_Job_ID")
+            self.__status_file_add_result('-1', mode="Add_Run_Aborning")
+        elif event_id == StatusFile.EVENT_BINARY_EXECUTE_START:
+            self.__status_file_add_result(event_value,
+                                          mode="Add_Binary_Running")
+        #elif event_id == StatusFile.EVENT_BINARY_EXECUTE_END:
+        #    pass
+        #elif event_id == StatusFile.EVENT_CHECK_START:
+        #    pass
+        elif event_id == StatusFile.EVENT_CHECK_END:
+            self.__status_file_add_result(event_value, mode="Add_Run_Result")
+
+        return event_time
+
+#TODO: put symlinks in status dir (here or elsewhere)
+
+    def __status_file_make(self):
+        """Create the status file for this app/test if doesn't exist."""
+
+        # Get the head dir in cwd.
+        cwd = os.getcwd()
+        dir_head1 = os.path.split(cwd)[0]
+
+        # Form path to rgt status file.
+        self.__status_file_path = os.path.join(dir_head1, "Status",
+                                           StatusFile.FILENAME)
+
+        # Create.
+        if not os.path.lexists(self.__status_file_path):
+            file_obj = open(self.__status_file_path, "w")
+            file_obj.write(StatusFile.header)
+            file_obj.close()
+
+    #----------
+
+    def __status_file_add_result(self, exit_value, mode):
         """Update the status file to reflect a new event."""
 
         #---Read the status file.
-        status_file = open(self.__path_to_file, 'r')
+        status_file = open(self.__status_file_path, 'r')
         records = status_file.readlines()
         status_file.close()
         #event_time = datetime.datetime.now().isoformat()
@@ -222,18 +342,12 @@ class StatusFile:
 
             if mode == 'Add_Build_Result':
                 words[3] = exit_value
-                #self.__write_system_log('build_result',
-                #                        str(exit_value), event_time)
 
             if mode == 'Add_Submit_Result':
                 words[4] = exit_value
-                #self.__write_system_log('submit_result',
-                #                        str(exit_value), event_time)
 
             if mode == 'Add_Run_Result':
                 words[5] = exit_value
-                #self.__write_system_log('run_result',
-                #                        str(exit_value), event_time)
 
             if mode == 'Add_Binary_Running':
                 binary_running_value = exit_value
@@ -246,8 +360,6 @@ class StatusFile:
                 file_obj2 = open(path2, 'w')
                 file_obj2.write(binary_running_value)
                 file_obj2.close()
-                #self.__write_system_log('binary_running',
-                #                        str(exit_value), event_time)
 
             if mode == 'Add_Run_Aborning':
                 aborning_run_value = exit_value
@@ -259,139 +371,30 @@ class StatusFile:
                 file_obj2 = open(path2, 'w')
                 file_obj2.write(aborning_run_value)
                 file_obj2.close()
-                #self.__write_system_log('run_aborning',
-                #                        str(exit_value), event_time)
 
             records[index] = StatusFile.__LINE_FORMAT % (
                 (words[0], words[1], words[2], words[3], words[4], words[5]))
 
         #---Update the status file.
-        status_file = open(self.__path_to_file, 'w')
+        status_file = open(self.__status_file_path, 'w')
         status_file.writelines(records)
         status_file.close()
 
     #----------
 
-    def log_event(self, event_id, event_value=None):
-        """Official function to log the occurrence of a harness event."""
-
-        #---THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
-        event_time = datetime.datetime.now().isoformat()
-
-        if event_id in StatusFile.EVENT_DICT:
-            event_filename = StatusFile.EVENT_DICT[event_id][0]
-            event_type = StatusFile.EVENT_DICT[event_id][1]
-            event_subtype = StatusFile.EVENT_DICT[event_id][2]
-        else:
-            print('Warning: event not recognized. ' + event_id)
-            #TODO: figure out how to treat warnings, assertions, etc.
-
-        #---THE FOLLOWING FORMS THE OFFICIAL TEXT DESCRIBING THE EVENT.
-        status_info = get_verbose_status_info(self.__test_id, event_type,
-                                              event_subtype, event_value,
-                                              event_time, event_filename)
-        event_record_string = event_time + '\t' + (
-            str(event_value) if event_value is not None else '')
-        for key_value in status_info:
-            event_record_string += '\t' + key_value[0] + '=' + key_value[1]
-        event_record_string += '\n'
-
-        #---Write a temporary file with the event info, then
-        #---(atomically) rename it to the permanent file,
-        #---to avoid possibility of a partially completed file.
-
-        dir_head = os.path.split(os.getcwd())[0]
-        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
-                                 event_filename)
-        if os.path.exists(file_path):
-            print('Warning: event log file already exists. ' + file_path)
-
-        file_path_partial = os.path.join(dir_head, 'Status',
-                                         str(self.__test_id),
-                                         'partial.' + event_filename)
-
-        file_ = open(file_path_partial, 'w')
-        file_.write(event_record_string)
-        file_.close()
-
-        #---THE FOLLOWING CREATES THE OFFICIAL MASTER INDICATOR OF THE
-        #---EVENT OCCURRING.
-        os.rename(file_path_partial, file_path)
-
-        #---Put the same event data on the system log.
-
-        self.__write_system_log(event_type, event_subtype, event_value,
-                                event_time, event_filename)
-
-        #---Update the status file appropriately.
-
-        #elif event_id == StatusFile.EVENT_BUILD_START:
-        #    pass
-        if event_id == StatusFile.EVENT_BUILD_END:
-            self.add_result(event_value, mode="Add_Build_Result")
-        #elif event_id == StatusFile.EVENT_SUBMIT_START:
-        #    pass
-        elif event_id == StatusFile.EVENT_SUBMIT_END:
-            self.add_result(event_value, mode="Add_Submit_Result")
-        elif event_id == StatusFile.EVENT_JOB_QUEUED:
-            self.add_result(event_value, mode="Add_Job_ID")
-            self.add_result('-1', mode="Add_Run_Aborning")
-        elif event_id == StatusFile.EVENT_BINARY_EXECUTE_START:
-            self.add_result(event_value, mode="Add_Binary_Running")
-        #elif event_id == StatusFile.EVENT_BINARY_EXECUTE_END:
-        #    pass
-        #elif event_id == StatusFile.EVENT_CHECK_START:
-        #    pass
-        elif event_id == StatusFile.EVENT_CHECK_END:
-            self.add_result(event_value, mode="Add_Run_Result")
-
-        return event_time
-
-#TODO: put symlinks in status dir (here or elsewhere)
-
-    ###################
-    # Private methods #
-    ###################
-
-    def __make_status_file(self):
-        """Create the status file for this app/test if doesn't exist."""
-
-        # Get the head dir in cwd.
-        cwd = os.getcwd()
-        dir_head1 = os.path.split(cwd)[0]
-
-        # Form path to rgt status file.
-        self.__path_to_file = os.path.join(dir_head1, "Status",
-                                           StatusFile.FILENAME)
-
-        # Create.
-        if not os.path.lexists(self.__path_to_file):
-            file_obj = open(self.__path_to_file, "w")
-            file_obj.write(StatusFile.header)
-            file_obj.close()
-
-    #----------
-
-    def __add_test_instance(self, event_time):
+    def __status_file_add_test_instance(self, event_time):
         """Start new line in master status file for app/test."""
-        file_obj = open(self.__path_to_file, "a")
+
+        file_obj = open(self.__status_file_path, "a")
         format_ = StatusFile.__LINE_FORMAT % (
             (event_time, self.__test_id, "***", "***", "***", "***"))
         file_obj.write(format_)
         file_obj.close()
 
-    #----------
-
-    def __write_system_log(self, event_name, event_value, event_status,
-                           event_time, event_filename):
-        """Write a system log entry for an event."""
-        write_system_log(self.__test_id, event_name, event_value,
-                         event_status, event_time, event_filename)
-
 #------------------------------------------------------------------------------
 
-def get_verbose_status_info(test_id, event_type, event_subtype,
-                            event_value, event_time, event_filename):
+def get_status_info(test_id, event_type, event_subtype,
+                    event_value, event_time, event_filename):
     """Create a data structure with verbose info for an event."""
 
     no_value = StatusFile.NO_VALUE
@@ -492,7 +495,6 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
     for field in StatusFile.FIELDS_PER_EVENT:
         status_info.append([field, event_info[field]])
 
-
     for field in StatusFile.FIELDS_SPLUNK_SPECIAL:
         #---Something extra to help Splunk:
         status_info.append([event_info['event_name']+'_'+field,
@@ -502,8 +504,7 @@ def get_verbose_status_info(test_id, event_type, event_subtype,
 
 #------------------------------------------------------------------------------
 
-def write_system_log(test_id, event_type, event_subtype,
-                     event_value, event_time, event_filename):
+def write_system_log(test_id, status_info):
     """Write a system log entry for an event."""
 
     #---Use Unix logger command unless (valid) directory requested.
@@ -517,11 +518,13 @@ def write_system_log(test_id, event_type, event_subtype,
     elif not os.path.exists(rgt_system_log_dir):
         is_using_unix_logger = True
 
-    #---Construct log string.
+    rgt_system_log_tag = (os.environ['RGT_SYSTEM_LOG_TAG']
+        if 'RGT_SYSTEM_LOG_TAG' in os.environ else '')
 
-    status_info = get_verbose_status_info(test_id, event_type, event_subtype,
-                                          event_value, event_time,
-                                          event_filename)
+    if rgt_system_log_tag == '':
+        return
+
+    #---Construct log string.
 
     #TODO: make quote a function ...
 
@@ -529,17 +532,12 @@ def write_system_log(test_id, event_type, event_subtype,
 
     log_string = ''
 
-    for i, key_value in enumerate(status_info):
-        if i != 0:
+    for key_value in status_info:
+        if log_string != '':
             log_string += ' '
         log_string += key_value[0] + '=' + quote + key_value[1] + quote
-        if key_value[0] == 'rgt_system_log_tag':
-            rgt_system_log_tag = key_value[1]
 
     #---Write log.
-
-    if rgt_system_log_tag == '':
-        return
 
     if is_using_unix_logger:
         os.system('logger -p local0.notice "' + log_string + '"')
