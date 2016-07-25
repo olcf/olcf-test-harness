@@ -26,7 +26,7 @@ from bin.test_harness_driver import test_harness_driver
 #
 # Inherits "apps_test_directory_layout".
 #
-class  subtest(base_apptest,apps_test_directory_layout):
+class subtest(base_apptest,apps_test_directory_layout):
     #These strings define the tasks that the tests can do.
     checkout = "check_out_tests"
     starttest = "start_tests"

@@ -54,7 +54,8 @@ class Test_runtests(unittest.TestCase):
         # The tests to run
         my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"} ]
         my_harness_tasks = ["check_out_tests",
-                            "start_tests"]
+                            "start_tests",
+                            "stop_tests"]
 
         # Create the input directory along with the input files. 
         self.__createInputDirectoryAndFiles(my_path_to_sspace,
