@@ -91,7 +91,7 @@ class StatusDatabase:
                 test_id_dir = os.path.join(status_dir, test_id)
                 event_filenames = [f for f in os.listdir(test_id_dir) if
                                    os.path.isfile(os.path.join(test_id_dir, f))
-                                   and re.search(r'^Event_[0-9]+_', f)]
+                                   and re.search(r'^Event_.*\.txt$', f)]
 
                 #---For every field of every event in the test instance,
                 #---collect the values it can take.
@@ -276,7 +276,7 @@ class StatusDatabase:
 
     #--------------------------------------------------------------------------
 
-    def perform_query(self, query_string):
+    def query(self, query_string):
         """Execute a query against the database, return result."""
 
         self.__db_cursor.execute(query_string)
@@ -293,7 +293,7 @@ class StatusDatabase:
     def print_query(self, query_string):
         """Execute a query and output the result."""
 
-        sys.stdout.write(self.perform_query(query_string))
+        sys.stdout.write(self.query(query_string))
 
         return self  #---for chaining.
 
