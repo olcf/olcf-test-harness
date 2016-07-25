@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+
+"""
+-------------------------------------------------------------------------------
+File:   rgt_status
+Author: Wayne Joubert (joubert@ornl.gov)
+National Center for Computational Sciences, Scientific Computing Group.
+Oak Ridge National Laboratory
+Copyright (C) 2016 Oak Ridge National Laboratory, UT-Battelle, LLC.
+-------------------------------------------------------------------------------
+"""
+
+import argparse
+
+from libraries.status_database import StatusDatabase
+from libraries.status_file import StatusFile
+
+#------------------------------------------------------------------------------
+
+def command_usage():
+    """Return string describing usage."""
+
+    stf = StatusFile #---Convenience.
+
+    events = ['_'.join(stf.EVENT_DICT[event][1:3]) for event in stf.EVENT_LIST]
+
+    usage = """
+Using the rgt_status command
+----------------------------
+
+
+Definitions
+-----------
+test_instance - the combination of "app", "test" and "test_id" which uniquely
+  specifies a single attempted run of a test case.
+
+event - an occurrence during the execution of a test_instance that is recorded
+  by the harness.  The master record of an event is stored as a text file
+  of the form <app>/<test>/Status/<test_id>/Event_???_<event_name>.txt
+
+  For the database, for consistency all missing events that did not trigger
+  for a test_instance are represented as a record with fields filled out
+  with the value """ + ('"' + stf.NO_VALUE + '"') + """.
+
+  The currently defined events are:
+  """ + ' '.join(events) + """
+
+field - the name of a piece of information recorded for an event.  The
+  event file consist of a string containing "<field>=<value>" pairs.
+
+  For the database, all missing fields of an event record are filled out
+  with the value """ + ('"' + stf.NO_VALUE + '"') + """.
+
+per-test_instance field, per-event field - some fields are expected to have
+  possibly different values across the events for a single test_instance
+  (per-event fields).  Other fields will have the same value across all
+  events (per-tes_instance fields).
+
+  The currently defined per-test_instance fields are:
+  """ + ' '.join(stf.FIELDS_PER_TEST_INSTANCE) + """
+
+  The currently defined per-event fields are:
+  """ + ' '.join(stf.FIELDS_PER_EVENT) + """
+
+event fields - the set of all fields associated with any event.
+
+  The currently defined event fields are:
+  """ + ' '.join(stf.FIELDS_PER_TEST_INSTANCE + stf.FIELDS_PER_EVENT) + """
+
+test_instance fields - to represent all the fields represented by all events
+  for a single test_instance, it is necessary to do some consolidation of field
+  names:
+  - all per-test_instance fields are represented only once
+  - all per-event fields are given names corresponding to the respective
+    event, of the form "<new_field_name> = <event_name>_<original_field_name>.
+
+  The currently defined test_instance fields are:
+  """ + ' '.join(stf.FIELDS_PER_TEST_INSTANCE +
+                 [e+'_'+f for e in events for f in stf.FIELDS_PER_EVENT]) + """
+
+
+Usage
+-----
+
+The typical usage is
+
+  rgt_status --query "<querystring>"
+
+Note that when in the bash shell, "<querystring>" can span multiple lines.
+Also, multiple queries can be performed in one invocation; this amortizes the
+time required to load the event data:
+
+  rgt_status --query "myquerystring1" --query "myquerystring2"
+
+Use of this command assumes the harness module is loaded and
+rgt_environmental_variables.bash.x is sourced.  It uses the current active
+rgt.input to get the app/test list it uses.
+
+An invocation of this command does a single "ingest" of all the
+status/event files available for all runs specified in the rgt.input file.
+From this it builds an in-memory sqlite3 database and then processes
+the queries and prints the results in order.
+
+Most of the time is spent in the ingestion process.  As an example,
+using a mockup dataset to reproduce the Titan stability test with
+~5000 test instances, it takes ~30-45 seconds to ingest from a file
+system mounted as a the NFS filesystem in NCCS.
+
+
+Sample Queries and Results
+--------------------------
+
+echo "===== all test cases ====="; echo
+
+rgt_status --query "
+SELECT 'test_instance =',        test_instance, '  ',
+       'app =',                  app, '  ',
+       'test =',                 test, '  ',
+       'test_id =',              test_id, '  ',
+       'user =',                 user, '  ',
+       'rgt_pbs_job_accnt_id =', rgt_pbs_job_accnt_id
+FROM test_instances
+ORDER BY test_instance"
+
+    > ===== all test cases =====
+    > 
+    > test_instance = HelloWorld,Test_16cores,1466713370.876055    app = HelloWorld    test = Test_16cores    test_id = 1466713370.876055    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466713602.473956    app = HelloWorld    test = Test_16cores    test_id = 1466713602.473956    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466713739.9293966    app = HelloWorld    test = Test_16cores    test_id = 1466713739.9293966    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466714020.5357533    app = HelloWorld    test = Test_16cores    test_id = 1466714020.5357533    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466714122.09454    app = HelloWorld    test = Test_16cores    test_id = 1466714122.09454    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466714211.8620155    app = HelloWorld    test = Test_16cores    test_id = 1466714211.8620155    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466714405.923308    app = HelloWorld    test = Test_16cores    test_id = 1466714405.923308    user = joubert    rgt_pbs_job_accnt_id = stf006
+    > test_instance = HelloWorld,Test_16cores,1466715149.9792898    app = HelloWorld    test = Test_16cores    test_id = 1466715149.9792898    user = [NO_VALUE]    rgt_pbs_job_accnt_id = [NO_VALUE]
+
+echo "===== cases that have completed ====="; echo
+
+rgt_status --query "
+SELECT 'test_instance =', test_instance FROM test_instances 
+WHERE check_end_job_status IS NOT '[NO_VALUE]'"
+
+    > ===== cases that have completed =====
+    > 
+    > test_instance = HelloWorld,Test_16cores,1466713739.9293966
+    > test_instance = HelloWorld,Test_16cores,1466714405.923308
+    > test_instance = HelloWorld,Test_16cores,1466713370.876055
+    > test_instance = HelloWorld,Test_16cores,1466714020.5357533
+    > test_instance = HelloWorld,Test_16cores,1466713602.473956
+    > test_instance = HelloWorld,Test_16cores,1466714211.8620155
+
+echo "===== cases that have not completed ====="; echo
+
+rgt_status --query "
+SELECT 'test_instance =', test_instance FROM test_instances 
+WHERE check_end_job_status IS '[NO_VALUE]'"
+
+    > ===== cases that have not completed =====
+    > 
+    > test_instance = HelloWorld,Test_16cores,1466715149.9792898
+    > test_instance = HelloWorld,Test_16cores,1466714122.09454
+
+echo "===== cases that have initiated but not completed ====="; echo
+
+rgt_status --query "
+SELECT 'test_instance =', test_instance FROM test_instances 
+WHERE check_end_job_status IS '[NO_VALUE]' AND
+  logging_start_event_time IS NOT '[NO_VALUE]'"
+
+    > ===== cases that have initiated but not completed =====
+    > 
+    > test_instance = HelloWorld,Test_16cores,1466714122.09454
+
+echo "===== all events for a specific test instance ====="; echo
+
+rgt_status --query "
+SELECT test_instance, event_name FROM events
+WHERE test_instance IS 'HelloWorld,Test_16cores,1466713602.473956'
+ORDER BY event_filename"
+
+    > ===== all events for a specific test instance =====
+    > 
+    > HelloWorld,Test_16cores,1466713602.473956 logging_start
+    > HelloWorld,Test_16cores,1466713602.473956 build_start
+    > HelloWorld,Test_16cores,1466713602.473956 build_end
+    > HelloWorld,Test_16cores,1466713602.473956 submit_start
+    > HelloWorld,Test_16cores,1466713602.473956 submit_end
+    > HelloWorld,Test_16cores,1466713602.473956 job_queued
+    > HelloWorld,Test_16cores,1466713602.473956 binary_execute_start
+    > HelloWorld,Test_16cores,1466713602.473956 binary_execute_end
+    > HelloWorld,Test_16cores,1466713602.473956 check_start
+    > HelloWorld,Test_16cores,1466713602.473956 check_end
+
+echo "===== distinct final job status values ====="; echo
+
+rgt_status --query "
+SELECT DISTINCT 'value =', check_end_job_status FROM test_instances"
+
+    > ===== distinct final job status values =====
+    > 
+    > value = 0
+    > value = 1
+    > value = [NO_VALUE]
+
+echo "===== count of cases that have completed ====="; echo
+
+rgt_status --query "
+SELECT COUNT(*) FROM test_instances 
+WHERE check_end_job_status IS NOT '[NO_VALUE]'"
+
+    > ===== count of cases that have completed =====
+    > 
+    > 6
+
+echo "===== counts for each final job_status ====="; echo
+
+rgt_status --query "
+SELECT 'check_end_job_status =', check_end_job_status, '   count =', COUNT(*)
+FROM test_instances 
+GROUP BY check_end_job_status
+ORDER BY check_end_job_status"
+
+    > ===== counts for each final job_status =====
+    > 
+    > check_end_job_status = 0    count = 3
+    > check_end_job_status = 1    count = 3
+    > check_end_job_status = [NO_VALUE]    count = 2
+
+echo "===== count of cases that have not completed ====="; echo
+
+rgt_status --query "
+SELECT COUNT(*) FROM test_instances 
+WHERE check_end_job_status IS '[NO_VALUE]'"
+
+    > ===== count of cases that have not completed =====
+    > 
+    > 2
+
+echo "===== count of cases that have not completed, adjusted ====="; echo
+
+rgt_status --query "
+SELECT COUNT(*) FROM test_instances 
+WHERE check_end_job_status IS'[NO_VALUE]'
+  AND test_instance IS NOT 'HelloWorld,Test_16cores,1466714122.09454'"
+
+    > ===== count of cases that have not completed, adjusted =====
+    > 
+    > 1
+
+echo "===== cases recently completed ====="; echo
+
+rgt_status --query "
+SELECT app, test, test_id, user, rgt_pbs_job_accnt_id, check_end_job_status 
+FROM test_instances 
+WHERE datetime(check_end_event_time) 
+  BETWEEN datetime('now', '-3 day') AND datetime('now')
+ORDER BY test_instance DESC"
+
+    > ===== cases recently completed =====
+    > 
+    > HelloWorld Test_16cores 1466714405.923308 joubert stf006 1
+    > HelloWorld Test_16cores 1466714211.8620155 joubert stf006 1
+    > HelloWorld Test_16cores 1466714020.5357533 joubert stf006 1
+    > HelloWorld Test_16cores 1466713739.9293966 joubert stf006 0
+    > HelloWorld Test_16cores 1466713602.473956 joubert stf006 0
+    > HelloWorld Test_16cores 1466713370.876055 joubert stf006 0
+
+echo "===== list of unique apps and tests recently completed ====="; echo
+
+rgt_status --query "
+SELECT DISTINCT app, test FROM test_instances 
+WHERE datetime(check_end_event_time) 
+  BETWEEN datetime('now', '-3 day') AND datetime('now')"
+
+    > ===== list of unique apps and tests recently completed =====
+    > 
+    > HelloWorld Test_16cores
+
+echo "===== binary execution times for recently completed tests ====="; echo
+
+rgt_status --query "
+SELECT 'app =',     app, '  ',
+       'test =',    test,  '  ',
+       'test_id =', test_id,  '  ',
+       'binary_execute_time (seconds) =',
+           strftime('%s', binary_execute_end_event_time) - 
+           strftime('%s', binary_execute_start_event_time) 
+FROM test_instances 
+WHERE datetime(check_end_event_time) 
+  BETWEEN datetime('now', '-3 day') AND datetime('now')"
+
+    > ===== binary execution times for recently completed tests =====
+    > 
+    > app = HelloWorld    test = Test_16cores    test_id = 1466713370.876055    binary_execute_time (seconds) = 3
+    > app = HelloWorld    test = Test_16cores    test_id = 1466714020.5357533    binary_execute_time (seconds) = 2
+    > app = HelloWorld    test = Test_16cores    test_id = 1466714211.8620155    binary_execute_time (seconds) = 1
+    > app = HelloWorld    test = Test_16cores    test_id = 1466713602.473956    binary_execute_time (seconds) = 3
+    > app = HelloWorld    test = Test_16cores    test_id = 1466714405.923308    binary_execute_time (seconds) = 1
+    > app = HelloWorld    test = Test_16cores    test_id = 1466713739.9293966    binary_execute_time (seconds) = 3
+
+"""
+
+    return usage
+
+#------------------------------------------------------------------------------
+
+def main():
+    """Main program to process rgt_status command.
+       This is the command line interface to the StatusDatabase class
+       and its functionality."""
+
+    parser = argparse.ArgumentParser(
+        description='Query the RGT status database.')
+    parser.add_argument('--query',
+                        help='perform query using this string (sqlite syntax)',
+                        action='append')
+    parser.add_argument('--usage', help='print detailed usage information',
+                        action='store_const', const=True)
+    args = parser.parse_args()
+
+    if args.query:
+        sdb = StatusDatabase().load()
+
+        for i, query in enumerate(args.query):
+            if i != 0:
+                print('')
+            sdb.print_query(query)
+        return
+
+    if args.usage:
+        print(command_usage())
+        return
+
+    parser.print_help()
+
+#------------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    main()
+
+#------------------------------------------------------------------------------
