@@ -4,9 +4,12 @@
 import unittest
 import shlex
 import os
+import time
 
 from bin import runtests
 from fundamental_types.rgt_state import RgtState
+from libraries.status_database import StatusDatabase
+
 
 class Test_runtests(unittest.TestCase):
     """ Tests for main program runtests.py """
@@ -75,8 +78,17 @@ class Test_runtests(unittest.TestCase):
 
     def tearDown(self):
         """ Stud doc for tear down """
+    
+        time.sleep(60)
+        
+        sdb = StatusDatabase().load()
+        
+        self.__checkTest(sdb)
+
         os.chdir(self.__startingDirectory)
 
+        return
+    
         
     def test_hello_world(self):
         """ Test of harness if it can launch a MPI hello world on 1 node. """ 
@@ -94,6 +106,21 @@ class Test_runtests(unittest.TestCase):
         error_message = "Hello world program did not complete all tasks."
         self.assertEqual(state_of_rgt,correct_state,error_message)
 
+    def __checkTest(self,sdb):
+        query_string = (
+            'SELECT check_end_event_value '
+            'FROM test_instances ' +
+            'WHERE app IS \'HelloWorld\' '
+              'AND test IS \'Test_16cores\' '
+            'ORDER BY check_end_event_time DESC' )
+
+        query_result = sdb.query(query_string)
+
+        count = len(query_result.split('\n'))
+
+        print(query_result)
+        return
+    
     def __createInputDirectoryAndFiles(
         self,
         path_to_scratch_space,
