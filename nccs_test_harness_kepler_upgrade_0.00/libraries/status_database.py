@@ -23,6 +23,8 @@ from libraries.status_file import StatusFile
 class StatusDatabase:
     """Class for accessing status information for runs."""
 
+    NO_VALUE = StatusFile.NO_VALUE #---Convenience variable.
+
     #--------------------------------------------------------------------------
 
     def __init__(self):
@@ -52,7 +54,7 @@ class StatusDatabase:
         #---Initializations.
 
         stf = StatusFile #---Convenience variable.
-        no_value = stf.NO_VALUE #---Convenience variable.
+        no_value = StatusDatabase.NO_VALUE #---Convenience variable.
 
         #---Two python dicts that will be converted to sql databases.
 
