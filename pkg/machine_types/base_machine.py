@@ -62,7 +62,10 @@ class BaseMachine(metaclass=ABCMeta):
 
     def submit_to_scheduler(self,batchfilename):
         """ Return the scheduler object."""
-        self.__scheduler.submit_job(batchfilename)
+        return self.__scheduler.submit_job(batchfilename)
+
+    def start_build_script(self,buildscriptname):
+        """ Return the state of the build."""
         return
 
     def print_jobLauncher_info(self):

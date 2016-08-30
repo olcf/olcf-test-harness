@@ -14,8 +14,9 @@ class RgtTest():
         self.__batchqueue = None
         self.__walltime = None
         self.__batchfilename = None
+        self.__buildscriptname = None
 
-    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, walltime, batchfilename):
+    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, walltime, batchfilename, buildscriptname):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
         self.__processes_per_socket = processes_per_socket
@@ -23,9 +24,13 @@ class RgtTest():
         self.__batchqueue = batchqueue
         self.__walltime = walltime
         self.__batchfilename = batchfilename
+        self.__buildscriptname = buildscriptname
 
     def get_batchfilename(self):
         return self.__batchfilename
+
+    def get_buildscriptname(self):
+        return self.__buildscriptname
 
     def get_jobname(self):
         return self.__jobname
@@ -49,6 +54,7 @@ class RgtTest():
         print("batchqueue = " + self.__batchqueue)
         print("walltime = " + str(self.__walltime))
         print("batchfilename = " + self.__batchfilename)
+        print("buildscriptname = " + self.__buildscriptname)
 
 if __name__ == "__main__":
     print('This is the RgtTest class')

@@ -25,6 +25,7 @@ class IBMpower8(BaseMachine):
         batchqueue = None
         walltime = None
         batchfilename = None
+        buildscriptname = None
 
         if os.path.isfile(self.get_rgt_input_file_name()):
             print("Reading input file from Power8")
@@ -37,6 +38,7 @@ class IBMpower8(BaseMachine):
             batchqueue_pattern = "batchqueue"
             walltime_pattern = "walltime"
             batchfilename_pattern = "batchfilename"
+            buildscriptname_pattern = "buildscriptname"
             delimiter = "="
 
             fileobj = open(self.get_rgt_input_file_name())
@@ -135,7 +137,21 @@ class IBMpower8(BaseMachine):
             else:
                 print("No batchfilename provided in IBM Power 8 machine")
 
-            self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, walltime,batchfilename)
+            # Find the name for the build script file to use to build the application
+            temp_re = re.compile(buildscriptname_pattern + "$")
+            for record in filerecords:
+                words = record.split(delimiter)
+                words[0] = words[0].strip().lower()
+                if temp_re.match(words[0]):
+                    buildscriptname = words[1].strip('\n').strip()
+                    break
+            if walltime:
+                print("Found buildscriptname is " + buildscriptname + " in IBM Power 8 machine")
+            else:
+                print("No buildscriptname provided in IBM Power 8 machine")
+
+            self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
+                                                jobname, batchqueue, walltime, batchfilename, buildscriptname)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
@@ -165,10 +181,15 @@ class IBMpower8(BaseMachine):
 
         return
 
+    def build_executable(self):
+        print("Building executable on Power8")
+        print("Using build script " + self.__rgt_test.get_buildscriptname())
+        self.start_build_script(self.__rgt_test.get_buildscriptname())
+        return
+
     def submit_batch_script(self):
         print("Submitting batch script for Power8")
-        self.submit_to_scheduler(self.__rgt_test.get_batchfilename())
-        return
+        return self.submit_to_scheduler(self.__rgt_test.get_batchfilename())
 
 if __name__ == "__main__":
     print('This is the IBM Power8 class')
