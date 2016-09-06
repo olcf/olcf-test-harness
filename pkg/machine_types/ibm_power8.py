@@ -11,11 +11,12 @@ import re
 class IBMpower8(BaseMachine):
     
     def __init__(self,name='IBM Power8',scheduler=None,jobLauncher=None,
-                 numNodes=0,numSocketsPerNode=0,numCoresPerSocket=0,rgt_test_input_file="rgt_test_input.txt"):
+                 numNodes=0,numSocketsPerNode=0,numCoresPerSocket=0,rgt_test_input_file="rgt_test_input.txt",workspace=None):
         BaseMachine.__init__(self,name,scheduler,jobLauncher,numNodes,
-                             numSocketsPerNode,numCoresPerSocket,rgt_test_input_file)
+                             numSocketsPerNode,numCoresPerSocket,rgt_test_input_file,workspace)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
+        self.read_rgt_test_input()
 
     def read_rgt_test_input(self):
         total_processes = None
@@ -26,6 +27,7 @@ class IBMpower8(BaseMachine):
         walltime = None
         batchfilename = None
         buildscriptname = None
+        checkscriptname = None
 
         if os.path.isfile(self.get_rgt_input_file_name()):
             print("Reading input file from Power8")
@@ -39,6 +41,7 @@ class IBMpower8(BaseMachine):
             walltime_pattern = "walltime"
             batchfilename_pattern = "batchfilename"
             buildscriptname_pattern = "buildscriptname"
+            checkscriptname_pattern = "checkscriptname"
             delimiter = "="
 
             fileobj = open(self.get_rgt_input_file_name())
@@ -150,15 +153,27 @@ class IBMpower8(BaseMachine):
             else:
                 print("No buildscriptname provided in IBM Power 8 machine")
 
+            # Find the name for the check script file to use to verify the test results
+            temp_re = re.compile(checkscriptname_pattern + "$")
+            for record in filerecords:
+                words = record.split(delimiter)
+                words[0] = words[0].strip().lower()
+                if temp_re.match(words[0]):
+                    checkscriptname = words[1].strip('\n').strip()
+                    break
+            if walltime:
+                print("Found checkscriptname is " + checkscriptname + " in IBM Power 8 machine")
+            else:
+                print("No checkscriptname provided in IBM Power 8 machine")
+
             self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
-                                                jobname, batchqueue, walltime, batchfilename, buildscriptname)
+                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
 
     def make_batch_script(self):
         print("Making batch script for Power8")
-        self.read_rgt_test_input()
 
         print("Using template called " + self.get_scheduler_template_file_name())
         templatefileobj = open(self.get_scheduler_template_file_name(),"r")
@@ -184,8 +199,7 @@ class IBMpower8(BaseMachine):
     def build_executable(self):
         print("Building executable on Power8")
         print("Using build script " + self.__rgt_test.get_buildscriptname())
-        self.start_build_script(self.__rgt_test.get_buildscriptname())
-        return
+        return self.start_build_script(self.__rgt_test.get_buildscriptname())
 
     def submit_batch_script(self):
         print("Submitting batch script for Power8")

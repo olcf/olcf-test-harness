@@ -8,6 +8,7 @@ from .scheduler_factory import SchedulerFactory
 from .jobLauncher_factory import JobLauncherFactory
 from abc import abstractmethod, ABCMeta
 import os
+import shutil
 
 class BaseMachine(metaclass=ABCMeta):
     
@@ -28,7 +29,7 @@ class BaseMachine(metaclass=ABCMeta):
     """
 
     def __init__(self,name,scheduler_type,jobLauncher_type,numNodes,
-                 numSockets,numCoresPerSocket,rgt_test_input_file):
+                 numSockets,numCoresPerSocket,rgt_test_input_file,workspace):
         self.__name = name 
         self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
         self.__jobLauncher = JobLauncherFactory.create_jobLauncher(jobLauncher_type)
@@ -36,6 +37,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.__numSockets = numSockets
         self.__numCoresPerSocket = numCoresPerSocket
         self.__rgt_test_input_file = rgt_test_input_file
+        self.__rgt_workspace = workspace
 
     def print_machine_info(self):
         """ Print information about the machine"""
@@ -47,6 +49,10 @@ class BaseMachine(metaclass=ABCMeta):
     def get_machine_name(self):
         """ Return a string with the system's name."""
         return self.__name
+
+    def get_rgt_workspace(self):
+        """ Return a string with the system's name."""
+        return self.__rgt_workspace
 
     def get_rgt_input_file_name(self):
         """ Return a string with the test input file name."""
@@ -66,6 +72,16 @@ class BaseMachine(metaclass=ABCMeta):
 
     def start_build_script(self,buildscriptname):
         """ Return the state of the build."""
+        currentdir = os.getcwd()
+        (dir_head1, dir_tail1) = os.path.split(currentdir)
+        (dir_head2, dir_tail2) = os.path.split(dir_head1)
+        path_to_source = os.path.join(dir_head2,"Source")
+        path_to_build_directory = os.path.join(self.get_rgt_workspace(),"build_directory_1")
+        shutil.copytree(path_to_source,path_to_build_directory)
+        os.chdir(path_to_build_directory)
+        print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
+        os.system(buildscriptname)
+        os.chdir(currentdir)
         return
 
     def print_jobLauncher_info(self):
