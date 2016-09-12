@@ -9,19 +9,17 @@ import string
 
 class rgt_input_file:
 
-    #Name of the input file.
-    filename = "rgt.input"
-
     #These are the entries in the input file.
     test_entry = "test"
     path_to_test_entry = "path_to_tests"
     comment_line_entry = "#"
     harness_task_entry = "harness_task"
 
-    def __init__(self):
+    def __init__(self,inputfilename="rgt.input"):
         self.__tests = []
         self.__path_to_tests = ""
         self.__harness_task = []
+        self.__inputFileName = inputfilename
 
 
         #
@@ -30,7 +28,7 @@ class rgt_input_file:
         self.__read_file()
 
     def __read_file(self):
-        ifile_obj = open(rgt_input_file.filename,"r")
+        ifile_obj = open(self.__inputFileName,"r")
         lines = ifile_obj.readlines()
         ifile_obj.close()
         

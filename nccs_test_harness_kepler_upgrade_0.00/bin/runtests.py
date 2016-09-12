@@ -50,11 +50,12 @@ def runtests(my_arg_string=None):
     parser = create_a_parser()
     Vargs = parser.parse_args(argv)
     concurrency = Vargs.concurrency
+    inputfile = Vargs.inputfile
     
     #
     # Read the input
     #    
-    ifile = input_files.rgt_input_file()
+    ifile = input_files.rgt_input_file(inputfilename=inputfile)
     
     rgt = regression_test.run_me(ifile,concurrency)
     return rgt
