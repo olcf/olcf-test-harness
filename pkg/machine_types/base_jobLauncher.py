@@ -26,6 +26,10 @@ class BaseJobLauncher:
     def get_jobLauncher_name(self):
         return self.__name
 
+    def build_job_command(self,total_processes,processes_per_node,processes_per_socket,executable):
+        print("Building job command in the base job launcher class")
+        return
+
     def print_jobLauncher_info(self):
         print("--------------------------------------")
         print("Job Launcher = " + str(self.__name))

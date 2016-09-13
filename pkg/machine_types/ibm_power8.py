@@ -11,9 +11,12 @@ import re
 class IBMpower8(BaseMachine):
     
     def __init__(self,name='IBM Power8',scheduler=None,jobLauncher=None,
-                 numNodes=0,numSocketsPerNode=0,numCoresPerSocket=0,rgt_test_input_file="rgt_test_input.txt",workspace=None):
+                 numNodes=0,numSocketsPerNode=0,numCoresPerSocket=0,
+                 rgt_test_input_file="rgt_test_input.txt",workspace=None,
+                 harness_id=None,scripts_dir=None):
         BaseMachine.__init__(self,name,scheduler,jobLauncher,numNodes,
-                             numSocketsPerNode,numCoresPerSocket,rgt_test_input_file,workspace)
+                             numSocketsPerNode,numCoresPerSocket,rgt_test_input_file,
+                             workspace,harness_id,scripts_dir)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
         self.read_rgt_test_input()
@@ -42,6 +45,7 @@ class IBMpower8(BaseMachine):
             batchfilename_pattern = "batchfilename"
             buildscriptname_pattern = "buildscriptname"
             checkscriptname_pattern = "checkscriptname"
+            executablename_pattern = "executablename"
             delimiter = "="
 
             fileobj = open(self.get_rgt_input_file_name())
@@ -135,7 +139,7 @@ class IBMpower8(BaseMachine):
                 if temp_re.match(words[0]):
                     batchfilename = words[1].strip('\n').strip()
                     break
-            if walltime:
+            if batchfilename:
                 print("Found batchfilename is " + batchfilename + " in IBM Power 8 machine")
             else:
                 print("No batchfilename provided in IBM Power 8 machine")
@@ -148,7 +152,7 @@ class IBMpower8(BaseMachine):
                 if temp_re.match(words[0]):
                     buildscriptname = words[1].strip('\n').strip()
                     break
-            if walltime:
+            if buildscriptname:
                 print("Found buildscriptname is " + buildscriptname + " in IBM Power 8 machine")
             else:
                 print("No buildscriptname provided in IBM Power 8 machine")
@@ -161,16 +165,35 @@ class IBMpower8(BaseMachine):
                 if temp_re.match(words[0]):
                     checkscriptname = words[1].strip('\n').strip()
                     break
-            if walltime:
+            if checkscriptname:
                 print("Found checkscriptname is " + checkscriptname + " in IBM Power 8 machine")
             else:
                 print("No checkscriptname provided in IBM Power 8 machine")
 
+            # Find the name for the executable to use to launch the test
+            temp_re = re.compile(executablename_pattern + "$")
+            for record in filerecords:
+                words = record.split(delimiter)
+                words[0] = words[0].strip().lower()
+                if temp_re.match(words[0]):
+                    executablename = words[1].strip('\n').strip()
+                    break
+            if executablename:
+                print("Found executablename is " + executablename + " in IBM Power 8 machine")
+            else:
+                print("No executablename provided in IBM Power 8 machine")
+
+
             self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
-                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname)
+                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
+
+    def get_jobLauncher_command(self,path_to_executable):
+        print("Building jobLauncher command for Power8")
+        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_total_processes(),self.__rgt_test.get_processes_per_node(),self.__rgt_test.get_processes_per_socket(),path_to_executable)
+        return jobLauncher_command
 
     def make_batch_script(self):
         print("Making batch script for Power8")
@@ -185,6 +208,15 @@ class IBMpower8(BaseMachine):
             (re.compile("__walltime__"),self.__rgt_test.get_walltime()),
             (re.compile("__batchqueue__"),self.__rgt_test.get_batchqueue()),
             (re.compile("__total_processes__"),self.__rgt_test.get_total_processes()),
+            (re.compile("__rgtenvironmentalfile__"),os.environ["RGT_ENVIRONMENTAL_FILE"]),
+            (re.compile("__nccstestharnessmodule__"),os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]),
+            (re.compile("__resultsdir__"),self.get_rgt_results_dir()),
+            (re.compile("__workdir__"),self.get_rgt_workdir()),
+            (re.compile("__startingdirectory__"),self.get_rgt_scripts_dir()),
+            (re.compile("__unique_id_string__"),self.get_rgt_harness_id()),
+            (re.compile("__batchfilename__"),self.__rgt_test.get_batchfilename()),
+            (re.compile("__pathtoexecutable__"),os.path.join(self.get_rgt_workspace(),"build_directory",self.__rgt_test.get_executablename())),
+            (re.compile("__joblaunchcommand__"),self.get_jobLauncher_command(os.path.join(self.get_rgt_workspace(),"build_directory",self.__rgt_test.get_executablename()))),
            ]
 
         fileobj = open(self.__rgt_test.get_batchfilename(),"w")

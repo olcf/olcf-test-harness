@@ -29,7 +29,8 @@ class BaseMachine(metaclass=ABCMeta):
     """
 
     def __init__(self,name,scheduler_type,jobLauncher_type,numNodes,
-                 numSockets,numCoresPerSocket,rgt_test_input_file,workspace):
+                 numSockets,numCoresPerSocket,rgt_test_input_file,workspace,
+                 harness_id,scripts_dir):
         self.__name = name 
         self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
         self.__jobLauncher = JobLauncherFactory.create_jobLauncher(jobLauncher_type)
@@ -38,6 +39,9 @@ class BaseMachine(metaclass=ABCMeta):
         self.__numCoresPerSocket = numCoresPerSocket
         self.__rgt_test_input_file = rgt_test_input_file
         self.__rgt_workspace = workspace
+        self.__rgt_harness_id = harness_id
+        self.__rgt_scripts_dir = scripts_dir
+        self.set_rgt_results_dir()
 
     def print_machine_info(self):
         """ Print information about the machine"""
@@ -51,8 +55,13 @@ class BaseMachine(metaclass=ABCMeta):
         return self.__name
 
     def get_rgt_workspace(self):
-        """ Return a string with the system's name."""
+        """ Return a string with the path to the workspace."""
         return self.__rgt_workspace
+
+    def create_rgt_workspace(self):
+        """ Create a workspace for this test instance."""
+        os.makedirs(self.get_rgt_workspace())
+        return
 
     def get_rgt_input_file_name(self):
         """ Return a string with the test input file name."""
@@ -70,19 +79,50 @@ class BaseMachine(metaclass=ABCMeta):
         """ Return the scheduler object."""
         return self.__scheduler.submit_job(batchfilename)
 
+    def build_jobLauncher_command(self,total_processes,processes_per_node,processes_per_socket,path_to_executable):
+        """ Return the jobLauncher command."""
+        return self.__jobLauncher.build_job_command(total_processes,processes_per_node,processes_per_socket,path_to_executable)
+
     def start_build_script(self,buildscriptname):
         """ Return the state of the build."""
+        os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
+        print("current directory in base_machine: ",currentdir)
         (dir_head1, dir_tail1) = os.path.split(currentdir)
         (dir_head2, dir_tail2) = os.path.split(dir_head1)
         path_to_source = os.path.join(dir_head2,"Source")
-        path_to_build_directory = os.path.join(self.get_rgt_workspace(),"build_directory_1")
+        print("Path to Source: ",path_to_source)
+        self.create_rgt_workspace()
+        path_to_build_directory = os.path.join(self.get_rgt_workspace(),"build_directory")
+        print("Path to Build Dir: ", path_to_build_directory)
         shutil.copytree(path_to_source,path_to_build_directory)
         os.chdir(path_to_build_directory)
         print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
         os.system(buildscriptname)
         os.chdir(currentdir)
         return
+
+    def get_rgt_harness_id(self):
+        """ Return the string with the Harness ID for this test instance."""
+        return self.__rgt_harness_id
+
+    def set_rgt_results_dir(self):
+        """ Return the string with the path to the Run_Archive/Harness ID directory."""
+        os.chdir(self.get_rgt_scripts_dir())
+        currentdir = os.getcwd()
+        (dir_head1, dir_tail1) = os.path.split(currentdir)
+        self.__rgt_results_dir = os.path.join(dir_head1,"Run_Archive",self.get_rgt_harness_id())
+
+    def get_rgt_results_dir(self):
+        """ Return the string corresponding to the path to the Scripts directory."""
+        return self.__rgt_results_dir
+
+    def get_rgt_scripts_dir(self):
+        return self.__rgt_scripts_dir
+
+    def get_rgt_workdir(self):
+        """ Return the string with the path to the Run_Archive/Harness ID directory."""
+        return os.path.join(self.get_rgt_workspace(),"workdir")
 
     def print_jobLauncher_info(self):
         """ Print information about the machine's job launcher."""
@@ -106,6 +146,7 @@ class BaseMachine(metaclass=ABCMeta):
 
     @abstractmethod
     def submit_batch_script(self):
+        print("I'm submitting a batch script in the base class")
         return
 
 

@@ -15,5 +15,10 @@ class Poe(BaseJobLauncher):
         self.__numTasksPerNodeOpt = None
         BaseJobLauncher.__init__(self,self.__name,self.__launchCmd,self.__numTasksOpt,self.__numTasksPerNodeOpt)
 
+    def build_job_command(self,total_processes,processes_per_node,processes_per_socket,executable):
+        print("Building job command in the POE class")
+        job_launch_command = self.__launchCmd + " " + executable
+        return job_launch_command
+
 if __name__ == '__main__':
     print('This is the POE job launcher class')
