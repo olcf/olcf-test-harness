@@ -28,8 +28,11 @@ def create_a_parser():
                                      add_help=True)
         
     parser.add_argument("--concurrency", 
-                        required=True,choices=["serial","threaded"],
-                        help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Threaded is concurrency over the Application/Subtest.")
+                        required=False,choices=["serial"],
+                        default="serial",
+                        help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Threaded is concurrency over the Application/Subtest. Threaded has been deprecated and will be removed in a future release.")
+
+    parser.add_argument("--inputfile",required=False,default="rgt.input",help="Optional argument to pass an input with a name other than rgt.input.")
 
     return parser
 
@@ -47,11 +50,12 @@ def runtests(my_arg_string=None):
     parser = create_a_parser()
     Vargs = parser.parse_args(argv)
     concurrency = Vargs.concurrency
+    inputfile = Vargs.inputfile
     
     #
     # Read the input
     #    
-    ifile = input_files.rgt_input_file()
+    ifile = input_files.rgt_input_file(inputfilename=inputfile)
     
     rgt = regression_test.run_me(ifile,concurrency)
     return rgt

@@ -52,41 +52,23 @@ class run_me:
         #print "Apps and tests = ",apps_tests
         #print "Tasks = ", self.__tasks
         #print
-        if self.__concurrency == "threaded":
-            for (application_name1,subtests1) in apps_tests.items():
-                self.__appsubtest  = self.__appsubtest +  \
-                                     [threadedDecorator.ThreadDecorator(name_of_application=application_name1,
-                                                                        name_of_subtest=subtests1,
-                                                                        local_path_to_tests=self.__local_path_to_tests) ]
+        ip = -1
+        for (application_name1,subtests1) in apps_tests.items():
+            for subtest2 in subtests1:
+        
+                self.__appsubtest  = self.__appsubtest + \
+                                     [apptest.subtest(name_of_application=application_name1,
+                                                      name_of_subtest=subtest2,
+                                                      local_path_to_tests=self.__local_path_to_tests) ]
+                ip = ip + 1
 
-            
-            with open(run_me.LOG_FILE_NAME,"a") as out:
-                for app in self.__appsubtest:
-                    message = "Starting tasks for application {}.\n".format(app.getNameOfApplication()) 
+
+                with open(run_me.LOG_FILE_NAME,"a") as out:
+                    app_test = self.__appsubtest[ip]
+                    message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
+                                                                                     app_test.getNameOfSubtest()) 
                     out.write(message)
-                    app.doTasks(tasks=self.__tasks)
-
-            for app in self.__appsubtest:
-                app.join()
-
-        elif self.__concurrency == "serial":
-            ip = -1
-            for (application_name1,subtests1) in apps_tests.items():
-                for subtest2 in subtests1:
-            
-                    self.__appsubtest  = self.__appsubtest + \
-                                         [apptest.subtest(name_of_application=application_name1,
-                                                          name_of_subtest=subtest2,
-                                                          local_path_to_tests=self.__local_path_to_tests) ]
-                    ip = ip + 1
-
-
-                    with open(run_me.LOG_FILE_NAME,"a") as out:
-                        app_test = self.__appsubtest[ip]
-                        message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
-                                                                                         app_test.getNameOfSubtest()) 
-                        out.write(message)
-                        app_test.doTasks(tasks=self.__tasks)
+                    app_test.doTasks(tasks=self.__tasks)
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
