@@ -194,14 +194,6 @@ def get_path_to_tmp_workspace(path_to_workspace,test_id_string):
     #
     path1 = os.path.join(path_to_workspace,dir_tail3,dir_tail2,test_id_string)
 
-    #
-    # Create convenience link to latest workspace dir
-    #
-    latest_dir = os.path.join(path_to_workspace, dir_tail3, dir_tail2, 'latest')
-    if os.path.exists(latest_dir):
-        os.unlink(latest_dir)
-    os.symlink(test_id_string, latest_dir)
-
     return path1
 
 
