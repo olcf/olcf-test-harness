@@ -18,7 +18,8 @@ __all__ = [
                 'aprun_3',
                 'aprun_titan',
                 'threadedDecorator',
-                'application_metric'
+                'application_metric',
+                'repositories'
           ]
 
 version = 2.0
