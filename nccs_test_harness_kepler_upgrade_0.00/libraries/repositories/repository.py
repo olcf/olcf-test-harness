@@ -8,7 +8,7 @@ class SVNRepository:
         self.__binaryName = "svn"
         self.__locationOfRepository = location_of_repository
 
-        pass
+        return
 
     def doSparseCheckout(self):
         print("From SVNRepository: Stud message for doing a sparse checkout")
