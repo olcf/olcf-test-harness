@@ -15,7 +15,7 @@ import re
 
 import sqlite3
 
-from libraries import input_files
+#from libraries import input_files
 from libraries.status_file import StatusFile
 
 #------------------------------------------------------------------------------
@@ -27,12 +27,13 @@ class StatusDatabase:
 
     #--------------------------------------------------------------------------
 
-    def __init__(self):
+    def __init__(self, rgt_input_file):
         """Constructor - simple initializations."""
 
         #---Get some locations from harness.
 
-        self.__input_file = input_files.rgt_input_file()
+        #self.__input_file = input_files.rgt_input_file()
+        self.__input_file = rgt_input_file
         self.__path_to_tests = self.__input_file.get_local_path_to_tests()
 
         self.__event_data = None
