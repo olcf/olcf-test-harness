@@ -12,6 +12,7 @@ Copyright (C) 2016 Oak Ridge National Laboratory, UT-Battelle, LLC.
 
 import argparse
 
+from libraries import input_files
 from libraries.status_database import StatusDatabase
 from libraries.status_file import StatusFile
 
@@ -31,6 +32,7 @@ Using the rgt_status command
 
 Definitions
 -----------
+
 test_instance - the combination of "app", "test" and "test_id" which uniquely
   specifies a single attempted run of a test case.
 
@@ -86,29 +88,164 @@ The typical usage is
 
   rgt_status --query "<querystring>"
 
-Note that when in the bash shell, "<querystring>" can span multiple lines.
-Also, multiple queries can be performed in one invocation; this amortizes the
+Note that when using the bash shell, "<querystring>" can span multiple lines,
+all within a set of double quotes.  Also, multiple queries can be performed
+in one invocation by specifying multiple --query options; this amortizes the
 time required to load the event data:
 
   rgt_status --query "myquerystring1" --query "myquerystring2"
 
 Use of this command assumes the harness module is loaded and
 rgt_environmental_variables.bash.x is sourced.  It uses the current active
-rgt.input to get the app/test list it uses.
+rgt.input file to get the current path to tests and the  app/test list it
+uses to assemble the list of runs that have been started.
 
 An invocation of this command does a single "ingest" of all the
 status/event files available for all runs specified in the rgt.input file.
-From this it builds an in-memory sqlite3 database and then processes
+From this it builds an in-memory sqlite3 database on which it processes
 the queries and prints the results in order.
 
-Most of the time is spent in the ingestion process.  As an example,
-using a mockup dataset to reproduce the Titan stability test with
-~5000 test instances, it takes ~30-45 seconds to ingest from a file
-system mounted as a the NFS filesystem in NCCS.
+Most of the time executing this command is spent in the ingestion process.
+As an example, using a mockup dataset that reproduces the 2013 Titan stability
+test with total ~5000 test instances, it takes ~30-45 seconds to ingest the
+data from a file system mounted as a the NFS filesystem in NCCS.
+It is advised that the path to test directory not be on a Lustre filesystem
+for reasons of stability and speed.
 
 
 Sample Queries and Results
 --------------------------
+
+echo "===== list of incomplete cases then complete cases in reverse chronological order ====="; echo
+
+rgt_status --query "
+SELECT 'app =',                   app, '  ',
+       'test =',                  test, '  ',
+       'test_id =',               test_id, '  ',
+       'check_end_event_time = ', check_end_event_time, '  ',
+       'check_end_job_status = ', check_end_job_status
+FROM test_instances
+WHERE check_end_job_status IS '[NO_VALUE]'" \
+--query "
+SELECT 'app =',                   app, '  ',
+       'test =',                  test, '  ',
+       'test_id =',               test_id, '  ',
+       'check_end_event_time = ', check_end_event_time, '  ',
+       'check_end_job_status = ', check_end_job_status
+FROM test_instances
+WHERE check_end_job_status IS NOT '[NO_VALUE]'
+ORDER BY strftime('%s', check_end_event_time) DESC" | column -t
+
+    > ===== list of incomplete cases then complete cases in reverse chronological order ===== 
+    > 
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1469114436.1783602  check_end_event_time  =  [NO_VALUE]                  check_end_job_status  =  [NO_VALUE]
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466715149.9792898  check_end_event_time  =  [NO_VALUE]                  check_end_job_status  =  [NO_VALUE]
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714122.09454    check_end_event_time  =  [NO_VALUE]                  check_end_job_status  =  [NO_VALUE]
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1469456129.99       check_end_event_time  =  2016-07-25T10:17:02.123296  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1469115981.233588   check_end_event_time  =  2016-07-21T11:47:47.089487  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1469114722.563406   check_end_event_time  =  2016-07-21T11:26:52.892153  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1467133644.4869497  check_end_event_time  =  2016-06-28T13:08:30.313782  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1467133379.3512604  check_end_event_time  =  2016-06-28T13:04:03.739118  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1467132555.1158934  check_end_event_time  =  2016-06-28T12:50:19.947913  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714405.923308   check_end_event_time  =  2016-06-23T16:41:01.669766  check_end_job_status  =  1
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714211.8620155  check_end_event_time  =  2016-06-23T16:37:42.498344  check_end_job_status  =  1
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714020.5357533  check_end_event_time  =  2016-06-23T16:34:25.326520  check_end_job_status  =  1
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466713739.9293966  check_end_event_time  =  2016-06-23T16:30:17.086327  check_end_job_status  =  0
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466713602.473956   check_end_event_time  =  2016-06-23T16:28:08.252162  check_end_job_status  =  0
+
+echo "===== failed cases with location of run archive dir for each case ====="; echo
+
+rgt_status --query "
+SELECT 'app =',                   app, '  ',
+       'test =',                  test, '  ',
+       'test_id =',               test_id, '  ',
+       'check_end_event_time = ', check_end_event_time, '  ',
+       'run_archive = ',          run_archive
+FROM test_instances
+WHERE check_end_job_status IS '1'" | column -t
+
+    > ===== failed cases with location of run archive dir for each case =====
+    > 
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714020.5357533  check_end_event_time  =  2016-06-23T16:34:25.326520  run_archive  =  /autofs/nccs-svm1_proj/stf006/joubert/harness_mockup/runs-apps/HelloWorld/Test_16cores/Run_Archive/1466714020.5357533
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714405.923308   check_end_event_time  =  2016-06-23T16:41:01.669766  run_archive  =  /autofs/nccs-svm1_proj/stf006/joubert/harness_mockup/runs-apps/HelloWorld/Test_16cores/Run_Archive/1466714405.923308
+    > app  =  HelloWorld  test  =  Test_16cores  test_id  =  1466714211.8620155  check_end_event_time  =  2016-06-23T16:37:42.498344  run_archive  =  /autofs/nccs-svm1_proj/stf006/joubert/harness_mockup/runs-apps/HelloWorld/Test_16cores/Run_Archive/1466714211.8620155
+
+echo "===== counts for each choice of final job_status ====="; echo
+
+rgt_status --query "
+SELECT 'check_end_job_status =', check_end_job_status, '   count =', COUNT(*)
+FROM test_instances 
+GROUP BY check_end_job_status
+ORDER BY check_end_job_status"
+
+    > ===== counts for each choice of final job_status =====
+    > 
+    > check_end_job_status = 0    count = 8
+    > check_end_job_status = 1    count = 3
+    > check_end_job_status = [NO_VALUE]    count = 3
+
+echo "===== counts of pass/fail/incomplete per app per test ====="; echo
+
+rgt_status --query "
+SELECT 'app =', app, '   test = ', test, 'check_end_job_status = ', check_end_job_status, '   count =', COUNT(*)
+FROM test_instances 
+GROUP BY app || test || check_end_job_status
+ORDER BY app || test || check_end_job_status" | column -t
+
+    > ===== counts of pass/fail/incomplete per app per test =====
+    > 
+    > app  =  HelloWorld  test  =  Test_16cores  check_end_job_status  =  0           count  =  8
+    > app  =  HelloWorld  test  =  Test_16cores  check_end_job_status  =  1           count  =  3
+    > app  =  HelloWorld  test  =  Test_16cores  check_end_job_status  =  [NO_VALUE]  count  =  3
+
+echo "===== counts of pass/fail/incomplete per app ====="; echo
+
+rgt_status --query "
+SELECT 'app =', app, '   check_end_job_status = ', check_end_job_status, '   count =', COUNT(*)
+FROM test_instances 
+GROUP BY app || check_end_job_status
+ORDER BY app || check_end_job_status" | column -t
+
+    > ===== counts of pass/fail/incomplete per app =====
+    > 
+    > app  =  HelloWorld  check_end_job_status  =  0           count  =  8
+    > app  =  HelloWorld  check_end_job_status  =  1           count  =  3
+    > app  =  HelloWorld  check_end_job_status  =  [NO_VALUE]  count  =  3
+
+echo "===== percent passed out of all tests ====="; echo
+
+rgt_status --query "
+SELECT
+( SELECT COUNT(*)
+FROM test_instances 
+where check_end_job_status IS '0'
+GROUP BY check_end_job_status )
+/
+( ( SELECT COUNT(*)
+  FROM test_instances 
+  where check_end_job_status IS NOT '[NO_VALUE]' ) / 100.0 )
+"
+
+    > ===== percent passed out of all tests =====
+    > 
+    > 72.7272727273
+
+echo "===== percent passed out of completed tests ====="; echo
+
+rgt_status --query "
+SELECT
+( SELECT COUNT(*)
+FROM test_instances 
+where check_end_job_status IS '0'
+GROUP BY check_end_job_status )
+/
+( ( SELECT COUNT(*)
+  FROM test_instances ) / 100.0 )
+"
+
+    > ===== percent passed out of completed tests =====
+    > 
+    > 57.1428571429
 
 echo "===== all test cases ====="; echo
 
@@ -315,10 +452,17 @@ def main():
                         action='append')
     parser.add_argument('--usage', help='print detailed usage information',
                         action='store_const', const=True)
+
+    parser.add_argument("--inputfile", required=False, default='rgt.input',
+                        help='Optional argument to specify an input file '
+                        'other than rgt.input.')
+
     args = parser.parse_args()
 
     if args.query:
-        sdb = StatusDatabase().load()
+        inputfile = args.inputfile
+        rgt_input_file = input_files.rgt_input_file(inputfilename=inputfile)
+        sdb = StatusDatabase(rgt_input_file).load()
 
         for i, query in enumerate(args.query):
             if i != 0:
