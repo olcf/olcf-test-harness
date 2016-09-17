@@ -26,7 +26,12 @@ class Test_Git_repositories(unittest.TestCase):
         """ Tear down to run basic repo tests. """
         return
 
+
     def test_git_repo(self):
+        # Do a sparse chekout of the of file_1.txt
+        # from the directory "Sample_Directory_For_Repository_Testing"
+        self.repository.doSparseCheckout()
+
         msg = "Stud message for git repository."
         self.assertTrue(False, msg)
         return
@@ -50,6 +55,10 @@ class Test_SVN_repositories(unittest.TestCase):
         return
 
     def test_svn_repo(self):
+        # Do a sparse chekout of the of file_1.txt
+        # from the directory "Sample_Directory_For_Repository_Testing"
+        self.repository.doSparseCheckout()
+
         msg = "Stud message for svn repository."
         self.assertTrue(False, msg)
         return

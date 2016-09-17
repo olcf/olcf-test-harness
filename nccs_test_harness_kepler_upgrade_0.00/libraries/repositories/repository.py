@@ -68,6 +68,8 @@ BaseRepository.register(SVNRepository)
 BaseRepository.register(GitRepository)
 
 class RepositoryFactory:
+    """ This class is a factory that creates repositories.
+    """
     def __init__(self):
         return
 
@@ -78,9 +80,9 @@ class RepositoryFactory:
 
         my_repository = None
         if type_of_repository == "git":
-            my_repository = GitRepository()
+            my_repository = GitRepository(location_of_repository)
         elif type_of_repository == "svn":
-            my_repository = SVNRepository()
+            my_repository = SVNRepository(location_of_repository)
 
         return my_repository
 
