@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# NCCS_TEST_HARNESS documentation build configuration file, created by
-# sphinx-quickstart on Sat Sep 17 14:04:44 2016.
+# NCCS_Test_Harness documentation build configuration file, created by
+# sphinx-quickstart on Sat Sep 17 16:31:14 2016.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -19,9 +19,11 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
-#sys.path.insert(0, os.path.abspath('../../test'))
-#sys.path.insert(0, os.path.abspath('../../nccs_test_harness_kepler_upgrade_0.00/libraries/repositories'))
+# sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../'),)
+sys.path.insert(0, os.path.abspath('../nccs_test_harness_kepler_upgrade_0.00'),)
+for tmp_path in sys.path:
+    print(tmp_path)
 
 # -- General configuration ------------------------------------------------
 
@@ -35,11 +37,6 @@ sys.path.insert(0, os.path.abspath('../..'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
 ]
@@ -61,9 +58,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'NCCS_TEST_HARNESS'
-copyright = '2016, Many people'
-author = 'Many people'
+project = 'NCCS_Test_Harness'
+copyright = '2016, Many People'
+author = 'Many People'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -93,7 +90,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+#exclude_patterns = ['../../RETIRED_nccs_test_harness_kepler_upgrade']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -124,7 +121,7 @@ pygments_style = 'sphinx'
 # keep_warnings = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+todo_include_todos = False
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -146,7 +143,7 @@ html_theme = 'alabaster'
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
-# html_title = 'NCCS_TEST_HARNESS v1.0'
+# html_title = 'NCCS_Test_Harness v1.0'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #
@@ -246,7 +243,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'NCCS_TEST_HARNESSdoc'
+htmlhelp_basename = 'NCCS_Test_Harnessdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -272,8 +269,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'NCCS_TEST_HARNESS.tex', 'NCCS\\_TEST\\_HARNESS Documentation',
-     'Many people', 'manual'),
+    (master_doc, 'NCCS_Test_Harness.tex', 'NCCS\\_Test\\_Harness Documentation',
+     'Many People', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -314,7 +311,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'nccs_test_harness', 'NCCS_TEST_HARNESS Documentation',
+    (master_doc, 'nccs_test_harness', 'NCCS_Test_Harness Documentation',
      [author], 1)
 ]
 
@@ -329,8 +326,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'NCCS_TEST_HARNESS', 'NCCS_TEST_HARNESS Documentation',
-     author, 'NCCS_TEST_HARNESS', 'One line description of project.',
+    (master_doc, 'NCCS_Test_Harness', 'NCCS_Test_Harness Documentation',
+     author, 'NCCS_Test_Harness', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -349,7 +346,3 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
-
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
