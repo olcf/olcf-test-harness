@@ -9,7 +9,12 @@ from libraries.repositories.repository import GitRepository
 
 
 class Test_Git_repositories(unittest.TestCase):
-    """ Tests for repository functionality """
+    """ Tests for repository functionality
+
+        This class tests if the git repository class can
+        do sparse checkout.
+
+    """
 
     def setUp(self):
         """ Set up to run basic repository tests. """

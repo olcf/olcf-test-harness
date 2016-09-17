@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-sphinx-apidoc -f -o source ../test/
+sphinx-apidoc -f -o source ../ 
 make html
