@@ -20,16 +20,40 @@ class SVNRepository:
                                              path_to_sample_directory,
                                              path_to_local_dir):
         completed_svn_init = subprocess.run(["svnadmin","create",path_to_local_dir])
-        svn_url = "file://" + path_to_local_dir + "/trunk"
+        svn_url = "file://" + path_to_local_dir + "/trunk/"
         subprocess.run(["svn","import",path_to_sample_directory,svn_url,"-m 'Initial svn commit'"])
-        
         return RepositoryFactory.create("svn",
                                          svn_url)
+    def getLocationOfRepository(self):
+        return self.__locationOfRepository
 
     def doSparseCheckout(self,
+                         stdout_file_handle,
+                         stderr_file_handle,
                          root_path_to_checkout_directory,
-                         directories_to_checkout):
-        return
+                         directory_to_checkout):
+
+        # Defdine the svn options for a sparse checkout.
+        svn_options = 'checkout -N'
+       
+        # Define the full qualified path the checkout location of the folder.
+        tail_dir = os.path.basename(directory_to_checkout)
+        path_to_local_dir = os.path.join(root_path_to_checkout_directory,tail_dir)
+
+        # Form the checkout command
+        sparse_checkout_command = "{my_bin} {my_options} {my_svn_path} {my_local_path}".format(
+                                            my_bin = self.__binaryName, 
+                                            my_options = svn_options, 
+                                            my_svn_path = directory_to_checkout,
+                                            my_local_path = path_to_local_dir)
+        # Debig lines
+        print(sparse_checkout_command)
+
+        exit_status = subprocess.call(sparse_checkout_command,
+                                      shell=True,
+                                      stdout=stdout_file_handle,
+                                      stderr=stderr_file_handle)
+        return exit_status
 
 class GitRepository:
     """ This class is encapsulates the behavoir of a git repository.
@@ -59,10 +83,14 @@ class GitRepository:
 
         return RepositoryFactory.create("git",path_to_local_dir)
 
+    def getLocationOfRepository(self):
+        return self.__locationOfRepository
 
     def doSparseCheckout(self,
+                         stdout_file_handle,
+                         stderr_file_handle,
                          root_path_to_checkout_directory,
-                         directories_to_checkout):
+                         directory_to_checkout):
         """ Performs a sparse checkout of directories from the repository.
 
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
@@ -85,6 +113,10 @@ class BaseRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def doSparseCheckout(self):
+        return
+
+    @abstractmethod
+    def getLocationOfRepository(self):
         return
 
 BaseRepository.register(SVNRepository)

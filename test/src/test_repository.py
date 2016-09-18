@@ -19,6 +19,9 @@ class Test_Git_repositories(unittest.TestCase):
 
     def setUp(self):
         """ Set up to run basic repository tests. """
+        # Define standard oaut and error file names for commands
+        self.stdout_path = {'sparse_checkout' : os.path.join( os.path.abspath('.'), 'git_sparse_checkout.stdout.txt')}
+        self.stderr_path = {'sparse_checkout' : os.path.join( os.path.abspath('.'), 'git_sparse_checkout.stderr.txt')}
 
         # Make a local git repository
         path_to_sample_directory = get_path_to_sample_directory()
@@ -33,8 +36,7 @@ class Test_Git_repositories(unittest.TestCase):
         create_application_directory(self)
 
         # Create the list of folders to sparsely checkout from the repository.
-        self.folders = create_list_of_folders_to_checkout()
-
+        self.folders = create_list_of_folders_to_checkout(self)
         return
 
     def tearDown(self):
@@ -45,11 +47,16 @@ class Test_Git_repositories(unittest.TestCase):
     def test_git_repo(self):
         # Do a sparse chekout of the of Hello Word test Test16_cores.
         # from the directory "Sample_Directory_For_Repository_Testing"
-        self.repository.doSparseCheckout(self.pathToApplications,
-                                         self.folders)
+        with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
+            with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
+                self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
+                                                 stderr_file_handle=stderr_handle,
+                                                 root_path_to_checkout_directory=self.pathToApplications,
+                                                 directory_to_checkout = self.folders[0])
 
-        msg = "Stud message for git repository."
-        self.assertTrue(False, msg)
+        (test_result,msg) = verify_sparse_checkout(self)
+        self.assertTrue(test_result, msg)
+
         return
 
 
@@ -58,6 +65,10 @@ class Test_SVN_repositories(unittest.TestCase):
 
     def setUp(self):
         """ Set up to run basic repository tests. """
+
+        # Define standard oaut and error file names for commands
+        self.stdout_path = {'sparse_checkout' : os.path.join( os.path.abspath('.'), 'svn_sparse_checkout.stdout.txt')}
+        self.stderr_path = {'sparse_checkout' : os.path.join( os.path.abspath('.'), 'svn_sparse_checkout.stderr.txt')}
 
         # Make a local svn repository
         path_to_sample_directory = get_path_to_sample_directory()
@@ -71,7 +82,7 @@ class Test_SVN_repositories(unittest.TestCase):
         create_application_directory(self)
 
         # Create the list of folders to sparsely checkout from the repository.
-        self.folders = create_list_of_folders_to_checkout()
+        self.folders = create_list_of_folders_to_checkout(self)
 
         return
 
@@ -82,11 +93,15 @@ class Test_SVN_repositories(unittest.TestCase):
     def test_svn_repo(self):
         # Do a sparse chekout of the of file_1.txt
         # from the directory "Sample_Directory_For_Repository_Testing"
-        self.repository.doSparseCheckout(self.pathToApplications,
-                                         self.folders)
+        with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
+            with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
+                self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
+                                                 stderr_file_handle=stderr_handle,
+                                                 root_path_to_checkout_directory=self.pathToApplications,
+                                                 directory_to_checkout = self.folders[0])
 
-        msg = "Stud message for svn repository."
-        self.assertTrue(False, msg)
+        (test_result,msg) = verify_sparse_checkout(self)
+        self.assertTrue(test_result, msg)
         return
 
 
@@ -114,9 +129,17 @@ def create_application_directory(my_unit_test):
     os.makedirs(my_unit_test.pathToApplications)
     return
 
-def create_list_of_folders_to_checkout():
-    folders = []
+def create_list_of_folders_to_checkout(self):
+    my_repository_location = self.repository.getLocationOfRepository()
+    folders = [
+                os.path.join(my_repository_location,'Test_16cores'),
+              ]
     return folders
+
+def verify_sparse_checkout(self):
+    msg = "Stud message"
+    test_result = False
+    return(test_result,msg)
 
 if __name__ == "__main__":
     unittest.main()
