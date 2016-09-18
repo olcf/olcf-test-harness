@@ -20,8 +20,8 @@
 import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../'),)
-sys.path.insert(0, os.path.abspath('../nccs_test_harness_kepler_upgrade_0.00'),)
+sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../nccs_test_harness_kepler_upgrade_0_00'),)
 for tmp_path in sys.path:
     print(tmp_path)
 
