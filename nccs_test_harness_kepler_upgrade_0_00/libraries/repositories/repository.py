@@ -32,8 +32,35 @@ class SVNRepository:
                          stderr_file_handle,
                          root_path_to_checkout_directory,
                          directory_to_checkout):
+        """ Performs a sparse checkout of directory from the repository.
+            :param stdout_file_handle: A file object to write standard out
+            :type stdout_file_handle: A file object
 
-        # Defdine the svn options for a sparse checkout.
+            :param stderr_file_handle: A file object to write standard error
+            :type stderr_file_handle: A file object
+
+            :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
+            :type root_path_to_checkout_directory: string
+
+            :param directory_to_checkout: A list of directories or files to sparsely checkout.
+            :type directories: a string list of directory or file names.
+
+            :returns: a tuple (message,exit_status) 
+            :rtype:  message is a string, exit_status is an integer
+        """
+        # Check if file handles are open
+        message = ""
+        if stdout_file_handle.closed:
+            message =  "Error! In sparse checkout the stdout file handle is closed"
+            exit_status = 1
+            return (message,exit_status)
+
+        if stderr_file_handle.closed:
+            message =  "Error! In sparse checkout the stderr file handle is closed"
+            exit_status = 1
+            return (message,exit_status)
+
+        # Define the svn options for a sparse checkout.
         svn_options = 'checkout -N'
        
         # Define the full qualified path the checkout location of the folder.
@@ -46,14 +73,16 @@ class SVNRepository:
                                             my_options = svn_options, 
                                             my_svn_path = directory_to_checkout,
                                             my_local_path = path_to_local_dir)
-        # Debig lines
-        print(sparse_checkout_command)
 
         exit_status = subprocess.call(sparse_checkout_command,
                                       shell=True,
                                       stdout=stdout_file_handle,
                                       stderr=stderr_file_handle)
-        return exit_status
+
+        if exit_status > 0:
+            message = "Sparse checkout of command failed: " + sparse_checkout_command
+
+        return (message,exit_status)
 
 class GitRepository:
     """ This class is encapsulates the behavoir of a git repository.
@@ -91,14 +120,34 @@ class GitRepository:
                          stderr_file_handle,
                          root_path_to_checkout_directory,
                          directory_to_checkout):
-        """ Performs a sparse checkout of directories from the repository.
+        """ Performs a sparse checkout of directory from the repository.
+            :param stdout_file_handle: A file object to write standard out
+            :type stdout_file_handle: A file object
+
+            :param stderr_file_handle: A file object to write standard error
+            :type stderr_file_handle: A file object
 
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string
 
-            :param directories_to_checkout: A list of directories or files to sparsely checkout.
+            :param directory_to_checkout: A list of directories or files to sparsely checkout.
             :type directories: a string list of directory or file names.
+
+            :returns: a tuple (message,exit_status) 
+            :rtype:  message is a string, exit_status is an integer
         """
+        
+        # Check if file handles are open
+        message = ""
+        if stdout_file_handle.closed:
+            message =  "Error! In sparse checkout the stdout file handle is closed"
+            exit_status = 1
+            return (message,exit_status)
+
+        if stderr_file_handle.closed:
+            message =  "Error! In sparse checkout the stderr file handle is closed"
+            exit_status = 1
+            return (message,exit_status)
         return
 
 class BaseRepository(metaclass=ABCMeta):
