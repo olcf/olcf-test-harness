@@ -68,7 +68,10 @@ BaseRepository.register(SVNRepository)
 BaseRepository.register(GitRepository)
 
 class RepositoryFactory:
-    """ This class is a factory that creates repositories.
+    """ This class is a factory that creates repository objects.
+
+    This class creates a repository object by calling the class method
+    create. Currently only git and svn repository objects are supported.
     """
     def __init__(self):
         return
@@ -77,12 +80,32 @@ class RepositoryFactory:
     def create(cls,
                type_of_repository,
                location_of_repository):
+        """ Creates a repository object that encapuslates the repository behavoir. 
 
+        This class method will a Repository object if the type_of_repository is 
+        supported, othewise a value of None will be returned. 
+
+        :param type_of_repository: The type of repositiory
+        :type type_of_repository: string
+
+        :param location_of_repository: The fully qualified path to an existing repository.
+        :type location_of_repository: string
+
+        :returns: my_repository
+        :rtype: A Repository object - currently only GitRepository or SVNRepository objects 
+                are returned. 
+        """
+
+        # Check if the repository string value in type_of_repository 
+        # matches one of the supported types.  
         my_repository = None
         if type_of_repository == "git":
             my_repository = GitRepository(location_of_repository)
         elif type_of_repository == "svn":
             my_repository = SVNRepository(location_of_repository)
+        else:
+            # No supporting repository if program reaches this branch.
+            my_repository = None
 
         return my_repository
 
