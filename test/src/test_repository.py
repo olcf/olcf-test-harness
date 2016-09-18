@@ -22,8 +22,8 @@ class Test_Git_repositories(unittest.TestCase):
         # Make a local git repository
         path_to_sample_directory = get_path_to_sample_directory()
         local_dir = get_path_to_local_dir("git_repo")
-        self.repository = GitRepository.createRepoFromExistingDirectory(path_to_sample_directory,
-                                                                        local_dir)
+        self.repository = GitRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
+                                                                             local_dir)
 
         return
 
@@ -51,8 +51,8 @@ class Test_SVN_repositories(unittest.TestCase):
         # Make a local svn repository
         path_to_sample_directory = get_path_to_sample_directory()
         local_dir = get_path_to_local_dir("svn_repo")
-        self.repository = SVNRepository.createRepoFromExistingDirectory(path_to_sample_directory,
-                                                                        local_dir)
+        self.repository = SVNRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
+                                                                             local_dir)
         return
 
     def tearDown(self):

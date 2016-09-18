@@ -5,6 +5,10 @@ import os
 import subprocess
 
 class SVNRepository:
+    """ This class is encapsulates the behavoir of a svn repository.
+
+    """
+
     def __init__(self,
                  location_of_repository=None):
         self.__binaryName = "svn"
@@ -12,19 +16,25 @@ class SVNRepository:
         return
 
     @classmethod
-    def createRepoFromExistingDirectory(cls,
-                                        path_to_sample_directory,
-                                        path_to_local_dir):
+    def createLocalRepoFromExistingDirectory(cls,
+                                             path_to_sample_directory,
+                                             path_to_local_dir):
         completed_svn_init = subprocess.run(["svnadmin","create",path_to_local_dir])
         svn_url = "file://" + path_to_local_dir + "/trunk"
         subprocess.run(["svn","import",path_to_sample_directory,svn_url,"-m 'Initial svn commit'"])
         
-        return RepositoryFactory.create("svn",svn_url)
+        return RepositoryFactory.create("svn",
+                                         svn_url)
 
-    def doSparseCheckout(self):
+    def doSparseCheckout(self,
+                         root_path_to_checkout_directory,
+                         directories_to_checkout):
         return
 
 class GitRepository:
+    """ This class is encapsulates the behavoir of a git repository.
+
+    """
     def __init__(self,
                  location_of_repository=None):
         self.__binaryName = "git"
@@ -32,7 +42,7 @@ class GitRepository:
         return
 
     @classmethod
-    def createRepoFromExistingDirectory(cls,
+    def createLocalRepoFromExistingDirectory(cls,
                                         path_to_sample_directory,
                                         path_to_local_dir):
         starting_directory = os.getcwd()
@@ -50,14 +60,27 @@ class GitRepository:
         return RepositoryFactory.create("git",path_to_local_dir)
 
 
-    def doSparseCheckout(self):
+    def doSparseCheckout(self,
+                         root_path_to_checkout_directory,
+                         directories_to_checkout):
+        """ Performs a sparse checkout of directories from the repository.
+
+            :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
+            :type root_path_to_checkout_directory: string
+
+            :param directories_to_checkout: A list of directories or files to sparsely checkout.
+            :type directories: a string list of directory or file names.
+        """
         return
 
 class BaseRepository(metaclass=ABCMeta):
+    """ This class define the comman behavoir of a repository as expected by the NCCS Test Harness.
+
+    """
 
     @classmethod
     @abstractmethod
-    def createRepoFromExistingDirectory(cls):
+    def createLocalRepoFromExistingDirectory(cls):
         return
 
     @abstractmethod
