@@ -19,7 +19,7 @@ class Test_Git_repositories(unittest.TestCase):
 
     def setUp(self):
         """ Set up to run basic repository tests. """
-        # Define standard oaut and error file names for commands
+        # Define standard out and error file names for commands
         self.stdout_path = {'sparse_checkout' : os.path.join( os.path.abspath('.'), 'git_sparse_checkout.stdout.txt')}
         self.stderr_path = {'sparse_checkout' : os.path.join( os.path.abspath('.'), 'git_sparse_checkout.stderr.txt')}
 
@@ -34,6 +34,9 @@ class Test_Git_repositories(unittest.TestCase):
         # checkout of the Application and test.
         self.pathToApplications = get_path_to_application_directory("git_sparse_checkout_applications")
         create_application_directory(self)
+
+        # Define the path to the repository.
+        self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
 
         # Create the list of folders to sparsely checkout from the repository.
         self.folders = create_list_of_folders_to_checkout(self)
@@ -51,6 +54,7 @@ class Test_Git_repositories(unittest.TestCase):
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
                                                  stderr_file_handle=stderr_handle,
+                                                 path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
                                                  directory_to_checkout = self.folders[0])
 
@@ -81,6 +85,9 @@ class Test_SVN_repositories(unittest.TestCase):
         self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
         create_application_directory(self)
 
+        # Define the path to the repository.
+        self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
+
         # Create the list of folders to sparsely checkout from the repository.
         self.folders = create_list_of_folders_to_checkout(self)
 
@@ -97,6 +104,7 @@ class Test_SVN_repositories(unittest.TestCase):
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
                                                  stderr_file_handle=stderr_handle,
+                                                 path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
                                                  directory_to_checkout = self.folders[0])
 

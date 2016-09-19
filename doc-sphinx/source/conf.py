@@ -19,10 +19,7 @@
 #
 import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../..'))
-for tmp_path in sys.path:
-    print(tmp_path)
 
 # -- General configuration ------------------------------------------------
 
@@ -90,6 +87,12 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['**/RETIRED_nccs_test_harness_kepler_upgrade']
+
+# This value is a list of autodoc directive flags that should be 
+# automatically applied to all autodoc directives. The supported 
+# flags are 'members', 'undoc-members', 'private-members', 'special-members',
+# 'inherited-members' and 'show-inheritance'.
+# autodoc_default_flags = ['members','prvate-members']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

@@ -5,7 +5,7 @@ import os
 
 class  apps_test_directory_layout(object):
 
-    path_to_svn_repository = os.environ["RGT_PATH_TO_SVN_REPS"]
+    path_to_repository = os.environ["RGT_PATH_TO_REPS"]
     organization = os.environ["RGT_ORGANIZATION"] 
     machine = os.environ["RGT_MACHINE_NAME"] 
     top_level_applications ="applications"
@@ -172,7 +172,7 @@ class  apps_test_directory_layout(object):
 
 
         #Now join names to make the fully qualified path names to svn repository..
-        path_1 = os.path.join(apps_test_directory_layout.path_to_svn_repository)
+        path_1 = os.path.join(apps_test_directory_layout.path_to_repository)
         path_1 = os.path.join(path_1,apps_test_directory_layout.top_level_applications)
         path_1 = os.path.join(path_1,apps_test_directory_layout.organization)
         path_1 = os.path.join(path_1,apps_test_directory_layout.machine)

@@ -1,8 +1,12 @@
 from abc import ABCMeta
 from abc import abstractmethod
+import sys
 import shutil
 import os
 import subprocess
+import contextlib
+import io
+import tempfile
 
 class SVNRepository:
     """ This class is encapsulates the behavoir of a svn repository.
@@ -30,14 +34,19 @@ class SVNRepository:
     def doSparseCheckout(self,
                          stdout_file_handle,
                          stderr_file_handle,
+                         path_to_repository,
                          root_path_to_checkout_directory,
                          directory_to_checkout):
         """ Performs a sparse checkout of directory from the repository.
+
             :param stdout_file_handle: A file object to write standard out
             :type stdout_file_handle: A file object
 
             :param stderr_file_handle: A file object to write standard error
             :type stderr_file_handle: A file object
+
+            :param path_to_repository: The url to the repository.
+            :type path_to_repository: string
 
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string
@@ -92,6 +101,7 @@ class GitRepository:
                  location_of_repository=None):
         self.__binaryName = "git"
         self.__locationOfRepository = location_of_repository
+
         return
 
     @classmethod
@@ -118,6 +128,7 @@ class GitRepository:
     def doSparseCheckout(self,
                          stdout_file_handle,
                          stderr_file_handle,
+                         path_to_repository,
                          root_path_to_checkout_directory,
                          directory_to_checkout):
         """ Performs a sparse checkout of directory from the repository.
@@ -126,6 +137,9 @@ class GitRepository:
 
             :param stderr_file_handle: A file object to write standard error
             :type stderr_file_handle: A file object
+
+            :param path_to_repository: The url to the repository.
+            :type path_to_repository: string
 
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string
@@ -148,12 +162,90 @@ class GitRepository:
             message =  "Error! In sparse checkout the stderr file handle is closed"
             exit_status = 1
             return (message,exit_status)
+        
+        # Define the full qualified path the checkout location of the folder.
+        tail_dir = os.path.basename(directory_to_checkout)
+        path_to_local_dir = os.path.join(root_path_to_checkout_directory,tail_dir)
+
+
+        # Create a hidden directory that will contain the git sparse checkouts.
+        path_to_hidden_directory = os.path.join(root_path_to_checkout_directory,".hidden_git_repository")
+        os.mkdir(path_to_hidden_directory)
+
+        return
+
+
+        # Verify git sparse checkout is enabled.
+        self.__verifySparseCheckoutEnabled()
+
+    def __verifySparseCheckoutEnabled(self):
+        """ Verifies that git the user has enabled sparse git checkouts. 
+
+            If sparse git checkouts are not enabled, the program will 
+            print a warning to stderr and exit.
+        """
+
+        # Define the git command to check if sparse checkouts are enabled
+        git_command = "{my_bin} {my_options} {keyvalue}".format(my_bin = self.__binaryName,
+                                                                my_options = "config --get",
+                                                                keyvalue="core.sparsecheckout")
+    
+        # Run the git command and write the command's 
+        # stderr and stdout results to 
+        # unique temp files. The stdout tempfile has only one record which 
+        # is searched for true or false. If true is found then
+        # sparse checkout is enabled, otherwise sparse checkouts are
+        # not enabled and we exit program.
+        exit_status = 0
+        with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stdout:
+            with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stderr:
+                exit_status = None
+                message = None
+                try:
+                    exit_status = subprocess.check_call(git_command,
+                                                        shell=True,
+                                                        stdout=tmpfile_stdout,
+                                                        stderr=tmpfile_stderr)
+                except subprocess.CalledProcessError as exc :
+                    exit_status = 1
+                    message = "Error in subprocess command: " + exc.cmd
+                except:
+                    exit_status = 1
+                    message = "Unexpected error!"
+
+                # Close the file objects of the temporary files.
+                tmpfile_stdout_path = tmpfile_stdout.name
+                tmpfile_stderr_path = tmpfile_stderr.name
+                tmpfile_stdout.close()
+                tmpfile_stderr.close()
+
+                # Remove the temporary directories if the subprocess fails.
+                if  exit_status > 0:
+                    shutil.rmdir(tmpfile_stdout_path) 
+                    shutil.rmdir(tmpfile_stderr_path) 
+                    sys.exit(message)
+
+                # Search for 'true' in the temp stdout file.
+                tmpfile_stdout_contents = None
+                with open(tmpfile_stdout_path,"r") as tmpfile_file_obj:
+                    tmpfile_stdout_contents = tmpfile_file_obj.readlines()
+                    if not ( 'true' in tmpfile_stdout_contents[0].lower() ) : 
+                        error_message  =  "Error! Sparse checkout of git repositories is not enabled.\n"
+                        error_message +=  "Please enable sparse checkout of git repositories." 
+                        sys.exit(error_message)
+
+                # Remove the temporary directories before we return.
+                shutil.rmdir(tmpfile_stdout_path) 
+                shutil.rmdir(tmpfile_stderr_path) 
         return
 
 class BaseRepository(metaclass=ABCMeta):
     """ This class define the comman behavoir of a repository as expected by the NCCS Test Harness.
 
     """
+    def __init__(self):
+        print("In base repository")
+        return
 
     @classmethod
     @abstractmethod
@@ -177,9 +269,6 @@ class RepositoryFactory:
     This class creates a repository object by calling the class method
     create. Currently only git and svn repository objects are supported.
     """
-    def __init__(self):
-        return
-
     @classmethod
     def create(cls,
                type_of_repository,
