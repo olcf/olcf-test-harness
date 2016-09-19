@@ -8,6 +8,7 @@ from .base_scheduler import BaseScheduler
 import shlex
 import subprocess
 import re
+import os
 
 class LSF(BaseScheduler):
 
@@ -60,6 +61,32 @@ class LSF(BaseScheduler):
         print(jobid)
 
         return jobid
+
+    def write_jobid_to_status(self,jobid,unique_id):
+        #
+        # Get the current working directory.
+        #
+        cwd = os.getcwd()
+
+        #
+        # Get the 1 head path in the cwd.
+        #
+        (dir_head1, dir_tail1) = os.path.split(cwd)
+
+        #
+        # Now join dir_head1 to make the path. This path should be unique.
+        #
+        path1 = os.path.join(dir_head1,"Status",unique_id,"job_id.txt")
+
+        #
+        # Write the pbs job id to the file.
+        #
+        fileobj = open(path1,"w")
+        string1 = "%20s\n" % (jobid)
+        fileobj.write(string1)
+        fileobj.close()
+
+        return path1
 
 if __name__ == '__main__':
     print('This is the LSF scheduler class')

@@ -75,9 +75,11 @@ class BaseMachine(metaclass=ABCMeta):
         """ Return a string with the name of the scheduler's template file."""
         return self.__scheduler.get_scheduler_template_file_name()
 
-    def submit_to_scheduler(self,batchfilename):
-        """ Return the scheduler object."""
-        return self.__scheduler.submit_job(batchfilename)
+    def submit_to_scheduler(self,batchfilename,unique_id):
+        """ Return the jobID for the submission."""
+        jobid = self.__scheduler.submit_job(batchfilename)
+        path_to_jobid_status = self.__scheduler.write_jobid_to_status(jobid,unique_id)
+        return jobid 
 
     def build_jobLauncher_command(self,total_processes,processes_per_node,processes_per_socket,path_to_executable):
         """ Return the jobLauncher command."""
@@ -98,9 +100,9 @@ class BaseMachine(metaclass=ABCMeta):
         shutil.copytree(path_to_source,path_to_build_directory)
         os.chdir(path_to_build_directory)
         print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
-        os.system(buildscriptname)
+        build_exit_status = os.system(buildscriptname)
         os.chdir(currentdir)
-        return
+        return build_exit_status
 
     def get_rgt_harness_id(self):
         """ Return the string with the Harness ID for this test instance."""

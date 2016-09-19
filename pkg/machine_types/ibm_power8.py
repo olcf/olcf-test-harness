@@ -235,7 +235,8 @@ class IBMpower8(BaseMachine):
 
     def submit_batch_script(self):
         print("Submitting batch script for Power8")
-        return self.submit_to_scheduler(self.__rgt_test.get_batchfilename())
+        jobid = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
+        return jobid
 
 if __name__ == "__main__":
     print('This is the IBM Power8 class')
