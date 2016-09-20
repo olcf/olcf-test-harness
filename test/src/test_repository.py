@@ -82,16 +82,16 @@ class Test_SVN_repositories(unittest.TestCase):
         self.repository = SVNRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
                                                                              path_to_test_repository)
 
-        ## Make the application directory - this directory will contain the sparse
-        ## checkout of the Application and test.
-        #self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
-        #create_application_directory(self)
+        # Make the application directory - this directory will contain the sparse
+        # checkout of the Application and test.
+        self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
+        create_application_directory(self)
 
         ## Define the path to the repository.
-        #self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
+        self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
 
         ## Create the list of folders to sparsely checkout from the repository.
-        #self.folders = create_list_of_folders_to_checkout(self)
+        self.folders = create_list_of_folders_to_checkout(self)
 
         return
 
