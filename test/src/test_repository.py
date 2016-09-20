@@ -25,21 +25,22 @@ class Test_Git_repositories(unittest.TestCase):
 
         # Make a local git repository
         path_to_sample_directory = get_path_to_sample_directory()
-        local_repo_dir = get_path_to_local_dir("git_repo")
+        (path_to_test_repository,path_relative_path_to_apps_wrt_test_git_repository) = \
+            get_path_local_repository_directory("git")
 
         self.repository = GitRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
-                                                                             local_repo_dir)
+                                                                             path_to_test_repository)
 
-        # Make the application directory - this directory will contain the sparse
-        # checkout of the Application and test.
-        self.pathToApplications = get_path_to_application_directory("git_sparse_checkout_applications")
-        create_application_directory(self)
+        ## Make the application directory - this directory will contain the sparse
+        ## checkout of the Application and test.
+        #self.pathToApplications = get_path_to_application_directory("git_sparse_checkout_applications")
+        #create_application_directory(self)
 
-        # Define the path to the repository.
-        self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
+        ## Define the path to the repository.
+        #self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
 
-        # Create the list of folders to sparsely checkout from the repository.
-        self.folders = create_list_of_folders_to_checkout(self)
+        ## Create the list of folders to sparsely checkout from the repository.
+        #self.folders = create_list_of_folders_to_checkout(self)
         return
 
     def tearDown(self):
@@ -76,20 +77,21 @@ class Test_SVN_repositories(unittest.TestCase):
 
         # Make a local svn repository
         path_to_sample_directory = get_path_to_sample_directory()
-        local_repo_dir = get_path_to_local_dir("svn_repo")
+        (path_to_test_repository,path_relative_path_to_apps_wrt_test_git_repository) = \
+            get_path_local_repository_directory("svn")
         self.repository = SVNRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
-                                                                             local_repo_dir)
+                                                                             path_to_test_repository)
 
-        # Make the application directory - this directory will contain the sparse
-        # checkout of the Application and test.
-        self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
-        create_application_directory(self)
+        ## Make the application directory - this directory will contain the sparse
+        ## checkout of the Application and test.
+        #self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
+        #create_application_directory(self)
 
-        # Define the path to the repository.
-        self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
+        ## Define the path to the repository.
+        #self.pathToRepository = os.environ["RGT_PATH_TO_REPS"]
 
-        # Create the list of folders to sparsely checkout from the repository.
-        self.folders = create_list_of_folders_to_checkout(self)
+        ## Create the list of folders to sparsely checkout from the repository.
+        #self.folders = create_list_of_folders_to_checkout(self)
 
         return
 
@@ -126,10 +128,15 @@ def get_path_to_application_directory(tag):
     path_to_dir = os.path.join(path_head,tag)
     return path_to_dir
 
-def get_path_to_local_dir(tag):
-    path_head = os.getcwd()
-    path_to_dir = os.path.join(path_head, "local_repository", tag)
-    return path_to_dir
+def get_path_local_repository_directory(tag):
+    path_head = None
+    if tag == 'git':
+        path_head = os.getenv('PATH_TO_TEST_GIT_REPOSITORY')
+        internal_path_applications_directory = os.getenv('PATH_RELATIVE_PATH_TO_APPS_WRT_TEST_GIT_REPOSITORY')
+    elif tag == 'svn':
+        path_head = os.getenv('PATH_TO_TEST_SVN_REPOSITORY')
+        internal_path_applications_directory = os.getenv('PATH_RELATIVE_PATH_TO_APPS_WRT_TEST_SVN_REPOSITORY')
+    return (path_head,internal_path_applications_directory)
 
 def create_application_directory(my_unit_test):
     if os.path.exists(my_unit_test.pathToApplications) :

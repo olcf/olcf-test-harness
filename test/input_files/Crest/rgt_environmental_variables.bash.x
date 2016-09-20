@@ -34,7 +34,7 @@ export PATH_TO_HARNESS_TOP_LEVEL
 # URL to svn repository of acceptance test harness   -
 # applications.                                      -
 #-----------------------------------------------------
-MY_APP_REPO="file:///ccs/sys/adm/data/svn-acceptance/acceptance_project/trunk"
+MY_APP_REPO="https://code.ornl.gov/olcf-acceptance-team/olcf4-acceptance-tests.git"
 export MY_APP_REPO
 
 

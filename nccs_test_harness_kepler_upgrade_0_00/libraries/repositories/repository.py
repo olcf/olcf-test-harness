@@ -132,6 +132,7 @@ class GitRepository:
                          root_path_to_checkout_directory,
                          directory_to_checkout):
         """ Performs a sparse checkout of directory from the repository.
+
             :param stdout_file_handle: A file object to write standard out
             :type stdout_file_handle: A file object
 
@@ -168,9 +169,10 @@ class GitRepository:
         path_to_local_dir = os.path.join(root_path_to_checkout_directory,tail_dir)
 
 
-        # Create a hidden directory that will contain the git sparse checkouts.
+        # Change to the hidden directory and do an empty clone of the repository.
         path_to_hidden_directory = os.path.join(root_path_to_checkout_directory,".hidden_git_repository")
-        os.mkdir(path_to_hidden_directory)
+        self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
+                              url_path_to_repository = path_to_repository)
 
         return
 
@@ -219,10 +221,10 @@ class GitRepository:
                 tmpfile_stdout.close()
                 tmpfile_stderr.close()
 
-                # Remove the temporary directories if the subprocess fails.
+                # Remove the temporary files if the subprocess fails.
                 if  exit_status > 0:
-                    shutil.rmdir(tmpfile_stdout_path) 
-                    shutil.rmdir(tmpfile_stderr_path) 
+                    os.remove(tmpfile_stdout_path) 
+                    os.remove(tmpfile_stderr_path) 
                     sys.exit(message)
 
                 # Search for 'true' in the temp stdout file.
@@ -234,9 +236,29 @@ class GitRepository:
                         error_message +=  "Please enable sparse checkout of git repositories." 
                         sys.exit(error_message)
 
-                # Remove the temporary directories before we return.
-                shutil.rmdir(tmpfile_stdout_path) 
-                shutil.rmdir(tmpfile_stderr_path) 
+                # Remove the temporary files before we return.
+                os.remove(tmpfile_stdout_path) 
+                os.remove(tmpfile_stderr_path) 
+        return
+
+    def __doAnEmptyClone(self,
+                         path_to_local_directory,
+                         url_path_to_repository):
+
+        if not os.path.exists(path_to_local_directory):
+            os.mkdir(path_to_local_directory)
+
+        initial_dir = os.getcwd()
+        os.chdir(path_to_local_directory)
+        git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
+                                                          my_options='init')
+        run_as_subprocess_command(git_init_command)
+        git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
+                                                                             my_options = 'add -f origin',
+                                                                             my_url = url_path_to_repository)
+        run_as_subprocess_command(git_do_sparse_clone_command)
+        os.chdir(initial_dir)
+
         return
 
 class BaseRepository(metaclass=ABCMeta):
@@ -302,3 +324,48 @@ class RepositoryFactory:
 
         return my_repository
 
+def run_as_subprocess_command(cmd):
+    """ Runs the command in the string cmd by subprocess.
+
+            :param cmd: A string containing the command to run
+            :type cmd: string
+    """
+    # Run the git command and write the command's 
+    # stderr and stdout results to 
+    # unique temp files. The stdout tempfile has only one record which 
+    # is searched for true or false. If true is found then
+    # sparse checkout is enabled, otherwise sparse checkouts are
+    # not enabled and we exit program.
+    exit_status = 0
+    with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stdout:
+        with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stderr:
+            exit_status = None
+            message = None
+            try:
+                exit_status = subprocess.check_call(git_command,
+                                                    shell=True,
+                                                    stdout=tmpfile_stdout,
+                                                    stderr=tmpfile_stderr)
+            except subprocess.CalledProcessError as exc :
+                exit_status = 1
+                message = "Error in subprocess command: " + exc.cmd
+            except:
+                exit_status = 1
+                message = "Unexpected error!"
+    
+            # Close the file objects of the temporary files.
+            tmpfile_stdout_path = tmpfile_stdout.name
+            tmpfile_stderr_path = tmpfile_stderr.name
+            tmpfile_stdout.close()
+            tmpfile_stderr.close()
+    
+            # Remove the temporary files if the subprocess fails.
+            if  exit_status > 0:
+                os.remove(tmpfile_stdout_path) 
+                os.remove(tmpfile_stderr_path) 
+                sys.exit(message)
+    
+            # Remove the temporary files before we return.
+            os.remove(tmpfile_stdout_path) 
+            os.remove(tmpfile_stderr_path) 
+    return
