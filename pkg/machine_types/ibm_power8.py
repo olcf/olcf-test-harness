@@ -31,6 +31,7 @@ class IBMpower8(BaseMachine):
         batchfilename = None
         buildscriptname = None
         checkscriptname = None
+        reportscriptname = None
 
         if os.path.isfile(self.get_rgt_input_file_name()):
             print("Reading input file from Power8")
@@ -45,6 +46,7 @@ class IBMpower8(BaseMachine):
             batchfilename_pattern = "batchfilename"
             buildscriptname_pattern = "buildscriptname"
             checkscriptname_pattern = "checkscriptname"
+            reportscriptname_pattern = "reportscriptname"
             executablename_pattern = "executablename"
             delimiter = "="
 
@@ -98,7 +100,7 @@ class IBMpower8(BaseMachine):
                 words = record.split(delimiter)
                 words[0] = words[0].strip().lower()
                 if temp_re.match(words[0]):
-                    jobname = words[1].strip('\n')
+                    jobname = words[1].strip('\n').strip()
                     break
             if jobname:
                 print("Found jobname is " + jobname + " in IBM Power 8 machine")
@@ -111,7 +113,7 @@ class IBMpower8(BaseMachine):
                 words = record.split(delimiter)
                 words[0] = words[0].strip().lower()
                 if temp_re.match(words[0]):
-                    batchqueue = words[1].strip('\n')
+                    batchqueue = words[1].strip('\n').strip()
                     break
             if batchqueue:
                 print("Found batchqueue is " + batchqueue + " in IBM Power 8 machine")
@@ -170,6 +172,19 @@ class IBMpower8(BaseMachine):
             else:
                 print("No checkscriptname provided in IBM Power 8 machine")
 
+            # Find the name for the report script file to use to log results
+            temp_re = re.compile(reportscriptname_pattern + "$")
+            for record in filerecords:
+                words = record.split(delimiter)
+                words[0] = words[0].strip().lower()
+                if temp_re.match(words[0]):
+                    reportscriptname = words[1].strip('\n').strip()
+                    break
+            if reportscriptname:
+                print("Found reportscriptname is " + reportscriptname + " in IBM Power 8 machine")
+            else:
+                print("No reportscriptname provided in IBM Power 8 machine")
+
             # Find the name for the executable to use to launch the test
             temp_re = re.compile(executablename_pattern + "$")
             for record in filerecords:
@@ -185,7 +200,7 @@ class IBMpower8(BaseMachine):
 
 
             self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
-                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename)
+                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
@@ -237,6 +252,16 @@ class IBMpower8(BaseMachine):
         print("Submitting batch script for Power8")
         jobid = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
         return jobid
+
+    def check_executable(self):
+        print("Running check executable script on Power8")
+        print("Using check script " + self.__rgt_test.get_checkscriptname())
+        return self.start_check_script(self.__rgt_test.get_checkscriptname())
+
+    def report_executable(self):
+        print("Running report executable script on Power8")
+        print("Using report script " + self.__rgt_test.get_reportscriptname())
+        return self.start_report_script(self.__rgt_test.get_reportscriptname())
 
 if __name__ == "__main__":
     print('This is the IBM Power8 class')

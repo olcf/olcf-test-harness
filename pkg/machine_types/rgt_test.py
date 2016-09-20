@@ -16,9 +16,10 @@ class RgtTest():
         self.__batchfilename = None
         self.__buildscriptname = None
         self.__checkscriptname = None
+        self.__reportscriptname = None
         self.__executablename = None
 
-    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename):
+    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
         self.__processes_per_socket = processes_per_socket
@@ -28,6 +29,7 @@ class RgtTest():
         self.__batchfilename = batchfilename
         self.__buildscriptname = buildscriptname
         self.__checkscriptname = checkscriptname
+        self.__reportscriptname = reportscriptname
         self.__executablename = executablename
 
     def get_batchfilename(self):
@@ -38,6 +40,9 @@ class RgtTest():
 
     def get_checkscriptname(self):
         return self.__checkscriptname
+
+    def get_reportscriptname(self):
+        return self.__reportscriptname
 
     def get_executablename(self):
         return self.__executablename
@@ -72,6 +77,7 @@ class RgtTest():
         print("batchfilename = " + self.__batchfilename)
         print("buildscriptname = " + self.__buildscriptname)
         print("checkscriptname = " + self.__checkscriptname)
+        print("reportscriptname = " + self.__reportscriptname)
         print("executablename = " + self.__executablename)
 
 if __name__ == "__main__":

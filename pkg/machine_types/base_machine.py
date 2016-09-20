@@ -86,7 +86,7 @@ class BaseMachine(metaclass=ABCMeta):
         return self.__jobLauncher.build_job_command(total_processes,processes_per_node,processes_per_socket,path_to_executable)
 
     def start_build_script(self,buildscriptname):
-        """ Return the state of the build."""
+        """ Return the status of the build."""
         os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
         print("current directory in base_machine: ",currentdir)
@@ -104,6 +104,49 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(currentdir)
         return build_exit_status
 
+    def check_results(self,checkscriptname):
+        """ Run the check script provided by the user and log the result to the status file."""
+        jstatus = self.start_check_script(checkscriptname)
+        self.write_check_exit_status(jstatus)
+
+    def start_check_script(self,checkscriptname):
+        """ Check if results are correct. """
+        os.chdir(self.get_rgt_scripts_dir())
+        currentdir = os.getcwd()
+        print("current directory in base_machine: ",currentdir)
+        check_exit_status = os.system(checkscriptname)
+        os.chdir(currentdir)
+        return check_exit_status
+
+    def write_check_exit_status(self,jstatus):
+        """ Write the status of checking results to the status directory."""
+        (dir_head1, dir_tail1) = os.path.split(self.get_rgt_results_dir())
+        (dir_head2, dir_tail2) = os.path.split(dir_head1)
+
+        file1 = os.path.join(dir_head2,"Status",dir_tail1,"job_status.txt")
+        file1_obj = open(file1,"w")
+
+        # Set the string to write to the job_status.txt file.
+        if jstatus == 0:
+            pf = "1"
+        elif jstatus == 1:
+            pf = "0"
+        elif jstatus >= 2:
+            pf = "2"
+        string1 = "%s\n" % (pf)
+
+        file1_obj.write(string1)
+        file1_obj.close()
+
+    def start_report_script(self,reportscriptname):
+        """ Check if results are correct. """
+        os.chdir(self.get_rgt_scripts_dir())
+        currentdir = os.getcwd()
+        print("current directory in base_machine: ",currentdir)
+        report_exit_status = os.system(reportscriptname)
+        os.chdir(currentdir)
+        return report_exit_status
+
     def get_rgt_harness_id(self):
         """ Return the string with the Harness ID for this test instance."""
         return self.__rgt_harness_id
@@ -114,9 +157,10 @@ class BaseMachine(metaclass=ABCMeta):
         currentdir = os.getcwd()
         (dir_head1, dir_tail1) = os.path.split(currentdir)
         self.__rgt_results_dir = os.path.join(dir_head1,"Run_Archive",self.get_rgt_harness_id())
+        return
 
     def get_rgt_results_dir(self):
-        """ Return the string corresponding to the path to the Scripts directory."""
+        """ Return the string corresponding to the path to the Run_Archive directory."""
         return self.__rgt_results_dir
 
     def get_rgt_scripts_dir(self):
