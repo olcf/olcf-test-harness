@@ -103,12 +103,13 @@ def creating_root_dir_repo(path_to_repo):
 
 def create_list_of_folders_to_checkout(self):
     my_repository_application = self.repository.getLocationOfFile("HelloWorld")
-    my_repository_test = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
+    my_repository_test1 = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
+    my_repository_test2 = self.repository.getLocationOfFile('HelloWorld/Test_32cores')
     my_repository_source = self.repository.getLocationOfFile('Test_16cores/Source')
 
     folders = { "application" : my_repository_application,
                 "source": my_repository_source,
-                "test" : my_repository_test}
+                "test" : [my_repository_test1,my_repository_test2]}
 
     return folders
 

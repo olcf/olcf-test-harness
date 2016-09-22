@@ -19,6 +19,7 @@ class SVNRepository:
         self.__binaryName = "svn"
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
+        self.__checkedOutDirectories = []
 
         return
 
@@ -94,6 +95,7 @@ class SVNRepository:
 
         # Form the sparse checkout command for the application
         if not os.path.exists(path_to_local_dir):
+            self.__checkedOutDirectories += [path_to_local_dir]
             sparse_checkout_command = "{my_bin} {my_options} {my_svn_path} {my_local_path}".format(
                                                 my_bin = self.__binaryName, 
                                                 my_options = svn_options, 
@@ -109,11 +111,13 @@ class SVNRepository:
                 message += "Sparse checkout of command failed: " + sparse_checkout_command
                 return (message,exit_status)
 
+
         # Form the update command for the source
         application_dir = os.path.basename(directory_to_checkout['application'])
         tail_dir = os.path.basename(directory_to_checkout['source'])
         path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
         
+        self.__checkedOutDirectories += [path_to_local_dir]
         svn_options = 'update'
         svn_update_command = "{my_bin} {my_options} {my_local_path}".format(
                                             my_bin = self.__binaryName, 
@@ -131,29 +135,40 @@ class SVNRepository:
 
         # Form the update command for the test.
         application_dir = os.path.basename(directory_to_checkout['application'])
-        tail_dir = os.path.basename(directory_to_checkout['test'])
-        path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
+        for a_test in directory_to_checkout['test']:
+            tail_dir = os.path.basename(a_test)
+            path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
+            self.__checkedOutDirectories += [path_to_local_dir]
+            svn_options = 'update'
+            svn_update_command = "{my_bin} {my_options} {my_local_path}".format(
+                                                my_bin = self.__binaryName, 
+                                                my_options = svn_options, 
+                                                my_local_path = path_to_local_dir)
+            
+            exit_status = subprocess.call(svn_update_command,
+                                          shell=True,
+                                          stdout=stdout_file_handle,
+                                          stderr=stderr_file_handle)
 
-        svn_options = 'update'
-        svn_update_command = "{my_bin} {my_options} {my_local_path}".format(
-                                            my_bin = self.__binaryName, 
-                                            my_options = svn_options, 
-                                            my_local_path = path_to_local_dir)
-        
-        exit_status = subprocess.call(svn_update_command,
-                                      shell=True,
-                                      stdout=stdout_file_handle,
-                                      stderr=stderr_file_handle)
-
-        if exit_status > 0:
-            message += "svn update command failed: " + sparse_checkout_command
-            return (message,exit_status)
+            if exit_status > 0:
+                message += "svn update command failed: " + sparse_checkout_command
+                return (message,exit_status)
 
         return (message,exit_status)
 
     def verifySparseCheckout(self):
-        message = "Stud error meesage"
-        test_result = False
+        """ Verifies that the directories exist for a sparse checkout.
+
+            :returns: a tuple (message,exit_status) 
+            :rtype:  message is a string, exit_status is an integer
+        """
+
+        test_result = True
+        message = ""
+        for dirpath in self.__checkedOutDirectories:
+            if not os.path.exists(dirpath):
+                test_result = False
+                message += "Directory/file {0} did not checkout.".format(dirpath)
         return (message, test_result)
 
 class GitRepository:
