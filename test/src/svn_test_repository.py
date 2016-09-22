@@ -113,8 +113,9 @@ def create_list_of_folders_to_checkout(self):
     return folders
 
 def verify_sparse_checkout(self):
-    msg = "Stud message"
-    test_result = False
+
+    (msg,test_result) = self.repository.verifySparseCheckout()
+
     return(test_result,msg)
 
 if __name__ == "__main__":

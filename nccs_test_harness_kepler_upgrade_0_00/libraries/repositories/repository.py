@@ -151,6 +151,11 @@ class SVNRepository:
 
         return (message,exit_status)
 
+    def verifySparseCheckout(self):
+        message = "Stud error meesage"
+        test_result = False
+        return (message, test_result)
+
 class GitRepository:
     """ This class is encapsulates the behavoir of a git repository.
 
@@ -194,6 +199,7 @@ class GitRepository:
                                     self.__internalPathToApplications,
                                     file)
         return path_to_file
+
     def doSparseCheckout(self,
                          stdout_file_handle,
                          stderr_file_handle,
@@ -248,6 +254,11 @@ class GitRepository:
 
         # Verify git sparse checkout is enabled.
         self.__verifySparseCheckoutEnabled()
+
+    def verifySparseCheckout(self):
+        message = "Stud error meesage"
+        test_result = False
+        return (message, test_result)
 
     def __verifySparseCheckoutEnabled(self):
         """ Verifies that git the user has enabled sparse git checkouts. 
@@ -345,6 +356,10 @@ class BaseRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def doSparseCheckout(self):
+        return
+
+    @abstractmethod
+    def verifySparseCheckout(self):
         return
 
     @abstractmethod
