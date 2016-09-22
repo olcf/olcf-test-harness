@@ -21,7 +21,7 @@ export MY_MEMBER_WORK
 # Path to harness module file.                       -
 #                                                    -
 #-----------------------------------------------------
-MY_RGT_MODULE_FILE="/ccs/proj/scgs/NCCS_Test_Harness_Workspace/acceptance-test-harness/test/input_files/Crest/unit_testing/1.0"
+MY_RGT_MODULE_FILE="/ccs/home/arnoldt/sw/crest/modulefiles/my_unit_testing/crest_unit_testing"
 export MY_RGT_MODULE_FILE
 
 #---------------------------------------------------------------

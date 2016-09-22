@@ -14,22 +14,35 @@ class SVNRepository:
     """
 
     def __init__(self,
-                 location_of_repository=None):
+                 location_of_repository=None,
+                 internal_repo_path_to_applications=None):
         self.__binaryName = "svn"
         self.__locationOfRepository = location_of_repository
+        self.__internalPathToApplications = internal_repo_path_to_applications
+
         return
 
     @classmethod
     def createLocalRepoFromExistingDirectory(cls,
                                              path_to_sample_directory,
-                                             path_to_local_dir):
+                                             path_to_local_dir,
+                                             internal_repo_path_to_applications):
+
         completed_svn_init = subprocess.run(["svnadmin","create",path_to_local_dir])
-        svn_url = "file://" + path_to_local_dir + "/trunk/"
+        svn_url = "file://" + path_to_local_dir
         subprocess.run(["svn","import",path_to_sample_directory,svn_url,"-m 'Initial svn commit'"])
         return RepositoryFactory.create("svn",
-                                         svn_url)
+                                         svn_url,
+                                         internal_repo_path_to_applications)
     def getLocationOfRepository(self):
         return self.__locationOfRepository
+
+    def getLocationOfFile(self,
+                          file):
+        path_to_file = os.path.join(self.__locationOfRepository,
+                                    self.__internalPathToApplications,
+                                    file)
+        return path_to_file
 
     def doSparseCheckout(self,
                          stdout_file_handle,
@@ -98,16 +111,19 @@ class GitRepository:
 
     """
     def __init__(self,
-                 location_of_repository=None):
+                 location_of_repository=None,
+                 internal_repo_path_to_applications=None):
         self.__binaryName = "git"
         self.__locationOfRepository = location_of_repository
+        self.__internalPathToApplications = internal_repo_path_to_applications
 
         return
 
     @classmethod
     def createLocalRepoFromExistingDirectory(cls,
-                                        path_to_sample_directory,
-                                        path_to_local_dir):
+                                             path_to_sample_directory,
+                                             path_to_local_dir,
+                                             internal_repo_path_to_applications):
         starting_directory = os.getcwd()
         shutil.copytree(path_to_sample_directory,path_to_local_dir)
         
@@ -120,11 +136,19 @@ class GitRepository:
 
         os.chdir(starting_directory )
 
-        return RepositoryFactory.create("git",path_to_local_dir)
+        return RepositoryFactory.create("git",
+                                         path_to_local_dir,
+                                         internal_repo_path_to_applications)
 
     def getLocationOfRepository(self):
         return self.__locationOfRepository
 
+    def getLocationOfFile(self,
+                          file):
+        path_to_file = os.path.join(self.__locationOfRepository,
+                                    self.__internalPathToApplications,
+                                    file)
+        return path_to_file
     def doSparseCheckout(self,
                          stdout_file_handle,
                          stderr_file_handle,
@@ -282,6 +306,10 @@ class BaseRepository(metaclass=ABCMeta):
     def getLocationOfRepository(self):
         return
 
+    @abstractmethod
+    def getLocationOfFile(self):
+        return
+
 BaseRepository.register(SVNRepository)
 BaseRepository.register(GitRepository)
 
@@ -294,7 +322,8 @@ class RepositoryFactory:
     @classmethod
     def create(cls,
                type_of_repository,
-               location_of_repository):
+               location_of_repository,
+               internal_repo_path_to_applications):
         """ Creates a repository object that encapuslates the repository behavoir. 
 
         This class method will a Repository object if the type_of_repository is 
@@ -306,6 +335,10 @@ class RepositoryFactory:
         :param location_of_repository: The fully qualified path to an existing repository.
         :type location_of_repository: string
 
+        :param internal_repo_path_to_applications: The internal path within the repository to the Application
+                                                   directory
+        :type internal_repo_path_to_applications: string
+
         :returns: my_repository
         :rtype: A Repository object - currently only GitRepository or SVNRepository objects 
                 are returned. 
@@ -315,9 +348,11 @@ class RepositoryFactory:
         # matches one of the supported types.  
         my_repository = None
         if type_of_repository == "git":
-            my_repository = GitRepository(location_of_repository)
+            my_repository = GitRepository(location_of_repository,
+                                          internal_repo_path_to_applications)
         elif type_of_repository == "svn":
-            my_repository = SVNRepository(location_of_repository)
+            my_repository = SVNRepository(location_of_repository,
+                                          internal_repo_path_to_applications)
         else:
             # No supporting repository if program reaches this branch.
             my_repository = None
