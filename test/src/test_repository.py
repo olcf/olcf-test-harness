@@ -155,7 +155,7 @@ def create_application_directory(my_unit_test):
 
 def create_list_of_folders_to_checkout(self):
     my_repository_test = self.repository.getLocationOfFile('test_16cores')
-    my_repository_source = self.repository.getLocationOfFile('test_16cores/Source')
+    my_repository_source = self.repository.getLocationOfFile('Test_16cores/Source')
 
     folders = [
                 my_repository_test,

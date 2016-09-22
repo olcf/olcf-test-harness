@@ -153,7 +153,7 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         exit_status = 0
         checkout_command = "svn checkout -N " + svn_path_to_application + " " + abspath_app_dir
-        if os.path.exists(abspath_app_dir ):
+        if os.path.exists(abspath_app_dir):
             message = "Source of application: " + application_name + " already exists."
             self.writeToLogFile(message)
             exit_status = 0

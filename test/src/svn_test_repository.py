@@ -6,6 +6,7 @@ import os
 import shutil
 
 from libraries.repositories.repository import SVNRepository
+from libraries.repositories.repository import run_as_subprocess_command
 
 class Test_SVN_repositories(unittest.TestCase):
     """ Tests for repository functionality
@@ -25,6 +26,9 @@ class Test_SVN_repositories(unittest.TestCase):
         path_to_sample_directory = get_path_to_sample_directory()
         (path_to_test_repository,path_relative_path_to_apps_wrt_test_svn_repository) = \
             get_path_local_repository_directory()
+
+        creating_root_dir_repo(path_to_test_repository)
+        
         self.repository = SVNRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
                                                                              path_to_test_repository,
                                                                              path_relative_path_to_apps_wrt_test_svn_repository )
@@ -55,7 +59,8 @@ class Test_SVN_repositories(unittest.TestCase):
                                                  stderr_file_handle=stderr_handle,
                                                  path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
-                                                 directory_to_checkout = self.folders[0])
+                                                 directory_to_checkout = self.folders)
+
 
         (test_result,msg) = verify_sparse_checkout(self)
         self.assertTrue(test_result, msg)
@@ -81,7 +86,7 @@ def get_path_local_repository_directory():
     return (path_head,internal_path_applications_directory)
 
 def get_path_to_test_repository():
-    path_head = os.getenv('PATH_TO_TEST_GIT_REPOSITORY')
+    path_head = os.getenv('PATH_TO_TEST_SVN_REPOSITORY')
     return path_head
 
 def create_application_directory(my_unit_test):
@@ -90,14 +95,20 @@ def create_application_directory(my_unit_test):
     os.makedirs(my_unit_test.pathToApplications)
     return
 
-def create_list_of_folders_to_checkout(self):
-    my_repository_test = self.repository.getLocationOfFile('test_16cores')
-    my_repository_source = self.repository.getLocationOfFile('test_16cores/Source')
+def creating_root_dir_repo(path_to_repo):
+    if os.path.exists(path_to_repo) :
+        shutil.rmtree(path_to_repo)
+    os.makedirs(path_to_repo)
+    return
 
-    folders = [
-                my_repository_test,
-                my_repository_source
-              ]
+def create_list_of_folders_to_checkout(self):
+    my_repository_application = self.repository.getLocationOfFile("HelloWorld")
+    my_repository_test = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
+    my_repository_source = self.repository.getLocationOfFile('Test_16cores/Source')
+
+    folders = { "application" : my_repository_application,
+                "source": my_repository_source,
+                "test" : my_repository_test}
 
     return folders
 

@@ -28,6 +28,7 @@ class SVNRepository:
                                              path_to_local_dir,
                                              internal_repo_path_to_applications):
 
+
         completed_svn_init = subprocess.run(["svnadmin","create",path_to_local_dir])
         svn_url = "file://" + path_to_local_dir
         subprocess.run(["svn","import",path_to_sample_directory,svn_url,"-m 'Initial svn commit'"])
@@ -64,21 +65,23 @@ class SVNRepository:
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string
 
-            :param directory_to_checkout: A list of directories or files to sparsely checkout.
-            :type directories: a string list of directory or file names.
+            :param directory_to_checkout: A dictionary of directories or files to sparsely checkout.
+            :type directories: a dictionary of strings of directory or file names.
 
             :returns: a tuple (message,exit_status) 
             :rtype:  message is a string, exit_status is an integer
         """
-        # Check if file handles are open
         message = ""
+        exit_status = 0
+
+        # Check if file handles are open
         if stdout_file_handle.closed:
-            message =  "Error! In sparse checkout the stdout file handle is closed"
+            message +=  "Error! In sparse checkout the stdout file handle is closed"
             exit_status = 1
             return (message,exit_status)
 
         if stderr_file_handle.closed:
-            message =  "Error! In sparse checkout the stderr file handle is closed"
+            message +=  "Error! In sparse checkout the stderr file handle is closed"
             exit_status = 1
             return (message,exit_status)
 
@@ -86,23 +89,65 @@ class SVNRepository:
         svn_options = 'checkout -N'
        
         # Define the full qualified path the checkout location of the folder.
-        tail_dir = os.path.basename(directory_to_checkout)
+        tail_dir = os.path.basename(directory_to_checkout['application'])
         path_to_local_dir = os.path.join(root_path_to_checkout_directory,tail_dir)
 
-        # Form the checkout command
-        sparse_checkout_command = "{my_bin} {my_options} {my_svn_path} {my_local_path}".format(
+        # Form the sparse checkout command for the application
+        if not os.path.exists(path_to_local_dir):
+            sparse_checkout_command = "{my_bin} {my_options} {my_svn_path} {my_local_path}".format(
+                                                my_bin = self.__binaryName, 
+                                                my_options = svn_options, 
+                                                my_svn_path = directory_to_checkout['application'],
+                                                my_local_path = path_to_local_dir)
+
+            exit_status = subprocess.call(sparse_checkout_command,
+                                          shell=True,
+                                          stdout=stdout_file_handle,
+                                          stderr=stderr_file_handle)
+
+            if exit_status > 0:
+                message += "Sparse checkout of command failed: " + sparse_checkout_command
+                return (message,exit_status)
+
+        # Form the update command for the source
+        application_dir = os.path.basename(directory_to_checkout['application'])
+        tail_dir = os.path.basename(directory_to_checkout['source'])
+        path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
+        
+        svn_options = 'update'
+        svn_update_command = "{my_bin} {my_options} {my_local_path}".format(
                                             my_bin = self.__binaryName, 
                                             my_options = svn_options, 
-                                            my_svn_path = directory_to_checkout,
                                             my_local_path = path_to_local_dir)
-
-        exit_status = subprocess.call(sparse_checkout_command,
+        
+        exit_status = subprocess.call(svn_update_command,
                                       shell=True,
                                       stdout=stdout_file_handle,
                                       stderr=stderr_file_handle)
 
         if exit_status > 0:
-            message = "Sparse checkout of command failed: " + sparse_checkout_command
+            message += "svn update command failed: " + sparse_checkout_command
+            return (message,exit_status)
+
+        # Form the update command for the test.
+        application_dir = os.path.basename(directory_to_checkout['application'])
+        tail_dir = os.path.basename(directory_to_checkout['test'])
+        path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
+
+        svn_options = 'update'
+        svn_update_command = "{my_bin} {my_options} {my_local_path}".format(
+                                            my_bin = self.__binaryName, 
+                                            my_options = svn_options, 
+                                            my_local_path = path_to_local_dir)
+        
+        exit_status = subprocess.call(svn_update_command,
+                                      shell=True,
+                                      stdout=stdout_file_handle,
+                                      stderr=stderr_file_handle)
+
+        if exit_status > 0:
+            message += "svn update command failed: " + sparse_checkout_command
+            return (message,exit_status)
 
         return (message,exit_status)
 
