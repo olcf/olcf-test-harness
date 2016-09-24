@@ -462,7 +462,9 @@ class GitRepository:
         # Form the destination of the symbolic link.
         application_name = os.path.basename(path_to_dir)
         dest_of_symlink = os.path.join(root_path_to_checkout_directory,application_name)
-        os.symlink(src_of_symlink,dest_of_symlink) 
+
+        if not os.path.exists(dest_of_symlink):
+            os.symlink(src_of_symlink,dest_of_symlink) 
         return
 
 class BaseRepository(metaclass=ABCMeta):
