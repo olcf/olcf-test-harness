@@ -242,7 +242,7 @@ class GitRepository:
 
         path_to_application_dir = \
         self.__defineDirectoryToSparseApplicationCheckout(files_to_sparsely_checkout = directory_to_checkout,
-                                                              path_to_hidden_repo = path_to_hidden_directory)
+                                                          path_to_hidden_repo = path_to_hidden_directory)
         
         files_to_checkout = self.__defineFilesToCheckout(path_to_local_directory = path_to_hidden_directory,
                                                          files_to_sparsely_checkout = directory_to_checkout)
@@ -253,6 +253,9 @@ class GitRepository:
         self.__formSymbolicLinksToDirectory(root_path_to_checkout_directory,
                                             path_to_application_dir)
 
+        self.__defineFilesForVerifying(root_path_to_checkout_directory,
+                                       directory_to_checkout)
+
         return
 
 
@@ -260,8 +263,12 @@ class GitRepository:
         self.__verifySparseCheckoutEnabled()
 
     def verifySparseCheckout(self):
-        message = "Stud error meesage"
-        test_result = False
+        test_result = True
+        message = ""
+        for dirpath in self.__checkedOutDirectories:
+            if not os.path.exists(dirpath):
+                test_result = False
+                message += "Directory/file {0} did not checkout.".format(dirpath)
         return (message, test_result)
 
     def __verifySparseCheckoutEnabled(self):
@@ -393,8 +400,8 @@ class GitRepository:
         return
 
     def __defineDirectoryToSparseApplicationCheckout(self,
-                                                         files_to_sparsely_checkout,
-                                                        path_to_hidden_repo):
+                                                     files_to_sparsely_checkout,
+                                                     path_to_hidden_repo):
         path_to_source = files_to_sparsely_checkout['source']
         (path_to_application,source_name) = os.path.split(path_to_source ) 
 
@@ -408,6 +415,29 @@ class GitRepository:
         path_to_application_dir = os.path.join(tmp_path,application_name)
 
         return path_to_application_dir
+
+    def __defineFilesForVerifying(self,
+                                  root_path_to_checkout_directory,
+                                  files_to_sparsely_checkout):
+
+        # Define path to application.
+        path_to_source = files_to_sparsely_checkout['source']
+        (path_to_application,source_name) = os.path.split(path_to_source ) 
+        (root_path_to_application,application_name) = os.path.split(path_to_application)
+        path_to_application_dir = os.path.join(root_path_to_checkout_directory,application_name)
+        self.__checkedOutDirectories += [path_to_application_dir]
+
+        # Define path to source. 
+        src_path = os.path.join(path_to_application_dir,source_name)
+        self.__checkedOutDirectories += [src_path]
+        
+        # Define path to tests. 
+        for a_test in files_to_sparsely_checkout['test']:
+            (path_to_test,test_name) = os.path.split(a_test)
+            test_path = os.path.join(path_to_application_dir,test_name)
+            self.__checkedOutDirectories += [test_path]
+
+        return
 
     def __formSymbolicLinksToDirectory(self,
                                        root_path_to_checkout_directory,
