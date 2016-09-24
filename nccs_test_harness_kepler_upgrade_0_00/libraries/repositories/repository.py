@@ -271,12 +271,18 @@ class GitRepository:
 
         self.__doEnableSparseCheckout(path_to_local_directory = path_to_hidden_directory) 
 
+        path_to_application_dir = \
+        self.__defineDirectoryToSparseApplicationCheckout(files_to_sparsely_checkout = directory_to_checkout,
+                                                              path_to_hidden_repo = path_to_hidden_directory)
+        
         files_to_checkout = self.__defineFilesToCheckout(path_to_local_directory = path_to_hidden_directory,
                                                          files_to_sparsely_checkout = directory_to_checkout)
 
+        
         self.__doCheckout(path_to_local_directory = path_to_hidden_directory)
 
-        self.__formSymbolicLinksToDirectory(path_to_local_directory = path_to_hidden_directory)
+        self.__formSymbolicLinksToDirectory(root_path_to_checkout_directory,
+                                            path_to_application_dir)
 
         return
 
@@ -415,6 +421,48 @@ class GitRepository:
                                                                              my_options='checkout master')
         run_as_subprocess_command(git_checkout_command)
         os.chdir(initial_dir)
+        return
+
+    def __defineDirectoryToSparseApplicationCheckout(self,
+                                                         files_to_sparsely_checkout,
+                                                        path_to_hidden_repo):
+        path_to_source = files_to_sparsely_checkout['source']
+        (path_to_application,source_name) = os.path.split(path_to_source ) 
+
+        (root_path_to_application,application_name) = os.path.split(path_to_application)
+
+        unormalized_path = path_to_hidden_repo + root_path_to_application 
+
+        tmp_path = \
+            os.path.normpath(unormalized_path)
+
+        path_to_application_dir = os.path.join(tmp_path,application_name)
+
+        return path_to_application_dir
+
+    def __formSymbolicLinksToDirectory(self,
+                                       root_path_to_checkout_directory,
+                                       path_to_dir):
+
+        # Make sure that the directory exists 
+        if not os.path.exists(path_to_dir):
+            message = "The directory/file {} does not exist."
+            message += "I therefore can not form a symbolic to it"
+            sys.exit(message.format(path_to_dir))
+
+        if not os.path.exists(root_path_to_checkout_directory):
+            message = "The directory/file {} does not exist."
+            message += "I therefore can not form a symbolic to it from"
+            message += "within the directory {}.\n"
+            sys.exit(message.format(root_path_to_checkout_directory))
+
+        # Form the source of the symbolic link.
+        src_of_symlink = path_to_dir
+
+        # Form the destination of the symbolic link.
+        application_name = os.path.basename(path_to_dir)
+        dest_of_symlink = os.path.join(root_path_to_checkout_directory,application_name)
+        os.symlink(src_of_symlink,dest_of_symlink) 
         return
 
 class BaseRepository(metaclass=ABCMeta):

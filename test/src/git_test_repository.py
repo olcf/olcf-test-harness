@@ -49,8 +49,9 @@ class Test_Git_repositories(unittest.TestCase):
         return
 
     def test_git_repo(self):
-        # Do a sparse chekout of the of Hello Word test Test16_cores.
-        # from the directory "Sample_Directory_For_Repository_Testing"
+        """ Test is a sparse checkout can be performed for a git repository.
+
+        """
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
@@ -66,6 +67,10 @@ class Test_Git_repositories(unittest.TestCase):
 
 def get_path_to_sample_directory():
     """ Returns the fully qualified path to the directory 'Sample_Directory_For_Repository_Testing'
+
+
+        :returns: path_to_dir, The path to the directory which is used for creating the test repository.    
+        :rtype:  string
     """
     path_head = os.getenv('PATH_TO_HARNESS_TOP_LEVEL')
     path_to_dir = os.path.join(
@@ -73,6 +78,11 @@ def get_path_to_sample_directory():
     return path_to_dir
 
 def get_path_to_application_directory(tag):
+    """ Returns the fully qualified path to the directory which will serve as the root for the checkedout applications. 
+
+        :returns:  path_to_dir, The path to the directory which will serve as the root for the checkedout applications. 
+        :rtype:  string
+    """
     path_head = os.path.abspath('.')
     path_to_dir = os.path.join(path_head,tag)
     return path_to_dir
@@ -93,11 +103,14 @@ def create_application_directory(my_unit_test):
     return
 
 def create_list_of_folders_to_checkout(self):
+    """ Returns a dictionary of the folders/files to sparsely checkout.
+    """
     my_repository_location = self.repository.getLocationOfRepository()
     
     my_repository_application = self.repository.getLocationOfFile("HelloWorld")
     tmp_words = my_repository_application.split(my_repository_location)
     my_relative_path_repository_application = tmp_words[-1]
+    
     
     my_repository_test1 = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
     tmp_words = my_repository_test1.split(my_repository_location)
@@ -107,10 +120,10 @@ def create_list_of_folders_to_checkout(self):
     tmp_words = my_repository_test2.split(my_repository_location)
     my_relative_path_repository_test2 = tmp_words[-1]
     
-    my_repository_source = self.repository.getLocationOfFile('Test_16cores/Source')
+    my_repository_source = self.repository.getLocationOfFile('HelloWorld/Source')
     tmp_words = my_repository_source.split(my_repository_location)
     my_relative_path_repository_source = tmp_words[-1]
-
+    
     folders = { "application" : my_relative_path_repository_application,
                 "source": my_relative_path_repository_source,
                 "test" : [my_relative_path_repository_test1, my_relative_path_repository_test2]}
@@ -118,8 +131,7 @@ def create_list_of_folders_to_checkout(self):
     return folders
 
 def verify_sparse_checkout(self):
-    msg = "Stud message"
-    test_result = False
+    (msg,test_result) = self.repository.verifySparseCheckout()
     return(test_result,msg)
 
 if __name__ == "__main__":
