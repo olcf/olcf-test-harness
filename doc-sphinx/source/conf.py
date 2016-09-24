@@ -125,6 +125,9 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+#This value selects what content will be inserted into the 
+#main body of an autoclass directive.
+auto_class_content = ['both']
 
 # -- Options for HTML output ----------------------------------------------
 

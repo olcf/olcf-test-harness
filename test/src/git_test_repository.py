@@ -4,6 +4,7 @@
 import unittest
 import os
 import shutil
+import re
 
 from libraries.repositories.repository import GitRepository
 
@@ -56,7 +57,7 @@ class Test_Git_repositories(unittest.TestCase):
                                                  stderr_file_handle=stderr_handle,
                                                  path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
-                                                 directory_to_checkout = self.folders[0])
+                                                 directory_to_checkout = self.folders)
 
         (test_result,msg) = verify_sparse_checkout(self)
         self.assertTrue(test_result, msg)
@@ -92,13 +93,27 @@ def create_application_directory(my_unit_test):
     return
 
 def create_list_of_folders_to_checkout(self):
-    my_repository_test = self.repository.getLocationOfFile('test_16cores')
-    my_repository_source = self.repository.getLocationOfFile('test_16cores/Source')
+    my_repository_location = self.repository.getLocationOfRepository()
+    
+    my_repository_application = self.repository.getLocationOfFile("HelloWorld")
+    tmp_words = my_repository_application.split(my_repository_location)
+    my_relative_path_repository_application = tmp_words[-1]
+    
+    my_repository_test1 = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
+    tmp_words = my_repository_test1.split(my_repository_location)
+    my_relative_path_repository_test1 = tmp_words[-1]
+    
+    my_repository_test2 = self.repository.getLocationOfFile('HelloWorld/Test_32cores')
+    tmp_words = my_repository_test2.split(my_repository_location)
+    my_relative_path_repository_test2 = tmp_words[-1]
+    
+    my_repository_source = self.repository.getLocationOfFile('Test_16cores/Source')
+    tmp_words = my_repository_source.split(my_repository_location)
+    my_relative_path_repository_source = tmp_words[-1]
 
-    folders = [
-                my_repository_test,
-                my_repository_source
-              ]
+    folders = { "application" : my_relative_path_repository_application,
+                "source": my_relative_path_repository_source,
+                "test" : [my_relative_path_repository_test1, my_relative_path_repository_test2]}
 
     return folders
 

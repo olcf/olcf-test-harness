@@ -174,13 +174,17 @@ class SVNRepository:
 class GitRepository:
     """ This class is encapsulates the behavoir of a git repository.
 
+
     """
     def __init__(self,
                  location_of_repository=None,
                  internal_repo_path_to_applications=None):
-        self.__binaryName = "git"
+
+        
+        self.__binaryName = "git" #:ivar __binaryName: The name of the git binary.
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
+        self.__checkedOutDirectories = []
 
         return
 
@@ -254,15 +258,25 @@ class GitRepository:
             exit_status = 1
             return (message,exit_status)
         
-        # Define the full qualified path the checkout location of the folder.
-        tail_dir = os.path.basename(directory_to_checkout)
-        path_to_local_dir = os.path.join(root_path_to_checkout_directory,tail_dir)
-
 
         # Change to the hidden directory and do an empty clone of the repository.
-        path_to_hidden_directory = os.path.join(root_path_to_checkout_directory,".hidden_git_repository")
+        starting_directory = os.getcwd()
+
+        path_to_hidden_directory = os.path.join(root_path_to_checkout_directory,
+                                                ".hidden_git_repository")
+        
         self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
                               url_path_to_repository = path_to_repository)
+
+
+        self.__doEnableSparseCheckout(path_to_local_directory = path_to_hidden_directory) 
+
+        files_to_checkout = self.__defineFilesToCheckout(path_to_local_directory = path_to_hidden_directory,
+                                                         files_to_sparsely_checkout = directory_to_checkout)
+
+        self.__doCheckout(path_to_local_directory = path_to_hidden_directory)
+
+        self.__formSymbolicLinksToDirectory(path_to_local_directory = path_to_hidden_directory)
 
         return
 
@@ -308,7 +322,7 @@ class GitRepository:
                     message = "Error in subprocess command: " + exc.cmd
                 except:
                     exit_status = 1
-                    message = "Unexpected error!"
+                    message = "Unexpected error! " + git_command
 
                 # Close the file objects of the temporary files.
                 tmpfile_stdout_path = tmpfile_stdout.name
@@ -348,12 +362,59 @@ class GitRepository:
         git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
                                                           my_options='init')
         run_as_subprocess_command(git_init_command)
+
         git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
-                                                                             my_options = 'add -f origin',
+                                                                             my_options = 'remote add -f origin',
                                                                              my_url = url_path_to_repository)
         run_as_subprocess_command(git_do_sparse_clone_command)
         os.chdir(initial_dir)
 
+        return
+
+    def __doEnableSparseCheckout(self,
+                                 path_to_local_directory):
+        initial_dir = os.getcwd()
+
+        os.chdir(path_to_local_directory)
+
+        # Enable sparse checkouts.
+        git_enable_sparse_checkouts_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
+                                                                             my_options='config core.sparseCheckout true')
+
+        run_as_subprocess_command(git_enable_sparse_checkouts_command)
+
+        os.chdir(initial_dir)
+
+        return
+
+    def __defineFilesToCheckout(self,
+                                path_to_local_directory,
+                                files_to_sparsely_checkout):
+        
+        a_record = "{entry}\n"
+        path_to_sparse_checkout_file = os.path.join(path_to_local_directory,".git","info","sparse-checkout")
+        file_obj = open(path_to_sparse_checkout_file,'w')
+
+        file_obj.write(a_record.format(entry = files_to_sparsely_checkout['source']))
+        files_to_checkout = [files_to_sparsely_checkout['source']]
+        for a_test in files_to_sparsely_checkout['test']:
+            file_obj.write(a_record.format(entry = a_test))
+            files_to_checkout += [a_test]
+
+        file_obj.close()
+        return files_to_checkout
+
+    def __doCheckout(self,
+                     path_to_local_directory):
+        initial_dir = os.getcwd()
+
+        os.chdir(path_to_local_directory)
+
+        # Do checkout
+        git_checkout_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
+                                                                             my_options='checkout master')
+        run_as_subprocess_command(git_checkout_command)
+        os.chdir(initial_dir)
         return
 
 class BaseRepository(metaclass=ABCMeta):
@@ -440,7 +501,7 @@ def run_as_subprocess_command(cmd):
             :param cmd: A string containing the command to run
             :type cmd: string
     """
-    # Run the git command and write the command's 
+    # Run the command and write the command's 
     # stderr and stdout results to 
     # unique temp files. The stdout tempfile has only one record which 
     # is searched for true or false. If true is found then
@@ -452,7 +513,7 @@ def run_as_subprocess_command(cmd):
             exit_status = None
             message = None
             try:
-                exit_status = subprocess.check_call(git_command,
+                exit_status = subprocess.check_call(cmd,
                                                     shell=True,
                                                     stdout=tmpfile_stdout,
                                                     stderr=tmpfile_stderr)
@@ -461,7 +522,7 @@ def run_as_subprocess_command(cmd):
                 message = "Error in subprocess command: " + exc.cmd
             except:
                 exit_status = 1
-                message = "Unexpected error!"
+                message = "Unexpected error in command! " + cmd
     
             # Close the file objects of the temporary files.
             tmpfile_stdout_path = tmpfile_stdout.name
