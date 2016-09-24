@@ -1,5 +1,12 @@
+import sys
+
+# NCCS Test Harness imports
+import minimal_version
+
+minimal_version.check_valid_python_version()
+
 __all__ = [ 
-            'repositories'
+            'repository',
+            'repository_factory'
           ]
 
-version = 2.0

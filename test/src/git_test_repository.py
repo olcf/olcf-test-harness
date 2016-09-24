@@ -4,9 +4,9 @@
 import unittest
 import os
 import shutil
-import re
 
-from libraries.repositories.repository import GitRepository
+# NCCS Test Harness package imports
+from libraries.repositories.repository_factory import RepositoryFactory
 
 
 class Test_Git_repositories(unittest.TestCase):
@@ -28,9 +28,9 @@ class Test_Git_repositories(unittest.TestCase):
         (path_to_test_repository,path_relative_path_to_apps_wrt_test_git_repository) = \
             get_path_local_repository_directory()
 
-        self.repository = GitRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
-                                                                             path_to_test_repository,
-                                                                             path_relative_path_to_apps_wrt_test_git_repository)
+        self.repository = RepositoryFactory.createLocalGitRepoFromExistingDirectory(path_to_sample_directory,
+                                                                                    path_to_test_repository,
+                                                                                    path_relative_path_to_apps_wrt_test_git_repository)
 
         # Make the application directory - this directory will contain the sparse
         # checkout of the Application and test.

@@ -5,8 +5,8 @@ import unittest
 import os
 import shutil
 
-from libraries.repositories.repository import SVNRepository
-from libraries.repositories.repository import run_as_subprocess_command
+# NCCS Tesst Harness packages
+from libraries.repositories.repository_factory import RepositoryFactory
 
 class Test_SVN_repositories(unittest.TestCase):
     """ Tests for repository functionality
@@ -29,9 +29,9 @@ class Test_SVN_repositories(unittest.TestCase):
 
         creating_root_dir_repo(path_to_test_repository)
         
-        self.repository = SVNRepository.createLocalRepoFromExistingDirectory(path_to_sample_directory,
-                                                                             path_to_test_repository,
-                                                                             path_relative_path_to_apps_wrt_test_svn_repository )
+        self.repository = RepositoryFactory.createLocalSVNRepoFromExistingDirectory(path_to_sample_directory,
+                                                                                    path_to_test_repository,
+                                                                                    path_relative_path_to_apps_wrt_test_svn_repository )
 
         # Make the application directory - this directory will contain the sparse
         # checkout of the Application and test.
