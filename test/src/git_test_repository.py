@@ -8,7 +8,11 @@ import shutil
 # NCCS Test Harness package imports
 from libraries.repositories.repository_factory import RepositoryFactory
 
+correct_repository_type = os.getenv('RGT_TYPE_OF_REPOSITORY') == 'git'
+skip_message = \
+    "We are running tests for a git repository, but our repository is of type {}".format(os.getenv('RGT_TYPE_OF_REPOSITORY') )
 
+@unittest.skipUnless(correct_repository_type,skip_message)
 class Test_Git_repositories(unittest.TestCase):
     """ Tests for repository functionality
 

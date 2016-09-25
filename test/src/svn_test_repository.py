@@ -8,6 +8,11 @@ import shutil
 # NCCS Tesst Harness packages
 from libraries.repositories.repository_factory import RepositoryFactory
 
+correct_repository_type = os.getenv('RGT_TYPE_OF_REPOSITORY') == 'svn'
+skip_message = \
+    "We are running tests for a svn repository, but our repository is of type {}".format(os.getenv('RGT_TYPE_OF_REPOSITORY') )
+
+@unittest.skipUnless(correct_repository_type,skip_message)
 class Test_SVN_repositories(unittest.TestCase):
     """ Tests for repository functionality
 
