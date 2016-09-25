@@ -6,8 +6,12 @@ import os
 import shutil
 
 # NCCS Tesst Harness packages
-from libraries.repositories.repository_factory import RepositoryFactory
+from libraries.repositories import RepositoryFactory
 
+
+# Define the type of repository we are testing for these unit
+# tests- git type. This variable is used to skip all tests that are not 
+# of the same type.
 correct_repository_type = os.getenv('RGT_TYPE_OF_REPOSITORY') == 'svn'
 skip_message = \
     "We are running tests for a svn repository, but our repository is of type {}".format(os.getenv('RGT_TYPE_OF_REPOSITORY') )
