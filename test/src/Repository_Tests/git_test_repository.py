@@ -9,6 +9,9 @@ import shutil
 from libraries.repositories import RepositoryFactory
 from libraries.repositories import get_type_of_repository
 from libraries.repositories import types_of_repositories
+from src.Repository_Tests import get_path_to_sample_directory
+from src.Repository_Tests import get_path_to_application_directory
+from src.Repository_Tests import create_application_directory
 
 # Define the type of repository we are testing for these unit
 # tests- git type. This variable is used to skip all tests that are not 
@@ -78,28 +81,6 @@ class Test_Git_repositories(unittest.TestCase):
 
         return
 
-def get_path_to_sample_directory():
-    """ Returns the fully qualified path to the directory 'Sample_Directory_For_Repository_Testing'
-
-
-        :returns: path_to_dir, The path to the directory which is used for creating the test repository.    
-        :rtype:  string
-    """
-    path_head = os.getenv('PATH_TO_HARNESS_TOP_LEVEL')
-    path_to_dir = os.path.join(
-        path_head, 'test', 'input_files', 'Sample_Directory_For_Repository_Testing')
-    return path_to_dir
-
-def get_path_to_application_directory(tag):
-    """ Returns the fully qualified path to the directory which will serve as the root for the checkedout applications. 
-
-        :returns:  path_to_dir, The path to the directory which will serve as the root for the checkedout applications. 
-        :rtype:  string
-    """
-    path_head = os.path.abspath('.')
-    path_to_dir = os.path.join(path_head,tag)
-    return path_to_dir
-
 def get_path_local_repository_directory():
     path_head = os.getenv('PATH_TO_TEST_GIT_REPOSITORY')
     internal_path_applications_directory = os.getenv('PATH_RELATIVE_PATH_TO_APPS_WRT_TEST_GIT_REPOSITORY')
@@ -108,12 +89,6 @@ def get_path_local_repository_directory():
 def get_path_to_test_repository():
     path_head = os.getenv('PATH_TO_TEST_GIT_REPOSITORY')
     return path_head
-
-def create_application_directory(my_unit_test):
-    if os.path.exists(my_unit_test.pathToApplications) :
-        shutil.rmtree(my_unit_test.pathToApplications)
-    os.makedirs(my_unit_test.pathToApplications)
-    return
 
 def create_list_of_folders_to_checkout(self):
     """ Returns a dictionary of the folders/files to sparsely checkout.

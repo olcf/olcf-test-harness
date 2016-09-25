@@ -1,5 +1,3 @@
-import sys
-
 # NCCS Test Harness imports
 import minimal_version
 
