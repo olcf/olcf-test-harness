@@ -53,3 +53,7 @@ def run_as_subprocess_command(cmd):
             os.remove(tmpfile_stdout_path) 
             os.remove(tmpfile_stderr_path) 
     return
+
+def get_type_of_repository():
+    return os.getenv('RGT_TYPE_OF_REPOSITORY')
+
