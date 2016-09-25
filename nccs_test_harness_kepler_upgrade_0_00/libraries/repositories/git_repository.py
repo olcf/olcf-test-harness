@@ -8,9 +8,10 @@ import tempfile
 
 # NCCS Tesst Harness packages
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
+from libraries.repositories.abstract_repository import BaseRepository
 
 
-class GitRepository:
+class GitRepository(BaseRepository):
     """ This class is encapsulates the behavoir of a git repository.
     """
     def __init__(self,
@@ -118,6 +119,10 @@ class GitRepository:
                 test_result = False
                 message += "Directory/file {0} did not checkout.".format(dirpath)
         return (message, test_result)
+
+    def removeRepository(self):
+        shutil.rmtree(self.__locationOfRepository)
+        return
 
     def __verifySparseCheckoutEnabled(self):
         """ Verifies that git the user has enabled sparse git checkouts. 

@@ -34,7 +34,8 @@ class Test_SVN_repositories(unittest.TestCase):
         do sparse checkout.
 
     """
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         """ Set up to run basic repository tests. """
 
         # Define standard oaut and error file names for commands
@@ -52,26 +53,28 @@ class Test_SVN_repositories(unittest.TestCase):
                                                                                     path_to_test_repository,
                                                                                     path_relative_path_to_apps_wrt_test_svn_repository )
 
-        # Make the application directory - this directory will contain the sparse
-        # checkout of the Application and test.
-        self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
-        create_application_directory(self)
-
         ## Define the path to the repository.
         self.pathToRepository = get_path_to_test_repository()
 
-        ## Create the list of folders to sparsely checkout from the repository.
-        self.folders = create_list_of_folders_to_checkout(self)
-
         return
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         """ Tear down to run basic repo tests. """
+        self.repository.removeRepository()
         return
 
     def test_svn_repo(self):
         """ Test if a sparse checkout can be performed for a svn repository.
         """
+        # Create the list of folders to sparsely checkout from the repository.
+        self.folders = create_list_of_folders_to_checkout(self)
+
+        # Make the application directory - this directory will contain the sparse
+        # checkout of the Application and test.
+        self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
+        create_application_directory(self)
+
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,

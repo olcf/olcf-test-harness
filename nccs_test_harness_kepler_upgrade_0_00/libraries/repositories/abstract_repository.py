@@ -2,8 +2,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 # NCCS Tesst Harness packages
-from .repository import SVNRepository
-from .repository import GitRepository
 
 class BaseRepository(metaclass=ABCMeta):
     """ This class define the comman behavoir of a repository as expected by the NCCS Test Harness.
@@ -11,11 +9,6 @@ class BaseRepository(metaclass=ABCMeta):
     """
     def __init__(self):
         print("In base repository")
-        return
-
-    @classmethod
-    @abstractmethod
-    def createLocalRepoFromExistingDirectory(cls):
         return
 
     @abstractmethod
@@ -34,6 +27,7 @@ class BaseRepository(metaclass=ABCMeta):
     def getLocationOfFile(self):
         return
 
-BaseRepository.register(SVNRepository)
-BaseRepository.register(GitRepository)
+    @abstractmethod
+    def removeRepository(self):
+        return
 

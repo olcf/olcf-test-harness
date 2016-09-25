@@ -8,8 +8,9 @@ import tempfile
 
 # NCCS Tesst Harness packages
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
+from libraries.repositories.abstract_repository import BaseRepository
 
-class SVNRepository:
+class SVNRepository(BaseRepository):
     """ This class is encapsulates the behavoir of a svn repository.
 
     """
@@ -158,4 +159,10 @@ class SVNRepository:
                 test_result = False
                 message += "Directory/file {0} did not checkout.".format(dirpath)
         return (message, test_result)
+
+    def removeRepository(self):
+        svn_url_prefix = "file://"
+        tmp_words = self.__locationOfRepository.split(svn_url_prefix)
+        shutil.rmtree(tmp_words[-1])
+        return
 
