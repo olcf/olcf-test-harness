@@ -53,12 +53,21 @@ class Test_Git_repositories(unittest.TestCase):
         # Define the path to the repository.
         self.pathToRepository = get_path_to_test_repository()
 
+        # Make the application directory - this directory will contain the sparse
+        # checkout of the Application and test.
+        self.pathToApplications = get_path_to_application_directory("git_sparse_checkout_applications")
+        create_application_directory(self)
+
         return
 
     @classmethod
     def tearDownClass(self):
         """ Tear down to run basic repo tests. """
+        # We now reomve the directories created from
+        # running this test.
         self.repository.removeRepository()
+        
+        shutil.rmtree(self.pathToApplications)
         return
 
     def test_git_repo(self):
@@ -67,10 +76,6 @@ class Test_Git_repositories(unittest.TestCase):
         # Create the list of folders to sparsely checkout from the repository.
         self.folders = create_list_of_folders_to_checkout(self)
 
-        # Make the application directory - this directory will contain the sparse
-        # checkout of the Application and test.
-        self.pathToApplications = get_path_to_application_directory("git_sparse_checkout_applications")
-        create_application_directory(self)
 
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:

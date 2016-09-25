@@ -30,7 +30,7 @@ skip_message = \
 class Test_SVN_repositories(unittest.TestCase):
     """ Tests for repository functionality
 
-        This class tests if the git repository class can
+        This class tests if the svn repository class can
         do sparse checkout.
 
     """
@@ -53,15 +53,26 @@ class Test_SVN_repositories(unittest.TestCase):
                                                                                     path_to_test_repository,
                                                                                     path_relative_path_to_apps_wrt_test_svn_repository )
 
-        ## Define the path to the repository.
+        # Define the path to the repository.
         self.pathToRepository = get_path_to_test_repository()
+
+        # Make the application directory - this directory will contain the sparse
+        # checkout of the Application and test.
+        self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
+        create_application_directory(self)
 
         return
 
     @classmethod
     def tearDownClass(self):
         """ Tear down to run basic repo tests. """
+
+        # We now reomve the directories created from
+        # running this test.
         self.repository.removeRepository()
+
+        shutil.rmtree(self.pathToApplications)
+
         return
 
     def test_svn_repo(self):
@@ -70,10 +81,6 @@ class Test_SVN_repositories(unittest.TestCase):
         # Create the list of folders to sparsely checkout from the repository.
         self.folders = create_list_of_folders_to_checkout(self)
 
-        # Make the application directory - this directory will contain the sparse
-        # checkout of the Application and test.
-        self.pathToApplications = get_path_to_application_directory("svn_sparse_checkout_applications")
-        create_application_directory(self)
 
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
@@ -86,6 +93,7 @@ class Test_SVN_repositories(unittest.TestCase):
 
         (test_result,msg) = verify_sparse_checkout(self)
         self.assertTrue(test_result, msg)
+
         return
 
 def get_path_local_repository_directory():
