@@ -105,13 +105,18 @@ class SVNRepository(BaseRepository):
             :returns: a tuple (message,exit_status) 
             :rtype:  message is a string, exit_status is an integer
         """
+        print("****\n\n")
+        for dirpath in self.__checkedOutDirectories:
+            debug_message = "Verifying directory {}\n".format(dirpath )
+            print(debug_message)
+        print("****\n\n")
 
         test_result = True
         message = ""
         for dirpath in self.__checkedOutDirectories:
             if not os.path.exists(dirpath):
                 test_result = False
-                message += "Directory/file {0} did not checkout.".format(dirpath)
+                message += "Directory/file {0} did not checkout.\n".format(dirpath)
         return (message, test_result)
 
     def removeRepository(self):
@@ -164,9 +169,13 @@ class SVNRepository(BaseRepository):
         message = ''
         exit_status = 0
 
-        application_dir = os.path.basename(directory_to_checkout['application'])
-        tail_dir = os.path.basename(directory_to_checkout['source'])
-        path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
+        application_dir_head = os.path.basename(directory_to_checkout['application'])
+        application_dir_tail = directory_to_checkout['application']
+        my_repository_location = self.__locationOfRepository
+
+        tmp_words = directory_to_checkout['source'].split(application_dir_tail)
+        last_word = tmp_words[-1]
+        path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir_head,last_word[1:])
 
         if not contains(self.__checkedOutDirectories,path_to_local_dir):
             self.__checkedOutDirectories += [path_to_local_dir]
@@ -176,6 +185,7 @@ class SVNRepository(BaseRepository):
                                             my_bin = self.__binaryName, 
                                             my_options = svn_options, 
                                             my_local_path = path_to_local_dir)
+
         
         exit_status = subprocess.call(svn_update_command,
                                       shell=True,
@@ -198,11 +208,15 @@ class SVNRepository(BaseRepository):
         exit_status = 0
 
         # Form the update command for the test.
-        application_dir = os.path.basename(directory_to_checkout['application'])
+        application_dir_head = os.path.basename(directory_to_checkout['application'])
+        application_dir_tail = directory_to_checkout['application']
+        my_repository_location = self.__locationOfRepository
+
         svn_options = 'update'
         for a_test in directory_to_checkout['test']:
-            tail_dir = os.path.basename(a_test)
-            path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir,tail_dir)
+            tmp_words = a_test.split(application_dir_tail)
+            last_word = tmp_words[-1]
+            path_to_local_dir = os.path.join(root_path_to_checkout_directory,application_dir_head,last_word[1:])
 
             if not contains(self.__checkedOutDirectories,path_to_local_dir):
                 self.__checkedOutDirectories += [path_to_local_dir]
@@ -212,6 +226,7 @@ class SVNRepository(BaseRepository):
                                                 my_options = svn_options, 
                                                 my_local_path = path_to_local_dir)
             
+
             exit_status = subprocess.call(svn_update_command,
                                           shell=True,
                                           stdout=stdout_file_handle,
