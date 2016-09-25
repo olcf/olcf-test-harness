@@ -56,8 +56,7 @@ class Test_Git_repositories(unittest.TestCase):
         return
 
     def test_git_repo(self):
-        """ Test is a sparse checkout can be performed for a git repository.
-
+        """ Test if a sparse checkout can be performed for a git repository.
         """
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:

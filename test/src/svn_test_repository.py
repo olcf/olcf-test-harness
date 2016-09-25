@@ -60,8 +60,8 @@ class Test_SVN_repositories(unittest.TestCase):
         return
 
     def test_svn_repo(self):
-        # Do a sparse chekout of the of file_1.txt
-        # from the directory "Sample_Directory_For_Repository_Testing"
+        """ Test if a sparse checkout can be performed for a svn repository.
+        """
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
