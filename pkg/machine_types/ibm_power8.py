@@ -212,7 +212,6 @@ class IBMpower8(BaseMachine):
 
     def make_batch_script(self):
         print("Making batch script for Power8")
-
         print("Using template called " + self.get_scheduler_template_file_name())
         templatefileobj = open(self.get_scheduler_template_file_name(),"r")
         templatelines = templatefileobj.readlines()
@@ -251,6 +250,7 @@ class IBMpower8(BaseMachine):
     def submit_batch_script(self):
         print("Submitting batch script for Power8")
         jobid = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
+        print("Submitting " + self.__rgt_test.get_batchfilename() + " Jobid = " + str(jobid))
         return jobid
 
     def check_executable(self):

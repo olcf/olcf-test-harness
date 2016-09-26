@@ -58,11 +58,12 @@ class LSF(BaseScheduler):
         print(jobid_pattern)
         print("jobid_pattern.findall = ")
         jobid = jobid_pattern.findall(records[0])[0]
-        print(jobid)
+        self.set_job_id(jobid)
+        print(self.get_job_id())
 
-        return jobid
+        return p.returncode
 
-    def write_jobid_to_status(self,jobid,unique_id):
+    def write_jobid_to_status(self,unique_id):
         #
         # Get the current working directory.
         #
@@ -82,7 +83,7 @@ class LSF(BaseScheduler):
         # Write the pbs job id to the file.
         #
         fileobj = open(path1,"w")
-        string1 = "%20s\n" % (jobid)
+        string1 = "%20s\n" % (self.get_job_id())
         fileobj.write(string1)
         fileobj.close()
 

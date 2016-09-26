@@ -77,9 +77,9 @@ class BaseMachine(metaclass=ABCMeta):
 
     def submit_to_scheduler(self,batchfilename,unique_id):
         """ Return the jobID for the submission."""
-        jobid = self.__scheduler.submit_job(batchfilename)
-        path_to_jobid_status = self.__scheduler.write_jobid_to_status(jobid,unique_id)
-        return jobid 
+        submit_exit_value = self.__scheduler.submit_job(batchfilename)
+        write_job_id_exit_value = self.__scheduler.write_jobid_to_status(unique_id)
+        return submit_exit_value and write_job_id_exit_value
 
     def build_jobLauncher_command(self,total_processes,processes_per_node,processes_per_socket,path_to_executable):
         """ Return the jobLauncher command."""

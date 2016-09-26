@@ -25,9 +25,17 @@ class BaseScheduler:
         self.__numTasksOpt = numTasksOpt
         self.__jobNameOpt = jobNameOpt
         self.__templateFile = templateFile
+        self.__job_id = None
 
     def get_scheduler_type(self):
         return self.__type
+
+    def get_job_id(self):
+        return self.__job_id
+
+    def set_job_id(self,jobid):
+        self.__job_id = jobid
+        return
 
     def get_scheduler_template_file_name(self):
         return self.__templateFile
