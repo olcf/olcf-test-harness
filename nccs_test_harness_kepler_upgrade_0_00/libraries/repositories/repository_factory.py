@@ -73,9 +73,14 @@ class RepositoryFactory:
                                                 path_to_local_dir,
                                                 internal_repo_path_to_applications):
         starting_directory = os.getcwd()
+
+        if os.path.exists(path_to_local_dir) :
+            shutil.rmtree(path_to_local_dir)
+
         shutil.copytree(path_to_sample_directory,path_to_local_dir)
         
         os.chdir(path_to_local_dir)
+
         completed_git_init = subprocess.run(["git","init"])
 
         completed_git_add = subprocess.run(["git","add","."])

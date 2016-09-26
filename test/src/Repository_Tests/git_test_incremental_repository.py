@@ -47,8 +47,6 @@ class Test_Git_repositories(unittest.TestCase):
         (path_to_test_repository,path_relative_path_to_apps_wrt_test_git_repository) = \
             get_path_local_repository_directory()
 
-        creating_root_dir_repo(path_to_test_repository)
-
         self.repository = RepositoryFactory.createLocalGitRepoFromExistingDirectory(path_to_sample_directory,
                                                                                     path_to_test_repository,
                                                                                     path_relative_path_to_apps_wrt_test_git_repository)
@@ -77,7 +75,7 @@ class Test_Git_repositories(unittest.TestCase):
         """ Test if a sparse checkout can be performed for a git repository.
         """
         # Create the list of folders to sparsely checkout from the repository.
-        self.folders = create_list_of_folders_to_checkout(self)
+        self.folders0 = create_list_of_folders_to_checkout_0(self)
 
 
         with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
@@ -86,10 +84,24 @@ class Test_Git_repositories(unittest.TestCase):
                                                  stderr_file_handle=stderr_handle,
                                                  path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
-                                                 directory_to_checkout = self.folders)
+                                                 directory_to_checkout = self.folders0)
 
         (test_result,msg) = verify_sparse_checkout(self)
         self.assertTrue(test_result, msg)
+
+        #Now check out new folders and verify that the new and old folders
+        # exist.
+        self.folders1 = create_list_of_folders_to_checkout_1(self)
+        with open(self.stdout_path['sparse_checkout'],"a") as stdout_handle:
+            with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
+                self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
+                                                 stderr_file_handle=stderr_handle,
+                                                 path_to_repository=self.pathToRepository,
+                                                 root_path_to_checkout_directory=self.pathToApplications,
+                                                 directory_to_checkout = self.folders1)
+
+        (test_result,msg) = verify_sparse_checkout(self)
+        self.assertTrue(test_result,msg)
 
         return
 
@@ -102,7 +114,7 @@ def get_path_to_test_repository():
     path_head = os.getenv('PATH_TO_TEST_GIT_REPOSITORY')
     return path_head
 
-def create_list_of_folders_to_checkout(self):
+def create_list_of_folders_to_checkout_0(self):
     """ Returns a dictionary of the folders/files to sparsely checkout.
     """
     my_repository_location = self.repository.getLocationOfRepository()
@@ -111,22 +123,36 @@ def create_list_of_folders_to_checkout(self):
     tmp_words = my_repository_application.split(my_repository_location)
     my_relative_path_repository_application = tmp_words[-1]
     
-    
-    my_repository_test1 = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
-    tmp_words = my_repository_test1.split(my_repository_location)
-    my_relative_path_repository_test1 = tmp_words[-1]
-    
-    my_repository_test2 = self.repository.getLocationOfFile('HelloWorld/Test_32cores')
-    tmp_words = my_repository_test2.split(my_repository_location)
-    my_relative_path_repository_test2 = tmp_words[-1]
-    
     my_repository_source = self.repository.getLocationOfFile('HelloWorld/Source')
     tmp_words = my_repository_source.split(my_repository_location)
     my_relative_path_repository_source = tmp_words[-1]
     
     folders = { "application" : my_relative_path_repository_application,
                 "source": my_relative_path_repository_source,
-                "test" : [my_relative_path_repository_test1, my_relative_path_repository_test2]}
+                "test" : []}
+
+    return folders
+
+def create_list_of_folders_to_checkout_1(self):
+    """ Returns a dictionary of the folders/files to sparsely checkout.
+    """
+    my_repository_location = self.repository.getLocationOfRepository()
+    
+    my_repository_application = self.repository.getLocationOfFile("HelloWorld")
+    tmp_words = my_repository_application.split(my_repository_location)
+    my_relative_path_repository_application = tmp_words[-1]
+    
+    my_repository_source = self.repository.getLocationOfFile('HelloWorld/Source')
+    tmp_words = my_repository_source.split(my_repository_location)
+    my_relative_path_repository_source = tmp_words[-1]
+    
+    my_repository_test2 = self.repository.getLocationOfFile('HelloWorld/Test_32cores')
+    tmp_words = my_repository_test2.split(my_repository_location)
+    my_relative_path_repository_test2 = tmp_words[-1]
+    
+    folders = { "application" : my_relative_path_repository_application,
+                "source": my_relative_path_repository_source,
+                "test" : [my_relative_path_repository_test2]}
 
     return folders
 
