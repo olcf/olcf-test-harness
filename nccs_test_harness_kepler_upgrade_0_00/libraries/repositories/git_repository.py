@@ -8,6 +8,7 @@ import tempfile
 
 # NCCS Tesst Harness packages
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
+from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr
 from libraries.repositories.abstract_repository import BaseRepository
 
 
@@ -23,6 +24,8 @@ class GitRepository(BaseRepository):
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
         self.__checkedOutDirectories = []
+
+        # git rev-parse --is-inside-work-tree
 
         return
 
@@ -189,20 +192,39 @@ class GitRepository(BaseRepository):
                          path_to_local_directory,
                          url_path_to_repository):
 
-        if not os.path.exists(path_to_local_directory):
-            os.mkdir(path_to_local_directory)
-
+        
         initial_dir = os.getcwd()
-        os.chdir(path_to_local_directory)
-        git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
-                                                          my_options='init')
-        run_as_subprocess_command(git_init_command)
 
-        git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
-                                                                             my_options = 'remote add -f origin',
-                                                                             my_url = url_path_to_repository)
-        run_as_subprocess_command(git_do_sparse_clone_command)
-        os.chdir(initial_dir)
+        if os.path.exists(path_to_local_directory):
+
+            os.chdir(path_to_local_directory)
+
+            if not self.__directoryUnderGitControl():
+                git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
+                                                                  my_options='init')
+                run_as_subprocess_command(git_init_command)
+
+                git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
+                                                                                     my_options = 'remote add -f origin',
+                                                                                     my_url = url_path_to_repository)
+                run_as_subprocess_command(git_do_sparse_clone_command)
+            os.chdir(initial_dir)
+
+        else:
+            os.mkdir(path_to_local_directory)
+            
+            os.chdir(path_to_local_directory)
+
+            git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
+                                                              my_options='init')
+            run_as_subprocess_command(git_init_command)
+
+            git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
+                                                                                 my_options = 'remote add -f origin',
+                                                                                 my_url = url_path_to_repository)
+            run_as_subprocess_command(git_do_sparse_clone_command)
+            
+            os.chdir(initial_dir)
 
         return
 
@@ -319,3 +341,25 @@ class GitRepository(BaseRepository):
             os.symlink(src_of_symlink,dest_of_symlink) 
         return
 
+    def __directoryUnderGitControl(self,
+                                  directory_to_test=None):
+        under_git_control = False
+        if directory_to_test:
+            initial_dir = os.getcwd()
+            os.chdir(directory_to_test)
+
+        # Do checkout
+        git_rev_parse_cmd = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
+                                                       my_options='rev-parse --is-inside-work-tree')
+
+        (stdout,stderr) = run_as_subprocess_command_return_stdout_stderr(git_rev_parse_cmd)
+        
+        if stdout[0].startswith("true"):
+            under_git_control = True
+        else:
+            under_git_control = False
+
+        if directory_to_test:
+            os.chdir(initial_dir)
+
+        return under_git_control
