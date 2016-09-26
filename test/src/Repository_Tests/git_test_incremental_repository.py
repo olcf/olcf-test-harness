@@ -12,6 +12,7 @@ from libraries.repositories import types_of_repositories
 from src.Repository_Tests import get_path_to_sample_directory
 from src.Repository_Tests import get_path_to_application_directory
 from src.Repository_Tests import create_application_directory
+from src.Repository_Tests import creating_root_dir_repo
 
 # Define the type of repository we are testing for these unit
 # tests- git type. This variable is used to skip all tests that are not 
@@ -46,6 +47,8 @@ class Test_Git_repositories(unittest.TestCase):
         (path_to_test_repository,path_relative_path_to_apps_wrt_test_git_repository) = \
             get_path_local_repository_directory()
 
+        creating_root_dir_repo(path_to_test_repository)
+
         self.repository = RepositoryFactory.createLocalGitRepoFromExistingDirectory(path_to_sample_directory,
                                                                                     path_to_test_repository,
                                                                                     path_relative_path_to_apps_wrt_test_git_repository)
@@ -66,8 +69,8 @@ class Test_Git_repositories(unittest.TestCase):
         # We now reomve the directories created from
         # running this test.
         self.repository.removeRepository()
-        
-        shutil.rmtree(self.pathToApplications)
+        #shutil.rmtree(self.pathToApplications)
+
         return
 
     def test_git_repo(self):

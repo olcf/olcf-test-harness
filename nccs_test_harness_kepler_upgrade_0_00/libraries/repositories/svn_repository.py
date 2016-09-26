@@ -105,12 +105,6 @@ class SVNRepository(BaseRepository):
             :returns: a tuple (message,exit_status) 
             :rtype:  message is a string, exit_status is an integer
         """
-        print("****\n\n")
-        for dirpath in self.__checkedOutDirectories:
-            debug_message = "Verifying directory {}\n".format(dirpath )
-            print(debug_message)
-        print("****\n\n")
-
         test_result = True
         message = ""
         for dirpath in self.__checkedOutDirectories:

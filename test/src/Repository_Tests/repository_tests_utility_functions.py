@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+import shutil
 
 def get_path_to_sample_directory():
     """ Returns the fully qualified path to the directory 'Sample_Directory_For_Repository_Testing'
@@ -27,5 +28,11 @@ def create_application_directory(my_unit_test):
     if os.path.exists(my_unit_test.pathToApplications) :
         shutil.rmtree(my_unit_test.pathToApplications)
     os.makedirs(my_unit_test.pathToApplications)
+    return
+
+def creating_root_dir_repo(path_to_repo):
+    if os.path.exists(path_to_repo) :
+        shutil.rmtree(path_to_repo)
+    os.makedirs(path_to_repo)
     return
 
