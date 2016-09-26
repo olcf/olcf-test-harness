@@ -249,17 +249,39 @@ class GitRepository(BaseRepository):
                                 files_to_sparsely_checkout):
         
         a_record = "{entry}\n"
+
         path_to_sparse_checkout_file = os.path.join(path_to_local_directory,".git","info","sparse-checkout")
-        file_obj = open(path_to_sparse_checkout_file,'w')
 
-        file_obj.write(a_record.format(entry = files_to_sparsely_checkout['source']))
-        files_to_checkout = [files_to_sparsely_checkout['source']]
-        for a_test in files_to_sparsely_checkout['test']:
-            file_obj.write(a_record.format(entry = a_test))
-            files_to_checkout += [a_test]
+        if not os.path.exists(path_to_sparse_checkout_file):
+            self.__touch(path_to_sparse_checkout_file)
 
-        file_obj.close()
-        return files_to_checkout
+        # Read all entries in file sparse-checkout.
+        sparse_checkout = []
+        with open(path_to_sparse_checkout_file,'r') as file_obj:
+            tmp_sparse_checkout = file_obj.readlines()
+            for tmp_record in tmp_sparse_checkout:
+                sparse_checkout += [tmp_record.strip()]
+            
+        
+        # Remove duplicate entries in files_to_sparsely_checkout as compared
+        # to sparse_checkout file.
+
+        # Remove duplicated source.
+        tmp_record = files_to_sparsely_checkout['source']
+        if not (tmp_record in sparse_checkout) : 
+            sparse_checkout += [tmp_record.strip()]
+
+        # Remove duplicated tests.
+        for tmp_record in files_to_sparsely_checkout['test']:
+            if not (tmp_record in sparse_checkout):
+                sparse_checkout += [tmp_record.strip()]
+
+        # Now write new sparse-checkout file.
+        with open(path_to_sparse_checkout_file,'w') as file_obj:
+            for tmp_record in sparse_checkout:
+                file_obj.write(a_record.format(entry = tmp_record))
+
+        return sparse_checkout
 
     def __doCheckout(self,
                      path_to_local_directory):
@@ -300,17 +322,20 @@ class GitRepository(BaseRepository):
         (path_to_application,source_name) = os.path.split(path_to_source ) 
         (root_path_to_application,application_name) = os.path.split(path_to_application)
         path_to_application_dir = os.path.join(root_path_to_checkout_directory,application_name)
-        self.__checkedOutDirectories += [path_to_application_dir]
+        if not ( path_to_application_dir in self.__checkedOutDirectories):
+            self.__checkedOutDirectories += [path_to_application_dir]
 
         # Define path to source. 
         src_path = os.path.join(path_to_application_dir,source_name)
-        self.__checkedOutDirectories += [src_path]
+        if not ( src_path in self.__checkedOutDirectories):
+            self.__checkedOutDirectories += [src_path]
         
         # Define path to tests. 
         for a_test in files_to_sparsely_checkout['test']:
             (path_to_test,test_name) = os.path.split(a_test)
             test_path = os.path.join(path_to_application_dir,test_name)
-            self.__checkedOutDirectories += [test_path]
+            if not ( test_path in self.__checkedOutDirectories):
+                self.__checkedOutDirectories += [test_path]
 
         return
 
@@ -363,3 +388,10 @@ class GitRepository(BaseRepository):
             os.chdir(initial_dir)
 
         return under_git_control
+
+    def __touch(self,
+                path):
+        with open(path, 'a') as file_obj:
+            os.utime(path, None)
+
+        return

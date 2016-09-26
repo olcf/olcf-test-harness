@@ -66,7 +66,6 @@ class Test_Git_repositories(unittest.TestCase):
         # We now reomve the directories created from
         # running this test.
         self.repository.removeRepository()
-        
         shutil.rmtree(self.pathToApplications)
         return
 
