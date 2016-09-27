@@ -13,6 +13,7 @@ from libraries.rgt_utilities import unique_text_string
 from libraries.rgt_utilities import test_work_space
 from libraries.layout_of_apps_directory import apps_test_directory_layout
 from libraries import status_file
+from machine_types.machine_factory import MachineFactory
 
 
 #
@@ -108,6 +109,32 @@ def test_harness_driver(argv=None):
     currentdir = os.getcwd()
     os.putenv('RGT_PATH_TO_SCRIPTS_DIR',currentdir)
 
+    rgt_test_input_file = os.path.join(currentdir,"rgt_test_input.txt")
+
+    if not os.path.isfile(rgt_test_input_file):
+        build_and_submit_exit_value = user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me)
+    else:
+        build_and_submit_exit_value = auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me)
+
+    return build_and_submit_exit_value
+
+def create_parser():
+    my_parser = argparse.ArgumentParser(description="Driver for Application and tests")
+        
+    my_parser.add_argument("-r",  
+                         help="The batch script for the next test will resubmititself",
+                         action="store_true")
+
+    return my_parser
+
+def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me):
+    """
+    Executes scripts provided by the user for a test.
+
+    This function runs the submit_executable.x, build_executable.x,
+    check_executable.x, report_executable.x.
+    
+    """
     #
     # Execute the build script.
     #
@@ -127,6 +154,7 @@ def test_harness_driver(argv=None):
     else:
         submit_command = "./submit_executable.x "
         submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
+
     command2 = submit_command + submit_command_args
     jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
     submit_exit_value = os.system(command2)
@@ -140,14 +168,36 @@ def test_harness_driver(argv=None):
 
     return build_exit_value and submit_exit_value
 
-def create_parser():
-    my_parser = argparse.ArgumentParser(description="Driver for Application and tests")
-        
-    my_parser.add_argument("-r",  
-                         help="The batch script for the next test will resubmititself",
-                         action="store_true")
+def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me):
+    """
+    Generates scripts for the user to build, submit and execute a test.
 
-    return my_parser
+    This function uses the machine_types library.
+    
+    """
+    
+    # Make the batch script.
+    mymachine = MachineFactory.create_machine(path_to_tmp_workspace,unique_id)
+
+    # Build the executable for this test on the specified machine
+    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
+    build_exit_value = mymachine.build_executable()
+    print("build_exit_value = " + str(build_exit_value))
+    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+
+    # Create the batch script
+    mymachine.make_batch_script()
+
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
+    # Submit the batch file to the scheduler.
+    submit_exit_value = mymachine.submit_batch_script()
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
+
+    job_id = read_job_id(unique_id)
+    print("Job ID = " + job_id)
+    jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
+    
+    return build_exit_value and submit_exit_value
 
 def usage():
     print ("There are two modes of usage as a main program or as a function call")

@@ -6,10 +6,11 @@ import subprocess
 import getopt
 import string
 from libraries import status_file
+from machine_types.machine_factory import MachineFactory
 
 #
 # Author: Arnold Tharrington
-# Modified: Wayne Joubert
+# Modified: Wayne Joubert, Veronica G. Vergara Larrea
 # National Center for Computational Sciences, Scientific Computing Group.
 # Oak Ridge National Laboratory
 #
@@ -60,28 +61,47 @@ def main():
         job_id = str.strip(job_id)
 
         
-
     #
     # Call the check_executable.x script only after the job_id.txt file is created.
     #
     jstatus = status_file.StatusFile(test_id_string,mode="Old")
     jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
 
-    check_command_argv = ["./check_executable.x"]
-    for args1 in sys.argv[1:] :
-        check_command_argv = check_command_argv + [args1]
-        
-    check_cmd_process = subprocess.call(check_command_argv)
+    # Need to add the if to check for the rgt_test_input.txt file here
 
-    #
-    # Run report_executable.x, if it exists.
-    #
-
-    report_command_argv = ['./report_executable.x']
-    if os.path.exists(report_command_argv[0]):
+    rgt_test_input_file = os.path.join(cwd,"rgt_test_input.txt")
+    
+    if not os.path.isfile(rgt_test_input_file):
+        check_command_argv = ["./check_executable.x"]
         for args1 in sys.argv[1:] :
-            report_command_argv = report_command_argv + [args1]
-        report_command_argv = subprocess.call(report_command_argv)
+            check_command_argv = check_command_argv + [args1]
+            
+        check_cmd_process = subprocess.call(check_command_argv)
+
+        #
+        # Run report_executable.x, if it exists.
+        #
+
+        report_command_argv = ['./report_executable.x']
+        if os.path.exists(report_command_argv[0]):
+            for args1 in sys.argv[1:] :
+                report_command_argv = report_command_argv + [args1]
+            report_command_argv = subprocess.call(report_command_argv)
+
+    else:
+        mymachine = MachineFactory.create_machine(dir_head1,test_id_string)
+        
+        check_exit_value = mymachine.check_executable()
+        print("check_exit_value = " + str(check_exit_value))
+
+        report_exit_value = mymachine.report_executable()
+        print("report_exit_value = " + str(report_exit_value))
+
+    #
+    # Call the check_executable.x script only after the job_id.txt file is created.
+    #
+    jstatus = status_file.StatusFile(test_id_string,mode="Old")
+    jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
 
     #
     # Now read the result to the job_status.txt file.
