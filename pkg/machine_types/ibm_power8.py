@@ -256,7 +256,7 @@ class IBMpower8(BaseMachine):
     def check_executable(self):
         print("Running check executable script on Power8")
         print("Using check script " + self.__rgt_test.get_checkscriptname())
-        return self.start_check_script(self.__rgt_test.get_checkscriptname())
+        return self.check_results(self.__rgt_test.get_checkscriptname())
 
     def report_executable(self):
         print("Running report executable script on Power8")

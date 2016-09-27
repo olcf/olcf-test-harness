@@ -111,10 +111,13 @@ class BaseMachine(metaclass=ABCMeta):
 
     def start_check_script(self,checkscriptname):
         """ Check if results are correct. """
-        os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
         print("current directory in base_machine: ",currentdir)
-        check_exit_status = os.system(checkscriptname)
+        os.chdir(self.get_rgt_results_dir())
+        print("Starting check script in base_machine: ",os.getcwd())
+        path_to_checkscript = os.path.join(self.get_rgt_scripts_dir(),checkscriptname)
+        print("Using check script: ",path_to_checkscript)
+        check_exit_status = os.system(path_to_checkscript)
         os.chdir(currentdir)
         return check_exit_status
 
@@ -126,14 +129,15 @@ class BaseMachine(metaclass=ABCMeta):
         file1 = os.path.join(dir_head2,"Status",dir_tail1,"job_status.txt")
         file1_obj = open(file1,"w")
 
+        print("Writing check_exit_status = ",jstatus," into ",file1)
         # Set the string to write to the job_status.txt file.
-        if jstatus == 0:
-            pf = "1"
-        elif jstatus == 1:
-            pf = "0"
-        elif jstatus >= 2:
-            pf = "2"
-        string1 = "%s\n" % (pf)
+        #if jstatus == 0:
+        #    pf = "1"
+        #elif jstatus == 1:
+        #    pf = "0"
+        #elif jstatus >= 2:
+        #    pf = "2"
+        string1 = "%s\n" % (jstatus)
 
         file1_obj.write(string1)
         file1_obj.close()

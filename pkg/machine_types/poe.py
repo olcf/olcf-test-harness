@@ -17,7 +17,7 @@ class Poe(BaseJobLauncher):
 
     def build_job_command(self,total_processes,processes_per_node,processes_per_socket,executable):
         print("Building job command in the POE class")
-        job_launch_command = self.__launchCmd + " " + executable
+        job_launch_command = self.__launchCmd + " " + executable + " 1> stdout.txt 2> stderr.txt"
         return job_launch_command
 
 if __name__ == '__main__':
