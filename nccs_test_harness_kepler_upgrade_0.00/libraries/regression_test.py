@@ -42,7 +42,16 @@ class run_me:
         #
         # Store the applications and subtest in a defaultdict container.
         #
-        apps_tests = collections.defaultdict(list)
+        # The defaultdict collection does not guarantee order. Replacing
+        # it with OrderedDict
+        #
+        apps_tests = collections.OrderedDict()
+
+        for test in self.__tests:
+            name_of_application1=test[0]
+            name_of_subtest1=test[1]
+            apps_tests[name_of_application1] = []
+
         for test in self.__tests:
             name_of_application1=test[0]
             name_of_subtest1=test[1]
