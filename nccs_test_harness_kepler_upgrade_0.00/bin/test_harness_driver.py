@@ -114,9 +114,9 @@ def test_harness_driver(argv=None):
     rgt_test_input_file = os.path.join(currentdir,"rgt_test_input.txt")
 
     if not os.path.isfile(rgt_test_input_file):
-        build_and_submit_exit_value = user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me)
+        build_and_submit_exit_value = user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me)
     else:
-        build_and_submit_exit_value = auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me)
+        build_and_submit_exit_value = auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me)
 
     return build_and_submit_exit_value
 
@@ -129,7 +129,7 @@ def create_parser():
 
     return my_parser
 
-def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me):
+def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me):
     """
     Executes scripts provided by the user for a test.
 
@@ -172,7 +172,7 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me):
 
     return build_exit_value and submit_exit_value
 
-def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me):
+def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me):
     """
     Generates scripts for the user to build, submit and execute a test.
 
