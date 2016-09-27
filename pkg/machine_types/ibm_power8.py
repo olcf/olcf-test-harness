@@ -211,8 +211,7 @@ class IBMpower8(BaseMachine):
         return jobLauncher_command
 
     def make_batch_script(self):
-        print("Making batch script for Power8")
-        print("Using template called " + self.get_scheduler_template_file_name())
+        print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
         templatefileobj = open(self.get_scheduler_template_file_name(),"r")
         templatelines = templatefileobj.readlines()
         templatefileobj.close()
@@ -243,24 +242,21 @@ class IBMpower8(BaseMachine):
         return
 
     def build_executable(self):
-        print("Building executable on Power8")
-        print("Using build script " + self.__rgt_test.get_buildscriptname())
+        print("Building executable on Power8 using build script " + self.__rgt_test.get_buildscriptname())
         return self.start_build_script(self.__rgt_test.get_buildscriptname())
 
     def submit_batch_script(self):
         print("Submitting batch script for Power8")
-        jobid = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
-        print("Submitting " + self.__rgt_test.get_batchfilename() + " Jobid = " + str(jobid))
-        return jobid
+        submit_exit_value = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
+        print("Submitting " + self.__rgt_test.get_batchfilename() + " submit_exit_value = " + str(submit_exit_value))
+        return submit_exit_value
 
     def check_executable(self):
-        print("Running check executable script on Power8")
-        print("Using check script " + self.__rgt_test.get_checkscriptname())
+        print("Running check executable script on Power8 using check script " + self.__rgt_test.get_checkscriptname())
         return self.check_results(self.__rgt_test.get_checkscriptname())
 
     def report_executable(self):
-        print("Running report executable script on Power8")
-        print("Using report script " + self.__rgt_test.get_reportscriptname())
+        print("Running report executable script on Power8 using report script " + self.__rgt_test.get_reportscriptname())
         return self.start_report_script(self.__rgt_test.get_reportscriptname())
 
 if __name__ == "__main__":
