@@ -47,7 +47,7 @@ def check_num_recently_completed_jobs(sdb):
               'AND datetime(check_end_event_time) '
                'BETWEEN datetime(\'now\', \'-' + interval + '\') AND '
                        'datetime(\'now\') '
-            'ORDER BY event_time DESC'
+            'ORDER BY check_end_event_time DESC'
 
         query_result = sdb.query(query_string)
 

@@ -4,6 +4,9 @@ import os
 import sys
 import string
 import getopt
+
+
+
 import shutil
 import datetime
 from shlex import split
@@ -28,8 +31,7 @@ from machine_types.machine_factory import MachineFactory
 #
 #
 def test_harness_driver(argv=None):
-        
-    
+
     #
     # Check for the existence of the file "kill_test".
     # If the file exists then the program will exit
@@ -79,16 +81,6 @@ def test_harness_driver(argv=None):
     unique_id = unique_text_string()
 
     #
-    # Make the Status directory.
-    #
-    make_path_to_status_dir(unique_id)
-
-    #
-    # Add entry to status file.
-    #
-    jstatus = status_file.StatusFile(unique_id,mode="New")
-
-    #
     # Get the path to workspace for this test instance. 
     #
     workspace = test_work_space()
@@ -99,9 +91,19 @@ def test_harness_driver(argv=None):
     path_to_tmp_workspace = get_path_to_tmp_workspace(workspace,unique_id)
 
     #
+    # Make the Status directory.
+    #
+    make_path_to_status_dir(unique_id, path_to_tmp_workspace)
+
+    #
+    # Add entry to status file.
+    #
+    jstatus = status_file.StatusFile(unique_id,mode="New")
+
+    #
     # Make the Run_Archive directory.
     #
-    make_path_to_Run_Archive_dir(unique_id)
+    make_path_to_Run_Archive_dir(unique_id, path_to_tmp_workspace)
 
     #
     # Add to environment the path to the Scripts directory.
@@ -144,6 +146,8 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,resubmit_me):
     jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
     build_exit_value = os.system(command1)
     jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+
+    create_workspace_convenience_links(workspace, unique_id)
 
     #
     # Execute the submit script.
@@ -243,8 +247,46 @@ def get_path_to_tmp_workspace(path_to_workspace,test_id_string):
     return path1
 
 
+def create_workspace_convenience_links(path_to_workspace, test_id_string):
+    #
+    # Get the current working directory.
+    #
+    cwd = os.getcwd()
 
-def make_path_to_status_dir(test_id_string):
+    #
+    # Get the 3 tail paths in the cwd.
+    #
+    (dir_head1, dir_tail1) = os.path.split(cwd)
+    (dir_head2, dir_tail2) = os.path.split(dir_head1)
+    (dir_head3, dir_tail3) = os.path.split(dir_head2)
+
+    #
+    # Now join tail2 and tail3 to make the path. This path should be unique.
+    #
+    path1 = os.path.join(path_to_workspace,dir_tail3,dir_tail2,test_id_string)
+
+    #
+    # Create convenience link from this workspace to current Status dir.
+    #
+    os.symlink(os.path.join(dir_head1, 'Status', test_id_string),
+               os.path.join(path1, 'Status'))
+
+    #
+    # Create convenience link from this workspace to current Run_Archive dir.
+    #
+    os.symlink(os.path.join(dir_head1, 'Run_Archive', test_id_string),
+               os.path.join(path1, 'Run_Archive'))
+
+    #
+    # Create convenience link to latest workspace dir
+    #
+    latest_dir = os.path.join(path_to_workspace, dir_tail3, dir_tail2, 'latest')
+    if os.path.exists(latest_dir):
+        os.unlink(latest_dir)
+    os.symlink(test_id_string, latest_dir)
+
+
+def make_path_to_status_dir(test_id_string, path_to_tmp_workspace):
     #
     # Get the current working directory.
     #
@@ -261,6 +303,24 @@ def make_path_to_status_dir(test_id_string):
     path1 = os.path.join(dir_head1,"Status",test_id_string)
 
     os.makedirs(path1)
+
+    #
+    # Create convenience links to associated workspace dirs.
+    #
+    os.symlink(os.path.join(path_to_tmp_workspace, 'build_directory'),
+               os.path.join(path1, 'build_directory'))
+
+    os.symlink(os.path.join(path_to_tmp_workspace, 'workdir'),
+               os.path.join(path1, 'workdir'))
+
+    #
+    # Create convenience link to latest status dir
+    #
+    latest_dir = os.path.join(dir_head1, 'Status', 'latest')
+    if os.path.exists(latest_dir):
+        os.unlink(latest_dir)
+    os.symlink(test_id_string, latest_dir)
+
 
 def backup_status_file():
     #
@@ -293,7 +353,7 @@ def backup_status_file():
         shutil.copyfile(src,dest)
 
 
-def make_path_to_Run_Archive_dir(test_id_string):
+def make_path_to_Run_Archive_dir(test_id_string, path_to_tmp_workspace):
     #
     # Get the current working directory.
     #
@@ -310,6 +370,24 @@ def make_path_to_Run_Archive_dir(test_id_string):
     path1 = os.path.join(dir_head1,"Run_Archive",test_id_string)
 
     os.makedirs(path1)
+
+    #
+    # Create convenience links to associated workspace dirs.
+    #
+    os.symlink(os.path.join(path_to_tmp_workspace, 'build_directory'),
+               os.path.join(path1, 'build_directory'))
+
+    os.symlink(os.path.join(path_to_tmp_workspace, 'workdir'),
+               os.path.join(path1, 'workdir'))
+
+    #
+    # Create convenience link to latest status dir
+    #
+    latest_dir = os.path.join(dir_head1, 'Run_Archive', 'latest')
+    if os.path.exists(latest_dir):
+        os.unlink(latest_dir)
+    os.symlink(test_id_string, latest_dir)
+
 
 def read_job_id(test_id_string):
     #

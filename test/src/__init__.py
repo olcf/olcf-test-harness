@@ -1,5 +1,6 @@
 __all__ = [
-            "test_runtests"
+            "test_runtests",
+            "test_repository"
           ]
 
-version = 3.4
+version = 3.5

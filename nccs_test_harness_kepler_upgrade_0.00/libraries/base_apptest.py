@@ -16,23 +16,27 @@ class base_apptest(object):
 
     def __init__(self,name_of_application,name_of_subtest,local_path_to_tests):
 
+        self.__master_log_files_dir = os.path.join(os.getcwd(), 'harness_log_files')
+        if not os.path.exists(self.__master_log_files_dir):
+            os.mkdir(self.__master_log_files_dir)
+
         self.__nameOfApplication = name_of_application
         self.__name_of_subtest = name_of_subtest
         self.__threadTag = "<" + str(name_of_application) + "::" + str(name_of_subtest) + ">"
         self.__localPathToTests = local_path_to_tests
-        self.__dirPathToLogFiles = os.path.join(os.getcwd(),name_of_application + "_Logfiles")
+        self.__dirPathToLogFiles = os.path.join(self.__master_log_files_dir, name_of_application + "_Logfiles")
         self.__appLogFilePath = os.path.join(self.__dirPathToLogFiles, self.__nameOfApplication + ".logfile.txt")
         self.__appTestLogFilePath = os.path.join(self.__dirPathToLogFiles,
                                                  self.__nameOfApplication + "__" + self.__name_of_subtest + ".logfile.txt")
 
-        self.__appCheckOutLogFilePathStdOut = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".appcheckout.stdout.txt")
-        self.__appCheckOutLogFilePathStdErr = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".appcheckout.stderr.txt")
-        self.__appTestCheckOutLogFilePathStdOut = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".testcheckout.stdout.txt")
-        self.__appTestCheckOutLogFilePathStdErr = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".testcheckout.stderr.txt")
-        self.__appTestUpdateSourceOutLogFilePathStdOut = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".sourceupdate.stdout.txt")
-        self.__appTestUpdateSourceOutLogFilePathStdErr = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".sourceupdate.stderr.txt")
-        self.__appStartTestLogFilePathStdOut = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".starttest.stdout.txt")
-        self.__appStartTestLogFilePathStdErr = os.path.join(os.getcwd(),name_of_application + "_Logfiles",self.__nameOfApplication + "__" + self.__name_of_subtest + ".starttest.stderr.txt")
+        self.__appCheckOutLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".appcheckout.stdout.txt")
+        self.__appCheckOutLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".appcheckout.stderr.txt")
+        self.__appTestCheckOutLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".testcheckout.stdout.txt")
+        self.__appTestCheckOutLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".testcheckout.stderr.txt")
+        self.__appTestUpdateSourceOutLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".sourceupdate.stdout.txt")
+        self.__appTestUpdateSourceOutLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".sourceupdate.stderr.txt")
+        self.__appStartTestLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".starttest.stdout.txt")
+        self.__appStartTestLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".starttest.stderr.txt")
 
         if not os.path.exists(self.__dirPathToLogFiles):
             os.mkdir(self.__dirPathToLogFiles)

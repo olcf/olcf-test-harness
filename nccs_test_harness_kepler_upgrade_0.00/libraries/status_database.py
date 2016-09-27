@@ -15,7 +15,7 @@ import re
 
 import sqlite3
 
-from libraries import input_files
+#from libraries import input_files
 from libraries.status_file import StatusFile
 
 #------------------------------------------------------------------------------
@@ -23,14 +23,17 @@ from libraries.status_file import StatusFile
 class StatusDatabase:
     """Class for accessing status information for runs."""
 
+    NO_VALUE = StatusFile.NO_VALUE #---Convenience variable.
+
     #--------------------------------------------------------------------------
 
-    def __init__(self):
+    def __init__(self, rgt_input_file):
         """Constructor - simple initializations."""
 
         #---Get some locations from harness.
 
-        self.__input_file = input_files.rgt_input_file()
+        #self.__input_file = input_files.rgt_input_file()
+        self.__input_file = rgt_input_file
         self.__path_to_tests = self.__input_file.get_local_path_to_tests()
 
         self.__event_data = None
@@ -52,7 +55,7 @@ class StatusDatabase:
         #---Initializations.
 
         stf = StatusFile #---Convenience variable.
-        no_value = stf.NO_VALUE #---Convenience variable.
+        no_value = StatusDatabase.NO_VALUE #---Convenience variable.
 
         #---Two python dicts that will be converted to sql databases.
 
