@@ -31,3 +31,7 @@ class BaseRepository(metaclass=ABCMeta):
     def removeRepository(self):
         return
 
+    @abstractmethod
+    def doSparseSourceCheckout(self)
+        return
+

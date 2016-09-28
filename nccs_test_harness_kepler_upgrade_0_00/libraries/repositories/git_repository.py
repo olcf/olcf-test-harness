@@ -111,6 +111,15 @@ class GitRepository(BaseRepository):
         self.__verifySparseCheckoutEnabled()
         return (message,exit_status)
 
+    def doSparseSourceCheckout(self,
+                               application_name)
+
+        """Does sparse checkout of source applications source directory"""
+        message = ""
+        exit_status = 0
+
+        return (message,exit_status)
+
     def verifySparseCheckout(self):
         test_result = True
         message = ""

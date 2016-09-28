@@ -96,6 +96,14 @@ class SVNRepository(BaseRepository):
 
         return (message,exit_status)
 
+    def doSparseSourceCheckout(self,
+                               application_name)
+        """Does sparse checkout of source applications source directory"""
+        message = ""
+        exit_status = 0
+
+        return (message,exit_status)
+
     def verifySparseCheckout(self):
         """ Verifies that the directories exist for a sparse checkout.
 
@@ -109,6 +117,7 @@ class SVNRepository(BaseRepository):
                 test_result = False
                 message += "Directory/file {0} did not checkout.\n".format(dirpath)
         return (message, test_result)
+
 
     def removeRepository(self):
         svn_url_prefix = "file://"
