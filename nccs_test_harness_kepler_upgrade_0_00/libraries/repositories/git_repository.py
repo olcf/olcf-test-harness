@@ -24,9 +24,6 @@ class GitRepository(BaseRepository):
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
         self.__checkedOutDirectories = []
-
-        # git rev-parse --is-inside-work-tree
-
         return
 
 
@@ -40,10 +37,10 @@ class GitRepository(BaseRepository):
                                     file)
         return path_to_file
 
+
     def doSparseCheckout(self,
                          stdout_file_handle,
                          stderr_file_handle,
-                         path_to_repository,
                          root_path_to_checkout_directory,
                          directory_to_checkout):
         """ Performs a sparse checkout of directory from the repository.
@@ -53,9 +50,6 @@ class GitRepository(BaseRepository):
 
             :param stderr_file_handle: A file object to write standard error
             :type stderr_file_handle: A file object
-
-            :param path_to_repository: The url to the repository.
-            :type path_to_repository: string
 
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string
@@ -87,7 +81,9 @@ class GitRepository(BaseRepository):
                                                 ".hidden_git_repository")
         
         self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
-                              url_path_to_repository = path_to_repository)
+                              url_path_to_repository = self.__locationOfRepository,
+                              stdout_file_handle=stdout_file_handle,
+                              stderr_file_handle=stderr_file_handle)
 
 
         self.__doEnableSparseCheckout(path_to_local_directory = path_to_hidden_directory) 
@@ -113,6 +109,7 @@ class GitRepository(BaseRepository):
 
         # Verify git sparse checkout is enabled.
         self.__verifySparseCheckoutEnabled()
+        return (message,exit_status)
 
     def verifySparseCheckout(self):
         test_result = True
@@ -190,7 +187,9 @@ class GitRepository(BaseRepository):
 
     def __doAnEmptyClone(self,
                          path_to_local_directory,
-                         url_path_to_repository):
+                         url_path_to_repository,
+                         stdout_file_handle,
+                         stderr_file_handle):
 
         
         initial_dir = os.getcwd()

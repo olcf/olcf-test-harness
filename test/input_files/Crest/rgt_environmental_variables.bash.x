@@ -18,11 +18,11 @@ MY_MEMBER_WORK=${MEMBERWORK}/stf006
 export MY_MEMBER_WORK
 
 #-----------------------------------------------------
-# Path to harness module file.                       -
-#                                                    -
+# Rum the module commands to load the test harness   -
+# module.                                            -
 #-----------------------------------------------------
-MY_RGT_MODULE_FILE="/ccs/home/arnoldt/sw/crest/modulefiles/my_unit_testing/crest_unit_testing"
-export MY_RGT_MODULE_FILE
+module use /ccs/proj/ccsstaff/olcf4_acceptance/modulefiles
+module load my_unit_testing/crest_unit_testing
 
 #---------------------------------------------------------------
 # Path to the harness top level.                               -

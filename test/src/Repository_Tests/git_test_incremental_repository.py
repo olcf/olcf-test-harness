@@ -82,7 +82,6 @@ class Test_Git_repositories(unittest.TestCase):
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
                                                  stderr_file_handle=stderr_handle,
-                                                 path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
                                                  directory_to_checkout = self.folders0)
 
@@ -96,7 +95,6 @@ class Test_Git_repositories(unittest.TestCase):
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
                                                  stderr_file_handle=stderr_handle,
-                                                 path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
                                                  directory_to_checkout = self.folders1)
 
@@ -108,7 +106,6 @@ class Test_Git_repositories(unittest.TestCase):
             with open(self.stderr_path['sparse_checkout'],"a") as stderr_handle:
                 self.repository.doSparseCheckout(stdout_file_handle=stdout_handle,
                                                  stderr_file_handle=stderr_handle,
-                                                 path_to_repository=self.pathToRepository,
                                                  root_path_to_checkout_directory=self.pathToApplications,
                                                  directory_to_checkout = self.folders2)
 

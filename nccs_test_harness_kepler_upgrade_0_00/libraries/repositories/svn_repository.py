@@ -36,10 +36,10 @@ class SVNRepository(BaseRepository):
                                     file)
         return path_to_file
 
+
     def doSparseCheckout(self,
                          stdout_file_handle,
                          stderr_file_handle,
-                         path_to_repository,
                          root_path_to_checkout_directory,
                          directory_to_checkout):
         """ Performs a sparse checkout of directory from the repository.
@@ -49,9 +49,6 @@ class SVNRepository(BaseRepository):
 
             :param stderr_file_handle: A file object to write standard error
             :type stderr_file_handle: A file object
-
-            :param path_to_repository: The url to the repository.
-            :type path_to_repository: string
 
             :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string

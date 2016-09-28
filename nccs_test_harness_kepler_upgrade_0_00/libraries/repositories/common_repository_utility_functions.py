@@ -110,3 +110,5 @@ def run_as_subprocess_command_return_stdout_stderr(cmd):
 def get_type_of_repository():
     return os.getenv('RGT_TYPE_OF_REPOSITORY')
 
+def get_location_of_repository():
+    return (os.getenv("RGT_PATH_TO_REPS"),os.getenv("RGT_PATH_TO_REPS_INTERNAL"))

@@ -16,6 +16,8 @@ import sys
 import copy
 import multiprocessing
 from types import *
+
+# NCCS Test Harness Package Imports
 from libraries.base_apptest import base_apptest
 from libraries.layout_of_apps_directory import apps_test_directory_layout
 from libraries.status_file import parse_status_file
@@ -78,7 +80,6 @@ class subtest(base_apptest,apps_test_directory_layout):
                                         harness task to be preformed on this app/test
         """
 
-
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
@@ -90,11 +91,12 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         for harness_task in tasks:
             if harness_task == subtest.checkout:
+
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
                 self.check_out_source()
-                self.check_out_test()
+                # self.check_out_test()
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -123,6 +125,17 @@ class subtest(base_apptest,apps_test_directory_layout):
         return [self.getNameOfApplication(),self.getNameOfSubtest()]
 
     def check_out_source(self):
+        from libraries.repositories import RepositoryFactory
+        from libraries.repositories import get_location_of_repository
+        from libraries.repositories import get_type_of_repository
+        from libraries.repositories import types_of_repositories
+
+        repository_type = get_type_of_repository()
+        (location_of_repository,internal_repo_path_to_applications) = get_location_of_repository()
+        my_repository = RepositoryFactory.create(repository_type,
+                                                 location_of_repository,
+                                                 internal_repo_path_to_applications)
+
         message = "Checking out source of application: " + self.getNameOfApplication()
         self.writeToLogFile(message)
 
@@ -192,7 +205,19 @@ class subtest(base_apptest,apps_test_directory_layout):
     # Checks out the App and Test from the svn repository.
     #
     def check_out_test(self):
+        from libraries.repositories import RepositoryFactory
+        from libraries.repositories import get_type_of_repository
+        from libraries.repositories import types_of_repositories
+        from libraries.repositories import get_location_of_repository
+
+        repository_type = get_type_of_repository()
+        (location_of_repository,internal_repo_path_to_applications) = get_location_of_repository()
+        my_repository = RepositoryFactory.create(repository_type ,
+                                                 location_of_repository,
+                                                 internal_repo_path_to_applications)
+
         message =  "Checking out test: " + self.getNameOfApplication() + " " + self.getNameOfSubtest()
+
         self.writeToLogTestFile(message)
 
         #Get the current working directory.
