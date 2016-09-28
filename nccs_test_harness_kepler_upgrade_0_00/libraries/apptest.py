@@ -164,7 +164,8 @@ class subtest(base_apptest,apps_test_directory_layout):
         #Form the absolute path to the Source directory.
         abspath_source_dir = os.path.join(cwd,relative_path_to_app_dir,self.getNameOfApplication(),"Source")
 
-        my_repository.doSparseSourceCheckout(application_name=application_name) 
+        my_repository.doSparseSourceCheckout(application_name=application_name,
+                                             root_path_to_checkout_directory=abspath_app_root_dir) 
 
         exit_status = 0
         checkout_command = "svn checkout -N " + svn_path_to_application + " " + abspath_app_dir

@@ -112,12 +112,35 @@ class GitRepository(BaseRepository):
         return (message,exit_status)
 
     def doSparseSourceCheckout(self,
-                               application_name):
+                               application_name,
+                               root_path_to_checkout_directory):
 
         """Does sparse checkout of source applications source directory"""
         message = ""
         exit_status = 0
 
+        my_repository_location = self.getLocationOfRepository()
+
+        my_repository_application = self.getLocationOfFile(application_name)
+        tmp_words = my_repository_application.split(my_repository_location)
+        my_relative_path_repository_application = tmp_words[-1]
+
+        partial_path_to_source = application_name + '/Source' 
+        my_repository_source = self.getLocationOfFile(partial_path_to_source)
+        tmp_words = my_repository_source.split(my_repository_location)
+        my_relative_path_repository_source = tmp_words[-1]
+
+        
+        folders = { "application" : my_relative_path_repository_application,
+                    "source": my_relative_path_repository_source,
+                    "test" : []}
+
+        with open('sparse_checkout.stdout',"a") as stdout_handle:
+            with open('sparse_checkout.stderr',"a") as stderr_handle:
+                self.doSparseCheckout(stdout_file_handle=stdout_handle,
+                                      stderr_file_handle=stderr_handle,
+                                      root_path_to_checkout_directory=root_path_to_checkout_directory,
+                                      directory_to_checkout = folders)
         return (message,exit_status)
 
     def verifySparseCheckout(self):
@@ -219,7 +242,7 @@ class GitRepository(BaseRepository):
             os.chdir(initial_dir)
 
         else:
-            os.mkdir(path_to_local_directory)
+            os.makedirs(path_to_local_directory)
             
             os.chdir(path_to_local_directory)
 

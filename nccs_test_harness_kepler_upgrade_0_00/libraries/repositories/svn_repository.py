@@ -97,7 +97,8 @@ class SVNRepository(BaseRepository):
         return (message,exit_status)
 
     def doSparseSourceCheckout(self,
-                               application_name):
+                               application_name,
+                               root_path_to_checkout_directory):
         """Does sparse checkout of source applications source directory"""
         message = ""
         exit_status = 0
