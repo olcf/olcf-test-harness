@@ -112,7 +112,7 @@ class GitRepository(BaseRepository):
         return (message,exit_status)
 
     def doSparseSourceCheckout(self,
-                               application_name)
+                               application_name):
 
         """Does sparse checkout of source applications source directory"""
         message = ""

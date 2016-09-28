@@ -32,6 +32,6 @@ class BaseRepository(metaclass=ABCMeta):
         return
 
     @abstractmethod
-    def doSparseSourceCheckout(self)
+    def doSparseSourceCheckout(self):
         return
 
