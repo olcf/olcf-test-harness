@@ -21,8 +21,8 @@
     # Path to harness module file.                       -
     #                                                    -
     #-----------------------------------------------------
-    MY_RGT_MODULE_FILE="/ccs/proj/scgs/NCCS_Test_Harness_Workspace/acceptance-test-harness/test/input_files/Titan/unit_testing/1.0"
-    export MY_RGT_MODULE_FILE
+    #MY_RGT_MODULE_FILE="/ccs/proj/scgs/NCCS_Test_Harness_Workspace/acceptance-test-harness/test/input_files/Titan/unit_testing/1.0"
+    #export MY_RGT_MODULE_FILE
 
     #---------------------------------------------------------------
     # Path to the harness top level.                               -

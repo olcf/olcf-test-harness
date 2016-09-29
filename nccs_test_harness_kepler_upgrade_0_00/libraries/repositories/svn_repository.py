@@ -97,11 +97,62 @@ class SVNRepository(BaseRepository):
         return (message,exit_status)
 
     def doSparseSourceCheckout(self,
+                               stdout_handle,
+                               stderr_handle,
                                application_name,
                                root_path_to_checkout_directory):
         """Does sparse checkout of source applications source directory"""
         message = ""
         exit_status = 0
+
+        my_repository_location = self.getLocationOfRepository()
+
+        my_repository_application = self.getLocationOfFile(application_name)
+
+        partial_path_to_source = application_name + '/Source' 
+        my_repository_source = self.getLocationOfFile(partial_path_to_source)
+
+        folders = { "application" : my_repository_application ,
+                    "source": my_repository_source,
+                    "test" : []}
+
+
+        (message,exit_status) = \
+            self.doSparseCheckout(stdout_file_handle=stdout_handle,
+                                  stderr_file_handle=stderr_handle,
+                                  root_path_to_checkout_directory=root_path_to_checkout_directory,
+                                  directory_to_checkout=folders)
+
+        return (message,exit_status)
+
+    def doSparseTestCheckout(self,
+                             stdout_handle,
+                             stderr_handle,
+                             application_name,
+                             test_name,
+                             root_path_to_checkout_directory):
+        message = ""
+        exit_status = 0
+
+        my_repository_location = self.getLocationOfRepository()
+
+        my_repository_application = self.getLocationOfFile(application_name)
+
+        partial_path_to_source = application_name + '/Source' 
+        my_repository_source = self.getLocationOfFile(partial_path_to_source)
+
+        partial_path_to_test = application_name + '/' + test_name 
+        my_repository_test = self.getLocationOfFile(partial_path_to_test)
+
+        folders = { "application" : my_repository_application ,
+                    "source": my_repository_source,
+                    "test" : [my_repository_test]}
+
+        (message,exit_status) = \
+            self.doSparseCheckout(stdout_file_handle=stdout_handle,
+                                  stderr_file_handle=stderr_handle,
+                                  root_path_to_checkout_directory=root_path_to_checkout_directory,
+                                  directory_to_checkout=folders)
 
         return (message,exit_status)
 

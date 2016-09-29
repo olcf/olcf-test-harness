@@ -129,7 +129,6 @@ class GitRepository(BaseRepository):
         tmp_words = my_repository_source.split(my_repository_location)
         my_relative_path_repository_source = tmp_words[-1]
 
-        
         folders = { "application" : my_relative_path_repository_application,
                     "source": my_relative_path_repository_source,
                     "test" : []}
