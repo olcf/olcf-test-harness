@@ -106,7 +106,6 @@ def create_list_of_folders_to_checkout(self):
     tmp_words = my_repository_application.split(my_repository_location)
     my_relative_path_repository_application = tmp_words[-1]
     
-    
     my_repository_test1 = self.repository.getLocationOfFile('HelloWorld/Test_16cores')
     tmp_words = my_repository_test1.split(my_repository_location)
     my_relative_path_repository_test1 = tmp_words[-1]
