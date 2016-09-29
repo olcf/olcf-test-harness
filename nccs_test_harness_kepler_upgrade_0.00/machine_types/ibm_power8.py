@@ -221,6 +221,7 @@ class IBMpower8(BaseMachine):
             (re.compile("__walltime__"),self.__rgt_test.get_walltime()),
             (re.compile("__batchqueue__"),self.__rgt_test.get_batchqueue()),
             (re.compile("__total_processes__"),self.__rgt_test.get_total_processes()),
+            (re.compile("__processes_per_node__"),self.__rgt_test.get_processes_per_node()),
             (re.compile("__rgtenvironmentalfile__"),os.environ["RGT_ENVIRONMENTAL_FILE"]),
             (re.compile("__nccstestharnessmodule__"),os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]),
             (re.compile("__resultsdir__"),self.get_rgt_results_dir()),
@@ -228,7 +229,7 @@ class IBMpower8(BaseMachine):
             (re.compile("__startingdirectory__"),self.get_rgt_scripts_dir()),
             (re.compile("__unique_id_string__"),self.get_rgt_harness_id()),
             (re.compile("__batchfilename__"),self.__rgt_test.get_batchfilename()),
-            (re.compile("__pathtoexecutable__"),os.path.join(self.get_rgt_workspace(),"build_directory",self.__rgt_test.get_executablename())),
+            (re.compile("__pathtoexecutable__"),os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename())),
             (re.compile("__joblaunchcommand__"),self.get_jobLauncher_command(os.path.join(self.get_rgt_workspace(),"build_directory",self.__rgt_test.get_executablename()))),
            ]
 
