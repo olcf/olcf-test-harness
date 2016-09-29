@@ -164,8 +164,10 @@ class subtest(base_apptest,apps_test_directory_layout):
         #Form the absolute path to the Source directory.
         abspath_source_dir = os.path.join(cwd,relative_path_to_app_dir,self.getNameOfApplication(),"Source")
 
+        message = "For the source update my current directory is " + abspath_app_dir 
+        self.writeToLogTestFile(message)
+
         exit_status = 0
-        checkout_command = "svn checkout -N " + svn_path_to_application + " " + abspath_app_dir
         if os.path.exists(abspath_app_dir):
             message = "Source of application: " + application_name + " already exists."
             self.writeToLogFile(message)
@@ -180,14 +182,10 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                                                  err,
                                                                                  application_name=application_name,
                                                                                  root_path_to_checkout_directory=abspath_app_root_dir) 
-
-            
         if exit_status > 0:
-            string1 = "Checkout of source command failed: " + checkout_command
+            string1 = "Checkout of source failed."
             sys.exit(string1)
 
-        message = "For the source update my current directory is " + abspath_app_dir 
-        self.writeToLogTestFile(message)
 
         update_log_files = self.getPathToSourceUpdateLogFiles()
         stdout_path = update_log_files["stdout"]
@@ -198,12 +196,6 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         message = "Source update command stderr path is {}".format(stderr_path)
         self.writeToLogTestFile(message)
-
-        update_command = "svn update " + abspath_source_dir
-        with open(stdout_path,"a") as out:
-            with open(stderr_path,"a") as err:
-                subprocess.check_call(update_command,shell=True,stdout=out,stderr=err)
-
    
     #
     # Checks out the App and Test from the svn repository.
@@ -293,7 +285,6 @@ class subtest(base_apptest,apps_test_directory_layout):
         cwd = os.getcwd()
 
         pathtoscripts = self.get_local_path_to_scripts() 
-
 
         # If the file kill file exits then remove it.
         pathtokillfile = self.get_local_path_to_kill_file() 
