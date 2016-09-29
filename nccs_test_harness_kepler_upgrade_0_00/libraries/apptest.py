@@ -96,7 +96,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                     test_checkout_lock.acquire()
 
                 self.check_out_source()
-                # self.check_out_test()
+                self.check_out_test()
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -164,9 +164,6 @@ class subtest(base_apptest,apps_test_directory_layout):
         #Form the absolute path to the Source directory.
         abspath_source_dir = os.path.join(cwd,relative_path_to_app_dir,self.getNameOfApplication(),"Source")
 
-        my_repository.doSparseSourceCheckout(application_name=application_name,
-                                             root_path_to_checkout_directory=abspath_app_root_dir) 
-
         exit_status = 0
         checkout_command = "svn checkout -N " + svn_path_to_application + " " + abspath_app_dir
         if os.path.exists(abspath_app_dir):
@@ -179,7 +176,11 @@ class subtest(base_apptest,apps_test_directory_layout):
             stderr_path = app_checkout_log_files["stderr"]
             with open(stdout_path,"a") as out:
                 with open(stderr_path,"a") as err:
-                    exit_status = subprocess.call(checkout_command,shell=True,stdout=out,stderr=err)
+                    (message,exit_status) = my_repository.doSparseSourceCheckout(out,
+                                                                                 err,
+                                                                                 application_name=application_name,
+                                                                                 root_path_to_checkout_directory=abspath_app_root_dir) 
+
             
         if exit_status > 0:
             string1 = "Checkout of source command failed: " + checkout_command
@@ -226,6 +227,9 @@ class subtest(base_apptest,apps_test_directory_layout):
         #Get the current working directory.
         cwd = os.getcwd()
 
+        #Get the name of the application
+        application_name = self.getNameOfApplication()
+
         #Get the relative path, with respect to cwd, to the 
         #application directory.
         relative_path_to_app_dir = self.get_local_path_to_tests_wd()
@@ -259,10 +263,14 @@ class subtest(base_apptest,apps_test_directory_layout):
         stdout_path = update_log_files["stdout"]
         stderr_path = update_log_files["stderr"]
 
-        update_command = "svn update " + abspath_subtest_dir 
         with open(stdout_path,"a") as out:
             with open(stderr_path,"a") as err:
-                exit_status = subprocess.call(args=update_command,shell=True,stdout=out,stderr=err)
+
+                (message,exit_status) = my_repository.doSparseTestCheckout(out,
+                                                                           err,
+                                                                           application_name=application_name,
+                                                                           test_name = subtest_name, 
+                                                                           root_path_to_checkout_directory=abspath_app_root_dir) 
                 if exit_status > 0:
                     message = "Update command failed: " + update_command
                     self.writeToLogTestFile(message)
