@@ -1,0 +1,1 @@
+This is simple parallel world hello world mpi program.

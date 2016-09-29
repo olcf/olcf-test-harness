@@ -1,6 +1,8 @@
 __all__ = [
             "test_runtests",
-            "test_repository"
+            "Repository_Tests",
+            "svn_test_repository",
+            "git_test_repository"
           ]
 
 version = 3.5

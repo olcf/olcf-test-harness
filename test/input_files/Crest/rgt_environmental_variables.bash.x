@@ -18,11 +18,11 @@ MY_MEMBER_WORK=${MEMBERWORK}/stf006
 export MY_MEMBER_WORK
 
 #-----------------------------------------------------
-# Path to harness module file.                       -
-#                                                    -
+# Rum the module commands to load the test harness   -
+# module.                                            -
 #-----------------------------------------------------
-MY_RGT_MODULE_FILE="/ccs/proj/scgs/NCCS_Test_Harness_Workspace/acceptance-test-harness/test/input_files/Crest/unit_testing/1.0"
-export MY_RGT_MODULE_FILE
+module use /ccs/proj/ccsstaff/olcf4_acceptance/modulefiles
+module load my_unit_testing/crest_unit_testing
 
 #---------------------------------------------------------------
 # Path to the harness top level.                               -
@@ -34,7 +34,7 @@ export PATH_TO_HARNESS_TOP_LEVEL
 # URL to svn repository of acceptance test harness   -
 # applications.                                      -
 #-----------------------------------------------------
-MY_APP_REPO="file:///ccs/sys/adm/data/svn-acceptance/acceptance_project/trunk"
+MY_APP_REPO="https://code.ornl.gov/olcf-acceptance-team/olcf4-acceptance-tests.git"
 export MY_APP_REPO
 
 
