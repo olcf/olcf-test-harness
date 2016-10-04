@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 from libraries import input_files
 from libraries import regression_test
 
