@@ -1,4 +1,5 @@
 from .aprun import Aprun
+from .mpirun import Mpirun
 from .poe import Poe
 
 class JobLauncherFactory:
@@ -10,6 +11,8 @@ class JobLauncherFactory:
         tmp_jobLauncher = None
         if jobLauncher_type == "aprun":
             tmp_jobLauncher = Aprun()
+        elif jobLauncher_type == "mpirun":
+            tmp_jobLauncher = Mpirun()
         elif jobLauncher_type == "poe":
             tmp_jobLauncher = Poe()
         else:

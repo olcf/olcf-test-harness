@@ -30,6 +30,8 @@ class MachineFactory:
         tmp_machine = None
         if rgt_machine_name == "Crest":
             tmp_machine = IBMpower8(name=rgt_machine_name,scheduler=rgt_scheduler_type,jobLauncher=rgt_jobLauncher_type,workspace=rgt_path_to_workspace,harness_id=rgt_harness_id,scripts_dir=rgt_scripts_dir)
+        elif rgt_machine_name == "summitdev":
+            tmp_machine = IBMpower8(name=rgt_machine_name,scheduler=rgt_scheduler_type,jobLauncher=rgt_jobLauncher_type,workspace=rgt_path_to_workspace,harness_id=rgt_harness_id,scripts_dir=rgt_scripts_dir)
         elif rgt_machine_name == "Chester":
             tmp_machine = CrayXK7(name=rgt_machine_name,scheduler=rgt_scheduler_type,jobLauncher=rgt_jobLauncher_type,workspace=rgt_path_to_workspace,harness_id=rgt_harness_id,scripts_dir=rgt_scripts_dir)
         else:
