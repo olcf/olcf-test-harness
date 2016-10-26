@@ -13,6 +13,7 @@ import os
 import datetime
 import re
 import socket
+import pprint
 
 #from libraries import computers_1
 
@@ -795,8 +796,11 @@ def parse_status_file2(path_to_status_file):
              "number_of_failed_tests": number_of_failed_tests,
              "number_of_inconclusive_tests": number_of_inconclusive_tests}
 
-    print("shash=" + shash)
-    print("failed_jobs=" + failed_jobs)
+    #print("shash=", shash)
+    #print("failed_jobs=", failed_jobs)
+    print('status dict:')
+    pprint.pprint(shash)
+    print('failed_jobs: ', failed_jobs)
     return shash, failed_jobs
 
 #------------------------------------------------------------------------------
