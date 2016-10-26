@@ -736,23 +736,21 @@ def parse_status_file2(path_to_status_file):
     number_of_failed_tests = 0
     number_of_inconclusive_tests = 0
 
-    shash = {"number_of_tests": number_of_tests,
-             "number_of_passed_tests": number_of_passed_tests,
-             "number_of_failed_tests": number_of_failed_tests,
-             "number_of_inconclusive_tests": number_of_inconclusive_tests}
+    shash = {'number_of_tests': number_of_tests,
+             'number_of_passed_tests': number_of_passed_tests,
+             'number_of_failed_tests': number_of_failed_tests,
+             'number_of_inconclusive_tests': number_of_inconclusive_tests}
 
     failed_jobs = []
 
-    if os.path.exists(path_to_status_file):
-        pass
-    else:
+    if not os.path.exists(path_to_status_file):
         return shash
 
     sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
-    print("parsing status file: " + path_to_status_file)
+    print('Parsing status file ' + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
         if not StatusFile.ignore_line(tmpline):
@@ -760,7 +758,7 @@ def parse_status_file2(path_to_status_file):
             words = tmpline.split()
 
             # Get the number of passed tests.
-            #Conservative check
+            # Conservative check
             if words[3].isdigit() and words[4].isdigit() and words[5].isdigit():
                 if int(words[5]) == 0:
                     number_of_passed_tests = number_of_passed_tests + 1
@@ -791,16 +789,16 @@ def parse_status_file2(path_to_status_file):
             #    number_of_tests = number_of_tests - 1
 
 
-    shash = {"number_of_tests": number_of_tests,
-             "number_of_passed_tests": number_of_passed_tests,
-             "number_of_failed_tests": number_of_failed_tests,
-             "number_of_inconclusive_tests": number_of_inconclusive_tests}
+    shash = {'number_of_tests': number_of_tests,
+             'number_of_passed_tests': number_of_passed_tests,
+             'number_of_failed_tests': number_of_failed_tests,
+             'number_of_inconclusive_tests': number_of_inconclusive_tests}
 
     #print("shash=", shash)
     #print("failed_jobs=", failed_jobs)
-    print('status dict:')
+    print('Status dict:')
     pprint.pprint(shash)
-    print('failed_jobs: ', failed_jobs)
+    print('Failed jobs: ', failed_jobs)
     return shash, failed_jobs
 
 #------------------------------------------------------------------------------
