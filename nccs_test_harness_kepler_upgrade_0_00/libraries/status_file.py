@@ -294,7 +294,7 @@ class StatusFile:
 
         return event_time
 
-#TODO: put symlinks in status dir (here or elsewhere)
+    #----------
 
     def __status_file_make(self):
         """Create the status file for this app/test if doesn't exist."""

@@ -120,6 +120,7 @@ def test_harness_driver(argv=None):
 
     return build_and_submit_exit_value
 
+
 def create_parser():
     my_parser = argparse.ArgumentParser(description="Driver for Application and tests")
         
@@ -128,6 +129,7 @@ def create_parser():
                          action="store_true")
 
     return my_parser
+
 
 def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me):
     """
@@ -172,6 +174,18 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
 
     return build_exit_value and submit_exit_value
 
+
+def try_symlink(source, link_name):
+    """Attempt to create symlink, skip if not possible."""
+    try:
+        os.symlink(source, link_name)
+    except KeyboardInterrupt:
+        # Allow interrupt from command line.
+        raise
+    except:
+        print('Failure to create symlink ' + link_name + ' to ' + source + '.')
+
+
 def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me):
     """
     Generates scripts for the user to build, submit and execute a test.
@@ -203,6 +217,7 @@ def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
     
     return build_exit_value and submit_exit_value
 
+
 def usage():
     print ("There are two modes of usage as a main program or as a function call")
     print
@@ -225,6 +240,7 @@ def usage():
     print ("-r                   The batch script for the next test will resubmit")
     print ("                     itself, otherwise the batch script for the next ")
     print ("                     test won't resubmit itself.")
+
          
 def get_path_to_tmp_workspace(path_to_workspace,test_id_string):
     #
@@ -268,14 +284,14 @@ def create_workspace_convenience_links(path_to_workspace, test_id_string):
     #
     # Create convenience link from this workspace to current Status dir.
     #
-    os.symlink(os.path.join(dir_head1, 'Status', test_id_string),
-               os.path.join(path1, 'Status'))
+    try_symlink(os.path.join(dir_head1, 'Status', test_id_string),
+                os.path.join(path1, 'Status'))
 
     #
     # Create convenience link from this workspace to current Run_Archive dir.
     #
-    os.symlink(os.path.join(dir_head1, 'Run_Archive', test_id_string),
-               os.path.join(path1, 'Run_Archive'))
+    try_symlink(os.path.join(dir_head1, 'Run_Archive', test_id_string),
+                os.path.join(path1, 'Run_Archive'))
 
     #
     # Create convenience link to latest workspace dir
@@ -283,7 +299,7 @@ def create_workspace_convenience_links(path_to_workspace, test_id_string):
     latest_dir = os.path.join(path_to_workspace, dir_tail3, dir_tail2, 'latest')
     if os.path.exists(latest_dir):
         os.unlink(latest_dir)
-    os.symlink(test_id_string, latest_dir)
+    try_symlink(test_id_string, latest_dir)
 
 
 def make_path_to_status_dir(test_id_string, path_to_tmp_workspace):
@@ -307,11 +323,11 @@ def make_path_to_status_dir(test_id_string, path_to_tmp_workspace):
     #
     # Create convenience links to associated workspace dirs.
     #
-    os.symlink(os.path.join(path_to_tmp_workspace, 'build_directory'),
-               os.path.join(path1, 'build_directory'))
+    try_symlink(os.path.join(path_to_tmp_workspace, 'build_directory'),
+                os.path.join(path1, 'build_directory'))
 
-    os.symlink(os.path.join(path_to_tmp_workspace, 'workdir'),
-               os.path.join(path1, 'workdir'))
+    try_symlink(os.path.join(path_to_tmp_workspace, 'workdir'),
+                os.path.join(path1, 'workdir'))
 
     #
     # Create convenience link to latest status dir
@@ -319,7 +335,7 @@ def make_path_to_status_dir(test_id_string, path_to_tmp_workspace):
     latest_dir = os.path.join(dir_head1, 'Status', 'latest')
     if os.path.exists(latest_dir):
         os.unlink(latest_dir)
-    os.symlink(test_id_string, latest_dir)
+    try_symlink(test_id_string, latest_dir)
 
 
 def backup_status_file():
@@ -374,11 +390,11 @@ def make_path_to_Run_Archive_dir(test_id_string, path_to_tmp_workspace):
     #
     # Create convenience links to associated workspace dirs.
     #
-    os.symlink(os.path.join(path_to_tmp_workspace, 'build_directory'),
-               os.path.join(path1, 'build_directory'))
+    try_symlink(os.path.join(path_to_tmp_workspace, 'build_directory'),
+                os.path.join(path1, 'build_directory'))
 
-    os.symlink(os.path.join(path_to_tmp_workspace, 'workdir'),
-               os.path.join(path1, 'workdir'))
+    try_symlink(os.path.join(path_to_tmp_workspace, 'workdir'),
+                os.path.join(path1, 'workdir'))
 
     #
     # Create convenience link to latest status dir
@@ -386,7 +402,7 @@ def make_path_to_Run_Archive_dir(test_id_string, path_to_tmp_workspace):
     latest_dir = os.path.join(dir_head1, 'Run_Archive', 'latest')
     if os.path.exists(latest_dir):
         os.unlink(latest_dir)
-    os.symlink(test_id_string, latest_dir)
+    try_symlink(test_id_string, latest_dir)
 
 
 def read_job_id(test_id_string):
