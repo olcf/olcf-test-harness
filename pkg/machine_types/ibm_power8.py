@@ -32,6 +32,7 @@ class IBMpower8(BaseMachine):
         buildscriptname = None
         checkscriptname = None
         reportscriptname = None
+        testinputfile = None
 
         if os.path.isfile(self.get_rgt_input_file_name()):
             print("Reading input file from Power8")
@@ -48,6 +49,7 @@ class IBMpower8(BaseMachine):
             checkscriptname_pattern = "checkscriptname"
             reportscriptname_pattern = "reportscriptname"
             executablename_pattern = "executablename"
+            testinputfile_pattern = "testinputfile"
             delimiter = "="
 
             fileobj = open(self.get_rgt_input_file_name())
@@ -197,10 +199,24 @@ class IBMpower8(BaseMachine):
                 print("Found executablename is " + executablename + " in IBM Power 8 machine")
             else:
                 print("No executablename provided in IBM Power 8 machine")
+                
+            # Find the name for the input of the test
+            temp_re = re.compile(testinputfile_pattern + "$")
+            for record in filerecords:
+                words = record.split(delimiter)
+                words[0] = words[0].strip().lower()
+                if temp_re.match(words[0]):
+                    testinputfile = words[1].strip('\n').strip()
+                    break
+            if testinputfile:
+                print("Found testinputfile is " + testinputfile + " in IBM Power 8 machine" )
+            else:
+                print("No testinputfile provided in IBM Power 8 machine")
 
 
             self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
-                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname)
+                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, 
+                                                checkscriptname, executablename, reportscriptname, testinputfile)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
@@ -231,6 +247,7 @@ class IBMpower8(BaseMachine):
             (re.compile("__batchfilename__"),self.__rgt_test.get_batchfilename()),
             (re.compile("__pathtoexecutable__"),os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename())),
             (re.compile("__joblaunchcommand__"),self.get_jobLauncher_command(os.path.join(self.get_rgt_workspace(),"build_directory",self.__rgt_test.get_executablename()))),
+            (re.compile("__testinputfile__"),self.__rgt_test.get_testinputfile()),
            ]
 
         fileobj = open(self.__rgt_test.get_batchfilename(),"w")
