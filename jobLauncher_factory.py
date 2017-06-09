@@ -1,5 +1,12 @@
+#!/usr/bin/env python
+#
+# Author: Veronica G. Vergara L.
+#
+#
+
 from .aprun import Aprun
 from .poe import Poe
+from .jsrun import Jsrun
 
 class JobLauncherFactory:
 
@@ -12,6 +19,8 @@ class JobLauncherFactory:
             tmp_jobLauncher = Aprun()
         elif jobLauncher_type == "poe":
             tmp_jobLauncher = Poe()
+        elif jobLauncher_type == "Jsrun":
+            tmp_jobLauncher = Jsrun()
         else:
             print("Job launcher not supported. Good bye!")
 
