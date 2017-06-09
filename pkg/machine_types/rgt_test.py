@@ -18,8 +18,11 @@ class RgtTest():
         self.__checkscriptname = None
         self.__reportscriptname = None
         self.__executablename = None
+        self.__testinputfile = None
 
-    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname):
+    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, 
+                            walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname,
+                            testinputfile):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
         self.__processes_per_socket = processes_per_socket
@@ -31,9 +34,13 @@ class RgtTest():
         self.__checkscriptname = checkscriptname
         self.__reportscriptname = reportscriptname
         self.__executablename = executablename
+        self.__testinputfile = testinputfile
 
     def get_batchfilename(self):
         return self.__batchfilename
+    
+    def get_testinputfile(self):
+        return self.__testinputfile
 
     def get_buildscriptname(self):
         return self.__buildscriptname
@@ -79,6 +86,7 @@ class RgtTest():
         print("checkscriptname = " + self.__checkscriptname)
         print("reportscriptname = " + self.__reportscriptname)
         print("executablename = " + self.__executablename)
+        print("testinputfile = " + self.__testinputfile)
 
 if __name__ == "__main__":
     print('This is the RgtTest class')
