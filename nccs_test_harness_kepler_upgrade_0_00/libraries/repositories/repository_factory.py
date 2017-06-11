@@ -1,11 +1,14 @@
 #! /usr/bin/env python3
 import shutil
+import sys
 import os
 import subprocess
+import logging
 
 # NCCS Test Harness package imports
 from libraries.repositories.svn_repository import SVNRepository 
 from libraries.repositories.git_repository import GitRepository 
+from libraries.repositories.repository_factory_exceptions import TypeOfRepositoryError
 
 class RepositoryFactory:
     """ This class is a factory that creates repository objects.
@@ -41,15 +44,27 @@ class RepositoryFactory:
         # Check if the repository string value in type_of_repository 
         # matches one of the supported types.  
         my_repository = None
-        if type_of_repository == "git":
-            my_repository = GitRepository(location_of_repository,
-                                          internal_repo_path_to_applications)
-        elif type_of_repository == "svn":
-            my_repository = SVNRepository(location_of_repository,
-                                          internal_repo_path_to_applications)
-        else:
-            # No supporting repository if program reaches this branch.
-            my_repository = None
+        repository_factory_log = logging.getLogger(__name__)
+        try:
+            if type_of_repository == "git":
+                my_repository = GitRepository(location_of_repository,
+                                              internal_repo_path_to_applications)
+            elif type_of_repository == "svn":
+                my_repository = SVNRepository(location_of_repository,
+                                              internal_repo_path_to_applications)
+            else:
+                # No supporting repository if program reaches this branch.
+                my_repository = None
+                msg =  "The type of repository is '{}'. This error is generally due to the\n"
+                msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
+                msg += "to a repository type not supported by this test harness.\n\n".format("None")
+                raise TypeOfRepositoryError(type_of_repository,msg)
+        except TypeOfRepositoryError as error:
+            msg =  "The type of repository is '%s'. This error is generally due to the \n"
+            msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
+            msg += "to a repository type not supported by this test harness.\n\n"
+            repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
+            sys.exit(1)
 
         return my_repository
     
