@@ -29,7 +29,7 @@ class Test_concurrency(unittest.TestCase):
 
         return
     
-    def test_hello_worlds_concurrent_chekout(self):
+    def test_hello_worlds_concurrent_checkout(self):
         error_message = "The test test_hello_worlds_concurrent_checkout failed!"
         self.assertEqual(1,0,error_message)
         return
