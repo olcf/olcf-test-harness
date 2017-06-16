@@ -65,6 +65,6 @@ export PATH_TO_TEST_GIT_REPOSITORY
 #                                                    -
 #                                                    -
 #-----------------------------------------------------
-PATH_RELATIVE_PATH_TO_APPS_WRT_TEST_GIT_REPOSITORY=ANY_MACHINE
+PATH_RELATIVE_PATH_TO_APPS_WRT_TEST_GIT_REPOSITORY=trunk/ANY_MACHINE
 export PATH_RELATIVE_PATH_TO_APPS_WRT_TEST_GIT_REPOSITORY
 
