@@ -10,7 +10,6 @@ from bin import runtests
 from fundamental_types.rgt_state import RgtState
 from libraries.status_database import StatusDatabase
 
-
 class Test_runtests(unittest.TestCase):
     """ Tests for main program runtests.py """
   
@@ -20,6 +19,7 @@ class Test_runtests(unittest.TestCase):
         #
         # Set environmental variables for the harness.
         #
+
 
         # Define the fully qualified name to the harness top level.
         my_path_to_harness_top_level = os.getenv("PATH_TO_HARNESS_TOP_LEVEL")
@@ -41,7 +41,7 @@ class Test_runtests(unittest.TestCase):
         my_home_directory = os.getenv("HOME")
 
         # Path to my input file directory.
-        my_rgt_input_directory = os.path.join(my_home_directory,"Harness_Unit_Testing_Alternate_Input")
+        my_rgt_input_directory = os.path.join(my_home_directory,"Harness_Unit_Testing_Input")
 
         # File name of rgt input file.
         my_rgt_input_file_name = "rgt.input"

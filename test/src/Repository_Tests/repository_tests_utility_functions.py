@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import unittest
 import os
 import shutil
 
@@ -36,3 +37,10 @@ def creating_root_dir_repo(path_to_repo):
     os.makedirs(path_to_repo)
     return
 
+def set_up_HelloWorlds(my_unit_test,tag):
+    """ Create the appropiate harnes input files for running the unit tests. """
+    
+def tear_down_HelloWorlds(my_unit_test,tag):
+    """ Tears down the unit tests. """
+    
+    return
