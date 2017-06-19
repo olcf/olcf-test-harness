@@ -32,7 +32,10 @@ def create_a_parser():
                         default="serial",
                         help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Threaded is concurrency over the Application/Subtest. Threaded has been deprecated and will be removed in a future release.")
 
-    parser.add_argument("--inputfile",required=False,default="rgt.input",help="Optional argument to pass an input with a name other than rgt.input.")
+    parser.add_argument("--inputfile",
+                        required=False,
+                        default="rgt.input",
+                        help="Optional argument to pass an input with a name other than rgt.input.")
 
     return parser
 
