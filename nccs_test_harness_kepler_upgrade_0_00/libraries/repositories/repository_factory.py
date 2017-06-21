@@ -20,7 +20,8 @@ class RepositoryFactory:
     def create(cls,
                type_of_repository,
                location_of_repository,
-               internal_repo_path_to_applications):
+               internal_repo_path_to_applications,
+               repository_branch):
         """ Creates a repository object that encapuslates the repository behavoir. 
 
         This class method will a Repository object if the type_of_repository is 
@@ -35,6 +36,9 @@ class RepositoryFactory:
         :param internal_repo_path_to_applications: The internal path within the repository to the Application
                                                    directory
         :type internal_repo_path_to_applications: string
+
+        :param repository branch: The name of the branch of the repository/
+        :type repository_branch string 
 
         :returns: my_repository
         :rtype: A Repository object - currently only GitRepository or SVNRepository objects 

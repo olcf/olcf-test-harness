@@ -95,8 +95,19 @@ class subtest(base_apptest,apps_test_directory_layout):
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
-                self.check_out_source()
-                self.check_out_test()
+                from libraries.repositories import RepositoryFactory
+                from libraries.repositories import get_type_of_repository
+                from libraries.repositories import types_of_repositories
+                from libraries.repositories import get_location_of_repository
+
+                repository_type = get_type_of_repository()
+                (location_of_repository,internal_repo_path_to_applications,my_repository_branch) = get_location_of_repository()
+                my_repository = RepositoryFactory.create(repository_type ,
+                                                         location_of_repository,
+                                                         internal_repo_path_to_applications,
+                                                         my_repository_branch)
+                self.check_out_source(my_repository)
+                self.check_out_test(my_repository)
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -124,17 +135,7 @@ class subtest(base_apptest,apps_test_directory_layout):
     def appTestName(self):
         return [self.getNameOfApplication(),self.getNameOfSubtest()]
 
-    def check_out_source(self):
-        from libraries.repositories import RepositoryFactory
-        from libraries.repositories import get_location_of_repository
-        from libraries.repositories import get_type_of_repository
-        from libraries.repositories import types_of_repositories
-
-        repository_type = get_type_of_repository()
-        (location_of_repository,internal_repo_path_to_applications) = get_location_of_repository()
-        my_repository = RepositoryFactory.create(repository_type,
-                                                 location_of_repository,
-                                                 internal_repo_path_to_applications)
+    def check_out_source(self,my_repository):
 
         message = "Checking out source of application: " + self.getNameOfApplication()
         self.writeToLogFile(message)
@@ -200,18 +201,7 @@ class subtest(base_apptest,apps_test_directory_layout):
     #
     # Checks out the App and Test from the svn repository.
     #
-    def check_out_test(self):
-        from libraries.repositories import RepositoryFactory
-        from libraries.repositories import get_type_of_repository
-        from libraries.repositories import types_of_repositories
-        from libraries.repositories import get_location_of_repository
-
-        repository_type = get_type_of_repository()
-        (location_of_repository,internal_repo_path_to_applications) = get_location_of_repository()
-        my_repository = RepositoryFactory.create(repository_type ,
-                                                 location_of_repository,
-                                                 internal_repo_path_to_applications)
-
+    def check_out_test(self,my_repository):
         message =  "Checking out test: " + self.getNameOfApplication() + " " + self.getNameOfSubtest()
 
         self.writeToLogTestFile(message)
@@ -264,7 +254,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                                            test_name = subtest_name, 
                                                                            root_path_to_checkout_directory=abspath_app_root_dir) 
                 if exit_status > 0:
-                    message = "Update command failed: " + update_command
+                    message = "Update command failed: "
                     self.writeToLogTestFile(message)
 
         if self.__number_of_iterations > 0:

@@ -53,6 +53,9 @@ class Test_runtests(unittest.TestCase):
 
         # Define the fully qualified domain name to the application repo.
         my_fqdn_to_app_repo = os.getenv("MY_APP_REPO")
+        
+        # Define the repository branch.
+        my_repository_branch = os.getenv("MY_APP_REPO_BRANCH")
 
         # The tests to run
         my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"} ]
@@ -67,6 +70,7 @@ class Test_runtests(unittest.TestCase):
                                             my_rgt_module_file,
                                             my_path_to_harness_top_level,
                                             my_fqdn_to_app_repo,
+                                            my_repository_branch, 
                                             my_tests,
                                             my_member_work,
                                             my_harness_tasks)
@@ -133,6 +137,7 @@ class Test_runtests(unittest.TestCase):
         path_to_module_file,
         path_to_harness_top_level,
         fqdn_to_app_repo,
+        repository_branch,
         harness_tests,
         my_member_work,
         harness_tasks):
@@ -147,7 +152,8 @@ class Test_runtests(unittest.TestCase):
                                 path_to_module_file,
                                 path_to_harness_top_level,
                                 my_member_work,
-                                fqdn_to_app_repo)
+                                fqdn_to_app_repo,
+                                repository_branch)
 
         # Create the rgt input file.
         self.__createRgtInputFile(path_to_input_directory,
@@ -161,7 +167,8 @@ class Test_runtests(unittest.TestCase):
         path_to_module_file,
         path_to_harness_top_level,
         my_member_work,
-        fqdn_to_app_repo):
+        fqdn_to_app_repo,
+        repository_branch):
 
         # Define the path to the rgt environmental variables
         # file that will be in the input directory.
@@ -245,7 +252,7 @@ class Test_runtests(unittest.TestCase):
 
         rgt_file_obj.write(rgt_path_top_level_env)
 
-        #Write the path to the Application repository.
+        # Write the path to the Application repository.
         rgt_path_top_app = comment_frmt.format(rgt_comment="Fully qualified applications path.",
                                                rgt_space=" ")
 
@@ -256,6 +263,15 @@ class Test_runtests(unittest.TestCase):
                                                    rgt_variable_value="'" + fqdn_to_app_repo + "'")
 
         rgt_file_obj.write(rgt_path_top_app_env)
+
+        # Write the repository branch
+        rgt_path_top_app = comment_frmt.format(rgt_comment="The branch of the repository.",
+                                               rgt_space=" ")
+        rgt_file_obj.write(rgt_path_top_app)
+
+        rgt_repo_branch_env =  export_frmt.format(rgt_variable="MY_APP_REPO_BRANCH",
+                                                  rgt_variable_value="'" + repository_branch + "'")
+        rgt_file_obj.write(rgt_repo_branch_env)
 
         # Close file.
         rgt_file_obj.close()

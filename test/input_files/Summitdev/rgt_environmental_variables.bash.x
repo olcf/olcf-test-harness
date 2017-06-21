@@ -38,6 +38,13 @@ MY_APP_REPO='gitlab@gitlab.ccs.ornl.gov:olcf-acceptance/olcf4-acceptance-tests.g
 export MY_APP_REPO
 
 #-----------------------------------------------------
+# Set the branch of the repository.                  -
+#                                                    -
+#-----------------------------------------------------
+MY_APP_REPO_BRANCH="summitdev_hello_world_branch"
+export MY_APP_REPO_BRANCH
+
+#-----------------------------------------------------
 # Rum the module commands to load the test harness   -
 # module.                                            -
 #-----------------------------------------------------

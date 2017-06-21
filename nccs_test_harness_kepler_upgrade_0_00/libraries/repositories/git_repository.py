@@ -17,12 +17,14 @@ class GitRepository(BaseRepository):
     """
     def __init__(self,
                  location_of_repository=None,
-                 internal_repo_path_to_applications=None):
+                 internal_repo_path_to_applications=None,
+                 repository_branch=None):
 
         
         self.__binaryName = "git" #:ivar __binaryName: The name of the git binary.
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
+        self.__repositoryBranch = repository_branch
         self.__checkedOutDirectories = []
         return
 
