@@ -52,10 +52,12 @@ class RepositoryFactory:
         try:
             if type_of_repository == "git":
                 my_repository = GitRepository(location_of_repository,
-                                              internal_repo_path_to_applications)
+                                              internal_repo_path_to_applications,
+                                              repository_branch)
             elif type_of_repository == "svn":
                 my_repository = SVNRepository(location_of_repository,
-                                              internal_repo_path_to_applications)
+                                              internal_repo_path_to_applications,
+                                              repository_branch)
             else:
                 # No supporting repository if program reaches this branch.
                 my_repository = None

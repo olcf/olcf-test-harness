@@ -139,6 +139,10 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
     check_executable.x, report_executable.x.
     
     """
+
+    # Add the current directory to my PYTHONPATH
+    sys.path.insert(0, os.getcwd())
+
     #
     # Execute the build script.
     #
@@ -151,16 +155,37 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
 
     create_workspace_convenience_links(workspace, unique_id)
 
-    #
-    # Execute the submit script.
-    #
-    if resubmit_me:
-        submit_command = "./submit_executable.x "
-        submit_command_args = "-r " + "-p " + path_to_tmp_workspace + " -i " + unique_id
-    else:
-        submit_command = "./submit_executable.x "
-        submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
+    # If ./submit_executable.py exists then use submit_executable.py and call as a main program.
+    # Otherwise we use submit_executable.x and call via os.system call.
+    
+    submit_python_file = "./submit_executable.py"
+    if os.path.isfile(submit_python_file):
+        #
+        # Call ./submit_python_file.py as a main program.
+        #
+        print("Calling submit_executable.py as a main program")
+        import submit_executable
+        if resubmit_me:
+            submit_executable.submit_executable(path_to_tmp_workspace,
+                                                unique_id,
+                                                batch_recursive_mode=True)
+        else:
+            submit_executable.submit_executable(path_to_tmp_workspace,
+                                                unique_id,
+                                                batch_recursive_mode=False)
 
+    else:
+        #
+        # Execute the submit script.
+        #
+        if resubmit_me:
+            submit_command = "./submit_executable.x "
+            submit_command_args = "-r " + "-p " + path_to_tmp_workspace + " -i " + unique_id
+        else:
+            submit_command = "./submit_executable.x "
+            submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
+        
+   
     command2 = submit_command + submit_command_args
     jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
     submit_exit_value = os.system(command2)

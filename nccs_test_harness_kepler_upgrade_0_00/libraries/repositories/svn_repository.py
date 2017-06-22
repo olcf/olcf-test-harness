@@ -18,13 +18,35 @@ class SVNRepository(BaseRepository):
 
     def __init__(self,
                  location_of_repository=None,
-                 internal_repo_path_to_applications=None):
+                 internal_repo_path_to_applications=None,
+                 repository_branch=None):
         self.__binaryName = "svn"
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
+        self.__repositoryBranch = None
+        self.repository_branch = my_repository_branch
         self.__checkedOutDirectories = []
 
         return
+
+    @property 
+    def repository_branch(self):
+        value = "master"
+        if self.__repositoryBranch == None:
+            return value
+        else:
+            return self.__repositoryBranch
+    
+    @repository_branch.setter
+    def  repository_branch(self,value):
+        self.__repositoryBranch = value
+        if value != None:
+            message  = "The functionality to checkout a branch in svn is not enabled.\n"
+            message += "To prevent the error, unset environmnetal variable MY_APP_REPO_BRANCH:\n"
+            message += "    unset MY_APP_REPO_BRANCH\n"
+            message += "    export MY_APP_REPO_BRANCH\n"
+            print(message)
+            sys.exit()
 
     def getLocationOfRepository(self):
         return self.__locationOfRepository

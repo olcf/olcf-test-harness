@@ -18,16 +18,28 @@ class GitRepository(BaseRepository):
     def __init__(self,
                  location_of_repository=None,
                  internal_repo_path_to_applications=None,
-                 repository_branch=None):
+                 my_repository_branch=None):
 
         
         self.__binaryName = "git" #:ivar __binaryName: The name of the git binary.
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
-        self.__repositoryBranch = repository_branch
+        self.__repositoryBranch = None
+        self.repository_branch = my_repository_branch
         self.__checkedOutDirectories = []
         return
 
+    @property 
+    def repository_branch(self):
+        value = "master"
+        if self.__repositoryBranch == None:
+            return value
+        else:
+            return self.__repositoryBranch
+    
+    @repository_branch.setter
+    def  repository_branch(self,value):
+        self.__repositoryBranch = value
 
     def getLocationOfRepository(self):
         return self.__locationOfRepository
@@ -358,8 +370,10 @@ class GitRepository(BaseRepository):
         os.chdir(path_to_local_directory)
 
         # Do checkout
-        git_checkout_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
-                                                                             my_options='checkout master')
+        git_checkout_command = "{my_bin} {my_options} {branch}".format(my_bin=self.__binaryName,
+                                                                       my_options='checkout',
+                                                                       branch=self.repository_branch)
+
         run_as_subprocess_command(git_checkout_command)
         os.chdir(initial_dir)
         return
