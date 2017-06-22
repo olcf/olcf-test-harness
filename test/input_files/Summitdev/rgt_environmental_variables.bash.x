@@ -50,7 +50,6 @@ export MY_APP_REPO_BRANCH
 #-----------------------------------------------------
 module load ${MY_RGT_MODULE_FILE}
 
-
 #-----------------------------------------------------
 # Define the path to the scratch space.              -
 #                                                    -
