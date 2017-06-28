@@ -146,12 +146,22 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
     #
     # Execute the build script.
     #
-    build_command = "./build_executable.x "
-    build_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
-    command1 = build_command + build_command_args
-    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
-    build_exit_value = os.system(command1)
-    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+    build_python_file = "./build_executable.py"
+    if os.path.isfile():
+        #
+        # Call ./build_excutable.py a main program.
+        #
+        import build_executable
+        build_executable.build_executable(path_to_tmp_workspace,
+                                          unique_id)
+    else:
+        build_command = "./build_executable.x "
+        build_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
+        command1 = build_command + build_command_args
+        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
+        build_exit_value = os.system(command1)
+        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+
 
     create_workspace_convenience_links(workspace, unique_id)
 
@@ -163,7 +173,6 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
         #
         # Call ./submit_python_file.py as a main program.
         #
-        print("Calling submit_executable.py as a main program")
         import submit_executable
         if resubmit_me:
             submit_executable.submit_executable(path_to_tmp_workspace,
