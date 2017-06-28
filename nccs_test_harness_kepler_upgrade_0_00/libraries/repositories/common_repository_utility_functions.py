@@ -111,4 +111,4 @@ def get_type_of_repository():
     return os.getenv('RGT_TYPE_OF_REPOSITORY')
 
 def get_location_of_repository():
-    return (os.getenv("RGT_PATH_TO_REPS"),os.getenv("RGT_PATH_TO_REPS_INTERNAL"),os.getenv("MY_APP_REPO_BRANCH"))
+    return (os.getenv("RGT_PATH_TO_REPS"),os.getenv("RGT_PATH_TO_REPS_INTERNAL"),os.getenv("RGT_APP_REPO_BRANCH"))

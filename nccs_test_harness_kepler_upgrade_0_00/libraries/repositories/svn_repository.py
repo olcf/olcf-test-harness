@@ -42,9 +42,9 @@ class SVNRepository(BaseRepository):
         self.__repositoryBranch = value
         if value != None:
             message  = "The functionality to checkout a branch in svn is not enabled.\n"
-            message += "To prevent the error, unset environmnetal variable MY_APP_REPO_BRANCH:\n"
-            message += "    unset MY_APP_REPO_BRANCH\n"
-            message += "    export MY_APP_REPO_BRANCH\n"
+            message += "To prevent the error, unset environmnetal variable RGT_APP_REPO_BRANCH:\n"
+            message += "    unset RGT_APP_REPO_BRANCH\n"
+            message += "    export RGT_APP_REPO_BRANCH\n"
             print(message)
             sys.exit()
 
