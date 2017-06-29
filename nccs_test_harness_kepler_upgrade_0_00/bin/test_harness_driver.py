@@ -147,10 +147,8 @@ def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
     # Execute the build script.
     #
     build_python_file = "./build_executable.py"
-    if os.path.isfile():
-        #
+    if os.path.isfile(build_python_file):
         # Call ./build_excutable.py a main program.
-        #
         import build_executable
         build_executable.build_executable(path_to_tmp_workspace,
                                           unique_id)
