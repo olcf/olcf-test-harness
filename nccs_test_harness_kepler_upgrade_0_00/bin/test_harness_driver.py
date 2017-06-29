@@ -131,78 +131,36 @@ def create_parser():
     return my_parser
 
 
-def user_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,resubmit_me):
+def user_generated_scripts(path_to_tmp_workspace,
+                           unique_id,
+                           jstatus,
+                           workspace,
+                           resubmit_me):
     """
     Executes scripts provided by the user for a test.
 
-    This function runs the submit_executable.x, build_executable.x,
-    check_executable.x, report_executable.x.
+    This function runs the submit_executable.x and  build_executable.x,
     
     """
 
-    # Add the current directory to my PYTHONPATH
-    sys.path.insert(0, os.getcwd())
+    # Add the current directory which should be the
+    # Scripts directory of the test to my PYTHONPATH
+    path_to_scripts_dir = os.getcwd() 
+    sys.path.insert(0,path_to_scripts_dir)
 
-    #
-    # Execute the build script.
-    #
-    build_python_file = "./build_executable.py"
-    if os.path.isfile(build_python_file):
-        # Call ./build_excutable.py a main program.
-        import build_executable
-        build_executable.build_executable(path_to_tmp_workspace,
-                                          unique_id)
-    else:
-        build_command = "./build_executable.x "
-        build_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
-        command1 = build_command + build_command_args
-        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
-        build_exit_value = os.system(command1)
-        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+    build_exit_value = execute_build_script(path_to_tmp_workspace,
+                                            unique_id,
+                                            jstatus)
 
-
-    create_workspace_convenience_links(workspace, unique_id)
-
-    # If ./submit_executable.py exists then use submit_executable.py and call as a main program.
-    # Otherwise we use submit_executable.x and call via os.system call.
+    create_workspace_convenience_links(workspace,
+                                       unique_id)
     
-    submit_python_file = "./submit_executable.py"
-    if os.path.isfile(submit_python_file):
-        #
-        # Call ./submit_python_file.py as a main program.
-        #
-        import submit_executable
-        if resubmit_me:
-            submit_executable.submit_executable(path_to_tmp_workspace,
-                                                unique_id,
-                                                batch_recursive_mode=True)
-        else:
-            submit_executable.submit_executable(path_to_tmp_workspace,
-                                                unique_id,
-                                                batch_recursive_mode=False)
-
-    else:
-        #
-        # Execute the submit script.
-        #
-        if resubmit_me:
-            submit_command = "./submit_executable.x "
-            submit_command_args = "-r " + "-p " + path_to_tmp_workspace + " -i " + unique_id
-        else:
-            submit_command = "./submit_executable.x "
-            submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
-        
+    submit_exit_value = execute_submit_script(path_to_tmp_workspace,
+                                              unique_id,
+                                              jstatus,
+                                              resubmit_me)
    
-    command2 = submit_command + submit_command_args
-    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
-    submit_exit_value = os.system(command2)
-    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
 
-    #
-    # Log the PBS job id.
-    #
-    job_id = read_job_id(unique_id)
-    jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
 
     return build_exit_value and submit_exit_value
 
@@ -457,6 +415,74 @@ def read_job_id(test_id_string):
 
     return job_id
 
+def execute_build_script(path_to_tmp_workspace,
+                         unique_id,
+                         jstatus):
+    path_to_scripts_dir = os.getcwd() 
+
+    # Execute the build script.
+    build_python_file = "./build_executable.py"
+    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
+    if os.path.isfile(build_python_file):
+        # Call ./build_excutable.py a main program.
+        import build_executable
+        build_exit_value = build_executable.build_executable(path_to_tmp_workspace,
+                                                             unique_id)
+    else:
+        build_command = "./build_executable.x "
+        build_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
+        command1 = build_command + build_command_args
+        build_exit_value = os.system(command1)
+        
+    os.chdir(path_to_scripts_dir)
+    jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+    return build_exit_value 
+
+def execute_submit_script(path_to_tmp_workspace,
+                         unique_id,
+                         jstatus,
+                         resubmit_me):
+    path_to_scripts_dir = os.getcwd() 
+
+    # If ./submit_executable.py exists then use submit_executable.py and call as a main program.
+    # Otherwise we use submit_executable.x and call via os.system call.
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
+    
+    submit_python_file = "./submit_executable.py"
+    if os.path.isfile(submit_python_file):
+        # Call ./submit_python_file.py as a main program.
+        import submit_executable
+        if resubmit_me:
+            logical_value = True
+        else:
+            logical_value = False
+        submit_exit_value = submit_executable.submit_executable(path_to_tmp_workspace,
+                                                                unique_id,
+                                                                batch_recursive_mode=logical_value)
+    else:
+        #
+        # Execute the submit script.
+        #
+        if resubmit_me:
+            submit_command = "./submit_executable.x "
+            submit_command_args = "-r " + "-p " + path_to_tmp_workspace + " -i " + unique_id
+        else:
+            submit_command = "./submit_executable.x "
+            submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
+
+            command2 = submit_command + submit_command_args
+            submit_exit_value = os.system(command2)
+            
+    os.chdir(path_to_scripts_dir)
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
+
+    #
+    # Log the PBS job id.
+    #
+    job_id = read_job_id(unique_id)
+    jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
+
+    return submit_exit_value
 
 if __name__ == "__main__":
     test_harness_driver()
