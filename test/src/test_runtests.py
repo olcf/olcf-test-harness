@@ -28,6 +28,9 @@ class Test_runtests(unittest.TestCase):
         my_job_account_id = os.getenv("my_job_account_id")
         os.putenv("RGT_PBS_JOB_ACCNT_ID",my_job_account_id)
 
+        my_project_id = os.getenv("my_project_id")
+        os.putenv("RGT_PROJECTID",my_project_id)
+
         # Scratch space for running unit tests.
         my_member_work = os.getenv("path_to_member_work")
         my_path_to_sspace = os.path.join(my_member_work,"Harness_Unit_Testing_Scratch_Space")
@@ -195,6 +198,11 @@ class Test_runtests(unittest.TestCase):
         pbs_env = export_frmt.format(rgt_variable="RGT_PBS_JOB_ACCNT_ID",
                                      rgt_variable_value="'STF006'")
         rgt_file_obj.write(pbs_env)
+
+        project_env = export_frmt(rgt_variable="RGT_PROJECTID",
+                                  rgt_variable_value=os.getenv("RGT_PROJECTID"))
+
+        rgt_file_obj.write(project_env)
 
         # Write the path to scratch space to file.
         scratch_space_comment = comment_frmt.format(rgt_comment="Absolute path to scratch space",

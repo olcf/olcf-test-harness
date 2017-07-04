@@ -7,8 +7,11 @@
 #---------------------------------------------------------------
 # PBS job account id.                                          -
 #---------------------------------------------------------------
-RGT_PBS_JOB_ACCNT_ID='STF006ACCEPT'
+RGT_PBS_JOB_ACCNT_ID='STF006'
 export RGT_PBS_JOB_ACCNT_ID
+
+MY_RGT_PROJECTID='STF006'
+export MY_RGT_PROJECTID
 
 #-----------------------------------------------------
 # Path to my work directory.                         -
