@@ -4,6 +4,22 @@
 
 # Add or modify as needed to suit your environment.
 
+#-----------------------------------------------------
+# Define the location to run the harness tests.      -
+#                                                    -
+#                                                    -
+#-----------------------------------------------------
+MY_RGT_TEST_DIRECTORY=${HOME}/Harness_Unit_Testing_Input
+export MY_RGT_TEST_DIRECTORY
+
+#-----------------------------------------------------
+# Define the location of the harness master          -
+# environmental file.                                -
+#                                                    -
+#-----------------------------------------------------
+MY_RGT_MASTER_ENVIRONMENTAL_FILE=${MY_RGT_TEST_DIRECTORY}/rgt.environmental_variables.sh
+export MY_RGT_MASTER_ENVIRONMENTAL_FILE
+
 #---------------------------------------------------------------
 # PBS job account id.                                          -
 #---------------------------------------------------------------
@@ -61,12 +77,11 @@ RGT_PATH_TO_SSPACE='/lustre/atlas1/stf006/scratch/arnoldt/Harness_Unit_Testing_S
 export RGT_PATH_TO_SSPACE
 
 #-----------------------------------------------------
-# Define the path to the unit test gti repo.         -
+# Define the path to the unit test git repo.         -
 #                                                    -
 #-----------------------------------------------------
 PATH_TO_TEST_GIT_REPOSITORY=${HOME}/MY_HARNESS_TEST_REPO
 export PATH_TO_TEST_GIT_REPOSITORY
-
 
 #-----------------------------------------------------
 # Define the internal path to the unit test git      -

@@ -44,7 +44,8 @@ class Test_runtests(unittest.TestCase):
         my_home_directory = os.getenv("HOME")
 
         # Path to my input file directory.
-        my_rgt_input_directory = os.path.join(my_home_directory,"Harness_Unit_Testing_Input")
+        my_test_directory = os.getenv("MY_RGT_TEST_DIRECTORY")
+        my_rgt_input_directory = os.path.join(my_test_directory,"Harness_Unit_Testing_Input")
 
         # File name of rgt input file.
         my_rgt_input_file_name = "rgt.input"
