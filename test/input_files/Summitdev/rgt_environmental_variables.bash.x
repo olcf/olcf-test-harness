@@ -23,7 +23,7 @@ export MY_RGT_MASTER_ENVIRONMENTAL_FILE
 #---------------------------------------------------------------
 # PBS job account id.                                          -
 #---------------------------------------------------------------
-RGT_PBS_JOB_ACCNT_ID='STF006'
+RGT_PBS_JOB_ACCNT_ID='STF006ACCEPT'
 export RGT_PBS_JOB_ACCNT_ID
 
 MY_RGT_PROJECTID='STF006'
