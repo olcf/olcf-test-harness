@@ -9,7 +9,7 @@
 #                                                    -
 #                                                    -
 #-----------------------------------------------------
-MY_RGT_TEST_DIRECTORY=${HOME}/Harness_Unit_Testing_Input
+MY_RGT_TEST_DIRECTORY=${HOME}/NCCS_UNIT_TESTING
 export MY_RGT_TEST_DIRECTORY
 
 #-----------------------------------------------------
@@ -17,7 +17,7 @@ export MY_RGT_TEST_DIRECTORY
 # environmental file.                                -
 #                                                    -
 #-----------------------------------------------------
-MY_RGT_MASTER_ENVIRONMENTAL_FILE=${MY_RGT_TEST_DIRECTORY}/rgt.environmental_variables.sh
+MY_RGT_MASTER_ENVIRONMENTAL_FILE=${MY_RGT_TEST_DIRECTORY}/Harness_Unit_Testing_Input/rgt.environmental_variables.sh
 export MY_RGT_MASTER_ENVIRONMENTAL_FILE
 
 #---------------------------------------------------------------
