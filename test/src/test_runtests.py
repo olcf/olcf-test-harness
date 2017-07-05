@@ -195,12 +195,13 @@ class Test_runtests(unittest.TestCase):
                                               rgt_space=" ")
         rgt_file_obj.write(pbs_job_comment)
 
+        my_job_account_id = os.getenv("my_job_account_id")
         pbs_env = export_frmt.format(rgt_variable="RGT_PBS_JOB_ACCNT_ID",
-                                     rgt_variable_value="'STF006'")
+                                     rgt_variable_value="'" + my_job_account_id + "'")
         rgt_file_obj.write(pbs_env)
 
-        project_env = export_frmt(rgt_variable="RGT_PROJECTID",
-                                  rgt_variable_value=os.getenv("RGT_PROJECTID"))
+        project_env = export_frmt.format(rgt_variable="RGT_PROJECTID",
+                                        rgt_variable_value="'" + my_job_account_id + "'")
 
         rgt_file_obj.write(project_env)
 
