@@ -71,9 +71,10 @@ class subtest(base_apptest,apps_test_directory_layout):
     ##################
     # Public Methods #
     ##################
-    def doTasks(self,tasks=None,
-                     test_checkout_lock=None,
-                     test_display_lock=None):
+    def doTasks(self,
+                tasks=None,
+                test_checkout_lock=None,
+                test_display_lock=None):
         """
         :param list_of_string my_tasks: A list of the strings 
                                         where each element is an application
@@ -102,7 +103,7 @@ class subtest(base_apptest,apps_test_directory_layout):
 
                 repository_type = get_type_of_repository()
                 (location_of_repository,internal_repo_path_to_applications,my_repository_branch) = get_location_of_repository()
-                my_repository = RepositoryFactory.create(repository_type ,
+                my_repository = RepositoryFactory.create(repository_type,
                                                          location_of_repository,
                                                          internal_repo_path_to_applications,
                                                          my_repository_branch)

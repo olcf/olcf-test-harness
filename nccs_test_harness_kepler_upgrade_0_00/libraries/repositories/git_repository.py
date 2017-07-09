@@ -65,7 +65,7 @@ class GitRepository(BaseRepository):
             :param stderr_file_handle: A file object to write standard error
             :type stderr_file_handle: A file object
 
-            :param root_path_to_checkout_directory: The fully qualified path the the to level of the sparse checkout directory.
+            :param root_path_to_checkout_directory: The fully qualified path the the top level of the sparse checkout directory.
             :type root_path_to_checkout_directory: string
 
             :param directory_to_checkout: A list of directories or files to sparsely checkout.
