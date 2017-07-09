@@ -270,13 +270,8 @@ class StatusFile:
         write_system_log(self.__test_id, status_info)
 
         # Update the status file appropriately.
-
-        #elif event_id == StatusFile.EVENT_BUILD_START:
-        #    pass
         if event_id == StatusFile.EVENT_BUILD_END:
             self.__status_file_add_result(event_value, mode="Add_Build_Result")
-        #elif event_id == StatusFile.EVENT_SUBMIT_START:
-        #    pass
         elif event_id == StatusFile.EVENT_SUBMIT_END:
             self.__status_file_add_result(event_value, mode="Add_Submit_Result")
         elif event_id == StatusFile.EVENT_JOB_QUEUED:
@@ -285,10 +280,6 @@ class StatusFile:
         elif event_id == StatusFile.EVENT_BINARY_EXECUTE_START:
             self.__status_file_add_result(event_value,
                                           mode="Add_Binary_Running")
-        #elif event_id == StatusFile.EVENT_BINARY_EXECUTE_END:
-        #    pass
-        #elif event_id == StatusFile.EVENT_CHECK_START:
-        #    pass
         elif event_id == StatusFile.EVENT_CHECK_END:
             self.__status_file_add_result(event_value, mode="Add_Run_Result")
 

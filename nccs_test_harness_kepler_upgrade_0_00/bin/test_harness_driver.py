@@ -439,9 +439,9 @@ def execute_build_script(path_to_tmp_workspace,
     return build_exit_value 
 
 def execute_submit_script(path_to_tmp_workspace,
-                         unique_id,
-                         jstatus,
-                         resubmit_me):
+                          unique_id,
+                          jstatus,
+                          resubmit_me):
     path_to_scripts_dir = os.getcwd() 
 
     # If ./submit_executable.py exists then use submit_executable.py and call as a main program.
