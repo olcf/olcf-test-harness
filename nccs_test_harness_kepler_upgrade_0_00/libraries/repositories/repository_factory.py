@@ -21,7 +21,8 @@ class RepositoryFactory:
                type_of_repository,
                location_of_repository,
                internal_repo_path_to_applications,
-               repository_branch):
+               repository_branch,
+               path_to_hidden_git_repository=None):
         """ Creates a repository object that encapuslates the repository behavoir. 
 
         This class method will a Repository object if the type_of_repository is 
@@ -53,7 +54,8 @@ class RepositoryFactory:
             if type_of_repository == "git":
                 my_repository = GitRepository(location_of_repository,
                                               internal_repo_path_to_applications,
-                                              repository_branch)
+                                              repository_branch,
+                                              path_to_hidden_git_repository)
             elif type_of_repository == "svn":
                 my_repository = SVNRepository(location_of_repository,
                                               internal_repo_path_to_applications,

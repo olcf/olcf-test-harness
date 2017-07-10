@@ -103,10 +103,12 @@ class subtest(base_apptest,apps_test_directory_layout):
 
                 repository_type = get_type_of_repository()
                 (location_of_repository,internal_repo_path_to_applications,my_repository_branch) = get_location_of_repository()
+                path_to_hidden_git_repository = self.HiddenGitRepositoryPath
                 my_repository = RepositoryFactory.create(repository_type,
                                                          location_of_repository,
                                                          internal_repo_path_to_applications,
-                                                         my_repository_branch)
+                                                         my_repository_branch,
+                                                         path_to_hidden_git_repository)
                 self.check_out_source(my_repository)
                 self.check_out_test(my_repository)
 
@@ -198,7 +200,8 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         message = "Source update command stderr path is {}".format(stderr_path)
         self.writeToLogTestFile(message)
-   
+        return
+    
     #
     # Checks out the App and Test from the svn repository.
     #

@@ -8,7 +8,6 @@ class BaseRepository(metaclass=ABCMeta):
 
     """
     def __init__(self):
-        print("In base repository")
         return
 
     @abstractmethod

@@ -57,6 +57,10 @@ class  apps_test_directory_layout(object):
         self.__setHiddenGitRepositoryLayout(name_of_application)
         return
 
+    @property
+    def HiddenGitRepositoryPath(self):
+        return self.__localHiddenGitRepoDirectoryStructure["hidden_git_repository"] 
+
     #
     # Debug function.
     #

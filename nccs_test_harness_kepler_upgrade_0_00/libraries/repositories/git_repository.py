@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import shutil
 import os
@@ -18,13 +20,15 @@ class GitRepository(BaseRepository):
     def __init__(self,
                  location_of_repository=None,
                  internal_repo_path_to_applications=None,
-                 my_repository_branch=None):
+                 my_repository_branch=None,
+                 path_to_hidden_git_repository=None):
 
         
-        self.__binaryName = "git" #:ivar __binaryName: The name of the git binary.
+        self.__binaryName = "git"
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
         self.__repositoryBranch = None
+        self.__pathToHiddenGitRepository = path_to_hidden_git_repository
         self.repository_branch = my_repository_branch
         self.__checkedOutDirectories = []
         return
@@ -40,6 +44,10 @@ class GitRepository(BaseRepository):
     @repository_branch.setter
     def  repository_branch(self,value):
         self.__repositoryBranch = value
+
+    @property
+    def HiddenGitRepositoryPath(self):
+        return self.__pathToHiddenGitRepository
 
     def getLocationOfRepository(self):
         return self.__locationOfRepository
@@ -91,10 +99,7 @@ class GitRepository(BaseRepository):
         
 
         # Change to the hidden directory and do an empty clone of the repository.
-        starting_directory = os.getcwd()
-
-        path_to_hidden_directory = os.path.join(root_path_to_checkout_directory,
-                                                ".hidden_git_repository")
+        path_to_hidden_directory = self.HiddenGitRepositoryPath 
         
         self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
                               url_path_to_repository = self.__locationOfRepository,
