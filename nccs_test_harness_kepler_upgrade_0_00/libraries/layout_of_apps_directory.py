@@ -2,6 +2,7 @@
 
 import copy
 import os
+import re
 
 class  apps_test_directory_layout(object):
 
@@ -28,6 +29,7 @@ class  apps_test_directory_layout(object):
                             ".testrc"                              : ["__application__","__test__",".testrc"],
                            }
 
+    hidden_git_repository = {"hidden_git_repository" : [".hidden_git_repository___application__"] }
 
     suffix_for_ignored_tests = '.ignore_test'
     suffix_for_ignored_apps = '.ignore_app'
@@ -45,8 +47,15 @@ class  apps_test_directory_layout(object):
         self.__svn_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure)
         self.__local_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure)
 
+        self.__localHiddenGitRepoDirectoryStructure = copy.deepcopy(apps_test_directory_layout.hidden_git_repository)
+
         # Set the application and test layout.
-        self.__set_svn_application_test_layout(name_of_application,name_of_subtest)
+        self.__set_svn_application_test_layout(name_of_application,
+                                               name_of_subtest)
+
+        # Set the hidden git repository layout.
+        self.__setHiddenGitRepositoryLayout(name_of_application)
+        return
 
     #
     # Debug function.
@@ -140,6 +149,7 @@ class  apps_test_directory_layout(object):
            path = tmppath 
 
         return path
+
     #
     # Sets the application and test directory structure.
     #
@@ -183,8 +193,21 @@ class  apps_test_directory_layout(object):
                 path_2 = os.path.join(path_2,string1)
             self.__svn_app_test_directory_structure[key] = path_2
 
+    def __setHiddenGitRepositoryLayout(self,
+                                       application):
 
-       
-
-
-
+        my_regexp = re.compile("__application__") 
+        for key in self.__localHiddenGitRepoDirectoryStructure .keys():
+            ip = -1
+            for string1 in self.__localHiddenGitRepoDirectoryStructure [key]:
+                ip = ip + 1
+                self.__localHiddenGitRepoDirectoryStructure [key][ip] = my_regexp.sub(application,
+                                                                                      string1)
+   
+        path_a = self.__local_path_to_tests_wd
+        for key in self.__localHiddenGitRepoDirectoryStructure.keys():
+            path_b = path_a
+            for string1 in self.__localHiddenGitRepoDirectoryStructure[key]:
+                path_b = os.path.join(path_b,string1)
+            self.__localHiddenGitRepoDirectoryStructure[key] = path_b
+        return
