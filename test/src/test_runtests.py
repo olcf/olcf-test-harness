@@ -9,6 +9,7 @@ import time
 from bin import runtests
 from fundamental_types.rgt_state import RgtState
 from libraries.status_database import StatusDatabase
+from libraries import application_test_dictionary 
 
 class Test_runtests(unittest.TestCase):
     """ Tests for main program runtests.py """
@@ -61,8 +62,26 @@ class Test_runtests(unittest.TestCase):
         # Define the repository branch.
         my_repository_branch = os.getenv("MY_APP_REPO_BRANCH")
 
+
         # The tests to run
-        my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"} ]
+        my_tests_dictionary = application_test_dictionary.ApplicationTestDictionary()
+
+        my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"},
+                     {"Application" : "HelloWorld", "Test" : "Test_16cores_A"}]
+
+        # We now define the tests to run.
+        my_new_tests = []
+        hello_world_tests = {"Application" : "HelloWorld",
+                             "Tests"       : ["Test_16cores","Test_16cores_A","Test_16cores_B","Test_16cores_C"] }
+
+        self.__addTest(hello_world_tests,
+                       my_new_tests)
+
+        bonjour_le_monde = {"Application" : "Bonjour_le_Monde",
+                            "Tests"       : ["Test_16cores","Test_16cores_A","Test_16cores_B","Test_16cores_C"] }
+        self.__addTest(bonjour_le_monde,
+                       my_new_tests)
+
         my_harness_tasks = ["check_out_tests",
                             "start_tests",
                             "stop_tests"]
@@ -132,7 +151,17 @@ class Test_runtests(unittest.TestCase):
 
         print(query_result)
         return
-    
+   
+    def __addTest(self,
+                  tests_to_add,
+                  my_tests):
+        name_of_application = tests_to_add["Application"]
+        tests = tests_to_add["Tests"]
+        for my_tests in tests:
+            message = "Adding Test: {}, {}\n".format(name_of_application,my_tests)
+            print(message)
+        return
+
     def __createInputDirectoryAndFiles(
         self,
         path_to_scratch_space,

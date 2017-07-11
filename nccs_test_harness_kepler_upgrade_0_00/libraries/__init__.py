@@ -19,7 +19,8 @@ __all__ = [
                 'aprun_titan',
                 'threadedDecorator',
                 'application_metric',
-                'repositories'
+                'repositories',
+                'application_test_dictionary'
           ]
 
 version = 2.0

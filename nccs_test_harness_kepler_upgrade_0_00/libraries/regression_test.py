@@ -39,13 +39,7 @@ class run_me:
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
-        #
-        # Store the applications and subtest in a defaultdict container.
-        #
 
-        # The defaultdict collection does not guarantee order. Replacing
-        # it with OrderedDict
-        #
         apps_tests = collections.OrderedDict()
 
         for test in self.__tests:

@@ -8,4 +8,4 @@ Created on Jan 16, 2013
 from bin import runtests
 
 if __name__ == '__main__':
-    runtests.main("--concurrency serial")
+    runtests.runtests("--concurrency serial")
