@@ -64,7 +64,18 @@ class Test_runtests(unittest.TestCase):
 
 
         # The tests to run
-        my_tests_dictionary = application_test_dictionary.ApplicationTestDictionary()
+        hw_tests_dictionary = application_test_dictionary.ApplicationSubtestDictionary("HelloWorld")
+        hw_tests_dictionary.addAppSubtest("HelloWorld",
+                                          "Test_16cores")
+
+        hw_tests_dictionary.addAppSubtest("HelloWorld",
+                                          "Test_16cores_A")
+
+        hw_tests_dictionary.addAppSubtest("HelloWorld",
+                                          "Test_16cores_B")
+
+        hw_tests_dictionary.addAppSubtest("HelloWorld",
+                                          "Test_16cores_C")
 
         my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"},
                      {"Application" : "HelloWorld", "Test" : "Test_16cores_A"}]
@@ -77,8 +88,23 @@ class Test_runtests(unittest.TestCase):
         self.__addTest(hello_world_tests,
                        my_new_tests)
 
+        blm_tests_dictionary = application_test_dictionary.ApplicationSubtestDictionary("Bonjour_le_Monde")
+
+        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+                                          "Test_16cores")
+
+        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+                                          "Test_16cores_A")
+
+        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+                                          "Test_16cores_B")
+
+        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+                                          "Test_16cores_C")
+
         bonjour_le_monde = {"Application" : "Bonjour_le_Monde",
                             "Tests"       : ["Test_16cores","Test_16cores_A","Test_16cores_B","Test_16cores_C"] }
+
         self.__addTest(bonjour_le_monde,
                        my_new_tests)
 
