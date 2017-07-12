@@ -138,7 +138,7 @@ class Test_runtests(unittest.TestCase):
         argument_string = "--concurrency serial"
         my_rgt_test = runtests.runtests(argument_string)
 
-        time.sleep(60)
+        time.sleep(120)
 
         # Get the state of my_rgt_test
         state_of_rgt = my_rgt_test.getState()
@@ -154,7 +154,7 @@ class Test_runtests(unittest.TestCase):
         argument_string = "--concurrency parallel"
         my_rgt_test = runtests.runtests(argument_string)
 
-        time.sleep(60)
+        time.sleep(120)
 
         # Get the state of my_rgt_test
         state_of_rgt = my_rgt_test.getState()
