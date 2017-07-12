@@ -11,6 +11,20 @@ class ApplicationSubtestDictionary:
     application_name : String variable
                        The name of the application.
     """
+
+    @property
+    def Tests(self):
+        my_applications = []
+        for key in  self.__myCollection.keys():
+            my_applications.append(key)
+
+        my_tests = []
+        for app in my_applications:
+            for subtest in self.__myCollection[app]:
+                my_tests.append([app,subtest])
+
+        return my_tests
+
     def __init__(self,
                  application_name=None):
 
@@ -47,3 +61,4 @@ class ApplicationSubtestDictionary:
 
         message = "Adding Test: {}, {}\n".format(name_of_application,name_of_subtest)
         print(message)
+

@@ -77,40 +77,27 @@ class Test_runtests(unittest.TestCase):
         hw_tests_dictionary.addAppSubtest("HelloWorld",
                                           "Test_16cores_C")
 
-        my_tests = [ {"Application" : "HelloWorld", "Test" : "Test_16cores"},
-                     {"Application" : "HelloWorld", "Test" : "Test_16cores_A"}]
-
-        # We now define the tests to run.
-        my_new_tests = []
-        hello_world_tests = {"Application" : "HelloWorld",
-                             "Tests"       : ["Test_16cores","Test_16cores_A","Test_16cores_B","Test_16cores_C"] }
-
-        self.__addTest(hello_world_tests,
-                       my_new_tests)
 
         blm_tests_dictionary = application_test_dictionary.ApplicationSubtestDictionary("Bonjour_le_Monde")
 
-        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+        blm_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
                                           "Test_16cores")
 
-        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+        blm_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
                                           "Test_16cores_A")
 
-        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+        blm_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
                                           "Test_16cores_B")
 
-        hw_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
+        blm_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
                                           "Test_16cores_C")
-
-        bonjour_le_monde = {"Application" : "Bonjour_le_Monde",
-                            "Tests"       : ["Test_16cores","Test_16cores_A","Test_16cores_B","Test_16cores_C"] }
-
-        self.__addTest(bonjour_le_monde,
-                       my_new_tests)
 
         my_harness_tasks = ["check_out_tests",
                             "start_tests",
                             "stop_tests"]
+
+        my_tests = [hw_tests_dictionary,
+                    blm_tests_dictionary]
 
         # Create the input directory along with the input files. 
         self.__createInputDirectoryAndFiles(my_path_to_sspace,
@@ -145,7 +132,7 @@ class Test_runtests(unittest.TestCase):
         return
     
         
-    def test_hello_world(self):
+    def test_hello_world_serial(self):
         """ Test of harness if it can launch a MPI hello world on 1 node. """ 
 
         argument_string = "--concurrency serial"
@@ -160,7 +147,18 @@ class Test_runtests(unittest.TestCase):
         correct_state = RgtState.ALL_TASKS_COMPLETED
         
         # Compare results.
-        error_message = "Hello world program did not complete all tasks."
+        error_message = "Harness Hello world serial did not complete all tasks."
+        self.assertEqual(state_of_rgt,correct_state,error_message)
+
+    def test_hello_world_paralel(self):
+        argument_string = "--concurrency parallel"
+        my_rgt_test = runtests.runtests(argument_string)
+
+        # The state of my_rgt_test should be "ALL_TASKS_COMPLETED".
+        correct_state = RgtState.ALL_TASKS_COMPLETED
+        
+        # Compare results.
+        error_message = "Harness Hello world parallel did not complete all tasks."
         self.assertEqual(state_of_rgt,correct_state,error_message)
 
     def __checkTest(self,sdb):
@@ -178,16 +176,6 @@ class Test_runtests(unittest.TestCase):
         print(query_result)
         return
    
-    def __addTest(self,
-                  tests_to_add,
-                  my_tests):
-        name_of_application = tests_to_add["Application"]
-        tests = tests_to_add["Tests"]
-        for my_tests in tests:
-            message = "Adding Test: {}, {}\n".format(name_of_application,my_tests)
-            print(message)
-        return
-
     def __createInputDirectoryAndFiles(
         self,
         path_to_scratch_space,
@@ -380,9 +368,10 @@ class Test_runtests(unittest.TestCase):
 
         # Write to file tests to be run.
         my_tests = ""
-        for a_test in harness_tests:
-            my_tests += test_frmt.format(Application = a_test["Application"],
-                                         test = a_test["Test"])
+        for my_app_test in harness_tests:
+            for [my_application,my_subtest] in my_app_test.Tests:
+                my_tests += test_frmt.format(Application = my_application,
+                                             test = my_subtest)
         rgt_file_obj.write(my_tests)
 
         #Write to file the harness tasks.

@@ -28,7 +28,9 @@ class run_me:
     # Defines the harness log file name.
     LOG_FILE_NAME = "harness_log_file.txt"
     
-    def __init__(self,rgt_input_file,concurrency):
+    def __init__(self,
+                 rgt_input_file,
+                 concurrency):
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
         self.__local_path_to_tests = rgt_input_file.get_local_path_to_tests()
@@ -38,7 +40,6 @@ class run_me:
 
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
-
 
         apps_tests = collections.OrderedDict()
 

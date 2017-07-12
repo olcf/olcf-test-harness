@@ -28,9 +28,9 @@ def create_a_parser():
                                      add_help=True)
         
     parser.add_argument("--concurrency", 
-                        required=False,choices=["serial"],
+                        required=False,choices=["serial","parallel"],
                         default="serial",
-                        help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Threaded is concurrency over the Application/Subtest. Threaded has been deprecated and will be removed in a future release.")
+                        help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Parallel is concurrency over the Application/Subtest. Threaded has been deprecated and will be removed in a future release.")
 
     parser.add_argument("--inputfile",
                         required=False,
@@ -60,7 +60,8 @@ def runtests(my_arg_string=None):
     #    
     ifile = input_files.rgt_input_file(inputfilename=inputfile)
     
-    rgt = regression_test.run_me(ifile,concurrency)
+    rgt = regression_test.run_me(ifile,
+                                 concurrency)
     return rgt
     
 if __name__ == "__main__":
