@@ -43,35 +43,57 @@ class run_me:
 
         apps_tests = collections.OrderedDict()
 
-        for test in self.__tests:
-            name_of_application1=test[0]
-            name_of_subtest1=test[1]
-            apps_tests[name_of_application1] = []
+        # To be depracated.
+        # for test in self.__tests:
+        #     name_of_application1=test[0]
+        #     name_of_subtest1=test[1]
+        #     apps_tests[name_of_application1] = []
 
-        for test in self.__tests:
-            name_of_application1=test[0]
-            name_of_subtest1=test[1]
-            apps_tests[name_of_application1].append(name_of_subtest1)
+        # To be depracated.
+        # for test in self.__tests:
+        #     name_of_application1=test[0]
+        #     name_of_subtest1=test[1]
+        #     apps_tests[name_of_application1].append(name_of_subtest1)
 
         my_tests = self.__formListOfTests()
 
         ip = -1
-        for (application_name1,subtests1) in apps_tests.items():
-            for subtest2 in subtests1:
-        
+        for application_test in my_tests:
+            message = "Starting tasks for application {}.\n".format(application_test.ApplicationName)
+            for test in application_test.Tests:
+                my_application_name = test[0]
+                my_subtest_name = test[1]
                 self.__appsubtest  = self.__appsubtest + \
-                                     [apptest.subtest(name_of_application=application_name1,
-                                                      name_of_subtest=subtest2,
+                                     [apptest.subtest(name_of_application=my_application_name,
+                                                      name_of_subtest=my_subtest_name,
                                                       local_path_to_tests=self.__local_path_to_tests) ]
-                ip = ip + 1
-
-
+                ip += 1
                 with open(run_me.LOG_FILE_NAME,"a") as out:
                     app_test = self.__appsubtest[ip]
                     message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
                                                                                      app_test.getNameOfSubtest()) 
                     out.write(message)
                     app_test.doTasks(tasks=self.__tasks)
+
+            
+        # To be depracated.
+        # ip = -1
+        # for (application_name1,subtests1) in apps_tests.items():
+        #     for subtest2 in subtests1:
+        # 
+        #         self.__appsubtest  = self.__appsubtest + \
+        #                              [apptest.subtest(name_of_application=application_name1,
+        #                                               name_of_subtest=subtest2,
+        #                                               local_path_to_tests=self.__local_path_to_tests) ]
+        #         ip = ip + 1
+
+
+        #         with open(run_me.LOG_FILE_NAME,"a") as out:
+        #             app_test = self.__appsubtest[ip]
+        #             message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
+        #                                                                              app_test.getNameOfSubtest()) 
+        #             out.write(message)
+        #             app_test.doTasks(tasks=self.__tasks)
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
