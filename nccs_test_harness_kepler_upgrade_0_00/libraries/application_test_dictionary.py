@@ -47,18 +47,11 @@ class ApplicationSubtestDictionary:
         """
         # Check if the application is not already in dictionary as a key,
         # otherwise add new key.
-        if name_of_application in self.__myCollection:
-            pass
-        else:
+        if name_of_application not in self.__myCollection:
             self.__myCollection[name_of_application] = []
 
         # Check if the subtest is not already in the application list,
         # otherwise add a new subtest for that application.
-        if name_of_subtest in self.__myCollection[name_of_application]:
-            pass
-        else:
+        if name_of_subtest not in self.__myCollection[name_of_application]:
             (self.__myCollection[name_of_application]).append(name_of_subtest)
-
-        message = "Adding Test: {}, {}\n".format(name_of_application,name_of_subtest)
-        print(message)
 

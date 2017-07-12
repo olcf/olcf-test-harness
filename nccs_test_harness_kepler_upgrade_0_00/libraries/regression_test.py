@@ -6,9 +6,9 @@ import collections
 from types import *
 
 from libraries import apptest
-from libraries import rgt_utilities
-from libraries import threadedDecorator
 from fundamental_types.rgt_state import RgtState
+from libraries import application_test_dictionary
+
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
 # National Center for Computational Sciences, Scientific Computing Group.
@@ -53,6 +53,8 @@ class run_me:
             name_of_subtest1=test[1]
             apps_tests[name_of_application1].append(name_of_subtest1)
 
+        my_tests = self.__formListOfTests()
+
         ip = -1
         for (application_name1,subtests1) in apps_tests.items():
             for subtest2 in subtests1:
@@ -77,6 +79,37 @@ class run_me:
     def getState(self):
         return self.__returnState
 
+    # Private member functions
+    def __formListOfTests(self):
+        """ Returns a list with each element being of type 
+            application_test_dictionary.ApplicationSubtestDictionary.
+        """
+        # Form a set of application names.
+        my_set_of_application_names = set([])
+        for test in self.__tests:
+            name_of_application=test[0]
+            if name_of_application not in my_set_of_application_names:
+                my_set_of_application_names.add(name_of_application) 
+
+        # Form a list of tests without the subtests, and keep
+        # the sequence of the the application in a dictionary.
+        ip = -1
+        my_tests = []
+        application_sequence_index = {}
+        for application_name in my_set_of_application_names:
+            ip += 1
+            application_sequence_index[application_name] = ip
+            my_tests.append(application_test_dictionary.ApplicationSubtestDictionary(application_name))
+
+        # We now add the subtests for each appication.
+        for test in self.__tests:
+            name_of_application=test[0]
+            name_of_subtest=test[1]
+            index = application_sequence_index[name_of_application] 
+            my_tests[index].addAppSubtest(name_of_application,
+                                          name_of_subtest)
+        return my_tests
+    
     def __check_out_test(self,apptest1):
         # Check out the files.
         apptest1.check_out_test()
