@@ -15,7 +15,7 @@ from libraries import application_test_dictionary
 # Oak Ridge National Laboratory
 #
 
-class run_me:
+class Harness:
 
     #These strings define the tasks that the tests can do.
     checkout = "check_out_tests"
@@ -38,6 +38,7 @@ class run_me:
         self.__concurrency = concurrency
         mycomputer_with_events_record = None
 
+    def run_me_serial(self):
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
@@ -54,7 +55,7 @@ class run_me:
                                                       name_of_subtest=my_subtest_name,
                                                       local_path_to_tests=self.__local_path_to_tests) ]
                 ip += 1
-                with open(run_me.LOG_FILE_NAME,"a") as out:
+                with open(Harness.LOG_FILE_NAME,"a") as out:
                     app_test = self.__appsubtest[ip]
                     message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
                                                                                      app_test.getNameOfSubtest()) 
@@ -63,6 +64,10 @@ class run_me:
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
+        return
+
+    def run_me_concurrent(self):
+        return
 
     def getState(self):
         return self.__returnState
@@ -146,7 +151,7 @@ class run_me:
         # Generate the name of the logfile.                  -
         #                                                    -
         #-----------------------------------------------------
-        logfile = run_me.status_file + "__" + str(timestamp)
+        logfile = Harness.status_file + "__" + str(timestamp)
         for appsubtest1 in self.__appsubtest:
             app_status = appsubtest1.generateReport(logfile,taskwords,mycomputer_with_events_record)
 

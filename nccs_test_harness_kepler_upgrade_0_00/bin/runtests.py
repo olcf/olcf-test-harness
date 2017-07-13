@@ -60,8 +60,13 @@ def runtests(my_arg_string=None):
     #    
     ifile = input_files.rgt_input_file(inputfilename=inputfile)
     
-    rgt = regression_test.run_me(ifile,
+    rgt = regression_test.Harness(ifile,
                                  concurrency)
+    if concurrency == "serial":
+        rgt.run_me_serial()
+    elif concurrency == "parallel":
+        rgt.run_me_parallel()
+
     return rgt
     
 if __name__ == "__main__":
