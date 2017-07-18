@@ -131,7 +131,6 @@ class Test_runtests(unittest.TestCase):
 
         return
     
-    @unittest.skip("Skip for now. Will enable later.")     
     def test_hello_world_serial(self):
         """ Test of harness if it can launch a MPI hello world on 1 node. """ 
 
@@ -150,6 +149,7 @@ class Test_runtests(unittest.TestCase):
         error_message = "Harness Hello world serial did not complete all tasks."
         self.assertEqual(state_of_rgt,correct_state,error_message)
 
+    @unittest.skip("Skipping paralell test")
     def test_hello_world_parallel(self):
         argument_string = "--concurrency parallel"
         my_rgt_test = runtests.runtests(argument_string)

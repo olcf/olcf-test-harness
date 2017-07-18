@@ -4,6 +4,7 @@ import time
 import datetime
 import collections
 import queue
+import concurrent.futures
 from types import *
 
 from libraries import apptest
@@ -46,28 +47,31 @@ class Harness:
 
         my_tests = self.__formListOfTests()
 
-        ip = -1
         for application_test in my_tests:
-            message = "Starting tasks for application {}.\n".format(application_test.ApplicationName)
             for test in application_test.Tests:
                 my_application_name = test[0]
                 my_subtest_name = test[1]
-                self.__appsubtest  = self.__appsubtest + \
-                                     [apptest.subtest(name_of_application=my_application_name,
-                                                      name_of_subtest=my_subtest_name,
-                                                      local_path_to_tests=self.__local_path_to_tests) ]
                 apptest_queue.put(apptest.subtest(name_of_application=my_application_name,
                                                       name_of_subtest=my_subtest_name,
                                                       local_path_to_tests=self.__local_path_to_tests))
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as worker_pool:
+            for i in range(apptest_queue.qsize()):
+                app_test = apptest_queue.get()
+                [my_app_name,my_test_name] = app_test.appTestName()
+                message = "Starting tasks for application {} and test {}.\n".format(my_app_name,my_test_name)
+                print(message)
+                worker_pool.submit(app_test.doTasks,tasks=self.__tasks)
                 
-                ip += 1
-                with open(Harness.LOG_FILE_NAME,"a") as out:
-                    #app_test = self.__appsubtest[ip]
-                    app_test = apptest_queue.get()
-                    message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
-                                                                                     app_test.getNameOfSubtest()) 
-                    out.write(message)
-                    app_test.doTasks(tasks=self.__tasks)
+        #for application_test in my_tests:
+        #    message = "Starting tasks for application {}.\n".format(application_test.ApplicationName)
+        #    for test in application_test.Tests:
+        #        with open(Harness.LOG_FILE_NAME,"a") as out:
+        #            app_test = apptest_queue.get()
+        #            message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
+        #                                                                             app_test.getNameOfSubtest()) 
+        #            out.write(message)
+        #            app_test.doTasks(tasks=self.__tasks)
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
