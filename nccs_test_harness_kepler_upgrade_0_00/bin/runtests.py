@@ -65,7 +65,7 @@ def runtests(my_arg_string=None):
     if concurrency == "serial":
         rgt.run_me_serial()
     elif concurrency == "parallel":
-        rgt.run_me_parallel()
+        rgt.run_me_concurrent()
 
     return rgt
     

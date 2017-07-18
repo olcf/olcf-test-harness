@@ -14,7 +14,6 @@ import datetime
 import os
 import sys
 import copy
-import multiprocessing
 from types import *
 
 # NCCS Test Harness Package Imports
