@@ -3,6 +3,7 @@
 import time
 import datetime
 import collections
+import queue
 from types import *
 
 from libraries import apptest
@@ -13,7 +14,6 @@ from libraries import application_test_dictionary
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
 # National Center for Computational Sciences, Scientific Computing Group.
 # Oak Ridge National Laboratory
-###
 #
 
 class Harness:
@@ -40,6 +40,7 @@ class Harness:
         mycomputer_with_events_record = None
 
     def run_me_serial(self):
+        apptest_queue = queue.Queue()
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
@@ -55,9 +56,14 @@ class Harness:
                                      [apptest.subtest(name_of_application=my_application_name,
                                                       name_of_subtest=my_subtest_name,
                                                       local_path_to_tests=self.__local_path_to_tests) ]
+                apptest_queue.put(apptest.subtest(name_of_application=my_application_name,
+                                                      name_of_subtest=my_subtest_name,
+                                                      local_path_to_tests=self.__local_path_to_tests))
+                
                 ip += 1
                 with open(Harness.LOG_FILE_NAME,"a") as out:
-                    app_test = self.__appsubtest[ip]
+                    #app_test = self.__appsubtest[ip]
+                    app_test = apptest_queue.get()
                     message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
                                                                                      app_test.getNameOfSubtest()) 
                     out.write(message)
