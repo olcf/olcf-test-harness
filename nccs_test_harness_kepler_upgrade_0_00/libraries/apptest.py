@@ -530,4 +530,20 @@ class subtest(base_apptest,apps_test_directory_layout):
             taskwords1.remove(cls.summarize_results)
             
         return app_tasks1
+
+    @classmethod
+    def do_application_tasks(cls,
+                             application_name,
+                             app_test_queue,
+                             tasks):
+        message = "Starting tasks for application {}.\n".format(application_name)
+        print(message)
+
+        loop_message = "In Loop iteration {} of {}."
+        for ip in range(5):
+            message = loop_message.format(ip,application_name)
+            print(message)
+            time.sleep(2)
+
+        return
         

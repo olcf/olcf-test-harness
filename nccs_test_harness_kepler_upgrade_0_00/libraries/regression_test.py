@@ -41,40 +41,42 @@ class Harness:
         mycomputer_with_events_record = None
 
     def run_me_serial(self):
-        apptest_queue = queue.Queue()
+        app_queue = queue.Queue()
+        app_test_queue = {}
+
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
         my_tests = self.__formListOfTests()
 
         for application_test in my_tests:
-            for test in application_test.Tests:
-                my_application_name = test[0]
-                my_subtest_name = test[1]
-                apptest_queue.put(apptest.subtest(name_of_application=my_application_name,
-                                                      name_of_subtest=my_subtest_name,
-                                                      local_path_to_tests=self.__local_path_to_tests))
+            app_queue.put(application_test)
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as worker_pool:
-            for i in range(apptest_queue.qsize()):
-                app_test = apptest_queue.get()
-                [my_app_name,my_test_name] = app_test.appTestName()
-                message = "Starting tasks for application {} and test {}.\n".format(my_app_name,my_test_name)
-                print(message)
-                worker_pool.submit(app_test.doTasks,tasks=self.__tasks)
-                
-        #for application_test in my_tests:
-        #    message = "Starting tasks for application {}.\n".format(application_test.ApplicationName)
-        #    for test in application_test.Tests:
-        #        with open(Harness.LOG_FILE_NAME,"a") as out:
-        #            app_test = apptest_queue.get()
-        #            message = "Starting tasks for application {} test {} .\n".format(app_test.getNameOfApplication(),
-        #                                                                             app_test.getNameOfSubtest()) 
-        #            out.write(message)
-        #            app_test.doTasks(tasks=self.__tasks)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as application_executor:
+            app_future = {}
+            for i in range(app_queue.qsize()):
+                app_test = app_queue.get()
+                my_app_name = app_test.ApplicationName
+                my_tests = app_test.Tests
+
+                app_test_queue[my_app_name] = queue.Queue()
+                for test in application_test.Tests:
+                    my_application_name = test[0]
+                    my_subtest_name = test[1]
+                    app_test_queue[my_app_name].put(apptest.subtest(name_of_application=my_application_name,
+                                                    name_of_subtest=my_subtest_name,
+                                                    local_path_to_tests=self.__local_path_to_tests))
+
+                app_future[my_app_name] = application_executor.submit(apptest.subtest.do_application_tasks,
+                                                                      my_app_name,
+                                                                      app_test_queue[my_app_name],
+                                                                      self.__tasks)
+
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
+
+        # This code will be neeeded later
         return
 
     def run_me_concurrent(self):
