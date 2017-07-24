@@ -28,7 +28,8 @@ def create_a_parser():
                                      add_help=True)
         
     parser.add_argument("--concurrency", 
-                        required=False,choices=["serial","parallel"],
+                        required=False,
+                        choices=["serial","parallel"],
                         default="serial",
                         help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Parallel is concurrency over the Application/Subtest. Threaded has been deprecated and will be removed in a future release.")
 
@@ -36,6 +37,12 @@ def create_a_parser():
                         required=False,
                         default="rgt.input",
                         help="Optional argument to pass an input with a name other than rgt.input.")
+    
+    parser.add_argument("--loglevel",
+                         required=False,
+                         choices=["DEBUG","INFO","WARNING", "ERROR", "CRITICAL"],
+                         default="WARNING",
+                         help="Optional argument for logging level")
 
     return parser
 
@@ -54,6 +61,7 @@ def runtests(my_arg_string=None):
     Vargs = parser.parse_args(argv)
     concurrency = Vargs.concurrency
     inputfile = Vargs.inputfile
+    loglevel=Vargs.loglevel
     
     #
     # Read the input
@@ -63,9 +71,9 @@ def runtests(my_arg_string=None):
     rgt = regression_test.Harness(ifile,
                                  concurrency)
     if concurrency == "serial":
-        rgt.run_me_serial()
+        rgt.run_me_serial(loglevel)
     elif concurrency == "parallel":
-        rgt.run_me_concurrent()
+        rgt.run_me_concurrent(loglevel)
 
     return rgt
     

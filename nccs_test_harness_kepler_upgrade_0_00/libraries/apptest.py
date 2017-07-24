@@ -14,6 +14,7 @@ import datetime
 import os
 import sys
 import copy
+import logging
 from types import *
 
 # NCCS Test Harness Package Imports
@@ -45,6 +46,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                  name_of_application=None,
                  name_of_subtest=None,
                  local_path_to_tests=None,
+                 application_log_level="CRITICAL",
                  number_of_iterations=-1):
 
         base_apptest.__init__(self,
@@ -65,7 +67,24 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                                         name_of_subtest]]
         self.__number_of_iterations = -1
 
+        
+        # Set the logger for this application and subtest.
+        log_name = name_of_application + "." + name_of_subtest
+        self.__myLogger = logging.getLogger(log_name)
+        
+        # create console handler and set level to debug
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
 
+        # create formatter
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        # add formatter to ch
+        ch.setFormatter(formatter)
+        
+        numeric_level = getattr(logging, application_log_level.upper(), None)
+        self.__myLogger.setLevel(numeric_level)
+        self.__myLogger.addHandler(ch)
 
     ##################
     # Public Methods #
@@ -187,7 +206,11 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                                                  root_path_to_checkout_directory=abspath_app_root_dir) 
         if exit_status > 0:
             string1 = "Checkout of source failed."
+            self.writeToLogTestFile(string1)
             sys.exit(string1)
+        else:
+            message = "Checkout of source passed"
+            self.writeToLogTestFile(message)
 
 
         update_log_files = self.getPathToSourceUpdateLogFiles()
@@ -531,19 +554,23 @@ class subtest(base_apptest,apps_test_directory_layout):
             
         return app_tasks1
 
-    @classmethod
-    def do_application_tasks(cls,
-                             application_name,
-                             app_test_queue,
-                             tasks):
-        message = "Starting tasks for application {}.\n".format(application_name)
-        print(message)
+def do_application_tasks(application_name,
+                         app_test_list,
+                         tasks):
+    import random
 
-        loop_message = "In Loop iteration {} of {}."
-        for ip in range(5):
-            message = loop_message.format(ip,application_name)
-            print(message)
-            time.sleep(2)
+    message = "Starting tasks for application {}.\n".format(application_name)
+    print(message)
 
-        return
+    for ip in range(len(app_test_list)):
+        app_test = app_test_list[ip]
+        app_test.doTasks(tasks)
+
+    # loop_message = "In Loop iteration {} of {}."
+    # for ip in range(15):
+    #     message = loop_message.format(ip,application_name)
+    #     print(message)
+    #     time.sleep(random.uniform(0,10))
+
+    return
         

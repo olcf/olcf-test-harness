@@ -92,12 +92,19 @@ class Test_runtests(unittest.TestCase):
         blm_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
                                           "Test_16cores_C")
 
-        my_harness_tasks = ["check_out_tests",
-                            "start_tests",
-                            "stop_tests"]
+        # my_harness_tasks = ["check_out_tests",
+        #                     "start_tests",
+        #                     "stop_tests"]
 
-        my_tests = [hw_tests_dictionary,
-                    blm_tests_dictionary]
+        my_harness_tasks = ["check_out_tests"]
+
+
+        # my_tests = [hw_tests_dictionary,
+        #             blm_tests_dictionary]
+
+        my_tests = [blm_tests_dictionary,
+                    hw_tests_dictionary]
+
 
         # Create the input directory along with the input files. 
         self.__createInputDirectoryAndFiles(my_path_to_sspace,
@@ -178,7 +185,6 @@ class Test_runtests(unittest.TestCase):
 
         count = len(query_result.split('\n'))
 
-        print(query_result)
         return
    
     def __createInputDirectoryAndFiles(

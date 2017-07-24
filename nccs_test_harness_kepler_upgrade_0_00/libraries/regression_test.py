@@ -5,6 +5,7 @@ import datetime
 import collections
 import queue
 import concurrent.futures
+import logging
 from types import *
 
 from libraries import apptest
@@ -40,37 +41,58 @@ class Harness:
         self.__concurrency = concurrency
         mycomputer_with_events_record = None
 
-    def run_me_serial(self):
-        app_queue = queue.Queue()
-        app_test_queue = {}
-
+    def run_me_serial(self,
+                      log_level=None):
+        
+        numeric_level = getattr(logging, log_level.upper(), None)
+        list_of_applications = []
+        list_of_applications_names = []
+        future_to_application_name = {}
+        app_test_dict = {}
+        
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
         my_tests = self.__formListOfTests()
 
         for application_test in my_tests:
-            app_queue.put(application_test)
+            list_of_applications.append(application_test)
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as application_executor:
             app_future = {}
-            for i in range(app_queue.qsize()):
-                app_test = app_queue.get()
+            for ip in range(len(list_of_applications)):
+                app_test = list_of_applications[ip]
                 my_app_name = app_test.ApplicationName
                 my_tests = app_test.Tests
 
-                app_test_queue[my_app_name] = queue.Queue()
-                for test in application_test.Tests:
+                list_of_applications_names.append(my_app_name)
+                app_test_dict[my_app_name] = []
+                for test in my_tests:
                     my_application_name = test[0]
                     my_subtest_name = test[1]
-                    app_test_queue[my_app_name].put(apptest.subtest(name_of_application=my_application_name,
-                                                    name_of_subtest=my_subtest_name,
-                                                    local_path_to_tests=self.__local_path_to_tests))
 
-                app_future[my_app_name] = application_executor.submit(apptest.subtest.do_application_tasks,
-                                                                      my_app_name,
-                                                                      app_test_queue[my_app_name],
-                                                                      self.__tasks)
+                    app_test_dict[my_application_name].append(apptest.subtest(name_of_application=my_application_name,
+                                                              name_of_subtest=my_subtest_name,
+                                                              local_path_to_tests=self.__local_path_to_tests,
+                                                              application_log_level=log_level))
+
+            for my_application_name in list_of_applications_names:
+                future_to_application_name[my_application_name] = application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks)
+            # The line below is the same as the immediate 2 lines above.
+            # future_to_application_name = {application_executor.submit(apptest.subtest.do_application_tasks,app_name,app_test_queue[app_name],self.__tasks) : app_name for app_name in list_of_applications}
+           
+            # for my_future in concurrent.futures.as_completed(future_to_application_name,timeout=None):
+            #     name = future_to_application_name[my_future]
+            #     message = "Application {} future is completed".format(name)
+            #     print(message)
+                            
+            for ip in range(10):
+                message = "In timing loop {}.".format(ip)
+                print(message)
+                time.sleep(30)
+
+            message = "All applications completed. Yahoo!!"
+            print(message)
 
 
         # If we get to this point mark all task as completed.
@@ -79,7 +101,8 @@ class Harness:
         # This code will be neeeded later
         return
 
-    def run_me_concurrent(self):
+    def run_me_concurrent(self,
+                          log_level=None):
         # Form a queue of the apps.
         
     
