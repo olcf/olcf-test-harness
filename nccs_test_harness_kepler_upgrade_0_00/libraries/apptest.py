@@ -574,9 +574,6 @@ def do_application_tasks(application_name,
                          tasks):
     import random
 
-    message = "Starting tasks for application {}.\n".format(application_name)
-    print(message)
-
     for ip in range(len(app_test_list)):
         app_test = app_test_list[ip]
         app_test.doTasks(tasks)
