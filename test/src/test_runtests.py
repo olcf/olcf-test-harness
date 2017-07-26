@@ -141,10 +141,8 @@ class Test_runtests(unittest.TestCase):
     def test_hello_world_serial(self):
         """ Test of harness if it can launch a MPI hello world on 1 node. """ 
 
-        argument_string = "--concurrency serial"
+        argument_string = "--concurrency serial --loglevel DEBUG"
         my_rgt_test = runtests.runtests(argument_string)
-
-        time.sleep(120)
 
         # Get the state of my_rgt_test
         state_of_rgt = my_rgt_test.getState()
@@ -158,10 +156,8 @@ class Test_runtests(unittest.TestCase):
 
     @unittest.skip("Skipping paralell test")
     def test_hello_world_parallel(self):
-        argument_string = "--concurrency parallel"
+        argument_string = "--concurrency parallel --loglevel DEBUG"
         my_rgt_test = runtests.runtests(argument_string)
-
-        time.sleep(120)
 
         # Get the state of my_rgt_test
         state_of_rgt = my_rgt_test.getState()

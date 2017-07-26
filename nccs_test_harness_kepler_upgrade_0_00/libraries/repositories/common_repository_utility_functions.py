@@ -8,6 +8,19 @@ import tempfile
 
 # NCCS Tesst Harness packages
 
+format_subprocess_command  = "\n"
+format_subprocess_command += "===========================\n"
+format_subprocess_command += "Error in subprocess command: {command}\n"
+format_subprocess_command += "===========================\n"
+format_subprocess_command += "Standard out:\n"
+format_subprocess_command += "{standard_output}"
+format_subprocess_command += "\n\n"
+format_subprocess_command += "Standard error:\n"
+format_subprocess_command += "{standard_error}"
+format_subprocess_command += "\n\n"
+format_subprocess_command += "===========================\n\n"
+
+
 def run_as_subprocess_command(cmd):
     """ Runs the command in the string cmd by subprocess.
 
@@ -21,8 +34,8 @@ def run_as_subprocess_command(cmd):
     # sparse checkout is enabled, otherwise sparse checkouts are
     # not enabled and we exit program.
     exit_status = 0
-    with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stdout:
-        with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stderr:
+    with tempfile.NamedTemporaryFile("w+b",delete=False) as tmpfile_stdout:
+        with tempfile.NamedTemporaryFile("w+b",delete=False) as tmpfile_stderr:
             exit_status = None
             message = None
             try:
@@ -32,11 +45,33 @@ def run_as_subprocess_command(cmd):
                                                     stderr=tmpfile_stderr)
             except subprocess.CalledProcessError as exc :
                 exit_status = 1
-                message = "Error in subprocess command: " + exc.cmd
+
+                # Read the standard out of the subprocess command.
+                tmpfile_stdout.seek(0)
+                stdout_message = tmpfile_stdout.read()
+
+                # Read the standard error of the subprocess command.
+                tmpfile_stderr.seek(0)
+                stderr_message = tmpfile_stderr.read()
+
+                message = format_subprocess_command.format(command=cmd,
+                                                           standard_output=stdout_message,
+                                                           standard_error=stderr_message)
             except:
                 exit_status = 1
-                message = "Unexpected error in command! " + cmd
-    
+
+                # Read the standard out of the subprocess command.
+                tmpfile_stdout.seek(0)
+                stdout_message = tmpfile_stdout.read()
+
+                # Read the standard error of the subprocess command.
+                tmpfile_stderr.seek(0)
+                stderr_message = tmpfile_stderr.read()
+
+                message = format_subprocess_command.format(command=cmd,
+                                                           standard_output=stdout_message,
+                                                           standard_error=stderr_message)
+
             # Close the file objects of the temporary files.
             tmpfile_stdout_path = tmpfile_stdout.name
             tmpfile_stderr_path = tmpfile_stderr.name
@@ -48,10 +83,10 @@ def run_as_subprocess_command(cmd):
                 os.remove(tmpfile_stdout_path) 
                 os.remove(tmpfile_stderr_path) 
                 sys.exit(message)
-    
-            # Remove the temporary files before we return.
-            os.remove(tmpfile_stdout_path) 
-            os.remove(tmpfile_stderr_path) 
+            else:
+                # Remove the temporary files before we return.
+                os.remove(tmpfile_stdout_path) 
+                os.remove(tmpfile_stderr_path) 
     return
 
 def run_as_subprocess_command_return_stdout_stderr(cmd):

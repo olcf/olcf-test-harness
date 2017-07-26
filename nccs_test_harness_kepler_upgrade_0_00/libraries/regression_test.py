@@ -76,20 +76,27 @@ class Harness:
                                                               local_path_to_tests=self.__local_path_to_tests,
                                                               application_log_level=log_level))
 
-            for my_application_name in list_of_applications_names:
-                future_to_application_name[my_application_name] = application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks)
+            # for my_application_name in list_of_applications_names:
+            #     future_to_application_name[my_application_name] = application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks)
             # The line below is the same as the immediate 2 lines above.
-            # future_to_application_name = {application_executor.submit(apptest.subtest.do_application_tasks,app_name,app_test_queue[app_name],self.__tasks) : app_name for app_name in list_of_applications}
+            future_to_application_name = {application_executor.submit(apptest.do_application_tasks,app_name,app_test_dict[app_name],self.__tasks) : app_name for app_name in list_of_applications_names}
            
-            # for my_future in concurrent.futures.as_completed(future_to_application_name,timeout=None):
-            #     name = future_to_application_name[my_future]
-            #     message = "Application {} future is completed".format(name)
-            #     print(message)
-                            
-            for ip in range(10):
-                message = "In timing loop {}.".format(ip)
+            for my_future in concurrent.futures.as_completed(future_to_application_name):
+                name = future_to_application_name[my_future]
+                message = "Application {} future is completed".format(name)
                 print(message)
-                time.sleep(30)
+
+                # Check the result of the future.
+                # my_future_result = my_future.result()
+                # if my_future_result:
+                #     message = "Application {} future result:\n{}\n".format(name,my_future_result)
+                #     # print(message)
+
+                # Check if an exception has been raised
+                my_future_exception = my_future.exception()
+                if my_future_exception:
+                    message = "Application {} future exception:\n{}\n".format(name,my_future_exception)
+                    print(message)
 
             message = "All applications completed. Yahoo!!"
             print(message)

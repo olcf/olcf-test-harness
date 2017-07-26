@@ -127,8 +127,14 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                          internal_repo_path_to_applications,
                                                          my_repository_branch,
                                                          path_to_hidden_git_repository)
+                
+                self.__myLogger.debug("Start of checking out source")
                 self.check_out_source(my_repository)
+                self.__myLogger.debug("End of checking out source")
+                
+                self.__myLogger.debug("Start of checking out subtest")
                 self.check_out_test(my_repository)
+                self.__myLogger.debug("End of checking out subtest")
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -189,27 +195,36 @@ class subtest(base_apptest,apps_test_directory_layout):
         message = "For the source update my current directory is " + abspath_app_dir 
         self.writeToLogTestFile(message)
 
+        self.__myLogger.debug(message)
+        
         exit_status = 0
         if os.path.exists(abspath_app_dir):
             message = "Source of application: " + application_name + " already exists."
+            self.__myLogger.debug(message)
             self.writeToLogFile(message)
             exit_status = 0
         else:
             app_checkout_log_files = self.getPathToAppCheckoutLogFiles()
             stdout_path = app_checkout_log_files["stdout"]
             stderr_path = app_checkout_log_files["stderr"]
+            self.__myLogger.debug("Before call to sparse checkout")
             with open(stdout_path,"a") as out:
                 with open(stderr_path,"a") as err:
                     (message,exit_status) = my_repository.doSparseSourceCheckout(out,
                                                                                  err,
-                                                                                 application_name=application_name,
-                                                                                 root_path_to_checkout_directory=abspath_app_root_dir) 
+                                                                                 application_name,
+                                                                                 root_path_to_checkout_directory=abspath_app_root_dir,
+                                                                                 my_logger=self.__myLogger) 
+            self.__myLogger.debug("After call to sparse checkout")
+            
         if exit_status > 0:
             string1 = "Checkout of source failed."
+            self.__myLogger.debug(string1)
             self.writeToLogTestFile(string1)
             sys.exit(string1)
         else:
             message = "Checkout of source passed"
+            self.__myLogger.debug(message)
             self.writeToLogTestFile(message)
 
 
@@ -276,8 +291,8 @@ class subtest(base_apptest,apps_test_directory_layout):
 
                 (message,exit_status) = my_repository.doSparseTestCheckout(out,
                                                                            err,
-                                                                           application_name=application_name,
-                                                                           test_name = subtest_name, 
+                                                                           application_name,
+                                                                           test_name=subtest_name, 
                                                                            root_path_to_checkout_directory=abspath_app_root_dir) 
                 if exit_status > 0:
                     message = "Update command failed: "

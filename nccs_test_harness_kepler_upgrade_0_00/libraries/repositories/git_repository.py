@@ -64,7 +64,8 @@ class GitRepository(BaseRepository):
                          stdout_file_handle,
                          stderr_file_handle,
                          root_path_to_checkout_directory,
-                         directory_to_checkout):
+                         directory_to_checkout,
+                         my_logger=None):
         """ Performs a sparse checkout of directory from the repository.
 
             :param stdout_file_handle: A file object to write standard out
@@ -85,6 +86,9 @@ class GitRepository(BaseRepository):
 
         
         # Check if file handles are open
+        if my_logger:
+            my_logger.debug("Start of doSparseCheckout")
+            
         exit_status = 0
         message = ""
         if stdout_file_handle.closed:
@@ -100,14 +104,26 @@ class GitRepository(BaseRepository):
 
         # Change to the hidden directory and do an empty clone of the repository.
         path_to_hidden_directory = self.HiddenGitRepositoryPath 
+
+        if my_logger:
+            my_logger.debug("Start of empty clone")
         
         self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
                               url_path_to_repository = self.__locationOfRepository,
                               stdout_file_handle=stdout_file_handle,
-                              stderr_file_handle=stderr_file_handle)
+                              stderr_file_handle=stderr_file_handle,
+                              my_logger=my_logger)
+        if my_logger:
+            my_logger.debug("End of empty clone")
 
 
+        if my_logger:
+            my_logger.debug("Start of enable sparse checkout")
+        
         self.__doEnableSparseCheckout(path_to_local_directory = path_to_hidden_directory) 
+        
+        if my_logger:
+            my_logger.debug("End of enable sparse checkout.")
 
         path_to_application_dir = \
         self.__defineDirectoryToSparseApplicationCheckout(files_to_sparsely_checkout = directory_to_checkout,
@@ -131,7 +147,8 @@ class GitRepository(BaseRepository):
                                stdout_handle,
                                stderr_handle,
                                application_name,
-                               root_path_to_checkout_directory):
+                               root_path_to_checkout_directory,
+                               my_logger=None):
 
         """Does sparse checkout of source applications source directory"""
         message = ""
@@ -156,7 +173,8 @@ class GitRepository(BaseRepository):
             self.doSparseCheckout(stdout_file_handle=stdout_handle,
                                   stderr_file_handle=stderr_handle,
                                   root_path_to_checkout_directory=root_path_to_checkout_directory,
-                                  directory_to_checkout=folders)
+                                  directory_to_checkout=folders,
+                                  my_logger=my_logger)
         return (message,exit_status)
 
     def doSparseTestCheckout(self,
@@ -275,9 +293,12 @@ class GitRepository(BaseRepository):
                          path_to_local_directory,
                          url_path_to_repository,
                          stdout_file_handle,
-                         stderr_file_handle):
+                         stderr_file_handle,
+                         my_logger=None):
 
-        
+        if my_logger:
+            my_logger.debug("Inside and at begginning of  function __doAnEmptyClone") 
+
         initial_dir = os.getcwd()
 
         if os.path.exists(path_to_local_directory):
@@ -290,8 +311,8 @@ class GitRepository(BaseRepository):
                 run_as_subprocess_command(git_init_command)
 
                 git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
-                                                                                     my_options = 'remote add -f origin',
-                                                                                     my_url = url_path_to_repository)
+                                                                                      my_options = 'remote add -f origin',
+                                                                                      my_url = url_path_to_repository)
                 run_as_subprocess_command(git_do_sparse_clone_command)
             os.chdir(initial_dir)
 
@@ -305,16 +326,23 @@ class GitRepository(BaseRepository):
             run_as_subprocess_command(git_init_command)
 
             git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
-                                                                                 my_options = 'remote add -f origin',
-                                                                                 my_url = url_path_to_repository)
+                                                                                  my_options = 'remote add -f origin',
+                                                                                  my_url = url_path_to_repository)
             run_as_subprocess_command(git_do_sparse_clone_command)
             
             os.chdir(initial_dir)
 
+        if my_logger:
+            my_logger.debug("Inside and at end of function __doAnEmptyClone") 
+
         return
 
     def __doEnableSparseCheckout(self,
-                                 path_to_local_directory):
+                                 path_to_local_directory,
+                                 my_logger = None):
+        if my_logger:
+            my_logger.debug("Inside function at beginning __doEnableSparseCheckout") 
+
         initial_dir = os.getcwd()
 
         os.chdir(path_to_local_directory)
@@ -326,6 +354,10 @@ class GitRepository(BaseRepository):
         run_as_subprocess_command(git_enable_sparse_checkouts_command)
 
         os.chdir(initial_dir)
+
+        if my_logger:
+            my_logger.debug("Inside function at end __doEnableSparseCheckout") 
+
 
         return
 
