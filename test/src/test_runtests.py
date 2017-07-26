@@ -102,8 +102,7 @@ class Test_runtests(unittest.TestCase):
         # my_tests = [hw_tests_dictionary,
         #             blm_tests_dictionary]
 
-        my_tests = [blm_tests_dictionary,
-                    hw_tests_dictionary]
+        my_tests = [blm_tests_dictionary]
 
 
         # Create the input directory along with the input files. 

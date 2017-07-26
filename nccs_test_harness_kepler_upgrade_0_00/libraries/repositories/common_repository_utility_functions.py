@@ -21,25 +21,31 @@ format_subprocess_command += "\n\n"
 format_subprocess_command += "===========================\n\n"
 
 
-def run_as_subprocess_command(cmd):
+def run_as_subprocess_command(cmd,
+                              command_execution_directory=None):
     """ Runs the command in the string cmd by subprocess.
 
             :param cmd: A string containing the command to run
             :type cmd: string
+
+            :param command_execution_directory: The directory where the command is executed.
+            :type command_execution_directory: string
     """
-    # Run the command and write the command's 
-    # stderr and stdout results to 
-    # unique temp files. The stdout tempfile has only one record which 
-    # is searched for true or false. If true is found then
-    # sparse checkout is enabled, otherwise sparse checkouts are
-    # not enabled and we exit program.
+
     exit_status = 0
+
+    if command_execution_directory:
+        my_command = "cd {dir}; {command}".format(dir=command_execution_directory,
+                                                  command=cmd)
+    else:
+        my_command = cmd
+
     with tempfile.NamedTemporaryFile("w+b",delete=False) as tmpfile_stdout:
         with tempfile.NamedTemporaryFile("w+b",delete=False) as tmpfile_stderr:
             exit_status = None
             message = None
             try:
-                exit_status = subprocess.check_call(cmd,
+                exit_status = subprocess.check_call(my_command,
                                                     shell=True,
                                                     stdout=tmpfile_stdout,
                                                     stderr=tmpfile_stderr)
@@ -54,7 +60,7 @@ def run_as_subprocess_command(cmd):
                 tmpfile_stderr.seek(0)
                 stderr_message = tmpfile_stderr.read()
 
-                message = format_subprocess_command.format(command=cmd,
+                message = format_subprocess_command.format(command=exc.cmd,
                                                            standard_output=stdout_message,
                                                            standard_error=stderr_message)
             except:
@@ -68,7 +74,7 @@ def run_as_subprocess_command(cmd):
                 tmpfile_stderr.seek(0)
                 stderr_message = tmpfile_stderr.read()
 
-                message = format_subprocess_command.format(command=cmd,
+                message = format_subprocess_command.format(command=my_command,
                                                            standard_output=stdout_message,
                                                            standard_error=stderr_message)
 
@@ -89,26 +95,32 @@ def run_as_subprocess_command(cmd):
                 os.remove(tmpfile_stderr_path) 
     return
 
-def run_as_subprocess_command_return_stdout_stderr(cmd):
+def run_as_subprocess_command_return_stdout_stderr(cmd,
+                                                   command_execution_directory=None):
     """ Runs the command in the string cmd by subprocess.
 
             :param cmd: A string containing the command to run
             :type cmd: string
+
+            :param command_execution_directory: The directory where the command is executed.
+            :type command_execution_directory: string
     """
-    # Run the command and write the command's 
-    # stderr and stdout results to 
-    # unique temp files. The stdout tempfile has only one record which 
-    # is searched for true or false. If true is found then
-    # sparse checkout is enabled, otherwise sparse checkouts are
-    # not enabled and we exit program.
+
     exit_status = 0
+
+    if command_execution_directory:
+        my_command = "cd {dir}; {command}".format(dir=command_execution_directory,
+                                                  command=cmd)
+    else:
+        my_command = cmd
+
     with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stdout:
         with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stderr:
             exit_status = None
             message = None
             try:
                 initial_dir = os.getcwd()
-                exit_status = subprocess.check_call(cmd,
+                exit_status = subprocess.check_call(my_command,
                                                     shell=True,
                                                     stdout=tmpfile_stdout,
                                                     stderr=tmpfile_stderr)
@@ -117,7 +129,7 @@ def run_as_subprocess_command_return_stdout_stderr(cmd):
                 message = "Error in subprocess command: " + exc.cmd
             except:
                 exit_status = 1
-                message = "Unexpected error in command! " + cmd
+                message = "Unexpected error in command! " + my_command
     
             # Close the file objects of the temporary files.
             tmpfile_stdout_path = tmpfile_stdout.name

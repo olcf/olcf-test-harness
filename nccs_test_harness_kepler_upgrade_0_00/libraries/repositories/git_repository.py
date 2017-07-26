@@ -303,35 +303,32 @@ class GitRepository(BaseRepository):
 
         if os.path.exists(path_to_local_directory):
 
-            os.chdir(path_to_local_directory)
-
-            if not self.__directoryUnderGitControl():
+            if not self.__directoryUnderGitControl(path_to_local_directory):
                 git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
                                                                   my_options='init')
-                run_as_subprocess_command(git_init_command)
+                run_as_subprocess_command(git_init_command,
+                                          command_execution_directory=path_to_local_directory)
 
                 git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
                                                                                       my_options = 'remote add -f origin',
                                                                                       my_url = url_path_to_repository)
-                run_as_subprocess_command(git_do_sparse_clone_command)
-            os.chdir(initial_dir)
+                run_as_subprocess_command(git_do_sparse_clone_command,
+                                          command_execution_directory=path_to_local_directory)
 
         else:
             os.makedirs(path_to_local_directory)
-            
-            os.chdir(path_to_local_directory)
 
             git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
                                                               my_options='init')
-            run_as_subprocess_command(git_init_command)
+            run_as_subprocess_command(git_init_command,
+                                      command_execution_directory=path_to_local_directory)
 
             git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
                                                                                   my_options = 'remote add -f origin',
                                                                                   my_url = url_path_to_repository)
-            run_as_subprocess_command(git_do_sparse_clone_command)
+            run_as_subprocess_command(git_do_sparse_clone_command,
+                                      command_execution_directory=path_to_local_directory)
             
-            os.chdir(initial_dir)
-
         if my_logger:
             my_logger.debug("Inside and at end of function __doAnEmptyClone") 
 
@@ -486,25 +483,19 @@ class GitRepository(BaseRepository):
         return
 
     def __directoryUnderGitControl(self,
-                                  directory_to_test=None):
+                                  directory_to_test):
         under_git_control = False
-        if directory_to_test:
-            initial_dir = os.getcwd()
-            os.chdir(directory_to_test)
 
-        # Do checkout
         git_rev_parse_cmd = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
                                                        my_options='rev-parse --is-inside-work-tree')
 
-        (stdout,stderr) = run_as_subprocess_command_return_stdout_stderr(git_rev_parse_cmd)
+        (stdout,stderr) = run_as_subprocess_command_return_stdout_stderr(git_rev_parse_cmd,
+                                                                         directory_to_test)
         
         if stdout[0].startswith("true"):
             under_git_control = True
         else:
             under_git_control = False
-
-        if directory_to_test:
-            os.chdir(initial_dir)
 
         return under_git_control
 

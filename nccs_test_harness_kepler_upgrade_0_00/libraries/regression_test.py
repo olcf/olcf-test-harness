@@ -93,8 +93,6 @@ class Harness:
            
             for my_future in concurrent.futures.as_completed(future_to_application_name):
                 name = future_to_application_name[my_future]
-                message = "Application {} future is completed".format(name)
-                my_logger.debug(message)
 
                 # Check if an exception has been raised
                 my_future_exception = my_future.exception()
