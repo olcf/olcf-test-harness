@@ -82,7 +82,7 @@ def run_as_subprocess_command(cmd):
             if  exit_status > 0:
                 os.remove(tmpfile_stdout_path) 
                 os.remove(tmpfile_stderr_path) 
-                sys.exit(message)
+                # sys.exit(message)
             else:
                 # Remove the temporary files before we return.
                 os.remove(tmpfile_stdout_path) 

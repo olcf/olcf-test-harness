@@ -44,7 +44,17 @@ class Harness:
     def run_me_serial(self,
                       log_level=None):
         
+        # Define a logger that streams to console.
         numeric_level = getattr(logging, log_level.upper(), None)
+        log_name = "run_me_serial"
+        my_logger = logging.getLogger(log_name)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        my_logger.setLevel(numeric_level)
+        my_logger.addHandler(ch)
+
         list_of_applications = []
         list_of_applications_names = []
         future_to_application_name = {}
@@ -84,22 +94,16 @@ class Harness:
             for my_future in concurrent.futures.as_completed(future_to_application_name):
                 name = future_to_application_name[my_future]
                 message = "Application {} future is completed".format(name)
-                print(message)
-
-                # Check the result of the future.
-                # my_future_result = my_future.result()
-                # if my_future_result:
-                #     message = "Application {} future result:\n{}\n".format(name,my_future_result)
-                #     # print(message)
+                my_logger.debug(message)
 
                 # Check if an exception has been raised
                 my_future_exception = my_future.exception()
                 if my_future_exception:
                     message = "Application {} future exception:\n{}\n".format(name,my_future_exception)
-                    print(message)
+                    my_logger.debug(message)
 
             message = "All applications completed. Yahoo!!"
-            print(message)
+            my_logger.debug(message)
 
 
         # If we get to this point mark all task as completed.
@@ -163,7 +167,6 @@ class Harness:
 
     def __display_status(self,apptest1,taskwords,mycomputer_with_events_record):
         #Display the test status.
-        print("In display_status")
         if mycomputer_with_events_record == None:
             apptest1.display_status()
         else:
