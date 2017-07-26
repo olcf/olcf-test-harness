@@ -24,6 +24,9 @@ from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
 from libraries.status_file import summarize_status_file
 from bin.test_harness_driver import test_harness_driver
+from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
+from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr
+from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
 
 #
 # Inherits "apps_test_directory_layout".
@@ -312,10 +315,6 @@ class subtest(base_apptest,apps_test_directory_layout):
     #
     def start_test(self):
          
-        #Get the current working directory.
-        cwd = os.getcwd()
-
-        pathtoscripts = self.get_local_path_to_scripts() 
 
         # If the file kill file exits then remove it.
         pathtokillfile = self.get_local_path_to_kill_file() 
@@ -326,18 +325,23 @@ class subtest(base_apptest,apps_test_directory_layout):
         start_test_log_files = self.getPathToStartTestLogFiles()
         stdout_path = start_test_log_files["stdout"]
         stderr_path = start_test_log_files["stderr"]
-        arguments = "-r"
-        starttestcomand = "test_harness_driver('-r')"
-        os.chdir(pathtoscripts) 
+        
+        starttestcomand = "test_harness_driver.py -r"
+
         with open(stdout_path,"a") as out:
             with open(stderr_path,"a") as err:
-                arguments="-r"
-                my_argv = shlex.split(arguments)
-                exit_status = test_harness_driver(my_argv)
+
+                pathtoscripts = self.get_local_path_to_scripts() 
+
+                (stdout,stderr,exit_status) = \
+                run_as_subprocess_command_return_stdout_stderr_exitstatus(starttestcomand,
+                                                                          command_execution_directory=pathtoscripts)
+                out.writelines(stdout)
+                err.writelines(stderr)
+
                 if exit_status > 0:
                     string1 = "Command failed: " + starttestcomand
                     sys.exit(string1)
-        os.chdir(cwd)
 
     #
     # Stops the test.

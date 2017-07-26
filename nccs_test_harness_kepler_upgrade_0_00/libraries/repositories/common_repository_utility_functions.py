@@ -88,7 +88,7 @@ def run_as_subprocess_command(cmd,
             if  exit_status > 0:
                 os.remove(tmpfile_stdout_path) 
                 os.remove(tmpfile_stderr_path) 
-                # sys.exit(message)
+                sys.exit(message)
             else:
                 # Remove the temporary files before we return.
                 os.remove(tmpfile_stdout_path) 
@@ -153,6 +153,65 @@ def run_as_subprocess_command_return_stdout_stderr(cmd,
             os.remove(tmpfile_stderr_path) 
 
     return (stdout,stderr)
+
+def run_as_subprocess_command_return_stdout_stderr_exitstatus(cmd,
+                                                              command_execution_directory=None):
+    """ Runs the command in the string cmd by subprocess.
+
+            :param cmd: A string containing the command to run
+            :type cmd: string
+
+            :param command_execution_directory: The directory where the command is executed.
+            :type command_execution_directory: string
+    """
+
+    exit_status = 0
+
+    if command_execution_directory:
+        my_command = "cd {dir}; {command}".format(dir=command_execution_directory,
+                                                  command=cmd)
+    else:
+        my_command = cmd
+
+    with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stdout:
+        with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stderr:
+            exit_status = None
+            message = None
+            try:
+                initial_dir = os.getcwd()
+                exit_status = subprocess.check_call(my_command,
+                                                    shell=True,
+                                                    stdout=tmpfile_stdout,
+                                                    stderr=tmpfile_stderr)
+            except subprocess.CalledProcessError as exc :
+                exit_status = 1
+                message = "Error in subprocess command: " + exc.cmd
+            except:
+                exit_status = 1
+                message = "Unexpected error in command! " + my_command
+    
+            # Close the file objects of the temporary files.
+            tmpfile_stdout_path = tmpfile_stdout.name
+            tmpfile_stderr_path = tmpfile_stderr.name
+            tmpfile_stdout.close()
+            tmpfile_stderr.close()
+    
+            # Copy the contents of tmpfile_stdout_path and tmpfile_stderr_path
+            # to stdout and stderr.
+            stdout_file_obj = open(tmpfile_stdout_path,"r" )
+            stderr_file_obj = open(tmpfile_stderr_path,"r" )
+
+            stdout = stdout_file_obj.readlines()
+            stderr = stderr_file_obj.readlines()
+
+            stdout_file_obj.close()
+            stderr_file_obj.close()
+            
+            # Remove the temporary files before we return.
+            os.remove(tmpfile_stdout_path) 
+            os.remove(tmpfile_stderr_path) 
+
+    return (stdout,stderr,exit_status)
 
 def get_type_of_repository():
     return os.getenv('RGT_TYPE_OF_REPOSITORY')

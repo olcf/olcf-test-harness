@@ -96,7 +96,8 @@ class Test_runtests(unittest.TestCase):
         #                     "start_tests",
         #                     "stop_tests"]
 
-        my_harness_tasks = ["check_out_tests"]
+        my_harness_tasks = ["check_out_tests",
+                            "start_tests"]
 
 
         my_tests = [hw_tests_dictionary,
