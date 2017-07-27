@@ -354,7 +354,6 @@ class subtest(base_apptest,apps_test_directory_layout):
         kill_file.write("")
         kill_file.close()
 
-
     #
     # Displays the status of the tests.
     #

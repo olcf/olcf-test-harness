@@ -92,12 +92,9 @@ class Test_runtests(unittest.TestCase):
         blm_tests_dictionary.addAppSubtest("Bonjour_le_Monde",
                                           "Test_16cores_C")
 
-        # my_harness_tasks = ["check_out_tests",
-        #                     "start_tests",
-        #                     "stop_tests"]
-
         my_harness_tasks = ["check_out_tests",
-                            "start_tests"]
+                            "start_tests",
+                            "stop_tests"]
 
 
         my_tests = [hw_tests_dictionary,
