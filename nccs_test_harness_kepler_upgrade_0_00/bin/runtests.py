@@ -41,7 +41,7 @@ def create_a_parser():
     parser.add_argument("--loglevel",
                          required=False,
                          choices=["DEBUG","INFO","WARNING", "ERROR", "CRITICAL"],
-                         default="WARNING",
+                         default="INFO",
                          help="Optional argument for logging level")
 
     return parser
@@ -71,9 +71,11 @@ def runtests(my_arg_string=None):
     rgt = regression_test.Harness(ifile,
                                  concurrency)
     if concurrency == "serial":
-        rgt.run_me_serial(loglevel)
+        rgt.run_me(log_level=loglevel,
+                   nm_workers=1)
     elif concurrency == "parallel":
-        rgt.run_me_concurrent(loglevel)
+        rgt.run_me(loglevel,
+                   nm_workers=4)
 
     return rgt
     

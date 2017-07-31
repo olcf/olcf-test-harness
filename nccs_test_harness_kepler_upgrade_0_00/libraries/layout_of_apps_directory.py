@@ -205,8 +205,8 @@ class  apps_test_directory_layout(object):
             ip = -1
             for string1 in self.__localHiddenGitRepoDirectoryStructure [key]:
                 ip = ip + 1
-                self.__localHiddenGitRepoDirectoryStructure [key][ip] = my_regexp.sub(application,
-                                                                                      string1)
+                self.__localHiddenGitRepoDirectoryStructure[key][ip] = my_regexp.sub(application,
+                                                                                     string1)
    
         path_a = self.__local_path_to_tests_wd
         for key in self.__localHiddenGitRepoDirectoryStructure.keys():

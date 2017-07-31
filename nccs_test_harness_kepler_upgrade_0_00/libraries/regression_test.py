@@ -41,8 +41,9 @@ class Harness:
         self.__concurrency = concurrency
         mycomputer_with_events_record = None
 
-    def run_me_serial(self,
-                      log_level=None):
+    def run_me(self,
+               log_level=None,
+               nm_workers=1):
         
         # Define a logger that streams to console.
         numeric_level = getattr(logging, log_level.upper(), None)
@@ -68,7 +69,7 @@ class Harness:
         for application_test in my_tests:
             list_of_applications.append(application_test)
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as application_executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=nm_workers) as application_executor:
             app_future = {}
             for ip in range(len(list_of_applications)):
                 app_test = list_of_applications[ip]
@@ -109,10 +110,6 @@ class Harness:
 
         # This code will be neeeded later
         return
-
-    def run_me_concurrent(self,
-                          log_level=None):
-        # Form a queue of the apps.
         
     
         return

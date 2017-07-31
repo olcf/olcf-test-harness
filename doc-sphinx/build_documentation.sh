@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-sphinx-apidoc -f -o source ../ ../RETIRED_nccs_test_harness_kepler_upgrade 
+sphinx-apidoc -f -o source ../harness_source_documentation
 make html
