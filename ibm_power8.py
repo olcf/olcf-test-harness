@@ -20,10 +20,12 @@ class IBMpower8(BaseMachine):
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
         #self.read_rgt_test_input()
-        self.__template_dict = {}
         self.read_custom_rgt_test_input()
 
     def read_custom_rgt_test_input(self):
+
+        template_dict = {}
+
         if os.path.isfile(self.get_rgt_input_file_name()):
             print("Reading custom key-value pairs from Power8 input")
 
@@ -36,9 +38,12 @@ class IBMpower8(BaseMachine):
 
             for record in filerecords:
                 (k,v) = record.split('=')
-                self.__template_dict[k.strip().lower()] = v.strip()
+                template_dict[k.strip().lower()] = v.strip()
 
-        print(self.__template_dict)
+        print(template_dict)
+
+        self.__rgt_test.set_custom_test_parameters(template_dict)
+        self.__rgt_test.print_custom_test_parameters()
 
     def read_rgt_test_input(self):
         total_processes = None
