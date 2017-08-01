@@ -2,6 +2,6 @@ language: python
 sudo: false
 env: 
 - RGT_MACHINE_NAME=Summitdev
-- LSF_SCHEDULER_NAME=LSF
-- JOB_LAUNCHER=jsrun
-script: python -m test_classes.py
+- RGT_SCHEDULER_TYPE=LSF
+- RGT_JOBLAUNCHER_TYPE=jsrun
+script: ./tests/test_classes.py
