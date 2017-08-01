@@ -19,6 +19,7 @@ class RgtTest():
         self.__reportscriptname = None
         self.__executablename = None
         self.__testinputfile = None
+        self.__template_dict = {}
 
     def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, 
                             walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname,
@@ -35,6 +36,9 @@ class RgtTest():
         self.__reportscriptname = reportscriptname
         self.__executablename = executablename
         self.__testinputfile = testinputfile
+
+    def set_custom_test_parameters(self,template_dict):
+        self.__template_dict = template_dict
 
     def get_batchfilename(self):
         return self.__batchfilename
@@ -71,6 +75,12 @@ class RgtTest():
 
     def get_processes_per_socket(self):
         return str(self.__processes_per_socket)
+
+    def print_custom_test_parameters(self):
+        print("RGT Test Parameters")
+        print("===================")
+        for k in self.__template_dict:
+            print(k,"=",self.__template_dict[k])
 
     def print_test_parameters(self):
         print("RGT Test parameters")
