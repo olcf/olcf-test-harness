@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-from ..cray_xk7 import CrayXK7 
-from ..ibm_power8 import IBMpower8
-from ..machine_factory import MachineFactory
-from ..lsf import LSF
-from ..pbs import PBS
-from ..aprun import Aprun
-from ..poe import Poe
+from cray_xk7 import CrayXK7 
+from ibm_power8 import IBMpower8
+from machine_factory import MachineFactory
+from lsf import LSF
+from pbs import PBS
+from aprun import Aprun
+from poe import Poe
 
 #my_machine = CrayXK7('Chester','PBS','aprun',80,1,16)
 #print my_machine.get_machine_name()
@@ -17,7 +17,7 @@ from ..poe import Poe
 #my_machine.print_machine_info()
 
 #fc = MachineFactory.create_machine('Chester','XK7','PBS')
-fc = MachineFactory.create_machine()
+fc = MachineFactory.create_machine('./somedir','12345')
 print(fc)
 
 #my_scheduler = LSF()
