@@ -4,7 +4,7 @@
 #
 #
 
-from .base_scheduler import BaseScheduler
+from base_scheduler import BaseScheduler
 
 class PBS(BaseScheduler):
 

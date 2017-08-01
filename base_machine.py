@@ -4,8 +4,8 @@
 # 
 #
 
-from .scheduler_factory import SchedulerFactory
-from .jobLauncher_factory import JobLauncherFactory
+from scheduler_factory import SchedulerFactory
+from jobLauncher_factory import JobLauncherFactory
 from abc import abstractmethod, ABCMeta
 import os
 import shutil

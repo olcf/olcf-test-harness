@@ -3,8 +3,8 @@
 # Author: Veronica G. Vergara L.
 #
 
-from .base_machine import BaseMachine
-from .rgt_test import RgtTest
+from base_machine import BaseMachine
+from rgt_test import RgtTest
 import os
 import re
 

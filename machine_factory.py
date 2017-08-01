@@ -1,6 +1,6 @@
 import os
-from .cray_xk7 import CrayXK7
-from .ibm_power8 import IBMpower8
+from cray_xk7 import CrayXK7
+from ibm_power8 import IBMpower8
 
 
 class MachineFactory:
