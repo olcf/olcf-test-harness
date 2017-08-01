@@ -19,7 +19,7 @@ class JobLauncherFactory:
             tmp_jobLauncher = Aprun()
         elif jobLauncher_type == "poe":
             tmp_jobLauncher = Poe()
-        elif jobLauncher_type == "Jsrun":
+        elif jobLauncher_type == "jsrun":
             tmp_jobLauncher = Jsrun()
         else:
             print("Job launcher not supported. Good bye!")
