@@ -1,1 +1,7 @@
-
+language: python
+sudo: false
+env: 
+- RGT_MACHINE_NAME=Summitdev
+- LSF_SCHEDULER_NAME=LSF
+- JOB_LAUNCHER=jsrun
+script: python -m test_classes.py
