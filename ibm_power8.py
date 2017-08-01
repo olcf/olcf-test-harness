@@ -19,7 +19,26 @@ class IBMpower8(BaseMachine):
                              workspace,harness_id,scripts_dir)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
-        self.read_rgt_test_input()
+        #self.read_rgt_test_input()
+        self.__template_dict = {}
+        self.read_custom_rgt_test_input()
+
+    def read_custom_rgt_test_input(self):
+        if os.path.isfile(self.get_rgt_input_file_name()):
+            print("Reading custom key-value pairs from Power8 input")
+
+            # Read the custom parameters from RGT test input
+            delimiter = "="
+
+            fileobj = open(self.get_rgt_input_file_name())
+            filerecords = fileobj.readlines()
+            fileobj.close()
+
+            for record in filerecords:
+                (k,v) = record.split('=')
+                self.__template_dict[k.strip().lower()] = v.strip()
+
+        print(self.__template_dict)
 
     def read_rgt_test_input(self):
         total_processes = None
