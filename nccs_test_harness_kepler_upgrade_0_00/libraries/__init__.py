@@ -20,7 +20,8 @@ __all__ = [
                 'threadedDecorator',
                 'application_metric',
                 'repositories',
-                'application_test_dictionary'
+                'application_test_dictionary',
+                'rgt_logging'
           ]
 
 version = 2.0

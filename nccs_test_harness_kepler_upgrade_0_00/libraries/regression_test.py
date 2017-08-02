@@ -11,6 +11,7 @@ from types import *
 from libraries import apptest
 from fundamental_types.rgt_state import RgtState
 from libraries import application_test_dictionary
+from libraries.rgt_logging import rgt_logger
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -39,6 +40,7 @@ class Harness:
         self.__local_path_to_tests = rgt_input_file.get_local_path_to_tests()
         self.__appsubtest = []
         self.__concurrency = concurrency
+        self.__myLogger = rgt_logger()
         mycomputer_with_events_record = None
 
     def run_me(self,
@@ -55,6 +57,8 @@ class Harness:
         ch.setFormatter(formatter)
         my_logger.setLevel(numeric_level)
         my_logger.addHandler(ch)
+        message = "Start of harness."
+        self.__myLogger.doLogging(message)
 
         list_of_applications = []
         list_of_applications_names = []

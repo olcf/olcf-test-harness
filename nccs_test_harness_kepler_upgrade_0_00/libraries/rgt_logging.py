@@ -11,3 +11,8 @@ class rgt_logger:
 
     def __init__(self):
         return
+
+    def doLogging(self,
+                  message):
+        print(message)
+        return
