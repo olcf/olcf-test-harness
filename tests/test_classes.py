@@ -19,6 +19,7 @@ from poe import Poe
 #fc = MachineFactory.create_machine('Chester','XK7','PBS')
 fc = MachineFactory.create_machine('./somedir','12345')
 print(fc)
+fc.make_custom_batch_script()
 
 #my_scheduler = LSF()
 #print my_scheduler.get_scheduler_name()

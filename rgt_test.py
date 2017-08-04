@@ -20,6 +20,10 @@ class RgtTest():
         self.__executablename = None
         self.__testinputfile = None
         self.__template_dict = {}
+        self.__builtin_dict = {}
+        self.__builtin_params = {'total_processes', 'processes_per_node', 'processes_per_socket', 
+        'jobname', 'batchqueue', 'walltime', 'batchfilename', 'buildscriptname', 'checkscriptname',
+        'executablename', 'reportscriptname', 'testinputfile'}
 
     def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, 
                             walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname,
@@ -39,6 +43,63 @@ class RgtTest():
 
     def set_custom_test_parameters(self,template_dict):
         self.__template_dict = template_dict
+        for (k,v) in self.__template_dict.items():
+            if k == 'total_processes':
+                self.__total_processes = v
+            elif k == 'processes_per_node':
+                self.__processes_per_node = v
+            elif k == 'processes_per_socket':
+                self.__processes_per_socket = v
+            elif k == 'jobname':
+                self.__jobname = v
+            elif k == 'batchqueue':
+                self.__batchqueue = v
+            elif k == 'walltime':
+                self.__walltime = v
+            elif k == 'batchfilename':
+                self.__batchfilename = v
+            elif k == 'buildscriptname':
+                self.__buildscriptname = v
+            elif k == 'checkscriptname':
+                self.__checkscriptname = v
+            elif k == 'reportscriptname':
+                self.__reportscriptname = v
+            elif k == 'executablename':
+                self.__executablename = v
+            elif k == 'testinputfile':
+                self.__testinputfile = v
+                     
+    def check_builtin_parameters(self):
+        if (not self.__total_processes 
+           or not self.__processes_per_node
+           or not self.__processes_per_socket
+           or not self.__jobname
+           or not self.__batchqueue
+           or not self.__walltime
+           or not self.__batchfilename
+           or not self.__buildscriptname
+           or not self.__checkscriptname
+           or not self.__reportscriptname
+           or not self.__executablename
+           or not self.__testinputfile):
+            print("")
+            print("Required variable(s) missing!")
+            print(" processes_per_node = ",self.__processes_per_node)
+            print(" processes_per_socket = ",self.__processes_per_socket)
+            print(" jobname = ",self.__jobname)
+            print(" batchqueue = ",self.__batchqueue)
+            print(" walltime = ",self.__walltime)
+            print(" batchfilename = ",self.__batchfilename)
+            print(" buildscriptname = ",self.__buildscriptname)
+            print(" checkscriptname = ",self.__checkscriptname)
+            print(" reportscriptname = ",self.__reportscriptname)
+            print(" executablename = ",self.__executablename)
+            print(" testinputfile = ",self.__testinputfile)
+            
+            exit(1)
+
+    def get_template_dict(self):
+        return self.__template_dict
 
     def get_batchfilename(self):
         return self.__batchfilename
