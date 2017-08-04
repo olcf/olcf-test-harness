@@ -1,0 +1,5 @@
+varone = val1
+vartwo = val2
+varthree = val3
+batchfilename = mysubfile.txt
+processes_per_node = 5
