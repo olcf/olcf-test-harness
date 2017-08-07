@@ -84,6 +84,7 @@ class RgtTest():
            or not self.__testinputfile):
             print("")
             print("Required variable(s) missing!")
+            print(" total_processes = ",self.__total_processes)
             print(" processes_per_node = ",self.__processes_per_node)
             print(" processes_per_socket = ",self.__processes_per_socket)
             print(" jobname = ",self.__jobname)
