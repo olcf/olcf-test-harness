@@ -21,7 +21,12 @@ from machine_types.machine_factory import MachineFactory
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
-# National Center for Computational Sciences, Scientific Computing Group.
+# Scientific Computing Group.
+#
+# Modified by: Veronica G. Vergara Larrea (vergaravg@ornl.gov)
+# User Assistance Group.
+#
+# National Center for Computational Sciences
 # Oak Ridge National Laboratory
 #
 
@@ -204,7 +209,7 @@ def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
     jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
 
     # Create the batch script
-    mymachine.make_batch_script()
+    mymachine.make_custom_batch_script()
 
     jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
     # Submit the batch file to the scheduler.
