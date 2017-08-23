@@ -1,0 +1,14 @@
+varone = val1
+vartwo = val2
+varthree = val3
+batchfilename = mysubfile.txt
+processes_per_node = 5
+processes_per_socket =  1
+jobname =  mytest
+batchqueue =  batch
+walltime =  10
+buildscriptname =  build_me.sh
+checkscriptname =  check_me.sh
+reportscriptname =  report_me.sh
+executablename =  myexecutable
+testinputfile =  myinput

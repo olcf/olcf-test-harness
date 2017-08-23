@@ -19,7 +19,37 @@ class IBMpower8(BaseMachine):
                              workspace,harness_id,scripts_dir)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
+<<<<<<< HEAD
         self.read_rgt_test_input()
+=======
+        #self.read_rgt_test_input()
+        self.read_custom_rgt_test_input()
+
+    def read_custom_rgt_test_input(self):
+
+        template_dict = {}
+
+        if os.path.isfile(self.get_rgt_input_file_name()):
+            print("Reading custom key-value pairs from Power8 input")
+
+            # Read the custom parameters from RGT test input
+            delimiter = "="
+
+            fileobj = open(self.get_rgt_input_file_name())
+            filerecords = fileobj.readlines()
+            fileobj.close()
+
+            for record in filerecords:
+                (k,v) = record.split('=')
+                template_dict[k.strip().lower()] = v.strip()
+
+
+        print(template_dict)
+
+        self.__rgt_test.set_custom_test_parameters(template_dict)
+        self.__rgt_test.print_custom_test_parameters()
+        self.__rgt_test.check_builtin_parameters()
+>>>>>>> cace48dea21ec3a9683333d12e186d8ebccbeb00
 
     def read_rgt_test_input(self):
         total_processes = None
@@ -226,6 +256,33 @@ class IBMpower8(BaseMachine):
         jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_total_processes(),self.__rgt_test.get_processes_per_node(),self.__rgt_test.get_processes_per_socket(),path_to_executable)
         return jobLauncher_command
 
+<<<<<<< HEAD
+=======
+    def make_custom_batch_script(self):
+        print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
+        templatefileobj = open(self.get_scheduler_template_file_name(),"r")
+        templatelines = templatefileobj.readlines()
+        templatefileobj.close()
+
+        template_dict = self.__rgt_test.get_template_dict()
+        replace_dict = {}
+
+        for (k,v) in template_dict.items():
+            print("key = ",k,"value = ",v)
+            newk = "__" + k + "__"
+            replace_dict[newk] = v
+
+        fileobj = open(self.__rgt_test.get_batchfilename(),"w")
+        for record in templatelines:
+            for (k,v) in replace_dict.items():
+                re_temp = re.compile(k)
+                record = re_temp.sub(v,record)
+            fileobj.write(record)
+        fileobj.close()
+
+        print(replace_dict)
+
+>>>>>>> cace48dea21ec3a9683333d12e186d8ebccbeb00
     def make_batch_script(self):
         print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
         templatefileobj = open(self.get_scheduler_template_file_name(),"r")
