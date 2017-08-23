@@ -19,9 +19,6 @@ class IBMpower8(BaseMachine):
                              workspace,harness_id,scripts_dir)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
-<<<<<<< HEAD
-        self.read_rgt_test_input()
-=======
         #self.read_rgt_test_input()
         self.read_custom_rgt_test_input()
 
@@ -49,7 +46,6 @@ class IBMpower8(BaseMachine):
         self.__rgt_test.set_custom_test_parameters(template_dict)
         self.__rgt_test.print_custom_test_parameters()
         self.__rgt_test.check_builtin_parameters()
->>>>>>> cace48dea21ec3a9683333d12e186d8ebccbeb00
 
     def read_rgt_test_input(self):
         total_processes = None
@@ -256,8 +252,6 @@ class IBMpower8(BaseMachine):
         jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_total_processes(),self.__rgt_test.get_processes_per_node(),self.__rgt_test.get_processes_per_socket(),path_to_executable)
         return jobLauncher_command
 
-<<<<<<< HEAD
-=======
     def make_custom_batch_script(self):
         print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
         templatefileobj = open(self.get_scheduler_template_file_name(),"r")
@@ -282,7 +276,6 @@ class IBMpower8(BaseMachine):
 
         print(replace_dict)
 
->>>>>>> cace48dea21ec3a9683333d12e186d8ebccbeb00
     def make_batch_script(self):
         print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
         templatefileobj = open(self.get_scheduler_template_file_name(),"r")
