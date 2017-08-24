@@ -40,12 +40,22 @@ class IBMpower8(BaseMachine):
                 (k,v) = record.split('=')
                 template_dict[k.strip().lower()] = v.strip()
 
+        # Variables needed by the harness
+        template_dict["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
+        template_dict["nccstestharnessmodule"] = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
+        template_dict["resultsdir"] = self.get_rgt_results_dir()
+        template_dict["workdir"] = self.get_rgt_workdir()
+        template_dict["startingdirectory"] = self.get_rgt_scripts_dir()
+        template_dict["unique_id_string"] = self.get_rgt_harness_id()
+
 
         print(template_dict)
 
         self.__rgt_test.set_custom_test_parameters(template_dict)
         self.__rgt_test.print_custom_test_parameters()
         self.__rgt_test.check_builtin_parameters()
+
+        self.__rgt_test.append_to_template_dict("pathtoexecutable",os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename()))
 
     def read_rgt_test_input(self):
         total_processes = None
