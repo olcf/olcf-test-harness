@@ -68,6 +68,9 @@ class RgtTest():
                 self.__executablename = v
             elif k == 'testinputfile':
                 self.__testinputfile = v
+
+    def append_to_template_dict(self,k,v):
+        self.__template_dict[k] = v
                      
     def check_builtin_parameters(self):
         if (not self.__total_processes 
