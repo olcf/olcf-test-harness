@@ -71,6 +71,9 @@ class RgtTest():
 
     def append_to_template_dict(self,k,v):
         self.__template_dict[k] = v
+
+    def get_value_from_template_dict(self,k):
+        return self.__template_dict[k]
                      
     def check_builtin_parameters(self):
         if (not self.__total_processes 
@@ -99,6 +102,7 @@ class RgtTest():
             print(" reportscriptname = ",self.__reportscriptname)
             print(" executablename = ",self.__executablename)
             print(" testinputfile = ",self.__testinputfile)
+            print(" pathtoexecutable = ", self.__pathtoexecutable)
             
             exit(1)
 
@@ -122,6 +126,9 @@ class RgtTest():
 
     def get_executablename(self):
         return self.__executablename
+
+    #def get_pathtoexecutable(self):
+    #    return self.__pathtoexecutable
 
     def get_jobname(self):
         return self.__jobname
