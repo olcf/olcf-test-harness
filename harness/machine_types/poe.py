@@ -13,7 +13,7 @@ class Poe(BaseJobLauncher):
         self.__launchCmd = 'poe'
         self.__numTasksOpt = None
         self.__numTasksPerNodeOpt = None
-        BaseJobLauncher.__init__(self,self.__name,self.__launchCmd,self.__numTasksOpt,self.__numTasksPerNodeOpt)
+        BaseJobLauncher.__init__(self,self.__name)
 
     def build_job_command(self,total_processes,processes_per_node,processes_per_socket,executable):
         print("Building job command in the POE class")
