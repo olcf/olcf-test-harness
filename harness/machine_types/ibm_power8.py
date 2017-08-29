@@ -56,6 +56,7 @@ class IBMpower8(BaseMachine):
         self.__rgt_test.check_builtin_parameters()
 
         self.__rgt_test.append_to_template_dict("pathtoexecutable",os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename()))
+        self.__rgt_test.append_to_template_dict("joblaunchcommand",self.get_jobLauncher_command(self.__rgt_test.get_value_from_template_dict("pathtoexecutable")))
 
     def read_rgt_test_input(self):
         total_processes = None
@@ -259,7 +260,7 @@ class IBMpower8(BaseMachine):
 
     def get_jobLauncher_command(self,path_to_executable):
         print("Building jobLauncher command for Power8")
-        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_total_processes(),self.__rgt_test.get_processes_per_node(),self.__rgt_test.get_processes_per_socket(),path_to_executable)
+        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_template_dict())
         return jobLauncher_command
 
     def make_custom_batch_script(self):
@@ -284,6 +285,8 @@ class IBMpower8(BaseMachine):
             fileobj.write(record)
         fileobj.close()
 
+        print("")
+        print("Replacement Dictionary")
         print(replace_dict)
 
     def make_batch_script(self):
