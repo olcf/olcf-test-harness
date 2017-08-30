@@ -31,6 +31,7 @@ class Harness:
 
     # Defines the harness log file name.
     LOG_FILE_NAME = "harness_log_file.txt"
+    LOG_FILE_NAME2 = "harness_log_file"
     
     def __init__(self,
                  rgt_input_file,
@@ -40,25 +41,24 @@ class Harness:
         self.__local_path_to_tests = rgt_input_file.get_local_path_to_tests()
         self.__appsubtest = []
         self.__concurrency = concurrency
-        self.__myLogger = rgt_logger()
+        self.__myLogger = None
+
         mycomputer_with_events_record = None
 
     def run_me(self,
                log_level=None,
                nm_workers=1):
         
-        # Define a logger that streams to console.
-        numeric_level = getattr(logging, log_level.upper(), None)
-        log_name = "run_me_serial"
-        my_logger = logging.getLogger(log_name)
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        ch.setFormatter(formatter)
-        my_logger.setLevel(numeric_level)
-        my_logger.addHandler(ch)
+        # Define a logger that streams to file.
+        currenttime = time.localtime()
+        time_stamp = time.strftime("%Y%b%d_%H:%M:%S",currenttime)
+        self.__myLogger = rgt_logger(Harness.LOG_FILE_NAME2,
+                                     log_level,
+                                     time_stamp)
+
+        # Log the start of the harness.
         message = "Start of harness."
-        self.__myLogger.doLogging(message)
+        self.__myLogger.doInfoLogging(message)
 
         list_of_applications = []
         list_of_applications_names = []
@@ -89,12 +89,19 @@ class Harness:
                     app_test_dict[my_application_name].append(apptest.subtest(name_of_application=my_application_name,
                                                               name_of_subtest=my_subtest_name,
                                                               local_path_to_tests=self.__local_path_to_tests,
-                                                              application_log_level=log_level))
+                                                              application_log_level=log_level,
+                                                              timestamp=time_stamp))
 
-            # for my_application_name in list_of_applications_names:
-            #     future_to_application_name[my_application_name] = application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks)
+            future_to_application_name = {}
+            for my_application_name in list_of_applications_names:
+                future_to_application_name[application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks)] = my_application_name 
+
+                # Log that the application has been submitted for tasks.
+                message = "Application " + my_application_name + " has been submitted for running tasks."
+                self.__myLogger.doInfoLogging(message)
+
             # The line below is the same as the immediate 2 lines above.
-            future_to_application_name = {application_executor.submit(apptest.do_application_tasks,app_name,app_test_dict[app_name],self.__tasks) : app_name for app_name in list_of_applications_names}
+            # future_to_application_name = {application_executor.submit(apptest.do_application_tasks,app_name,app_test_dict[app_name],self.__tasks) : app_name for app_name in list_of_applications_names}
            
             for my_future in concurrent.futures.as_completed(future_to_application_name):
                 name = future_to_application_name[my_future]
@@ -102,20 +109,23 @@ class Harness:
                 # Check if an exception has been raised
                 my_future_exception = my_future.exception()
                 if my_future_exception:
-                    message = "Application {} future exception:\n{}\n".format(name,my_future_exception)
-                    my_logger.debug(message)
+                    message = "Application {} future exception:\n{}".format(name,my_future_exception)
+                    self.__myLogger.doInfoLogging(message)
+                else:
+                    message = "Application {} future is completed.".format(name)
+                    self.__myLogger.doInfoLogging(message)
+
 
             message = "All applications completed. Yahoo!!"
-            my_logger.debug(message)
+            self.__myLogger.doInfoLogging(message)
 
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
 
-        # This code will be neeeded later
-        return
-        
-    
+        message = "End of harness."
+        self.__myLogger.doInfoLogging(message)
+
         return
 
     def getState(self):

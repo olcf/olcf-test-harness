@@ -75,7 +75,7 @@ def runtests(my_arg_string=None):
                    nm_workers=1)
     elif concurrency == "parallel":
         rgt.run_me(loglevel,
-                   nm_workers=4)
+                   nm_workers=1)
 
     return rgt
     

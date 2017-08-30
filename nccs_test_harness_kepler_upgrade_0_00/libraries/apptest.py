@@ -18,6 +18,7 @@ import logging
 from types import *
 
 # NCCS Test Harness Package Imports
+from libraries.rgt_logging import rgt_logger
 from libraries.base_apptest import base_apptest
 from libraries.layout_of_apps_directory import apps_test_directory_layout
 from libraries.status_file import parse_status_file
@@ -50,19 +51,21 @@ class subtest(base_apptest,apps_test_directory_layout):
                  name_of_subtest=None,
                  local_path_to_tests=None,
                  application_log_level="CRITICAL",
-                 number_of_iterations=-1):
+                 number_of_iterations=-1,
+                 timestamp=None):
 
         base_apptest.__init__(self,
                               name_of_application,
                               name_of_subtest,
-                              local_path_to_tests)
+                              local_path_to_tests,
+                              time_stamp=timestamp)
 
         apps_test_directory_layout.__init__(self,
                                             name_of_application,
                                             name_of_subtest,
                                             local_path_to_tests)
 
-        #Format of data is [<local_path_to_tests>, <application>, <test>] 
+        # Format of data is [<local_path_to_tests>, <application>, <test>] 
         self.__apps_test_checked_out = []
 
         self.__apps_test_checked_out = self.__apps_test_checked_out + [[self.getLocalPathToTests(),
@@ -72,23 +75,16 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         
         # Set the logger for this application and subtest.
-        log_name = name_of_application + "." + name_of_subtest
-        self.__myLogger = logging.getLogger(log_name)
+
+        dir1 = self.getDirPathToLogFiles() 
+        log_name1 = name_of_application + "." + name_of_subtest
+        log_name2 = os.path.join(dir1,log_name1)
+        log_name3 = os.path.abspath(log_name2)
+
         
-        # create console handler and set level to debug
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-
-        # create formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        # add formatter to ch
-        ch.setFormatter(formatter)
-        
-        numeric_level = getattr(logging, application_log_level.upper(), None)
-        self.__myLogger.setLevel(numeric_level)
-        self.__myLogger.addHandler(ch)
-
+        self.__myLogger = rgt_logger(log_name3,
+                                     application_log_level,
+                                     timestamp)
     ##################
     # Public Methods #
     ##################
@@ -131,13 +127,13 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                          my_repository_branch,
                                                          path_to_hidden_git_repository)
                 
-                self.__myLogger.debug("Start of checking out source")
+                self.__myLogger.doInfoLogging("Start of checking out source")
                 self.check_out_source(my_repository)
-                self.__myLogger.debug("End of checking out source")
+                self.__myLogger.doInfoLogging("End of checking out source")
                 
-                self.__myLogger.debug("Start of checking out subtest")
+                self.__myLogger.doInfoLogging("Start of checking out subtest")
                 self.check_out_test(my_repository)
-                self.__myLogger.debug("End of checking out subtest")
+                self.__myLogger.doInfoLogging("End of checking out subtest")
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -198,19 +194,19 @@ class subtest(base_apptest,apps_test_directory_layout):
         message = "For the source update my current directory is " + abspath_app_dir 
         self.writeToLogTestFile(message)
 
-        self.__myLogger.debug(message)
+        self.__myLogger.doInfoLogging(message)
         
         exit_status = 0
         if os.path.exists(abspath_app_dir):
             message = "Source of application: " + application_name + " already exists."
-            self.__myLogger.debug(message)
+            self.__myLogger.doInfoLogging(message)
             self.writeToLogFile(message)
             exit_status = 0
         else:
             app_checkout_log_files = self.getPathToAppCheckoutLogFiles()
             stdout_path = app_checkout_log_files["stdout"]
             stderr_path = app_checkout_log_files["stderr"]
-            self.__myLogger.debug("Before call to sparse checkout")
+            self.__myLogger.doInfoLogging("Before call to sparse checkout")
             with open(stdout_path,"a") as out:
                 with open(stderr_path,"a") as err:
                     (message,exit_status) = my_repository.doSparseSourceCheckout(out,
@@ -218,16 +214,16 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                                                  application_name,
                                                                                  root_path_to_checkout_directory=abspath_app_root_dir,
                                                                                  my_logger=self.__myLogger) 
-            self.__myLogger.debug("After call to sparse checkout")
+            self.__myLogger.doInfoLogging("After call to sparse checkout")
             
         if exit_status > 0:
             string1 = "Checkout of source failed."
-            self.__myLogger.debug(string1)
+            self.__myLogger.doInfoLogging(string1)
             self.writeToLogTestFile(string1)
             sys.exit(string1)
         else:
             message = "Checkout of source passed"
-            self.__myLogger.debug(message)
+            self.__myLogger.doInfoLogging(message)
             self.writeToLogTestFile(message)
 
 

@@ -87,7 +87,7 @@ class GitRepository(BaseRepository):
         
         # Check if file handles are open
         if my_logger:
-            my_logger.debug("Start of doSparseCheckout")
+            my_logger.doInfoLogging("Start of doSparseCheckout")
             
         exit_status = 0
         message = ""
@@ -106,7 +106,7 @@ class GitRepository(BaseRepository):
         path_to_hidden_directory = self.HiddenGitRepositoryPath 
 
         if my_logger:
-            my_logger.debug("Start of empty clone")
+            my_logger.doInfoLogging("Start of empty clone")
         
         self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
                               url_path_to_repository = self.__locationOfRepository,
@@ -114,16 +114,16 @@ class GitRepository(BaseRepository):
                               stderr_file_handle=stderr_file_handle,
                               my_logger=my_logger)
         if my_logger:
-            my_logger.debug("End of empty clone")
+            my_logger.doInfoLogging("End of empty clone")
 
 
         if my_logger:
-            my_logger.debug("Start of enable sparse checkout")
+            my_logger.doInfoLogging("Start of enable sparse checkout")
         
         self.__doEnableSparseCheckout(path_to_local_directory = path_to_hidden_directory) 
         
         if my_logger:
-            my_logger.debug("End of enable sparse checkout.")
+            my_logger.doInfoLogging("End of enable sparse checkout.")
 
         path_to_application_dir = \
         self.__defineDirectoryToSparseApplicationCheckout(files_to_sparsely_checkout = directory_to_checkout,
@@ -297,7 +297,7 @@ class GitRepository(BaseRepository):
                          my_logger=None):
 
         if my_logger:
-            my_logger.debug("Inside and at begginning of  function __doAnEmptyClone") 
+            my_logger.doInfoLogging("Inside and at begginning of  function __doAnEmptyClone") 
 
         initial_dir = os.getcwd()
 
@@ -330,7 +330,7 @@ class GitRepository(BaseRepository):
                                       command_execution_directory=path_to_local_directory)
             
         if my_logger:
-            my_logger.debug("Inside and at end of function __doAnEmptyClone") 
+            my_logger.doInfoLogging("Inside and at end of function __doAnEmptyClone") 
 
         return
 
@@ -338,7 +338,7 @@ class GitRepository(BaseRepository):
                                  path_to_local_directory,
                                  my_logger = None):
         if my_logger:
-            my_logger.debug("Inside function at beginning __doEnableSparseCheckout") 
+            my_logger.doInfoLogging("Inside function at beginning __doEnableSparseCheckout") 
 
         initial_dir = os.getcwd()
 
@@ -353,7 +353,7 @@ class GitRepository(BaseRepository):
         os.chdir(initial_dir)
 
         if my_logger:
-            my_logger.debug("Inside function at end __doEnableSparseCheckout") 
+            my_logger.doInfoLogging("Inside function at end __doEnableSparseCheckout") 
 
 
         return

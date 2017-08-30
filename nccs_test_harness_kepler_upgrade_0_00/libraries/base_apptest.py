@@ -14,9 +14,17 @@ class base_apptest(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self,name_of_application,name_of_subtest,local_path_to_tests):
+    def __init__(self,
+                 name_of_application,
+                 name_of_subtest,
+                 local_path_to_tests,
+                 time_stamp=None):
 
-        self.__master_log_files_dir = os.path.join(os.getcwd(), 'harness_log_files')
+        if time_stamp:
+            self.__master_log_files_dir = os.path.join(os.getcwd(), 'harness_log_files.' + time_stamp)
+        else:
+            self.__master_log_files_dir = os.path.join(os.getcwd(), 'harness_log_files')
+
         if not os.path.exists(self.__master_log_files_dir):
             os.mkdir(self.__master_log_files_dir)
 
