@@ -82,21 +82,22 @@ class base_apptest(object):
         return {"stdout":self.__appStartTestLogFilePathStdOut,
                 "stderr":self.__appStartTestLogFilePathStdErr}
     
-    def writeToLogFile(self,message):
-        now = str(datetime.now())
-        now = now.strip()
-        message2 = "{0!s:<32} {1!s:<}\n".format(now, message)
-        log_filehandle = open(self.__appLogFilePath,"a")
-        log_filehandle.write(message2)
-        log_filehandle.close()
-        
-    def writeToLogTestFile(self,message):
-        now = str(datetime.now())
-        now = now.strip()
-        message2 = "{0!s:<32} Thread tag={1!s:<}  {2!s:<}\n".format(now, self.__threadTag, message)
-        log_filehandle = open(self.__appTestLogFilePath,"a")
-        log_filehandle.write(message2)
-        log_filehandle.close()
+    # def writeToLogFile(self,
+    #                    message):
+    #     now = str(datetime.now())
+    #     now = now.strip()
+    #     message2 = "{0!s:<32} {1!s:<}\n".format(now, message)
+    #     log_filehandle = open(self.__appLogFilePath,"a")
+    #     log_filehandle.write(message2)
+    #     log_filehandle.close()
+    #     
+    # def writeToLogTestFile(self,message):
+    #     now = str(datetime.now())
+    #     now = now.strip()
+    #     message2 = "{0!s:<32} Thread tag={1!s:<}  {2!s:<}\n".format(now, self.__threadTag, message)
+    #     log_filehandle = open(self.__appTestLogFilePath,"a")
+    #     log_filehandle.write(message2)
+    #     log_filehandle.close()
   
     @abc.abstractmethod
     def doTasks(self,myTasks,myTestCheckoutLock):

@@ -101,7 +101,7 @@ class subtest(base_apptest,apps_test_directory_layout):
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
-        self.writeToLogTestFile(message)
+        self.__myLogger.doInfoLogging(message)
 
         if tasks != None:
             tasks = copy.deepcopy(tasks)
@@ -164,7 +164,7 @@ class subtest(base_apptest,apps_test_directory_layout):
     def check_out_source(self,my_repository):
 
         message = "Checking out source of application: " + self.getNameOfApplication()
-        self.writeToLogFile(message)
+        self.__myLogger.doInfoLogging(message)
 
         #Get the current working directory.
         cwd = os.getcwd()
@@ -192,15 +192,12 @@ class subtest(base_apptest,apps_test_directory_layout):
         abspath_source_dir = os.path.join(cwd,relative_path_to_app_dir,self.getNameOfApplication(),"Source")
 
         message = "For the source update my current directory is " + abspath_app_dir 
-        self.writeToLogTestFile(message)
-
         self.__myLogger.doInfoLogging(message)
         
         exit_status = 0
         if os.path.exists(abspath_app_dir):
             message = "Source of application: " + application_name + " already exists."
             self.__myLogger.doInfoLogging(message)
-            self.writeToLogFile(message)
             exit_status = 0
         else:
             app_checkout_log_files = self.getPathToAppCheckoutLogFiles()
@@ -219,32 +216,19 @@ class subtest(base_apptest,apps_test_directory_layout):
         if exit_status > 0:
             string1 = "Checkout of source failed."
             self.__myLogger.doInfoLogging(string1)
-            self.writeToLogTestFile(string1)
             sys.exit(string1)
         else:
             message = "Checkout of source passed"
             self.__myLogger.doInfoLogging(message)
-            self.writeToLogTestFile(message)
 
-
-        update_log_files = self.getPathToSourceUpdateLogFiles()
-        stdout_path = update_log_files["stdout"]
-        stderr_path = update_log_files["stderr"]
-
-        message = "Source update command stdout path is {}".format(stdout_path)
-        self.writeToLogTestFile(message)
-
-        message = "Source update command stderr path is {}".format(stderr_path)
-        self.writeToLogTestFile(message)
         return
     
     #
-    # Checks out the App and Test from the svn repository.
+    # Checks out the App and Test from the repository.
     #
     def check_out_test(self,my_repository):
         message =  "Checking out test: " + self.getNameOfApplication() + " " + self.getNameOfSubtest()
-
-        self.writeToLogTestFile(message)
+        self.__myLogger.doInfoLogging(message)
 
         #Get the current working directory.
         cwd = os.getcwd()
@@ -268,15 +252,15 @@ class subtest(base_apptest,apps_test_directory_layout):
         #Form the absolute path to the subtest directory.
         abspath_subtest_dir = os.path.join(abspath_app_dir,subtest_name)
 
-        #Check out the application non-recursively.
+        # Check out the application non-recursively.
         if os.path.exists(abspath_app_dir):
             message = "In " + self.getNameOfApplication() + " " + \
                       self.getNameOfSubtest() + ", the " + self.getNameOfApplication() + \
                       "  directory already exists."
-            self.writeToLogTestFile(message)
+            self.__myLogger.doInfoLogging(message)
         else:
             message =  "Error! Application directory {} does not exist.".format(self.getNameOfApplication())
-            self.writeToLogTestFile(message)
+            self.__myLogger.doInfoLogging(message)
             sys.exit(message)
         
         
@@ -295,7 +279,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                                                                            root_path_to_checkout_directory=abspath_app_root_dir) 
                 if exit_status > 0:
                     message = "Update command failed: "
-                    self.writeToLogTestFile(message)
+                    self.__myLogger.doInfoLogging(message)
 
         if self.__number_of_iterations > 0:
             tmpdest2 = os.path.join(abspath_subtest_dir ,"Scripts",".testrc")
