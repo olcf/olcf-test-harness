@@ -1,0 +1,3 @@
+export RGT_MACHINE_NAME=Summitdev
+export RGT_SCHEDULER_TYPE=LSF
+export RGT_JOBLAUNCHER_TYPE=jsrun

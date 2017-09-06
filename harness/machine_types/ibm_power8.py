@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Author: Veronica G. Vergara L.
 #
@@ -19,7 +19,44 @@ class IBMpower8(BaseMachine):
                              workspace,harness_id,scripts_dir)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
-        self.read_rgt_test_input()
+        #self.read_rgt_test_input()
+        self.read_custom_rgt_test_input()
+
+    def read_custom_rgt_test_input(self):
+
+        template_dict = {}
+
+        if os.path.isfile(self.get_rgt_input_file_name()):
+            print("Reading custom key-value pairs from Power8 input")
+
+            # Read the custom parameters from RGT test input
+            delimiter = "="
+
+            fileobj = open(self.get_rgt_input_file_name())
+            filerecords = fileobj.readlines()
+            fileobj.close()
+
+            for record in filerecords:
+                (k,v) = record.split('=')
+                template_dict[k.strip().lower()] = v.strip()
+
+        # Variables needed by the harness
+        template_dict["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
+        template_dict["nccstestharnessmodule"] = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
+        template_dict["resultsdir"] = self.get_rgt_results_dir()
+        template_dict["workdir"] = self.get_rgt_workdir()
+        template_dict["startingdirectory"] = self.get_rgt_scripts_dir()
+        template_dict["unique_id_string"] = self.get_rgt_harness_id()
+
+
+        print(template_dict)
+
+        self.__rgt_test.set_custom_test_parameters(template_dict)
+        self.__rgt_test.print_custom_test_parameters()
+        self.__rgt_test.check_builtin_parameters()
+
+        self.__rgt_test.append_to_template_dict("pathtoexecutable",os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename()))
+        self.__rgt_test.append_to_template_dict("joblaunchcommand",self.get_jobLauncher_command(self.__rgt_test.get_value_from_template_dict("pathtoexecutable")))
 
     def read_rgt_test_input(self):
         total_processes = None
@@ -32,6 +69,7 @@ class IBMpower8(BaseMachine):
         buildscriptname = None
         checkscriptname = None
         reportscriptname = None
+        testinputfile = None
 
         if os.path.isfile(self.get_rgt_input_file_name()):
             print("Reading input file from Power8")
@@ -48,6 +86,7 @@ class IBMpower8(BaseMachine):
             checkscriptname_pattern = "checkscriptname"
             reportscriptname_pattern = "reportscriptname"
             executablename_pattern = "executablename"
+            testinputfile_pattern = "testinputfile"
             delimiter = "="
 
             fileobj = open(self.get_rgt_input_file_name())
@@ -197,18 +236,58 @@ class IBMpower8(BaseMachine):
                 print("Found executablename is " + executablename + " in IBM Power 8 machine")
             else:
                 print("No executablename provided in IBM Power 8 machine")
+                
+            # Find the name for the input of the test
+            temp_re = re.compile(testinputfile_pattern + "$")
+            for record in filerecords:
+                words = record.split(delimiter)
+                words[0] = words[0].strip().lower()
+                if temp_re.match(words[0]):
+                    testinputfile = words[1].strip('\n').strip()
+                    break
+            if testinputfile:
+                print("Found testinputfile is " + testinputfile + " in IBM Power 8 machine" )
+            else:
+                print("No testinputfile provided in IBM Power 8 machine")
 
 
             self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
-                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname)
+                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, 
+                                                checkscriptname, executablename, reportscriptname, testinputfile)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
 
     def get_jobLauncher_command(self,path_to_executable):
         print("Building jobLauncher command for Power8")
-        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_total_processes(),self.__rgt_test.get_processes_per_node(),self.__rgt_test.get_processes_per_socket(),path_to_executable)
+        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_template_dict())
         return jobLauncher_command
+
+    def make_custom_batch_script(self):
+        print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
+        templatefileobj = open(self.get_scheduler_template_file_name(),"r")
+        templatelines = templatefileobj.readlines()
+        templatefileobj.close()
+
+        template_dict = self.__rgt_test.get_template_dict()
+        replace_dict = {}
+
+        for (k,v) in template_dict.items():
+            print("key = ",k,"value = ",v)
+            newk = "__" + k + "__"
+            replace_dict[newk] = v
+
+        fileobj = open(self.__rgt_test.get_batchfilename(),"w")
+        for record in templatelines:
+            for (k,v) in replace_dict.items():
+                re_temp = re.compile(k)
+                record = re_temp.sub(v,record)
+            fileobj.write(record)
+        fileobj.close()
+
+        print("")
+        print("Replacement Dictionary")
+        print(replace_dict)
 
     def make_batch_script(self):
         print("Making batch script for Power8 using template called " + self.get_scheduler_template_file_name())
@@ -231,6 +310,7 @@ class IBMpower8(BaseMachine):
             (re.compile("__batchfilename__"),self.__rgt_test.get_batchfilename()),
             (re.compile("__pathtoexecutable__"),os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename())),
             (re.compile("__joblaunchcommand__"),self.get_jobLauncher_command(os.path.join(self.get_rgt_workspace(),"build_directory",self.__rgt_test.get_executablename()))),
+            (re.compile("__testinputfile__"),self.__rgt_test.get_testinputfile()),
            ]
 
         fileobj = open(self.__rgt_test.get_batchfilename(),"w")

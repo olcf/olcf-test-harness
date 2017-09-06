@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # 
 # Author: Veronica G. Vergara L.
 # 
@@ -81,9 +81,9 @@ class BaseMachine(metaclass=ABCMeta):
         write_job_id_exit_value = self.__scheduler.write_jobid_to_status(unique_id)
         return submit_exit_value and write_job_id_exit_value
 
-    def build_jobLauncher_command(self,total_processes,processes_per_node,processes_per_socket,path_to_executable):
+    def build_jobLauncher_command(self,template_dict):
         """ Return the jobLauncher command."""
-        return self.__jobLauncher.build_job_command(total_processes,processes_per_node,processes_per_socket,path_to_executable)
+        return self.__jobLauncher.build_job_command(template_dict)
 
     def start_build_script(self,buildscriptname):
         """ Return the status of the build."""
