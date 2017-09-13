@@ -18,7 +18,6 @@ class RgtTest():
         self.__checkscriptname = None
         self.__reportscriptname = None
         self.__executablename = None
-        self.__testinputfile = None
         self.__template_dict = {}
         self.__builtin_dict = {}
         self.__builtin_params = {'total_processes', 'processes_per_node', 'processes_per_socket', 
@@ -78,7 +77,6 @@ class RgtTest():
     def check_builtin_parameters(self):
         if (not self.__total_processes 
            or not self.__processes_per_node
-           or not self.__processes_per_socket
            or not self.__jobname
            or not self.__batchqueue
            or not self.__walltime
@@ -86,13 +84,11 @@ class RgtTest():
            or not self.__buildscriptname
            or not self.__checkscriptname
            or not self.__reportscriptname
-           or not self.__executablename
-           or not self.__testinputfile):
+           or not self.__executablename:
             print("")
             print("Required variable(s) missing!")
             print(" total_processes = ",self.__total_processes)
             print(" processes_per_node = ",self.__processes_per_node)
-            print(" processes_per_socket = ",self.__processes_per_socket)
             print(" jobname = ",self.__jobname)
             print(" batchqueue = ",self.__batchqueue)
             print(" walltime = ",self.__walltime)
@@ -101,7 +97,6 @@ class RgtTest():
             print(" checkscriptname = ",self.__checkscriptname)
             print(" reportscriptname = ",self.__reportscriptname)
             print(" executablename = ",self.__executablename)
-            print(" testinputfile = ",self.__testinputfile)
             print(" pathtoexecutable = ", self.__pathtoexecutable)
             
             exit(1)
@@ -168,7 +163,6 @@ class RgtTest():
         print("checkscriptname = " + self.__checkscriptname)
         print("reportscriptname = " + self.__reportscriptname)
         print("executablename = " + self.__executablename)
-        print("testinputfile = " + self.__testinputfile)
 
 if __name__ == "__main__":
     print('This is the RgtTest class')
