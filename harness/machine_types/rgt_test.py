@@ -78,7 +78,7 @@ class RgtTest():
            or not self.__buildscriptname
            or not self.__checkscriptname
            or not self.__reportscriptname
-           or not self.__executablename:
+           or not self.__executablename):
             print("")
             print("Required variable(s) missing!")
             print(" total_processes = ",self.__total_processes)
