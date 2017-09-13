@@ -22,11 +22,10 @@ class RgtTest():
         self.__builtin_dict = {}
         self.__builtin_params = {'total_processes', 'processes_per_node', 'processes_per_socket', 
         'jobname', 'batchqueue', 'walltime', 'batchfilename', 'buildscriptname', 'checkscriptname',
-        'executablename', 'reportscriptname', 'testinputfile'}
+        'executablename', 'reportscriptname'}
 
     def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, 
-                            walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname,
-                            testinputfile):
+                            walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
         self.__processes_per_socket = processes_per_socket
@@ -38,7 +37,6 @@ class RgtTest():
         self.__checkscriptname = checkscriptname
         self.__reportscriptname = reportscriptname
         self.__executablename = executablename
-        self.__testinputfile = testinputfile
 
     def set_custom_test_parameters(self,template_dict):
         self.__template_dict = template_dict
@@ -47,8 +45,6 @@ class RgtTest():
                 self.__total_processes = v
             elif k == 'processes_per_node':
                 self.__processes_per_node = v
-            elif k == 'processes_per_socket':
-                self.__processes_per_socket = v
             elif k == 'jobname':
                 self.__jobname = v
             elif k == 'batchqueue':
@@ -65,8 +61,6 @@ class RgtTest():
                 self.__reportscriptname = v
             elif k == 'executablename':
                 self.__executablename = v
-            elif k == 'testinputfile':
-                self.__testinputfile = v
 
     def append_to_template_dict(self,k,v):
         self.__template_dict[k] = v
@@ -106,9 +100,6 @@ class RgtTest():
 
     def get_batchfilename(self):
         return self.__batchfilename
-    
-    def get_testinputfile(self):
-        return self.__testinputfile
 
     def get_buildscriptname(self):
         return self.__buildscriptname
