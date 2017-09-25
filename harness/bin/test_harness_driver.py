@@ -475,8 +475,8 @@ def execute_submit_script(path_to_tmp_workspace,
             submit_command = "./submit_executable.x "
             submit_command_args = "-p " + path_to_tmp_workspace + " -i " + unique_id
 
-            command2 = submit_command + submit_command_args
-            submit_exit_value = os.system(command2)
+        command2 = submit_command + submit_command_args
+        submit_exit_value = os.system(command2)
             
     os.chdir(path_to_scripts_dir)
     jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
