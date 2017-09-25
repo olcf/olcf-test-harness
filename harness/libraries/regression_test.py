@@ -47,6 +47,8 @@ class Harness:
 
     def run_me(self,
                log_level=None,
+               my_effective_command_line=None,
+               my_warning_messages=None,
                nm_workers=1):
         
         # Define a logger that streams to file.
@@ -59,6 +61,14 @@ class Harness:
         # Log the start of the harness.
         message = "Start of harness."
         self.__myLogger.doInfoLogging(message)
+
+        # Log the effective command line"
+        if my_effective_command_line:
+            self.__myLogger.doInfoLogging(my_effective_command_line)
+
+        # Log the command line warning messages
+        if my_warning_messages:
+            self.__myLogger.doInfoLogging(my_warning_messages)
 
         list_of_applications = []
         list_of_applications_names = []

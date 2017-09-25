@@ -50,7 +50,7 @@ PATH_TO_HARNESS_TOP_LEVEL="/ccs/proj/scgs/NCCS_Test_Harness_Workspace/acceptance
 export PATH_TO_HARNESS_TOP_LEVEL
 
 #-----------------------------------------------------
-# URL to svn repository of acceptance test harness   -
+# URL to repository of acceptance test harness       -
 # applications.                                      -
 #-----------------------------------------------------
 MY_APP_REPO='gitlab@gitlab.ccs.ornl.gov:olcf-acceptance/olcf4-acceptance-tests.git'
