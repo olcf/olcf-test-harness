@@ -27,6 +27,7 @@ from libraries.status_file import summarize_status_file
 from bin.test_harness_driver import test_harness_driver
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr
+from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
 
 #
@@ -91,7 +92,8 @@ class subtest(base_apptest,apps_test_directory_layout):
     def doTasks(self,
                 tasks=None,
                 test_checkout_lock=None,
-                test_display_lock=None):
+                test_display_lock=None,
+                stdout_stderr=None):
         """
         :param list_of_string my_tasks: A list of the strings 
                                         where each element is an application
@@ -138,7 +140,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                 if test_checkout_lock:
                     test_checkout_lock.release()
             elif harness_task == subtest.starttest:
-                self.start_test()
+                self.start_test(stdout_stderr)
 
             elif harness_task == subtest.stoptest:
                 self.stop_test()
@@ -293,7 +295,8 @@ class subtest(base_apptest,apps_test_directory_layout):
     #
     # Starts the regression test.
     #
-    def start_test(self):
+    def start_test(self,
+                   stdout_stderr):
          
 
         # If the file kill file exits then remove it.
@@ -313,9 +316,14 @@ class subtest(base_apptest,apps_test_directory_layout):
 
                 pathtoscripts = self.get_local_path_to_scripts() 
 
-                (stdout,stderr,exit_status) = \
-                run_as_subprocess_command_return_stdout_stderr_exitstatus(starttestcomand,
-                                                                          command_execution_directory=pathtoscripts)
+                if stdout_stderr == "logfile":
+                    (stdout,stderr,exit_status) = \
+                    run_as_subprocess_command_return_stdout_stderr_exitstatus(starttestcomand,
+                                                                              command_execution_directory=pathtoscripts)
+                elif stdout_stderr == "screen":
+                    (stdout,stderr,exit_status) = \
+                    run_as_subprocess_command_return_exitstatus(starttestcomand,
+                                                                command_execution_directory=pathtoscripts)
                 out.writelines(stdout)
                 err.writelines(stderr)
 
@@ -554,12 +562,14 @@ class subtest(base_apptest,apps_test_directory_layout):
 
 def do_application_tasks(application_name,
                          app_test_list,
-                         tasks):
+                         tasks,
+                         stdout_stderr):
     import random
 
     for ip in range(len(app_test_list)):
         app_test = app_test_list[ip]
-        app_test.doTasks(tasks)
+        app_test.doTasks(tasks=tasks,
+                         stdout_stderr=stdout_stderr)
 
     # loop_message = "In Loop iteration {} of {}."
     # for ip in range(15):

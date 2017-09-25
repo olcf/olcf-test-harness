@@ -117,7 +117,8 @@ def runtests(my_arg_string=None):
     rgt.run_me(log_level=loglevel,
                my_effective_command_line=my_effective_command_line,
                my_warning_messages=warning_message,
-               nm_workers=nm_workers)
+               nm_workers=nm_workers,
+               stdout_stderr=stdout_stderr)
 
     return rgt
     
