@@ -140,7 +140,12 @@ class subtest(base_apptest,apps_test_directory_layout):
                 if test_checkout_lock:
                     test_checkout_lock.release()
             elif harness_task == subtest.starttest:
+                message = "Start of starting test."
+                self.__myLogger.doInfoLogging(message)
+                
                 self.start_test(stdout_stderr)
+                message = "End of starting test"
+                self.__myLogger.doInfoLogging(message)
 
             elif harness_task == subtest.stoptest:
                 self.stop_test()

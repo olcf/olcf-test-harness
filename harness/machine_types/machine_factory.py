@@ -1,3 +1,4 @@
+# Python 
 import os
 from .cray_xk7 import CrayXK7
 from .ibm_power8 import IBMpower8
@@ -5,8 +6,12 @@ from .ibm_power8 import IBMpower8
 
 class MachineFactory:
 
+    def __init__(self):
+        return
+
     @staticmethod
-    def create_machine(path_to_workspace,harness_id):
+    def create_machine(path_to_workspace,
+                       harness_id):
         rgt_machine_name = os.environ.get("RGT_MACHINE_NAME")
         rgt_scheduler_type = os.environ.get("RGT_SCHEDULER_TYPE")
         rgt_jobLauncher_type = os.environ.get("RGT_JOBLAUNCHER_TYPE")
@@ -38,7 +43,4 @@ class MachineFactory:
             print("Machine name does not exist. Good bye!")
 
         return tmp_machine
-
-    def __init__(self):
-        pass
 
