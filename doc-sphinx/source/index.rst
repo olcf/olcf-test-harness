@@ -9,12 +9,15 @@ Welcome to NCCS_Test_Harness's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    intro
-   modules
+   Packages
 
 .. automodule:: bin.runtests
+   :members:
+
+.. automodule:: machine_types.rgt_test
    :members:
 
 

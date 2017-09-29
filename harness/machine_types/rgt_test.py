@@ -1,11 +1,17 @@
-#!/usr/bin/env python
+""" 
+.. module:: rgt_test
+    :platform: Linux
+    :synopsis: Abstracts the rgt_test_input.txt file.
+
+"""
 #
 # Author: Veronica G. Vergara L.
 #
 
 
 class RgtTest():
-    """ 
+    """ This class is the abstraction of rgt_test_input.txt file.
+
     """
 
     def __init__(self):
