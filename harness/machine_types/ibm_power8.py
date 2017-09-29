@@ -10,15 +10,30 @@ import re
 
 class IBMpower8(BaseMachine):
     
-    def __init__(self,name='IBM Power8',scheduler=None,jobLauncher=None,
-                 numNodes=0,numSocketsPerNode=0,numCoresPerSocket=0,
-                 rgt_test_input_file="rgt_test_input.txt",workspace=None,
-                 harness_id=None,scripts_dir=None):
-        BaseMachine.__init__(self,name,scheduler,jobLauncher,numNodes,
-                             numSocketsPerNode,numCoresPerSocket,rgt_test_input_file,
-                             workspace,harness_id,scripts_dir)
+    def __init__(self,
+                 name='IBM Power8',
+                 scheduler=None,
+                 jobLauncher=None,
+                 numNodes=0,
+                 numSocketsPerNode=0,
+                 numCoresPerSocket=0,
+                 rgt_test_input_file="rgt_test_input.txt",
+                 workspace=None,
+                 harness_id=None,
+                 scripts_dir=None):
+        BaseMachine.__init__(self,
+                             name,
+                             scheduler,
+                             jobLauncher,
+                             numNodes,
+                             numSocketsPerNode,
+                             numCoresPerSocket,
+                             rgt_test_input_file,
+                             workspace,harness_id,
+                             scripts_dir)
         self.__rgt_test_input = None
         self.__rgt_test = RgtTest()
+
         #self.read_rgt_test_input()
         self.read_custom_rgt_test_input()
 
@@ -47,7 +62,6 @@ class IBMpower8(BaseMachine):
         template_dict["workdir"] = self.get_rgt_workdir()
         template_dict["startingdirectory"] = self.get_rgt_scripts_dir()
         template_dict["unique_id_string"] = self.get_rgt_harness_id()
-
 
         print(template_dict)
 
