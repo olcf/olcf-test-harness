@@ -12,7 +12,7 @@ Contents:
    :maxdepth: 4
 
    intro
-   Packages
+   packages
 
 .. automodule:: bin.runtests
    :members:
