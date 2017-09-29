@@ -11,8 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-    intro
-    modules
+   intro
+   modules
 
 .. automodule:: bin.runtests
    :members:
