@@ -10,6 +10,7 @@ from abc import abstractmethod, ABCMeta
 import os
 import shutil
 import subprocess
+import shlex
 
 class BaseMachine(metaclass=ABCMeta):
     
