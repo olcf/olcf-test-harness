@@ -75,10 +75,10 @@ def main():
     # check script, else call user generated check script.
     rgt_test_input_file = os.path.join(starting_directory,"rgt_test_input.txt")
     if os.path.isfile(rgt_test_input_file):
-        auto_generated_check_script(path_to_results, 
+        auto_generated_check_script(dir_head1,path_to_results, 
                                     test_id_string)
     else:
-        user_generated_check_script(path_to_results,
+        user_generated_check_script(dir_head1,path_to_results,
                                     test_id_string)
         # Run report_executable.x, if it exists.
         report_command_argv = ['./report_executable.x']
@@ -105,7 +105,7 @@ def main():
 
     return
 
-def user_generated_check_script(path_to_results,
+def user_generated_check_script(dir_head1,path_to_results,
                                 test_id_string):
 
     path_to_scripts_dir = os.getcwd() 
@@ -124,7 +124,7 @@ def user_generated_check_script(path_to_results,
     
     return
 
-def auto_generated_check_script(path_to_results,
+def auto_generated_check_script(dir_head1,path_to_results,
                                 test_id_string):
 
     mymachine = MachineFactory.create_machine(dir_head1,test_id_string)
