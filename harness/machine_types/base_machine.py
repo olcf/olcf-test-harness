@@ -102,7 +102,7 @@ class BaseMachine(metaclass=ABCMeta):
         shutil.copytree(path_to_source,path_to_build_directory)
         os.chdir(path_to_build_directory)
         print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
-        args = shlex.split(buildscriptcommand)
+        args = shlex.split(buildscriptname)
         build_outfile = "output_build.txt"
         build_stdout = open(build_outfile,"w")
         p = subprocess.Popen(args,stdout=build_stdout,stderr=subprocess.STDOUT)
