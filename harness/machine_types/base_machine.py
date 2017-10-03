@@ -9,6 +9,7 @@ from .jobLauncher_factory import JobLauncherFactory
 from abc import abstractmethod, ABCMeta
 import os
 import shutil
+import subprocess
 
 class BaseMachine(metaclass=ABCMeta):
     
@@ -100,7 +101,14 @@ class BaseMachine(metaclass=ABCMeta):
         shutil.copytree(path_to_source,path_to_build_directory)
         os.chdir(path_to_build_directory)
         print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
-        build_exit_status = os.system(buildscriptname)
+        args = shlex.split(buildscriptcommand)
+        build_outfile = "output_build.txt"
+        build_stdout = open(build_outfile,"w")
+        p = subprocess.Popen(args,stdout=build_stdout,stderr=subprocess.STDOUT)
+        p.wait()
+        build_stdout.close()
+
+        build_exit_status = p.returncode
         os.chdir(currentdir)
         return build_exit_status
 
