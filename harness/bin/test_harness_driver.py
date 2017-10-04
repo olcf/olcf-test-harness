@@ -44,6 +44,9 @@ def test_harness_driver(argv=None):
     #
     kill_file = apps_test_directory_layout.kill_file
     if os.path.exists(kill_file):
+        message =  "The kill file '{}' exists which prevents this test from running. It must be removed ".format(kill_file)
+        message += "to run this test."
+        print(message)
         return
 
     testrc_file = apps_test_directory_layout.rc_file
@@ -189,25 +192,24 @@ def auto_generated_scripts(path_to_tmp_workspace,unique_id,jstatus,workspace,res
     
     """
     
-    # Make the batch script.
-    mymachine = MachineFactory.create_machine(path_to_tmp_workspace,unique_id)
+    # Instantiate the machine for this computer.
+    mymachine = MachineFactory.create_machine(path_to_tmp_workspace,
+                                              unique_id)
 
     # Build the executable for this test on the specified machine
     jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
     build_exit_value = mymachine.build_executable()
-    print("build_exit_value = " + str(build_exit_value))
     jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
 
     # Create the batch script
     mymachine.make_custom_batch_script()
 
-    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
     # Submit the batch file to the scheduler.
+    jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
     submit_exit_value = mymachine.submit_batch_script()
     jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
 
     job_id = read_job_id(unique_id)
-    print("Job ID = " + job_id)
     jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
     
     return build_exit_value and submit_exit_value
