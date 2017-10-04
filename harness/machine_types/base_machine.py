@@ -126,7 +126,14 @@ class BaseMachine(metaclass=ABCMeta):
         print("Starting check script in base_machine: ",os.getcwd())
         path_to_checkscript = os.path.join(self.get_rgt_scripts_dir(),checkscriptname)
         print("Using check script: ",path_to_checkscript)
-        check_exit_status = os.system(path_to_checkscript)
+
+        args = shlex.split(path_to_checkscript)
+        check_outfile = "output_check.txt"
+        check_stdout = open(check_outfile, "w")
+        p = subprocess.Popen(args,stdout=check_stdout,stderr=subprocess.STDOUT)
+        p.wait()
+        check_stdout.close()
+        check_exit_status = p.returncode
         os.chdir(currentdir)
         return check_exit_status
 
