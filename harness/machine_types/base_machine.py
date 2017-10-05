@@ -163,7 +163,18 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
         print("current directory in base_machine: ",currentdir)
-        report_exit_status = os.system(reportscriptname)
+        os.chdir(self.get_rgt_results_dir())
+        print("Starting check script in base_machine: ",os.getcwd())
+        path_to_reportscript = os.path.join(self.get_rgt_scripts_dir(),reportscriptname)
+        print("Using report script: ",path_to_reportscript)
+
+        args = shlex.split(path_to_reportscript)
+        report_outfile = "output_report.txt"
+        report_stdout = open(report_outfile, "w")
+        p = subprocess.Popen(args,stdout=report_stdout,stderr=subprocess.STDOUT)
+        p.wait()
+        report_stdout.close()
+        report_exit_status = p.returncode
         os.chdir(currentdir)
         return report_exit_status
 
