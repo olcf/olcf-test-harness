@@ -47,7 +47,10 @@ class Harness:
 
     def run_me(self,
                log_level=None,
-               nm_workers=1):
+               my_effective_command_line=None,
+               my_warning_messages=None,
+               nm_workers=1,
+               stdout_stderr=None):
         
         # Define a logger that streams to file.
         currenttime = time.localtime()
@@ -59,6 +62,14 @@ class Harness:
         # Log the start of the harness.
         message = "Start of harness."
         self.__myLogger.doInfoLogging(message)
+
+        # Log the effective command line"
+        if my_effective_command_line:
+            self.__myLogger.doInfoLogging(my_effective_command_line)
+
+        # Log the command line warning messages
+        if my_warning_messages:
+            self.__myLogger.doInfoLogging(my_warning_messages)
 
         list_of_applications = []
         list_of_applications_names = []
@@ -94,14 +105,14 @@ class Harness:
 
             future_to_application_name = {}
             for my_application_name in list_of_applications_names:
-                future_to_application_name[application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks)] = my_application_name 
+                future_to_application_name[application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks,stdout_stderr)] = my_application_name 
 
                 # Log that the application has been submitted for tasks.
                 message = "Application " + my_application_name + " has been submitted for running tasks."
                 self.__myLogger.doInfoLogging(message)
 
             # The line below is the same as the immediate 2 lines above.
-            # future_to_application_name = {application_executor.submit(apptest.do_application_tasks,app_name,app_test_dict[app_name],self.__tasks) : app_name for app_name in list_of_applications_names}
+            # future_to_application_name = {application_executor.submit(apptest.do_application_tasks,app_name,app_test_dict[app_name],self.__tasks,stdout_stderr) : app_name for app_name in list_of_applications_names}
            
             for my_future in concurrent.futures.as_completed(future_to_application_name):
                 name = future_to_application_name[my_future]

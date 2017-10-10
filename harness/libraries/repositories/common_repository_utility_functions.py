@@ -213,6 +213,43 @@ def run_as_subprocess_command_return_stdout_stderr_exitstatus(cmd,
 
     return (stdout,stderr,exit_status)
 
+def run_as_subprocess_command_return_exitstatus(cmd,
+                                                command_execution_directory=None):
+    """ Runs the command in the string cmd by subprocess.
+
+            :param cmd: A string containing the command to run
+            :type cmd: string
+
+            :param command_execution_directory: The directory where the command is executed.
+            :type command_execution_directory: string
+    """
+    exit_status = 0
+    stdout = " Standard output piped to screen"
+    stderr = " Standard error piped to screen"
+    if command_execution_directory:
+        my_command = "cd {dir}; {command}".format(dir=command_execution_directory,
+                                                  command=cmd)
+    else:
+        my_command = cmd
+        exit_status = None
+
+    message = None
+
+    try:
+        initial_dir = os.getcwd()
+        exit_status = subprocess.check_call(my_command,
+                                            shell=True,
+                                            stdout=None,
+                                            stderr=None)
+    except subprocess.CalledProcessError as exc :
+        exit_status = 1
+        message = "Error in subprocess command: " + exc.cmd
+    except:
+        exit_status = 1
+        message = "Unexpected error in command! " + my_command
+    
+    return (stdout,stderr,exit_status)
+
 def get_type_of_repository():
     return os.getenv('RGT_TYPE_OF_REPOSITORY')
 

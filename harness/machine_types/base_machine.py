@@ -9,6 +9,8 @@ from .jobLauncher_factory import JobLauncherFactory
 from abc import abstractmethod, ABCMeta
 import os
 import shutil
+import subprocess
+import shlex
 
 class BaseMachine(metaclass=ABCMeta):
     
@@ -100,7 +102,14 @@ class BaseMachine(metaclass=ABCMeta):
         shutil.copytree(path_to_source,path_to_build_directory)
         os.chdir(path_to_build_directory)
         print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
-        build_exit_status = os.system(buildscriptname)
+        args = shlex.split(buildscriptname)
+        build_outfile = "output_build.txt"
+        build_stdout = open(build_outfile,"w")
+        p = subprocess.Popen(args,stdout=build_stdout,stderr=subprocess.STDOUT)
+        p.wait()
+        build_stdout.close()
+
+        build_exit_status = p.returncode
         os.chdir(currentdir)
         return build_exit_status
 
@@ -117,7 +126,14 @@ class BaseMachine(metaclass=ABCMeta):
         print("Starting check script in base_machine: ",os.getcwd())
         path_to_checkscript = os.path.join(self.get_rgt_scripts_dir(),checkscriptname)
         print("Using check script: ",path_to_checkscript)
-        check_exit_status = os.system(path_to_checkscript)
+
+        args = shlex.split(path_to_checkscript)
+        check_outfile = "output_check.txt"
+        check_stdout = open(check_outfile, "w")
+        p = subprocess.Popen(args,stdout=check_stdout,stderr=subprocess.STDOUT)
+        p.wait()
+        check_stdout.close()
+        check_exit_status = p.returncode
         os.chdir(currentdir)
         return check_exit_status
 
@@ -147,7 +163,18 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
         print("current directory in base_machine: ",currentdir)
-        report_exit_status = os.system(reportscriptname)
+        os.chdir(self.get_rgt_results_dir())
+        print("Starting check script in base_machine: ",os.getcwd())
+        path_to_reportscript = os.path.join(self.get_rgt_scripts_dir(),reportscriptname)
+        print("Using report script: ",path_to_reportscript)
+
+        args = shlex.split(path_to_reportscript)
+        report_outfile = "output_report.txt"
+        report_stdout = open(report_outfile, "w")
+        p = subprocess.Popen(args,stdout=report_stdout,stderr=subprocess.STDOUT)
+        p.wait()
+        report_stdout.close()
+        report_exit_status = p.returncode
         os.chdir(currentdir)
         return report_exit_status
 

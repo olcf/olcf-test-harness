@@ -9,9 +9,10 @@ from libraries import status_file
 from machine_types.machine_factory import MachineFactory
 
 #
-# Author: Arnold Tharrington
-# Modified: Wayne Joubert, Veronica G. Vergara Larrea
-# National Center for Computational Sciences, Scientific Computing Group.
+# Author: Arnold Tharrington, Scientific Computing Group
+# Modified by: Wayne Joubert, Scientific Computing Group
+# Modified by:: Veronica G. Vergara Larrea, User Assitance Group
+# National Center for Computational Sciences
 # Oak Ridge National Laboratory
 #
 
@@ -19,7 +20,7 @@ from machine_types.machine_factory import MachineFactory
 # This program drives the check_executable.x script.
 # It is designed such that it will be called from the Scripts directory.
 #
-#
+
 def main():
 
     #
@@ -61,9 +62,7 @@ def main():
         job_id = str.strip(job_id)
 
         
-    #
     # Call the check_executable.x script only after the job_id.txt file is created.
-    #
     jstatus = status_file.StatusFile(test_id_string,mode="Old")
     jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
 
@@ -72,24 +71,19 @@ def main():
     #
     os.putenv('RGT_PATH_TO_SCRIPTS_DIR',starting_directory)
 
-    # Need to add the check for the rgt_test_input.txt file here.
-    # If the rgt_test_input.txt file exists call user auto generated
-    # check script, else call use generated check script.
+    # If the rgt_test_input.txt file exists call auto generated
+    # check script, else call user generated check script.
     rgt_test_input_file = os.path.join(starting_directory,"rgt_test_input.txt")
     if os.path.isfile(rgt_test_input_file):
-        auto_generated_check_script(path_to_results, 
-                                    test_id_string)
+        auto_generated_check_script(path_to_results,test_id_string)
     else:
-        user_generated_check_script(path_to_results,
-                                    test_id_string)
-    
-
-    # Run report_executable.x, if it exists.
-    report_command_argv = ['./report_executable.x']
-    if os.path.exists(report_command_argv[0]):
-        for args1 in sys.argv[1:] :
-            report_command_argv = report_command_argv + [args1]
-            report_command_argv = subprocess.call(report_command_argv)
+        user_generated_check_script(path_to_results,test_id_string)
+        # Run report_executable.x, if it exists.
+        report_command_argv = ['./report_executable.x']
+        if os.path.exists(report_command_argv[0]):
+            for args1 in sys.argv[1:] :
+                report_command_argv = report_command_argv + [args1]
+                report_command_argv = subprocess.call(report_command_argv)
 
     jstatus = status_file.StatusFile(test_id_string,mode="Old")
     jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
@@ -109,8 +103,7 @@ def main():
 
     return
 
-def user_generated_check_script(path_to_results,
-                                test_id_string):
+def user_generated_check_script(path_to_results,test_id_string):
 
     path_to_scripts_dir = os.getcwd() 
     sys.path.insert(0,path_to_scripts_dir)
@@ -118,8 +111,7 @@ def user_generated_check_script(path_to_results,
 
     if (os.path.isfile(check_executable_python_file) ):
         import check_executable
-        check_executable.check_executable(path_to_results,
-                                          test_id_string)
+        check_executable.check_executable(path_to_results,test_id_string)
     else:
         check_command_argv = ["./check_executable.x"]
         for args1 in sys.argv[1:] :
@@ -130,27 +122,15 @@ def user_generated_check_script(path_to_results,
 
 def auto_generated_check_script(path_to_results,
                                 test_id_string):
-    message =  "The_auto_generated_check_functionality_is_not_implemented."
 
-    starting_directory = os.getcwd()
-    (dir_head1, dir_tail1) = os.path.split(starting_directory)
-    path2 = os.path.join(dir_head1,"Status",test_id_string,"job_status.txt")
+    mymachine = MachineFactory.create_machine(path_to_results,test_id_string)
+          
+    check_exit_value = mymachine.check_executable()
+    print("check_exit_value = " + str(check_exit_value))
 
-    file_obj2 = open(path2,"w")
-    file_obj2.write(message)
-    file_obj2.close()
+    report_exit_value = mymachine.report_executable()
+    print("report_exit_value = " + str(report_exit_value))
 
-    # When this auto_generated_check_script functionality
-    # is implmented we will use the machine class to launch the 
-    # check scripts.
-    #
-    # mymachine = MachineFactory.create_machine(dir_head1,test_id_string)
-    #      
-    # check_exit_value = mymachine.check_executable()
-    # print("check_exit_value = " + str(check_exit_value))
-
-    # report_exit_value = mymachine.report_executable()
-    # print("report_exit_value = " + str(report_exit_value))
     return
 
 def usage():

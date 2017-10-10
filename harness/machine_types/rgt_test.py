@@ -1,15 +1,26 @@
-#!/usr/bin/env python
+""" 
+.. module:: rgt_test
+    :platform: Linux
+    :synopsis: Abstracts the rgt_test_input.txt file.
+
+"""
 #
 # Author: Veronica G. Vergara L.
 #
 
 
 class RgtTest():
+    """ This class is the abstraction of rgt_test_input.txt file.
+
+    """
 
     def __init__(self):
+        se;f.__total_number_nodes = None
         self.__total_processes = None
         self.__processes_per_node = None
         self.__processes_per_socket = None
+        self.__total_number_gpus = None
+        self.__number_gpus_per_node =None
         self.__jobname = None
         self.__batchqueue = None
         self.__walltime = None
@@ -20,12 +31,29 @@ class RgtTest():
         self.__executablename = None
         self.__template_dict = {}
         self.__builtin_dict = {}
-        self.__builtin_params = {'total_processes', 'processes_per_node', 'processes_per_socket', 
-        'jobname', 'batchqueue', 'walltime', 'batchfilename', 'buildscriptname', 'checkscriptname',
-        'executablename', 'reportscriptname'}
+        self.__builtin_params = {'total_processes', 
+                                 'processes_per_node', 
+                                 'processes_per_socket', 
+                                 'jobname', 
+                                 'batchqueue', 
+                                 'walltime', 
+                                 'batchfilename', 
+                                 'buildscriptname', 
+                                 'checkscriptname',
+                                 'executablename', 
+                                 'reportscriptname'}
 
-    def set_test_parameters(self,total_processes, processes_per_node, processes_per_socket, jobname, batchqueue, 
-                            walltime, batchfilename, buildscriptname, checkscriptname, executablename, reportscriptname):
+    def set_test_parameters(self,
+                            total_processes, 
+                            processes_per_node, 
+                            processes_per_socket, 
+                            jobname, batchqueue, 
+                            walltime, 
+                            batchfilename, 
+                            buildscriptname, 
+                            checkscriptname, 
+                            executablename, 
+                            reportscriptname):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
         self.__processes_per_socket = processes_per_socket
