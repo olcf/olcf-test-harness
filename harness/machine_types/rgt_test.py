@@ -15,7 +15,7 @@ class RgtTest():
     """
 
     def __init__(self):
-        se;f.__total_number_nodes = None
+        self.__total_number_nodes = None
         self.__total_processes = None
         self.__processes_per_node = None
         self.__processes_per_socket = None
