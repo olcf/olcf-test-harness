@@ -31,15 +31,17 @@ class LSF(BaseScheduler):
         print("Submitting job from LSF class using batchfilename " + batchfilename)
         qcommand = self.__submitCmd
         args = shlex.split(qcommand)
-        temp_stdout = "t1.out"
-        temp_stderr = "t1.err"
+        temp_stdout = "submit.out"
+        temp_stderr = "submit.err"
 
         submit_stdout = open(temp_stdout,"w")
         submit_stderr = open(temp_stderr,"w")
-        jobfileobj = open(batchfilename,"r")
-        p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr,stdin=jobfileobj)
-        jobfileobj.close()
+        #jobfileobj = open(batchfilename,"r")
+        #p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr,stdin=jobfileobj)
+        #jobfileobj.close()
 
+        # We no longer need 'bsub <' since we are using the OLCF bsub
+        p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr)
         p.wait()
 
         submit_stdout.close()
