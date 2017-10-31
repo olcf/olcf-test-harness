@@ -21,34 +21,8 @@ from machine_types.machine_factory import MachineFactory
 # It is designed such that it will be called from the Scripts directory.
 #
 
-def main():
-
-    #
-    # Get the command line arguments.
-    #
-    try:
-        opts,args = getopt.getopt(sys.argv[1:],"hi:p:")
-
-    except getopt.GetoptError:
-            usage()
-            sys.exit(2)
-
-    #
-    # Parse the command line arguments.
-    #
-    for o, a in opts:
-        if o == "-p":
-            path_to_results = a
-        elif o == "-i":
-            test_id_string = a
-        elif o == ("-h", "--help"):
-            usage()
-            sys.exit()
-        else:
-            usage()
-            sys.exit()
-
-
+def check_executable_driver(path_to_results,
+                            test_id_string):
     #
     # Wait till job_id.txt is created. 
     #
@@ -100,6 +74,38 @@ def main():
     # Log result of status check.
     jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END,
                       job_correctness)
+
+    return
+
+def main():
+
+    #
+    # Get the command line arguments.
+    #
+    try:
+        opts,args = getopt.getopt(sys.argv[1:],"hi:p:")
+
+    except getopt.GetoptError:
+            usage()
+            sys.exit(2)
+
+    #
+    # Parse the command line arguments.
+    #
+    for o, a in opts:
+        if o == "-p":
+            path_to_results = a
+        elif o == "-i":
+            test_id_string = a
+        elif o == ("-h", "--help"):
+            usage()
+            sys.exit()
+        else:
+            usage()
+            sys.exit()
+
+    check_executable_driver(path_to_results,
+                            test_id_string)
 
     return
 
