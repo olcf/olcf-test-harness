@@ -5,6 +5,7 @@ import sys
 # Local package imports
 from .cray_xk7 import CrayXK7
 from .ibm_power8 import IBMpower8
+from .ibm_power9 import IBMpower9
 from .machine_factory_exceptions import MachineTypeNotImplementedError
 from .machine_factory_exceptions import MachineTypeUndefinedEnvironmentalVariableError
 
@@ -73,6 +74,20 @@ class MachineFactory:
                                       scripts_dir=rgt_scripts_dir)
             elif rgt_machine_name == "summitdev":
                 tmp_machine = IBMpower8(name=rgt_machine_name,
+                                        scheduler=rgt_scheduler_type,
+                                        jobLauncher=rgt_jobLauncher_type,
+                                        workspace=rgt_path_to_workspace,
+                                        harness_id=rgt_harness_id,
+                                        scripts_dir=rgt_scripts_dir)
+            elif rgt_machine_name == "peak":
+                tmp_machine = IBMpower9(name=rgt_machine_name,
+                                        scheduler=rgt_scheduler_type,
+                                        jobLauncher=rgt_jobLauncher_type,
+                                        workspace=rgt_path_to_workspace,
+                                        harness_id=rgt_harness_id,
+                                        scripts_dir=rgt_scripts_dir)
+            elif rgt_machine_name == "summit":
+                tmp_machine = IBMpower9(name=rgt_machine_name,
                                         scheduler=rgt_scheduler_type,
                                         jobLauncher=rgt_jobLauncher_type,
                                         workspace=rgt_path_to_workspace,
