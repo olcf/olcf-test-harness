@@ -52,6 +52,8 @@ class IBMpower9(BaseMachine):
             fileobj.close()
 
             for record in filerecords:
+                if not record.strip() or record.strip()[0] == '#':
+                  continue
                 (k,v) = record.split('=')
                 template_dict[k.strip().lower()] = v.strip()
 
