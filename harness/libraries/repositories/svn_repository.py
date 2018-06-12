@@ -19,7 +19,7 @@ class SVNRepository(BaseRepository):
     def __init__(self,
                  location_of_repository=None,
                  internal_repo_path_to_applications=None,
-                 repository_branch=None):
+                 my_repository_branch=None):
         self.__binaryName = "svn"
         self.__locationOfRepository = location_of_repository
         self.__internalPathToApplications = internal_repo_path_to_applications
@@ -63,7 +63,8 @@ class SVNRepository(BaseRepository):
                          stdout_file_handle,
                          stderr_file_handle,
                          root_path_to_checkout_directory,
-                         directory_to_checkout):
+                         directory_to_checkout,
+                         my_logger=None):
         """ Performs a sparse checkout of directory from the repository.
 
             :param stdout_file_handle: A file object to write standard out
@@ -122,7 +123,8 @@ class SVNRepository(BaseRepository):
                                stdout_handle,
                                stderr_handle,
                                application_name,
-                               root_path_to_checkout_directory):
+                               root_path_to_checkout_directory,
+                               my_logger=None):
         """Does sparse checkout of source applications source directory"""
         message = ""
         exit_status = 0
