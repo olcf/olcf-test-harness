@@ -29,7 +29,17 @@ class LSF(BaseScheduler):
 
     def submit_job(self,batchfilename):
         print("Submitting job from LSF class using batchfilename " + batchfilename)
-        qcommand = self.__submitCmd + " -q $RGT_SUBMIT_QUEUE $RGT_SUBMIT_ARGS " + batchfilename
+
+        qargs = ""
+        if "RGT_SUBMIT_QUEUE" in os.environ:
+            qargs = " -q $RGT_SUBMIT_QUEUE "
+
+        if "RGT_SUBMIT_ARGS" in os.environ:
+            qargs = qargs + os.getenv('RGT_SUBMIT_ARGS')
+
+        qcommand = self.__submitCmd + " " + qargs + " " + batchfilename
+        print(qcommand)
+
         args = shlex.split(qcommand)
         temp_stdout = "submit.out"
         temp_stderr = "submit.err"
