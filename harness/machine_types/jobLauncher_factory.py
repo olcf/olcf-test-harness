@@ -7,6 +7,7 @@
 from .aprun import Aprun
 from .poe import Poe
 from .jsrun import Jsrun
+from .srun import Srun
 
 class JobLauncherFactory:
 
@@ -21,6 +22,8 @@ class JobLauncherFactory:
             tmp_jobLauncher = Poe()
         elif jobLauncher_type == "jsrun":
             tmp_jobLauncher = Jsrun()
+        elif jobLauncher_type == "srun":
+            tmp_jobLauncher = Srun()
         else:
             print("Job launcher not supported. Good bye!")
 
