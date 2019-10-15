@@ -56,8 +56,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'NCCS_Test_Harness'
-copyright = '2016, Many People'
-author = 'Many People'
+copyright = '2016'
+author = 'Arnold Tharrington, Veronica Vergara, Wayne Joubert, Reuben Budiardja, Mark Berrill'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -87,7 +87,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['**/RETIRED_nccs_test_harness_kepler_upgrade']
+# exclude_patterns = ['**/RETIRED_nccs_test_harness_kepler_upgrade']
 
 # This value is a list of autodoc directive flags that should be 
 # automatically applied to all autodoc directives. The supported 

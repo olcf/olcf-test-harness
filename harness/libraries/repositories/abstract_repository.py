@@ -10,27 +10,53 @@ class BaseRepository(metaclass=ABCMeta):
     def __init__(self):
         return
 
+    @classmethod
     @abstractmethod
-    def doSparseCheckout(self):
+    def get_application_parent_directory(cls):
         return
 
+    @classmethod
     @abstractmethod
-    def verifySparseCheckout(self):
+    def get_repository_url_of_application(cls,application):
         return
 
+    @classmethod
     @abstractmethod
-    def getLocationOfRepository(self):
+    def get_fully_qualified_url_of_application_parent_directory():
         return
 
+    @property
     @abstractmethod
-    def getLocationOfFile(self):
+    def binaryName(self):
+        return 
+
+    @binaryName.setter
+    @abstractmethod
+    def binaryName(self,value):
         return
 
+    @property 
     @abstractmethod
-    def removeRepository(self):
+    def repository_branch(self):
+        return self.__repositoryBranch
+    
+    @repository_branch.setter
+    @abstractmethod
+    def repository_branch(self,value):
+        return
+    
+    @property
+    @abstractmethod
+    def remote_repository_URL(self):
+        return 
+
+    @remote_repository_URL.setter
+    @abstractmethod
+    def remote_repository_URL(self,value):
         return
 
+
     @abstractmethod
-    def doSparseSourceCheckout(self):
+    def cloneRepository(self):
         return
 

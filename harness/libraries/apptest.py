@@ -116,29 +116,28 @@ class subtest(base_apptest,apps_test_directory_layout):
                     test_checkout_lock.acquire()
 
                 from libraries.repositories import RepositoryFactory
-                from libraries.repositories import get_type_of_repository
-                from libraries.repositories import types_of_repositories
-                from libraries.repositories import get_location_of_repository
 
-                repository_type = get_type_of_repository()
-                (location_of_repository,internal_repo_path_to_applications,my_repository_branch) = get_location_of_repository()
-                path_to_hidden_git_repository = self.HiddenGitRepositoryPath
+                repository_type = RepositoryFactory.get_type_of_repository()
+                name_of_application = self.getNameOfApplication() 
+                url_to_remote_repsitory_application = RepositoryFactory.get_repository_url_of_application(name_of_application)
+                my_repository_branch = RepositoryFactory.get_repository_git_branch()
+
                 my_repository = RepositoryFactory.create(repository_type,
-                                                         location_of_repository,
-                                                         internal_repo_path_to_applications,
-                                                         my_repository_branch,
-                                                         path_to_hidden_git_repository)
+                                                         url_to_remote_repsitory_application,
+                                                         my_repository_branch)
                 
-                self.__myLogger.doInfoLogging("Start of checking out source")
-                self.check_out_source(my_repository)
-                self.__myLogger.doInfoLogging("End of checking out source")
+                self.__myLogger.doInfoLogging("Start of cloning repository")
+                destination = self.getLocalPathToTests()
+
+                self.cloneRepository(my_repository,
+                                     destination)
+
+                self.__myLogger.doInfoLogging("End of cloning repository")
                 
-                self.__myLogger.doInfoLogging("Start of checking out subtest")
-                self.check_out_test(my_repository)
-                self.__myLogger.doInfoLogging("End of checking out subtest")
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
+
             elif harness_task == subtest.starttest:
                 message = "Start of starting test."
                 self.__myLogger.doInfoLogging(message)
@@ -168,135 +167,29 @@ class subtest(base_apptest,apps_test_directory_layout):
     def appTestName(self):
         return [self.getNameOfApplication(),self.getNameOfSubtest()]
 
-    def check_out_source(self,my_repository):
-
-        message = "Checking out source of application: " + self.getNameOfApplication()
-        self.__myLogger.doInfoLogging(message)
+    def cloneRepository(self,my_repository,destination):
 
         #Get the current working directory.
         cwd = os.getcwd()
         
-        #Get the relative path, with respect to cwd, to the 
-        #application directory.
-        relative_path_to_app_dir = self.get_local_path_to_tests_wd()
-
-        #Get the url of the application with respect the the svn repo.
-        svn_path_to_application = self.get_svn_path_to_application()
-
-        #Get the name of the application
-        application_name = self.getNameOfApplication()
-
-        #Get the name of the subtest
-        subtest_name = self.getNameOfSubtest() 
-
-        #Form the absolute path to the application root directory.
-        abspath_app_root_dir = os.path.join(cwd,relative_path_to_app_dir)
-
-        #Form the absolute path to the application directory.
-        abspath_app_dir = os.path.join(cwd,relative_path_to_app_dir,self.getNameOfApplication())
-
-        #Form the absolute path to the Source directory.
-        abspath_source_dir = os.path.join(cwd,relative_path_to_app_dir,self.getNameOfApplication(),"Source")
-
-        message = "For the source update my current directory is " + abspath_app_dir 
+        message = "For the cloning, my current directory is " + cwd 
         self.__myLogger.doInfoLogging(message)
-        
+
+        my_repository.cloneRepository(destination,
+                                      self.__myLogger)
+
         exit_status = 0
-        if os.path.exists(abspath_app_dir):
-            message = "Source of application: " + application_name + " already exists."
-            self.__myLogger.doInfoLogging(message)
-            exit_status = 0
-        else:
-            app_checkout_log_files = self.getPathToAppCheckoutLogFiles()
-            stdout_path = app_checkout_log_files["stdout"]
-            stderr_path = app_checkout_log_files["stderr"]
-            self.__myLogger.doInfoLogging("Before call to sparse checkout")
-            with open(stdout_path,"a") as out:
-                with open(stderr_path,"a") as err:
-                    (message,exit_status) = my_repository.doSparseSourceCheckout(out,
-                                                                                 err,
-                                                                                 application_name,
-                                                                                 root_path_to_checkout_directory=abspath_app_root_dir,
-                                                                                 my_logger=self.__myLogger) 
-            self.__myLogger.doInfoLogging("After call to sparse checkout")
             
         if exit_status > 0:
-            string1 = "Checkout of source failed."
+            string1 = "Cloning of repository failed."
             self.__myLogger.doInfoLogging(string1)
             sys.exit(string1)
         else:
-            message = "Checkout of source passed"
+            message = "Cloning of repository passed"
             self.__myLogger.doInfoLogging(message)
 
         return
     
-    #
-    # Checks out the App and Test from the repository.
-    #
-    def check_out_test(self,my_repository):
-        message =  "Checking out test: " + self.getNameOfApplication() + " " + self.getNameOfSubtest()
-        self.__myLogger.doInfoLogging(message)
-
-        #Get the current working directory.
-        cwd = os.getcwd()
-
-        #Get the name of the application
-        application_name = self.getNameOfApplication()
-
-        #Get the relative path, with respect to cwd, to the 
-        #application directory.
-        relative_path_to_app_dir = self.get_local_path_to_tests_wd()
-
-        #Get the name of the subtest
-        subtest_name = self.getNameOfSubtest() 
-
-        #Form the absolute path to the application root directory.
-        abspath_app_root_dir = os.path.join(cwd,relative_path_to_app_dir)
-
-        #Form the absolute path to the application directory.
-        abspath_app_dir = os.path.join(abspath_app_root_dir,self.getNameOfApplication())
-
-        #Form the absolute path to the subtest directory.
-        abspath_subtest_dir = os.path.join(abspath_app_dir,subtest_name)
-
-        # Check out the application non-recursively.
-        if os.path.exists(abspath_app_dir):
-            message = "In " + self.getNameOfApplication() + " " + \
-                      self.getNameOfSubtest() + ", the " + self.getNameOfApplication() + \
-                      "  directory already exists."
-            self.__myLogger.doInfoLogging(message)
-        else:
-            message =  "Error! Application directory {} does not exist.".format(self.getNameOfApplication())
-            self.__myLogger.doInfoLogging(message)
-            sys.exit(message)
-        
-        
-        #Create the test by means of an update.
-        update_log_files = self.getPathToTestCheckoutLogFiles()
-        stdout_path = update_log_files["stdout"]
-        stderr_path = update_log_files["stderr"]
-
-        with open(stdout_path,"a") as out:
-            with open(stderr_path,"a") as err:
-
-                (message,exit_status) = my_repository.doSparseTestCheckout(out,
-                                                                           err,
-                                                                           application_name,
-                                                                           test_name=subtest_name, 
-                                                                           root_path_to_checkout_directory=abspath_app_root_dir) 
-                if exit_status > 0:
-                    message = "Update command failed: "
-                    self.__myLogger.doInfoLogging(message)
-
-        if self.__number_of_iterations > 0:
-            tmpdest2 = os.path.join(abspath_subtest_dir ,"Scripts",".testrc")
-            file_obj = open(tmpdest2,"w")
-            string1 = str(0) + "\n"
-            string2 = str(self.__number_of_iterations) + "\n"
-            file_obj.write(string1)
-            file_obj.write(string2)
-            file_obj.close() 
-
     #
     # Starts the regression test.
     #
@@ -575,12 +468,6 @@ def do_application_tasks(application_name,
         app_test = app_test_list[ip]
         app_test.doTasks(tasks=tasks,
                          stdout_stderr=stdout_stderr)
-
-    # loop_message = "In Loop iteration {} of {}."
-    # for ip in range(15):
-    #     message = loop_message.format(ip,application_name)
-    #     print(message)
-    #     time.sleep(random.uniform(0,10))
 
     return
         

@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 
-import sys
-import shutil
 import os
-import subprocess
-import contextlib
-import io
-import tempfile
 
 # NCCS Tesst Harness packages
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
@@ -18,490 +12,101 @@ class GitRepository(BaseRepository):
     """ This class is encapsulates the behavoir of a git repository.
     """
     def __init__(self,
-                 location_of_repository=None,
-                 internal_repo_path_to_applications=None,
-                 my_repository_branch=None,
-                 path_to_hidden_git_repository=None):
+                 git_remote_repository_url=None,
+                 my_repository_branch="master") :
 
         
-        self.__binaryName = "git"
-        self.__locationOfRepository = location_of_repository
-        self.__internalPathToApplications = internal_repo_path_to_applications
-        self.__repositoryBranch = None
-        self.__pathToHiddenGitRepository = path_to_hidden_git_repository
+        self.binaryName = "git"
+        self.remote_repository_URL = git_remote_repository_url
         self.repository_branch = my_repository_branch
-        self.__checkedOutDirectories = []
+        return
+
+    @property
+    def binaryName(self):
+        return self.__binaryName
+    
+    @binaryName.setter
+    def binaryName(self,value):
+        self.__binaryName = value
         return
 
     @property 
     def repository_branch(self):
-        value = "master"
-        if self.__repositoryBranch == None:
-            return value
-        else:
-            return self.__repositoryBranch
+        return self.__repositoryBranch
     
     @repository_branch.setter
-    def  repository_branch(self,value):
+    def repository_branch(self,value):
         self.__repositoryBranch = value
-
+        return
+    
     @property
-    def HiddenGitRepositoryPath(self):
-        return self.__pathToHiddenGitRepository
+    def remote_repository_URL(self):
+        return self.__gitRemoteRepositoryURL
 
-    def getLocationOfRepository(self):
-        return self.__locationOfRepository
-
-    def getLocationOfFile(self,
-                          file):
-        path_to_file = os.path.join(self.__locationOfRepository,
-                                    self.__internalPathToApplications,
-                                    file)
-        return path_to_file
-
-
-    def doSparseCheckout(self,
-                         stdout_file_handle,
-                         stderr_file_handle,
-                         root_path_to_checkout_directory,
-                         directory_to_checkout,
-                         my_logger=None):
-        """ Performs a sparse checkout of directory from the repository.
-
-            :param stdout_file_handle: A file object to write standard out
-            :type stdout_file_handle: A file object
-
-            :param stderr_file_handle: A file object to write standard error
-            :type stderr_file_handle: A file object
-
-            :param root_path_to_checkout_directory: The fully qualified path the the top level of the sparse checkout directory.
-            :type root_path_to_checkout_directory: string
-
-            :param directory_to_checkout: A list of directories or files to sparsely checkout.
-            :type directories: a string list of directory or file names.
-
-            :returns: a tuple (message,exit_status) 
-            :rtype:  message is a string, exit_status is an integer
-        """
-
-        
-        # Check if file handles are open
-        if my_logger:
-            my_logger.doInfoLogging("Start of doSparseCheckout")
-            
-        exit_status = 0
-        message = ""
-        if stdout_file_handle.closed:
-            message =  "Error! In sparse checkout the stdout file handle is closed"
-            exit_status = 1
-            return (message,exit_status)
-
-        if stderr_file_handle.closed:
-            message =  "Error! In sparse checkout the stderr file handle is closed"
-            exit_status = 1
-            return (message,exit_status)
-        
-
-        # Change to the hidden directory and do an empty clone of the repository.
-        path_to_hidden_directory = self.HiddenGitRepositoryPath 
-
-        if my_logger:
-            my_logger.doInfoLogging("Start of empty clone")
-        
-        self.__doAnEmptyClone(path_to_local_directory = path_to_hidden_directory,
-                              url_path_to_repository = self.__locationOfRepository,
-                              stdout_file_handle=stdout_file_handle,
-                              stderr_file_handle=stderr_file_handle,
-                              my_logger=my_logger)
-        if my_logger:
-            my_logger.doInfoLogging("End of empty clone")
-
-
-        if my_logger:
-            my_logger.doInfoLogging("Start of enable sparse checkout")
-        
-        self.__doEnableSparseCheckout(path_to_local_directory = path_to_hidden_directory) 
-        
-        if my_logger:
-            my_logger.doInfoLogging("End of enable sparse checkout.")
-
-        path_to_application_dir = \
-        self.__defineDirectoryToSparseApplicationCheckout(files_to_sparsely_checkout = directory_to_checkout,
-                                                          path_to_hidden_repo = path_to_hidden_directory)
-        
-        files_to_checkout = self.__defineFilesToCheckout(path_to_local_directory = path_to_hidden_directory,
-                                                         files_to_sparsely_checkout = directory_to_checkout)
-
-        
-        self.__doCheckout(path_to_local_directory = path_to_hidden_directory)
-
-        self.__formSymbolicLinksToDirectory(root_path_to_checkout_directory,
-                                            path_to_application_dir)
-
-        self.__defineFilesForVerifying(root_path_to_checkout_directory,
-                                       directory_to_checkout)
-
-        return (message,exit_status)
-
-    def doSparseSourceCheckout(self,
-                               stdout_handle,
-                               stderr_handle,
-                               application_name,
-                               root_path_to_checkout_directory,
-                               my_logger=None):
-
-        """Does sparse checkout of source applications source directory"""
-        message = ""
-        exit_status = 0
-
-        my_repository_location = self.getLocationOfRepository()
-
-        my_repository_application = self.getLocationOfFile(application_name)
-        tmp_words = my_repository_application.split(my_repository_location)
-        my_relative_path_repository_application = tmp_words[-1]
-
-        partial_path_to_source = application_name + '/Source' 
-        my_repository_source = self.getLocationOfFile(partial_path_to_source)
-        tmp_words = my_repository_source.split(my_repository_location)
-        my_relative_path_repository_source = tmp_words[-1]
-
-        folders = { "application" : my_relative_path_repository_application,
-                    "source": my_relative_path_repository_source,
-                    "test" : []}
-
-        (message,exit_status) = \
-            self.doSparseCheckout(stdout_file_handle=stdout_handle,
-                                  stderr_file_handle=stderr_handle,
-                                  root_path_to_checkout_directory=root_path_to_checkout_directory,
-                                  directory_to_checkout=folders,
-                                  my_logger=my_logger)
-        return (message,exit_status)
-
-    def doSparseTestCheckout(self,
-                             stdout_handle,
-                             stderr_handle,
-                             application_name,
-                             test_name,
-                             root_path_to_checkout_directory):
-
-        message = ""
-        exit_status = 0
-
-        my_repository_location = self.getLocationOfRepository()
-
-        my_repository_application = self.getLocationOfFile(application_name)
-        tmp_words = my_repository_application.split(my_repository_location)
-        my_relative_path_repository_application = tmp_words[-1]
-
-        partial_path_to_source = application_name + '/Source' 
-        my_repository_source = self.getLocationOfFile(partial_path_to_source)
-        tmp_words = my_repository_source.split(my_repository_location)
-        my_relative_path_repository_source = tmp_words[-1]
-
-        partial_path_to_test = application_name + '/' + test_name 
-        my_repository_test = self.getLocationOfFile(partial_path_to_test)
-        tmp_words = my_repository_test.split(my_repository_location)
-        my_relative_path_repository_test = tmp_words[-1]
+    @remote_repository_URL.setter
+    def remote_repository_URL(self,value):
+        self.__gitRemoteRepositoryURL = value
+        return
     
-        folders = { "application" : my_relative_path_repository_application,
-                    "source": my_relative_path_repository_source,
-                    "test" : [my_relative_path_repository_test]}
+    def cloneRepository(self,
+                        destination_directory="."):
 
-        (message,exit_status) = \
-            self.doSparseCheckout(stdout_file_handle=stdout_handle,
-                                  stderr_file_handle=stderr_handle,
-                                  root_path_to_checkout_directory=root_path_to_checkout_directory,
-                                  directory_to_checkout=folders)
+        my_clone_command="{gitbinary} clone --branch {branch} --recurse-submodules {repository} {directory}".format(
+                  gitbinary=self.binaryName,
+                  branch=self.repository_branch, 
+                  repository=self.remote_repository_URL,
+                  directory=destination_directory)
 
-        return (message,exit_status)
-
-    def verifySparseCheckout(self):
-        test_result = True
-        message = ""
-        for dirpath in self.__checkedOutDirectories:
-            if not os.path.exists(dirpath):
-                test_result = False
-                message += "Directory/file {0} did not checkout.".format(dirpath)
-        return (message, test_result)
-
-    def removeRepository(self):
-        shutil.rmtree(self.__locationOfRepository)
+        run_as_subprocess_command(my_clone_command)
         return
 
-    def __verifySparseCheckoutEnabled(self):
-        """ Verifies that git the user has enabled sparse git checkouts. 
+def get_type_of_repository():
+    return os.getenv('RGT_TYPE_OF_REPOSITORY')
 
-            If sparse git checkouts are not enabled, the program will 
-            print a warning to stderr and exit.
-        """
+def get_application_parent_directory():
+    parent_path=os.getenv("RGT_GIT_SERVER_APPLICATION_PARENT_DIR")
+    return parent_path
 
-        # Define the git command to check if sparse checkouts are enabled
-        git_command = "{my_bin} {my_options} {keyvalue}".format(my_bin = self.__binaryName,
-                                                                my_options = "config --get",
-                                                                keyvalue="core.sparsecheckout")
-    
-        # Run the git command and write the command's 
-        # stderr and stdout results to 
-        # unique temp files. The stdout tempfile has only one record which 
-        # is searched for true or false. If true is found then
-        # sparse checkout is enabled, otherwise sparse checkouts are
-        # not enabled and we exit program.
-        exit_status = 0
-        with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stdout:
-            with tempfile.NamedTemporaryFile("w",delete=False) as tmpfile_stderr:
-                exit_status = None
-                message = None
-                try:
-                    exit_status = subprocess.check_call(git_command,
-                                                        shell=True,
-                                                        stdout=tmpfile_stdout,
-                                                        stderr=tmpfile_stderr)
-                except subprocess.CalledProcessError as exc :
-                    exit_status = 1
-                    message = "Error in subprocess command: " + exc.cmd
-                except:
-                    exit_status = 1
-                    message = "Unexpected error! " + git_command
+def get_fully_qualified_url_of_application_parent_directory():
+    my_machine = os.getenv("RGT_GIT_MACHINE_NAME")
+    parent_directory=get_application_parent_directory() + "/" + my_machine + "/"
 
-                # Close the file objects of the temporary files.
-                tmpfile_stdout_path = tmpfile_stdout.name
-                tmpfile_stderr_path = tmpfile_stderr.name
-                tmpfile_stdout.close()
-                tmpfile_stderr.close()
+    data_transfer_protocol = os.getenv("RGT_GIT_DATA_TRANSFER_PROTOCOL")
 
-                # Remove the temporary files if the subprocess fails.
-                if  exit_status > 0:
-                    os.remove(tmpfile_stdout_path) 
-                    os.remove(tmpfile_stderr_path) 
-                    sys.exit(message)
+    if  data_transfer_protocol == "ssh" :
+        my_git_server_url=os.getenv("RGT_GIT_SSH_SERVER_URL")
+        path1 = my_git_server_url + ":" + parent_directory 
+    elif data_transfer_protocol == "https" :
+        my_git_server_url=os.getenv("RGT_GIT_HTTPS_SERVER_URL")
+        path1 = my_git_server_url + "/" + parent_directory
+    else :
+        # To Do: Raise exception for there are only two types of data transfer protocol.
+        path1 = "no_valid_path: To do : raise exception"
 
-                # Search for 'true' in the temp stdout file.
-                tmpfile_stdout_contents = None
-                with open(tmpfile_stdout_path,"r") as tmpfile_file_obj:
-                    tmpfile_stdout_contents = tmpfile_file_obj.readlines()
-                    if not ( 'true' in tmpfile_stdout_contents[0].lower() ) : 
-                        error_message  =  "Error! Sparse checkout of git repositories is not enabled.\n"
-                        error_message +=  "Please enable sparse checkout of git repositories." 
-                        sys.exit(error_message)
+    return path1
 
-                # Remove the temporary files before we return.
-                os.remove(tmpfile_stdout_path) 
-                os.remove(tmpfile_stderr_path) 
-        return
+def get_repository_url_of_application(application):
+    my_machine = os.getenv("RGT_GIT_MACHINE_NAME")
+    parent_directory = get_application_parent_directory()
 
-    def __doAnEmptyClone(self,
-                         path_to_local_directory,
-                         url_path_to_repository,
-                         stdout_file_handle,
-                         stderr_file_handle,
-                         my_logger=None):
+    data_transfer_protocol = os.getenv("RGT_GIT_DATA_TRANSFER_PROTOCOL")
 
-        if my_logger:
-            my_logger.doInfoLogging("Inside and at begginning of  function __doAnEmptyClone") 
+    if  data_transfer_protocol == "ssh" :
+        my_git_server_url=os.getenv("RGT_GIT_SSH_SERVER_URL")
+        path1 = my_git_server_url + ":" + parent_directory + "/"
+        path2 = application + ".git"
+        git_url_to_remote_repsitory_application = path1 + path2
+    elif data_transfer_protocol == "https":
+        my_git_server_url=os.getenv("RGT_GIT_HTTPS_SERVER_URL")
+        path1 = my_git_server_url + "/" + parent_directory + "/"
+        path2 = application + ".git"
+        git_url_to_remote_repsitory_application = path1 + path2
+    else :
+        # To Do: Raise exception for there are only two types of data transfer protocol.
+        git_url_to_remote_repsitory_application = "no_valid_path"
 
-        initial_dir = os.getcwd()
+    return git_url_to_remote_repsitory_application
 
-        if os.path.exists(path_to_local_directory):
-
-            if not self.__directoryUnderGitControl(path_to_local_directory):
-                git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
-                                                                  my_options='init')
-                run_as_subprocess_command(git_init_command,
-                                          command_execution_directory=path_to_local_directory)
-
-                git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
-                                                                                      my_options = 'remote add -f origin',
-                                                                                      my_url = url_path_to_repository)
-                run_as_subprocess_command(git_do_sparse_clone_command,
-                                          command_execution_directory=path_to_local_directory)
-
-        else:
-            os.makedirs(path_to_local_directory)
-
-            git_init_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
-                                                              my_options='init')
-            run_as_subprocess_command(git_init_command,
-                                      command_execution_directory=path_to_local_directory)
-
-            git_do_sparse_clone_command = "{my_bin} {my_options} {my_url}".format(my_bin=self.__binaryName,
-                                                                                  my_options = 'remote add -f origin',
-                                                                                  my_url = url_path_to_repository)
-            run_as_subprocess_command(git_do_sparse_clone_command,
-                                      command_execution_directory=path_to_local_directory)
-            
-        if my_logger:
-            my_logger.doInfoLogging("Inside and at end of function __doAnEmptyClone") 
-
-        return
-
-    def __doEnableSparseCheckout(self,
-                                 path_to_local_directory,
-                                 my_logger = None):
-        if my_logger:
-            my_logger.doInfoLogging("Inside function at beginning __doEnableSparseCheckout") 
-
-        initial_dir = os.getcwd()
-
-        os.chdir(path_to_local_directory)
-
-        # Enable sparse checkouts.
-        git_enable_sparse_checkouts_command = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
-                                                                             my_options='config core.sparseCheckout true')
-
-        run_as_subprocess_command(git_enable_sparse_checkouts_command)
-
-        os.chdir(initial_dir)
-
-        if my_logger:
-            my_logger.doInfoLogging("Inside function at end __doEnableSparseCheckout") 
-
-
-        return
-
-    def __defineFilesToCheckout(self,
-                                path_to_local_directory,
-                                files_to_sparsely_checkout):
-        
-        a_record = "{entry}\n"
-
-        path_to_sparse_checkout_file = os.path.join(path_to_local_directory,".git","info","sparse-checkout")
-
-        if not os.path.exists(path_to_sparse_checkout_file):
-            self.__touch(path_to_sparse_checkout_file)
-
-        # Read all entries in file sparse-checkout.
-        sparse_checkout = []
-        with open(path_to_sparse_checkout_file,'r') as file_obj:
-            tmp_sparse_checkout = file_obj.readlines()
-            for tmp_record in tmp_sparse_checkout:
-                sparse_checkout += [tmp_record.strip()]
-            
-        
-        # Remove duplicate entries in files_to_sparsely_checkout as compared
-        # to sparse_checkout file.
-
-        # Remove duplicated source.
-        tmp_record = files_to_sparsely_checkout['source']
-        if not (tmp_record in sparse_checkout) : 
-            sparse_checkout += [tmp_record.strip()]
-
-        # Remove duplicated tests.
-        for tmp_record in files_to_sparsely_checkout['test']:
-            if not (tmp_record in sparse_checkout):
-                sparse_checkout += [tmp_record.strip()]
-
-        # Now write new sparse-checkout file.
-        with open(path_to_sparse_checkout_file,'w') as file_obj:
-            for tmp_record in sparse_checkout:
-                file_obj.write(a_record.format(entry = tmp_record))
-
-        return sparse_checkout
-
-    def __doCheckout(self,
-                     path_to_local_directory):
-        initial_dir = os.getcwd()
-
-        os.chdir(path_to_local_directory)
-
-        # Do checkout
-        git_checkout_command = "{my_bin} {my_options} {branch}".format(my_bin=self.__binaryName,
-                                                                       my_options='checkout',
-                                                                       branch=self.repository_branch)
-
-        run_as_subprocess_command(git_checkout_command)
-        os.chdir(initial_dir)
-        return
-
-    def __defineDirectoryToSparseApplicationCheckout(self,
-                                                     files_to_sparsely_checkout,
-                                                     path_to_hidden_repo):
-        path_to_source = files_to_sparsely_checkout['source']
-        (path_to_application,source_name) = os.path.split(path_to_source ) 
-
-        (root_path_to_application,application_name) = os.path.split(path_to_application)
-
-        unormalized_path = path_to_hidden_repo + root_path_to_application 
-
-        tmp_path = \
-            os.path.normpath(unormalized_path)
-
-        path_to_application_dir = os.path.join(tmp_path,application_name)
-
-        return path_to_application_dir
-
-    def __defineFilesForVerifying(self,
-                                  root_path_to_checkout_directory,
-                                  files_to_sparsely_checkout):
-
-        # Define path to application.
-        path_to_source = files_to_sparsely_checkout['source']
-        (path_to_application,source_name) = os.path.split(path_to_source ) 
-        (root_path_to_application,application_name) = os.path.split(path_to_application)
-        path_to_application_dir = os.path.join(root_path_to_checkout_directory,application_name)
-        if not ( path_to_application_dir in self.__checkedOutDirectories):
-            self.__checkedOutDirectories += [path_to_application_dir]
-
-        # Define path to source. 
-        src_path = os.path.join(path_to_application_dir,source_name)
-        if not ( src_path in self.__checkedOutDirectories):
-            self.__checkedOutDirectories += [src_path]
-        
-        # Define path to tests. 
-        for a_test in files_to_sparsely_checkout['test']:
-            (path_to_test,test_name) = os.path.split(a_test)
-            test_path = os.path.join(path_to_application_dir,test_name)
-            if not ( test_path in self.__checkedOutDirectories):
-                self.__checkedOutDirectories += [test_path]
-
-        return
-
-    def __formSymbolicLinksToDirectory(self,
-                                       root_path_to_checkout_directory,
-                                       path_to_dir):
-
-        # Make sure that the directory exists 
-        if not os.path.exists(path_to_dir):
-            message = "The directory/file {} does not exist."
-            message += "I therefore can not form a symbolic to it"
-            sys.exit(message.format(path_to_dir))
-
-        if not os.path.exists(root_path_to_checkout_directory):
-            message = "The directory/file {} does not exist."
-            message += "I therefore can not form a symbolic to it from"
-            message += "within the directory {}.\n"
-            sys.exit(message.format(root_path_to_checkout_directory))
-
-        # Form the source of the symbolic link.
-        src_of_symlink = path_to_dir
-
-        # Form the destination of the symbolic link.
-        application_name = os.path.basename(path_to_dir)
-        dest_of_symlink = os.path.join(root_path_to_checkout_directory,application_name)
-
-        if not os.path.exists(dest_of_symlink):
-            os.symlink(src_of_symlink,dest_of_symlink) 
-        return
-
-    def __directoryUnderGitControl(self,
-                                  directory_to_test):
-        under_git_control = False
-
-        git_rev_parse_cmd = "{my_bin} {my_options}".format(my_bin=self.__binaryName,
-                                                       my_options='rev-parse --is-inside-work-tree')
-
-        (stdout,stderr) = run_as_subprocess_command_return_stdout_stderr(git_rev_parse_cmd,
-                                                                         directory_to_test)
-        
-        if stdout[0].startswith("true"):
-            under_git_control = True
-        else:
-            under_git_control = False
-
-        return under_git_control
-
-    def __touch(self,
-                path):
-        with open(path, 'a') as file_obj:
-            os.utime(path, None)
-
-        return
+def get_repository_git_branch():
+    my_git_branch=os.getenv("RGT_GIT_REPS_BRANCH")
+    return my_git_branch
