@@ -6,8 +6,7 @@ import subprocess
 import logging
 
 # NCCS Test Harness package imports
-from libraries.repositories.svn_repository import SVNRepository 
-from libraries.repositories.git_repository import GitRepository 
+from libraries.repositories.single_app_git_repository import SingleApplicationGitRepository 
 from libraries.repositories.repository_factory_exceptions import TypeOfRepositoryError
 
 class RepositoryFactory:
@@ -19,10 +18,8 @@ class RepositoryFactory:
     @classmethod
     def create(cls,
                type_of_repository,
-               location_of_repository,
-               internal_repo_path_to_applications,
-               repository_branch,
-               path_to_hidden_git_repository=None):
+               repository_URL,
+               repository_branch):
         """ Creates a repository object that encapuslates the repository behavoir. 
 
         This class method will a Repository object if the type_of_repository is 
@@ -31,18 +28,14 @@ class RepositoryFactory:
         :param type_of_repository: The type of repositiory
         :type type_of_repository: string
 
-        :param location_of_repository: The fully qualified path to an existing repository.
-        :type location_of_repository: string
-
-        :param internal_repo_path_to_applications: The internal path within the repository to the Application
-                                                   directory
-        :type internal_repo_path_to_applications: string
+        :param repository_URL: The fully qualified path to an existing repository.
+        :type repository_URL: string
 
         :param repository branch: The name of the branch of the repository/
         :type repository_branch string 
 
         :returns: my_repository
-        :rtype: A Repository object - currently only GitRepository or SVNRepository objects 
+        :rtype: A Repository object - currently only SingleApplicationGitRepository objects 
                 are returned. 
         """
 
@@ -52,14 +45,8 @@ class RepositoryFactory:
         repository_factory_log = logging.getLogger(__name__)
         try:
             if type_of_repository == "git":
-                my_repository = GitRepository(location_of_repository,
-                                              internal_repo_path_to_applications,
-                                              repository_branch,
-                                              path_to_hidden_git_repository)
-            elif type_of_repository == "svn":
-                my_repository = SVNRepository(location_of_repository,
-                                              internal_repo_path_to_applications,
-                                              repository_branch)
+                my_repository = SingleApplicationGitRepository(repository_URL,
+                                                               repository_branch)
             else:
                 # No supporting repository if program reaches this branch.
                 my_repository = None
@@ -77,41 +64,52 @@ class RepositoryFactory:
         return my_repository
     
     @classmethod
-    def createLocalSVNRepoFromExistingDirectory(cls,
-                                             path_to_sample_directory,
-                                             path_to_local_dir,
-                                             internal_repo_path_to_applications):
+    def get_fully_qualified_url_of_application_parent_directory(cls):
+        try:
+            if cls.get_type_of_repository() == "git":
+                pathspec=SingleApplicationGitRepository.get_fully_qualified_url_of_application_parent_directory()
+            else:
+                # No supporting repository if program reaches this branch.
+                pathspec = None
+                msg =  "The type of repository is '{}'. This error is generally due to the\n"
+                msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
+                msg += "to a repository type not supported by this test harness.\n\n".format("None")
+                raise TypeOfRepositoryError(type_of_repository,msg)
+        except TypeOfRepositoryError as error:
+            msg =  "The type of repository is '%s'. This error is generally due to the \n"
+            msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
+            msg += "to a repository type not supported by this test harness.\n\n"
+            repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
+            sys.exit(1)
+        return pathspec
 
-
-        completed_svn_init = subprocess.run(["svnadmin","create",path_to_local_dir])
-        svn_url = "file://" + path_to_local_dir
-        subprocess.run(["svn","import",path_to_sample_directory,svn_url,"-m 'Initial svn commit'"])
-        return RepositoryFactory.create("svn",
-                                         svn_url,
-                                         internal_repo_path_to_applications)
-    
     @classmethod
-    def createLocalGitRepoFromExistingDirectory(cls,
-                                                path_to_sample_directory,
-                                                path_to_local_dir,
-                                                internal_repo_path_to_applications):
-        starting_directory = os.getcwd()
+    def get_repository_url_of_application(cls,application):
+        try:
+            if cls.get_type_of_repository() == "git":
+                pathspec=SingleApplicationGitRepository.get_repository_url_of_application(application)
+            else:
+                # No supporting repository if program reaches this branch.
+                pathspec = None
+                msg =  "The type of repository is '{}'. This error is generally due to the\n"
+                msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
+                msg += "to a repository type not supported by this test harness.\n\n".format("None")
+                raise TypeOfRepositoryError(type_of_repository,msg)
+        except TypeOfRepositoryError as error:
+            msg =  "The type of repository is '%s'. This error is generally due to the \n"
+            msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
+            msg += "to a repository type not supported by this test harness.\n\n"
+            repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
+            sys.exit(1)
+        return pathspec
 
-        if os.path.exists(path_to_local_dir) :
-            shutil.rmtree(path_to_local_dir)
+    @classmethod
+    def get_type_of_repository(cls):
+        return os.getenv('RGT_TYPE_OF_REPOSITORY')
 
-        shutil.copytree(path_to_sample_directory,path_to_local_dir)
-        
-        os.chdir(path_to_local_dir)
+    @classmethod
+    def get_repository_git_branch(cls):
+        my_git_branch=os.getenv("RGT_GIT_REPS_BRANCH")
+        return my_git_branch
 
-        completed_git_init = subprocess.run(["git","init"])
 
-        completed_git_add = subprocess.run(["git","add","."])
-
-        completed_git_commit = subprocess.run(["git","commit","-m", "My git commit"])
-
-        os.chdir(starting_directory )
-
-        return RepositoryFactory.create("git",
-                                         path_to_local_dir,
-                                         internal_repo_path_to_applications)

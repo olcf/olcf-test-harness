@@ -3,9 +3,7 @@
 # System imports
 
 # Local package imports
-
-
-class RepositoryFactoryError(Exception):
+class GitActionException(Exception):
     """ Base class exception for this module. """
     def __init__(self):
         return
@@ -13,8 +11,8 @@ class RepositoryFactoryError(Exception):
     def what(self):
         self.whatIsMyError()
 
-class TypeOfRepositoryError(RepositoryFactoryError):
-    """Exception raised when an invalid repository type is specified
+class CloningToDirectoryWithIncorrectOriginError(GitActionException):
+    """Exception raised when cloning to a directory that exists.
 
     Attributes:
         expression -- the type of repository the error occured
@@ -22,10 +20,8 @@ class TypeOfRepositoryError(RepositoryFactoryError):
     """
 
     def __init__(self,
-                 expression=None,
                  message=None):
-        self.expression = expression
-        self.message = message
+        self.mesage = message
 
     def whatIsMyError(self):
         print(self.message)

@@ -8,8 +8,6 @@ minimal_version.check_valid_python_version()
 # Only these things are public from this package
 # in this package.
 from .repository_factory import RepositoryFactory
-from .common_repository_utility_functions import get_type_of_repository
-from .common_repository_utility_functions import get_location_of_repository
 
-types_of_repositories = {"git" : "git",
-                         "svn" : "svn"}
+# We only support the git repositories.
+types_of_repositories = {"git" : "git"}

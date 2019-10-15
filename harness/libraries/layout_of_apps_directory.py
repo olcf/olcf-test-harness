@@ -3,10 +3,10 @@
 import copy
 import os
 import re
+from libraries.repositories.repository_factory import RepositoryFactory
 
 class  apps_test_directory_layout(object):
 
-    path_to_repository = os.environ["RGT_PATH_TO_REPS"]
     organization = os.environ["RGT_ORGANIZATION"] 
     machine = os.environ["RGT_MACHINE_NAME"] 
     top_level_applications ="applications"
@@ -29,8 +29,6 @@ class  apps_test_directory_layout(object):
                             ".testrc"                              : ["__application__","__test__",".testrc"],
                            }
 
-    hidden_git_repository = {"hidden_git_repository" : [".hidden_git_repository___application__"] }
-
     suffix_for_ignored_tests = '.ignore_test'
     suffix_for_ignored_apps = '.ignore_app'
 
@@ -44,22 +42,14 @@ class  apps_test_directory_layout(object):
         self.__local_path_to_tests_wd = local_path_to_tests
 
         # Make deep copes of directory_structure 
-        self.__svn_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure)
+        self.__appTestDirectoryStructure = copy.deepcopy(apps_test_directory_layout.directory_structure)
         self.__local_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure)
 
-        self.__localHiddenGitRepoDirectoryStructure = copy.deepcopy(apps_test_directory_layout.hidden_git_repository)
-
         # Set the application and test layout.
-        self.__set_svn_application_test_layout(name_of_application,
-                                               name_of_subtest)
+        self.__setApplicationTestLayout(name_of_application,
+                                        name_of_subtest)
 
-        # Set the hidden git repository layout.
-        self.__setHiddenGitRepositoryLayout(name_of_application)
         return
-
-    @property
-    def HiddenGitRepositoryPath(self):
-        return self.__localHiddenGitRepoDirectoryStructure["hidden_git_repository"] 
 
     #
     # Debug function.
@@ -67,10 +57,10 @@ class  apps_test_directory_layout(object):
     def debug_layout(self):
         print( "\n\n")
         print ("================================================================")
-        print ("Debugging svn layout " + self.__name_of_application + self.__name_of_subtest)
+        print ("Debugging layout " + self.__name_of_application + self.__name_of_subtest)
         print ("================================================================")
-        for key in self.__svn_app_test_directory_structure.keys():
-            print ("%-20s = %-20s" % (key, self.__svn_app_test_directory_structure[key]))
+        for key in self.__appTestDirectoryStructure.keys():
+            print ("%-20s = %-20s" % (key, self.__appTestDirectoryStructure[key]))
         print ("================================================================\n\n")
 
         print ("\n\n")
@@ -83,20 +73,20 @@ class  apps_test_directory_layout(object):
     #
     # Returns the path to the top level of the application
     #
-    def get_svn_path_to_application(self):
-        return self.__svn_app_test_directory_structure["application"]
+    def getPathToApplication(self):
+        return self.__appTestDirectoryStructure["application"]
 
     #
     # Returns the path to the source.
     #
-    def get_svn_path_to_source(self):
-        return self.__svn_app_test_directory_structure["Source"]
+    def gePathToSource(self):
+        return self.__appTestDirectoryStructure["Source"]
 
     #
     # Returns the path to the top level of the test.
     #
-    def get_svn_path_to_test(self):
-        return self.__svn_app_test_directory_structure["test"]
+    def getPathToTest(self):
+        return self.__appTestDirectoryStructure["test"]
 
     #
     # Returns the local path to the top level of the Application directory.
@@ -157,23 +147,23 @@ class  apps_test_directory_layout(object):
     #
     # Sets the application and test directory structure.
     #
-    def __set_svn_application_test_layout(self,application,name_of_subtest):
+    def __setApplicationTestLayout(self,application,name_of_subtest):
 
         #Setting name of the application and subtest for the directory structure.
-        for key in self.__svn_app_test_directory_structure.keys():
-            tmpstringarray = self.__svn_app_test_directory_structure[key]
+        for key in self.__appTestDirectoryStructure.keys():
+            tmpstringarray = self.__appTestDirectoryStructure[key]
             ip = -1
-            for string1 in self.__svn_app_test_directory_structure[key]:
+            for string1 in self.__appTestDirectoryStructure[key]:
                 ip = ip + 1
                 if string1 == "__application__":
-                    self.__svn_app_test_directory_structure[key][ip] = application
+                    self.__appTestDirectoryStructure[key][ip] = application
     
                 if string1 == "__test__":
-                    self.__svn_app_test_directory_structure[key][ip] = name_of_subtest
+                    self.__appTestDirectoryStructure[key][ip] = name_of_subtest
 
 
         #Setting local directory structure.
-        self.__local_app_test_directory_structure = copy.deepcopy(self.__svn_app_test_directory_structure)
+        self.__local_app_test_directory_structure = copy.deepcopy(self.__appTestDirectoryStructure)
         path_a = os.path.join(self.__local_path_to_tests_wd,application)
         for key in self.__local_app_test_directory_structure.keys():
             pathb = path_a
@@ -185,33 +175,11 @@ class  apps_test_directory_layout(object):
             self.__local_app_test_directory_structure[key] = pathb
 
 
-        #Now join names to make the fully qualified path names to svn repository..
-        path_1 = os.path.join(apps_test_directory_layout.path_to_repository)
-        path_1 = os.path.join(path_1,apps_test_directory_layout.top_level_applications)
-        path_1 = os.path.join(path_1,apps_test_directory_layout.organization)
-        path_1 = os.path.join(path_1,apps_test_directory_layout.machine)
-        
-        for key in self.__svn_app_test_directory_structure.keys():
+        # Now join names to make the fully qualified path names to repository.
+        # The repository should do this.
+        path_1 = RepositoryFactory.get_fully_qualified_url_of_application_parent_directory() 
+        for key in self.__appTestDirectoryStructure.keys():
             path_2 = path_1
-            for string1 in self.__svn_app_test_directory_structure[key]:
+            for string1 in self.__appTestDirectoryStructure[key]:
                 path_2 = os.path.join(path_2,string1)
-            self.__svn_app_test_directory_structure[key] = path_2
-
-    def __setHiddenGitRepositoryLayout(self,
-                                       application):
-
-        my_regexp = re.compile("__application__") 
-        for key in self.__localHiddenGitRepoDirectoryStructure .keys():
-            ip = -1
-            for string1 in self.__localHiddenGitRepoDirectoryStructure [key]:
-                ip = ip + 1
-                self.__localHiddenGitRepoDirectoryStructure[key][ip] = my_regexp.sub(application,
-                                                                                     string1)
-   
-        path_a = self.__local_path_to_tests_wd
-        for key in self.__localHiddenGitRepoDirectoryStructure.keys():
-            path_b = path_a
-            for string1 in self.__localHiddenGitRepoDirectoryStructure[key]:
-                path_b = os.path.join(path_b,string1)
-            self.__localHiddenGitRepoDirectoryStructure[key] = path_b
-        return
+            self.__appTestDirectoryStructure[key] = path_2

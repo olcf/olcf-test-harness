@@ -1,6 +1,8 @@
-harness_source_documentation
-============================
+Module Documentation
+====================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
+
+   modules/repositories/git_repository.rst
 

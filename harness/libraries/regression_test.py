@@ -111,8 +111,6 @@ class Harness:
                 message = "Application " + my_application_name + " has been submitted for running tasks."
                 self.__myLogger.doInfoLogging(message)
 
-            # The line below is the same as the immediate 2 lines above.
-            # future_to_application_name = {application_executor.submit(apptest.do_application_tasks,app_name,app_test_dict[app_name],self.__tasks,stdout_stderr) : app_name for app_name in list_of_applications_names}
            
             for my_future in concurrent.futures.as_completed(future_to_application_name):
                 name = future_to_application_name[my_future]
