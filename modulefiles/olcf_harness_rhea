@@ -19,7 +19,9 @@ proc ModulesHelp { } {
   # URL to svn repository of acceptance test harness   -
   # applications.                                      -
   #-----------------------------------------------------
-  set apprep https://gitlab.ccs.ornl.gov/olcf-system-test/applications/rhea.git
+  #set apprep https://gitlab.ccs.ornl.gov/olcf-system-test/applications/rhea.git
+  #set apprep "https://gitlab.ccs.ornl.gov/olcf-system-test/applications"
+  set apprep "foo"
 
   #-----------------------------------------------------
   #Set path to harness driver programs, binaries, ...  -
@@ -49,6 +51,14 @@ proc ModulesHelp { } {
   setenv RGT_MACHINE_GPUS_PER_NODE 0
   setenv RGT_SUBMIT_QUEUE "batch"
   setenv RGT_SUBMIT_ARGS ""
+
+  # New variables for single git repo
+  setenv RGT_GIT_REPS_BRANCH "master"
+  setenv RGT_GIT_DATA_TRANSFER_PROTOCOL "ssh"
+  setenv RGT_GIT_SERVER_APPLICATION_PARENT_DIR "olcf-system-test/applications"
+  setenv RGT_GIT_MACHINE_NAME "rhea"
+  setenv RGT_GIT_SSH_SERVER_URL "gitlab@gitlab.ccs.ornl.gov"
+  setenv RGT_GIT_HTTPS_SERVER_URL "https://gitlab.ccs.ornl.gov"
 
   module load python
 
