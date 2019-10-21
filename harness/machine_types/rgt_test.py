@@ -66,6 +66,40 @@ class RgtTest():
         self.__reportscriptname = reportscriptname
         self.__executablename = executablename
 
+    def set_test_config_parameters(self, replacements):
+        self.__replacements = replacements
+        for k in replacements:
+            v = replacements[k]
+            print(k, v)
+            if k == 'total_processes':
+                self.__total_processes = v
+            elif k == 'processes_per_node':
+                self.__processes_per_node = v
+            elif k == 'jobname':
+                self.__jobname = v
+            elif k == 'batchqueue':
+                self.__batchqueue = v
+            elif k == 'walltime':
+                self.__walltime = v
+            elif k == 'batchfilename':
+                self.__batchfilename = v
+            elif k == 'buildscriptname':
+                self.__buildscriptname = v
+            elif k == 'checkscriptname':
+                self.__checkscriptname = v
+            elif k == 'reportscriptname':
+                self.__reportscriptname = v
+            elif k == 'executablename':
+                self.__executablename = v
+
+    def set_test_config_env_vars(self, env_vars):
+        self.__env_vars = env_vars
+        for e in env_vars:
+            v = env_vars[e]
+            print(e, v)
+
+
+
     def set_custom_test_parameters(self,template_dict):
         self.__template_dict = template_dict
         for (k,v) in self.__template_dict.items():
@@ -122,6 +156,9 @@ class RgtTest():
             print(" pathtoexecutable = ", self.__pathtoexecutable)
             
             exit(1)
+
+    def get_replacements(self):
+        return self.__replacements
 
     def get_template_dict(self):
         return self.__template_dict

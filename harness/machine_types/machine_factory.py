@@ -6,6 +6,7 @@ import sys
 from .cray_xk7 import CrayXK7
 from .ibm_power8 import IBMpower8
 from .ibm_power9 import IBMpower9
+from .rhel_x86 import RHELx86
 from .machine_factory_exceptions import MachineTypeNotImplementedError
 from .machine_factory_exceptions import MachineTypeUndefinedEnvironmentalVariableError
 
@@ -88,6 +89,13 @@ class MachineFactory:
                                         scripts_dir=rgt_scripts_dir)
             elif rgt_machine_name == "summit":
                 tmp_machine = IBMpower9(name=rgt_machine_name,
+                                        scheduler=rgt_scheduler_type,
+                                        jobLauncher=rgt_jobLauncher_type,
+                                        workspace=rgt_path_to_workspace,
+                                        harness_id=rgt_harness_id,
+                                        scripts_dir=rgt_scripts_dir)
+            elif rgt_machine_name == "rhea":
+                tmp_machine = RHELx86(name=rgt_machine_name,
                                         scheduler=rgt_scheduler_type,
                                         jobLauncher=rgt_jobLauncher_type,
                                         workspace=rgt_path_to_workspace,
