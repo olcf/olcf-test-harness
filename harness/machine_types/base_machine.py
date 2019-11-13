@@ -62,7 +62,7 @@ class BaseMachine(metaclass=ABCMeta):
 
     def create_rgt_workspace(self):
         """ Create a workspace for this test instance."""
-        os.makedirs(self.get_rgt_workspace())
+        os.makedirs(self.get_rgt_workspace(), exist_ok=True)
         return
 
     def get_rgt_input_file_name(self):
@@ -80,8 +80,8 @@ class BaseMachine(metaclass=ABCMeta):
     def submit_to_scheduler(self,batchfilename,unique_id):
         """ Return the jobID for the submission."""
         submit_exit_value = self.__scheduler.submit_job(batchfilename)
-        write_job_id_exit_value = self.__scheduler.write_jobid_to_status(unique_id)
-        return submit_exit_value and write_job_id_exit_value
+        self.__scheduler.write_jobid_to_status(unique_id)
+        return submit_exit_value
 
     def build_jobLauncher_command(self,template_dict):
         """ Return the jobLauncher command."""
@@ -117,6 +117,7 @@ class BaseMachine(metaclass=ABCMeta):
         """ Run the check script provided by the user and log the result to the status file."""
         jstatus = self.start_check_script(checkscriptname)
         self.write_check_exit_status(jstatus)
+        return jstatus
 
     def start_check_script(self,checkscriptname):
         """ Check if results are correct. """

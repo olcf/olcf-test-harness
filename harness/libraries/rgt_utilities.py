@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
 
-import os
-from libraries import computers_1
 import datetime
+import os
+import sys
+from libraries import computers_1
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -74,7 +75,9 @@ class work_space_generator:
         #
         # Get the environmental variable "RGT_PATH_TO_SSPACE".
         #
-        ws = os.environ["RGT_PATH_TO_SSPACE"]
+        ws = os.getenv('RGT_PATH_TO_SSPACE')
+        if ws == None:
+            sys.exit("HARNESS ERROR: Please set RGT_PATH_TO_SSPACE in the environment!")
 
         #
         # Assign workspace.
@@ -129,3 +132,16 @@ def return_my_computer_with_events_record(taskwords):
 
     return mycomputer
 
+
+########################################################################
+# Attempt to create symlink, skip if not possible.
+########################################################################
+def try_symlink(source, link_name):
+    try:
+        if not os.path.lexists(link_name):
+            os.symlink(source, link_name)
+    except KeyboardInterrupt:
+        # Allow interrupt from command line.
+        raise
+    except:
+        print(f'HARNESS ERROR: Failed to create symlink {link_name} to {source}.')

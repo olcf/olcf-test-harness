@@ -118,9 +118,9 @@ class IBMpower9(BaseMachine):
                     total_processes = int(words[1])
                     break
             if total_processes:
-                print("Found total_processes is " + str(total_processes) + " in IBM Power 8 machine")
+                print("Found total_processes is " + str(total_processes) + " in IBM Power9 machine")
             else:
-                print("No total_processes requested in IBM Power 8 machine")
+                print("No total_processes requested in IBM Power9 machine")
 
             # Find the number of processes per node the test
             temp_re = re.compile(processes_per_node_pattern + "$")
@@ -131,9 +131,9 @@ class IBMpower9(BaseMachine):
                     processes_per_node = int(words[1])
                     break
             if processes_per_node:
-                print("Found processes_per_node is " + str(processes_per_node) + " in IBM Power 8 machine")
+                print("Found processes_per_node is " + str(processes_per_node) + " in IBM Power9 machine")
             else:
-                print("No processes_per_node requested in IBM Power 8 machine")
+                print("No processes_per_node requested in IBM Power9 machine")
 
             # Find the number of processes per socket the test
             temp_re = re.compile(processes_per_socket_pattern + "$")
@@ -144,9 +144,9 @@ class IBMpower9(BaseMachine):
                     processes_per_socket = int(words[1])
                     break
             if processes_per_socket:
-                print("Found processes_per_socket is " + str(processes_per_socket) + " in IBM Power 8 machine")
+                print("Found processes_per_socket is " + str(processes_per_socket) + " in IBM Power9 machine")
             else:
-                print("No processes_per_socket requested in IBM Power 8 machine")
+                print("No processes_per_socket requested in IBM Power9 machine")
 
 
             # Find the job name the test
@@ -158,9 +158,9 @@ class IBMpower9(BaseMachine):
                     jobname = words[1].strip('\n').strip()
                     break
             if jobname:
-                print("Found jobname is " + jobname + " in IBM Power 8 machine")
+                print("Found jobname is " + jobname + " in IBM Power9 machine")
             else:
-                print("No jobname provided in IBM Power 8 machine")
+                print("No jobname provided in IBM Power9 machine")
 
             # Find the queue to use for the test
             temp_re = re.compile(batchqueue_pattern + "$")
@@ -171,9 +171,9 @@ class IBMpower9(BaseMachine):
                     batchqueue = words[1].strip('\n').strip()
                     break
             if batchqueue:
-                print("Found batchqueue is " + batchqueue + " in IBM Power 8 machine")
+                print("Found batchqueue is " + batchqueue + " in IBM Power9 machine")
             else:
-                print("No batchqueue provided in IBM Power 8 machine")
+                print("No batchqueue provided in IBM Power9 machine")
 
             # Find the walltime to use for the test
             temp_re = re.compile(walltime_pattern + "$")
@@ -184,9 +184,9 @@ class IBMpower9(BaseMachine):
                     walltime = int(words[1])
                     break
             if walltime:
-                print("Found walltime is " + str(walltime) + " in IBM Power 8 machine")
+                print("Found walltime is " + str(walltime) + " in IBM Power9 machine")
             else:
-                print("No walltime provided in IBM Power 8 machine")
+                print("No walltime provided in IBM Power9 machine")
 
             # Find the name for the batch submission file to use for the test
             temp_re = re.compile(batchfilename_pattern + "$")
@@ -197,9 +197,9 @@ class IBMpower9(BaseMachine):
                     batchfilename = words[1].strip('\n').strip()
                     break
             if batchfilename:
-                print("Found batchfilename is " + batchfilename + " in IBM Power 8 machine")
+                print("Found batchfilename is " + batchfilename + " in IBM Power9 machine")
             else:
-                print("No batchfilename provided in IBM Power 8 machine")
+                print("No batchfilename provided in IBM Power9 machine")
 
             # Find the name for the build script file to use to build the application
             temp_re = re.compile(buildscriptname_pattern + "$")
@@ -210,9 +210,9 @@ class IBMpower9(BaseMachine):
                     buildscriptname = words[1].strip('\n').strip()
                     break
             if buildscriptname:
-                print("Found buildscriptname is " + buildscriptname + " in IBM Power 8 machine")
+                print("Found buildscriptname is " + buildscriptname + " in IBM Power9 machine")
             else:
-                print("No buildscriptname provided in IBM Power 8 machine")
+                print("No buildscriptname provided in IBM Power9 machine")
 
             # Find the name for the check script file to use to verify the test results
             temp_re = re.compile(checkscriptname_pattern + "$")
@@ -223,9 +223,9 @@ class IBMpower9(BaseMachine):
                     checkscriptname = words[1].strip('\n').strip()
                     break
             if checkscriptname:
-                print("Found checkscriptname is " + checkscriptname + " in IBM Power 8 machine")
+                print("Found checkscriptname is " + checkscriptname + " in IBM Power9 machine")
             else:
-                print("No checkscriptname provided in IBM Power 8 machine")
+                print("No checkscriptname provided in IBM Power9 machine")
 
             # Find the name for the report script file to use to log results
             temp_re = re.compile(reportscriptname_pattern + "$")
@@ -236,9 +236,9 @@ class IBMpower9(BaseMachine):
                     reportscriptname = words[1].strip('\n').strip()
                     break
             if reportscriptname:
-                print("Found reportscriptname is " + reportscriptname + " in IBM Power 8 machine")
+                print("Found reportscriptname is " + reportscriptname + " in IBM Power9 machine")
             else:
-                print("No reportscriptname provided in IBM Power 8 machine")
+                print("No reportscriptname provided in IBM Power9 machine")
 
             # Find the name for the executable to use to launch the test
             temp_re = re.compile(executablename_pattern + "$")
@@ -249,9 +249,9 @@ class IBMpower9(BaseMachine):
                     executablename = words[1].strip('\n').strip()
                     break
             if executablename:
-                print("Found executablename is " + executablename + " in IBM Power 8 machine")
+                print("Found executablename is " + executablename + " in IBM Power9 machine")
             else:
-                print("No executablename provided in IBM Power 8 machine")
+                print("No executablename provided in IBM Power9 machine")
                 
             # Find the name for the input of the test
             temp_re = re.compile(testinputfile_pattern + "$")
@@ -262,9 +262,9 @@ class IBMpower9(BaseMachine):
                     testinputfile = words[1].strip('\n').strip()
                     break
             if testinputfile:
-                print("Found testinputfile is " + testinputfile + " in IBM Power 8 machine" )
+                print("Found testinputfile is " + testinputfile + " in IBM Power9 machine" )
             else:
-                print("No testinputfile provided in IBM Power 8 machine")
+                print("No testinputfile provided in IBM Power9 machine")
 
 
             self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
@@ -345,7 +345,7 @@ class IBMpower9(BaseMachine):
     def submit_batch_script(self):
         print("Submitting batch script for Power9")
         submit_exit_value = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
-        print("Submitting " + self.__rgt_test.get_batchfilename() + " submit_exit_value = " + str(submit_exit_value))
+        print("Submitted " + self.__rgt_test.get_batchfilename() + " submit_exit_value = " + str(submit_exit_value))
         return submit_exit_value
 
     def check_executable(self):

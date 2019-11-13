@@ -113,7 +113,7 @@ class StatusFile:
         'rgt_system_log_tag',
         'user',
         'hostname',
-        'rgt_pbs_job_accnt_id',
+        'rgt_job_accnt_id',
         'rgt_path_to_sspace',
         'path_to_rgt_package',
         'build_directory',
@@ -434,11 +434,13 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test'],
         test_instance_info['test_id'], 'workdir')
 
-    test_instance_info['rgt_pbs_job_accnt_id'] = (
-        os.environ['RGT_PBS_JOB_ACCNT_ID'])
+    test_instance_info['rgt_job_accnt_id'] = (
+        os.environ['RGT_JOB_ACCNT_ID']
+        if 'RGT_JOB_ACCNT_ID' in os.environ else no_value)
 
     test_instance_info['path_to_rgt_package'] = (
-        os.environ['PATH_TO_RGT_PACKAGE'])
+        os.environ['PATH_TO_RGT_PACKAGE']
+        if 'PATH_TO_RGT_PACKAGE' in os.environ else no_value)
 
     test_instance_info['rgt_system_log_tag'] = (
         os.environ['RGT_SYSTEM_LOG_TAG']
@@ -501,8 +503,8 @@ def write_system_log(test_id, status_info):
 
     #---Use Unix logger command unless (valid) directory requested.
 
-    rgt_system_log_dir = os.environ['RGT_SYSTEM_LOG_DIR'] \
-        if 'RGT_SYSTEM_LOG_DIR' in os.environ else ''
+    rgt_system_log_dir = (os.environ['RGT_SYSTEM_LOG_DIR']
+        if 'RGT_SYSTEM_LOG_DIR' in os.environ else '')
 
     is_using_unix_logger = False
     if rgt_system_log_dir == '':
