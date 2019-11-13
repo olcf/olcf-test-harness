@@ -1,0 +1,55 @@
+#%Module
+
+#-----------------------------------------------------
+# This module is for the Crest acceptance.           -
+#                                                    -
+#-----------------------------------------------------
+
+proc ModulesHelp { } {
+    puts stderr "Sets up environment to use the OLCF Test Harness on Rhea"
+  }
+
+  #-----------------------------------------------------
+  # Base path to test harness python scripts.          -
+  #                                                    -
+  #-----------------------------------------------------
+  set apppath $env(OLCF_HARNESS_DIR)/harness
+
+  #-----------------------------------------------------
+  # URL to repository of acceptance test harness       -
+  # applications.                                      -
+  #-----------------------------------------------------
+  set apprep https://gitlab.ccs.ornl.gov/olcf-system-test/applications/summit.git
+
+  #-----------------------------------------------------
+  #Set path to harness driver programs, binaries, ...  -
+  #-----------------------------------------------------
+  setenv PATH_TO_RGT_PACKAGE    $apppath
+  prepend-path PATH             $apppath/bin
+  prepend-path PATH             $apppath/utilities
+  prepend-path LD_LIBRARY_PATH  $apppath/libraries
+  prepend-path LIBRARY_PATH     $apppath/libraries
+  prepend-path PYTHONPATH       $apppath/utilities
+  prepend-path PYTHONPATH       $apppath/bin
+  prepend-path PYTHONPATH       $apppath/libraries
+  prepend-path PYTHONPATH       $apppath
+
+
+  #-----------------------------------------------------
+  # Set path to the repository that contains the       -
+  # applications and tests.                            -
+  #-----------------------------------------------------
+  setenv RGT_PATH_TO_REPS $apprep
+  setenv RGT_PATH_TO_REPS_INTERNAL "summit"
+  setenv RGT_MACHINE_NAME "summit"
+  setenv RGT_SCHEDULER_TYPE "LSF"
+  setenv RGT_JOBLAUNCHER_TYPE "jsrun"
+  setenv RGT_TYPE_OF_REPOSITORY "git"
+  setenv RGT_MACHINE_CPUS_PER_NODE 42
+  setenv RGT_MACHINE_GPUS_PER_NODE 6
+  setenv RGT_SUBMIT_QUEUE "batch"
+  setenv RGT_SUBMIT_ARGS ""
+
+  module load python
+
+

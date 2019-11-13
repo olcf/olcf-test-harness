@@ -7,7 +7,7 @@ from libraries.repositories.repository_factory import RepositoryFactory
 
 class  apps_test_directory_layout(object):
 
-    organization = os.environ["RGT_ORGANIZATION"] 
+    #organization = os.environ["RGT_ORGANIZATION"]
     machine = os.environ["RGT_MACHINE_NAME"] 
     top_level_applications ="applications"
     kill_file = "kill_test"
@@ -41,11 +41,11 @@ class  apps_test_directory_layout(object):
         self.__name_of_subtest = name_of_subtest
         self.__local_path_to_tests_wd = local_path_to_tests
 
-        # Make deep copes of directory_structure 
+        # Make deep copies of directory_structure
         self.__appTestDirectoryStructure = copy.deepcopy(apps_test_directory_layout.directory_structure)
         self.__local_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure)
 
-        # Set the application and test layout.
+        # Set the application and test layout
         self.__setApplicationTestLayout(name_of_application,
                                         name_of_subtest)
 
@@ -79,7 +79,7 @@ class  apps_test_directory_layout(object):
     #
     # Returns the path to the source.
     #
-    def gePathToSource(self):
+    def getPathToSource(self):
         return self.__appTestDirectoryStructure["Source"]
 
     #
