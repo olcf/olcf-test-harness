@@ -138,10 +138,10 @@ class base_apptest(object):
     #-----------------------------------------------------
     def __str__(self):
         tmp_string = "--\n"
-        tmp_string = tmp_string + "Application name: {}\n".format(str(self.__nameOfApplication))
-        tmp_string = tmp_string + "Subtest name: {}\n".format(str(self.__name_of_subtest))
-        tmp_string = tmp_string + "Local path to tests: {}\n".format(str(self.__localPathToTests))
-        tmp_string = tmp_string + "--\n"
+        tmp_string += "Application name: {}\n".format(str(self.__nameOfApplication))
+        tmp_string += "Subtest name: {}\n".format(str(self.__name_of_subtest))
+        tmp_string += "Local path to tests: {}\n".format(str(self.__localPathToTests))
+        tmp_string += "--\n"
 
         return tmp_string
 
