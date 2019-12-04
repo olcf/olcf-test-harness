@@ -1,56 +1,30 @@
 #%Module
 
-#---------------------------------------------
-# This module is for the Summit acceptance.  -
-#                                            -
-#---------------------------------------------
+#------------------------------
+# This module is for Summit.  -
+#------------------------------
 
 proc ModulesHelp { } {
-    puts stderr "Sets up environment to use the OLCF Test Harness on Summit"
-  }
+   puts stderr "Sets up environment to use the OLCF Test Harness on Summit"
+}
 
-  #---------------------------------------------
-  # Base path to test harness python scripts.  -
-  #---------------------------------------------
-  set harness $env(OLCF_HARNESS_DIR)/harness
+#---------------------------------------------
+# Base path to test harness python scripts.  -
+#---------------------------------------------
+set harness $env(OLCF_HARNESS_DIR)/harness
 
-  #------------------------------------------------------
-  # Set path to harness driver programs, binaries, ...  -
-  #------------------------------------------------------
-  setenv PATH_TO_RGT_PACKAGE     $harness
-  prepend-path PATH              $harness/bin
-  prepend-path PATH              $harness/utilities
-  prepend-path LD_LIBRARY_PATH   $harness/libraries
-  prepend-path LIBRARY_PATH      $harness/libraries
-  prepend-path PYTHONPATH        $harness/utilities
-  prepend-path PYTHONPATH        $harness/bin
-  prepend-path PYTHONPATH        $harness/libraries
-  prepend-path PYTHONPATH        $harness
+#------------------------------------------------------
+# Set path to harness driver programs, binaries, ...  -
+#------------------------------------------------------
+setenv PATH_TO_RGT_PACKAGE    $harness
+prepend-path PATH             $harness/bin
+prepend-path PATH             $harness/utilities
+prepend-path LD_LIBRARY_PATH  $harness/libraries
+prepend-path LIBRARY_PATH     $harness/libraries
 
-
-#  #------------------------------------------------
-#  # Set path to the repository that contains the  -
-#  # applications and tests.                       -
-#  #------------------------------------------------
-#  setenv RGT_PATH_TO_REPS $apprep
-#  setenv RGT_PATH_TO_REPS_INTERNAL "summit"
-#  setenv RGT_MACHINE_NAME "summit"
-#  setenv RGT_SCHEDULER_TYPE "LSF"
-#  setenv RGT_JOBLAUNCHER_TYPE "jsrun"
-#  setenv RGT_TYPE_OF_REPOSITORY "git"
-#  setenv RGT_MACHINE_CPUS_PER_NODE 42
-#  setenv RGT_MACHINE_GPUS_PER_NODE 6
-#  setenv RGT_SUBMIT_QUEUE "batch"
-#  setenv RGT_SUBMIT_ARGS ""
-#
-#  # New variables for single git repo
-#  setenv RGT_GIT_REPS_BRANCH "master"
-#  setenv RGT_GIT_DATA_TRANSFER_PROTOCOL "ssh"
-#  setenv RGT_GIT_SERVER_APPLICATION_PARENT_DIR "olcf-system-test/applications"
-#  setenv RGT_GIT_MACHINE_NAME "summit"
-#  setenv RGT_GIT_SSH_SERVER_URL "gitlab@gitlab.ccs.ornl.gov"
-#  setenv RGT_GIT_HTTPS_SERVER_URL "https://gitlab.ccs.ornl.gov"
-
-  module load python
-
+module load python
+prepend-path PYTHONPATH       $harness/utilities
+prepend-path PYTHONPATH       $harness/bin
+prepend-path PYTHONPATH       $harness/libraries
+prepend-path PYTHONPATH       $harness
 

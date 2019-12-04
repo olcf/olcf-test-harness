@@ -101,6 +101,13 @@ class MachineFactory:
                                         workspace=rgt_path_to_workspace,
                                         harness_id=rgt_harness_id,
                                         scripts_dir=rgt_scripts_dir)
+            elif rgt_machine_name == "lyra":
+                tmp_machine = RHELx86(name=rgt_machine_name,
+                                        scheduler=rgt_scheduler_type,
+                                        jobLauncher=rgt_jobLauncher_type,
+                                        workspace=rgt_path_to_workspace,
+                                        harness_id=rgt_harness_id,
+                                        scripts_dir=rgt_scripts_dir)
             else:
                 print("Machine name does not exist. Good bye!")
                 raise MachineTypeNotImplementedError(rgt_machine_name)
