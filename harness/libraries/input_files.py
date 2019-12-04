@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import string
+import configparser
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -15,17 +16,34 @@ class rgt_input_file:
     comment_line_entry = "#"
     harness_task_entry = "harness_task"
 
-    def __init__(self,inputfilename="rgt.input"):
+    def __init__(self,inputfilename="rgt.input", configfilename="master.ini"):
         self.__tests = []
         self.__path_to_tests = ""
         self.__harness_task = []
         self.__inputFileName = inputfilename
+        self.__configFileName = configfilename
 
+        # Read the master config file
+        self.__read_config()
 
         #
         # Read the input file.
         #
         self.__read_file()
+
+    def __read_config(self):
+        if os.path.isfile(self.__configFileName):
+            print("reading master config")
+            master_cfg = configparser.ConfigParser()
+            master_cfg.read(self.__configFileName)
+
+            machine_vars = master_cfg['MachineDetails']
+            repo_vars = master_cfg['RepoDetails']
+
+            for k in machine_vars:
+                v = machine_vars[k]
+                print(k, v)
+        
 
     def __read_file(self):
         ifile_obj = open(self.__inputFileName,"r")
