@@ -107,6 +107,7 @@ class rgt_input_file:
         for k in env_vars:
             envk = "RGT_" + str.upper(k)
             v = env_vars[k]
+
             if envk in os.environ:
                 print(envk + " is already set. Skipping.")
             else:
