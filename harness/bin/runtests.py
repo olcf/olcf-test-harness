@@ -111,13 +111,10 @@ def runtests(my_arg_string=None):
         warning_message += "Run 'runtests.py --help' for usage\n\n"
         print(warning_message)
     
-    # Read master config
-    master_cfg = input_files.rgt_input_file(configfilename=configfile)
-
     #
-    # Read the input
+    # Read the input and master config
     #    
-    ifile = input_files.rgt_input_file(inputfilename=inputfile)
+    ifile = input_files.rgt_input_file(inputfilename=inputfile,configfilename=configfile)
     
     rgt = regression_test.Harness(ifile,
                                   concurrency)

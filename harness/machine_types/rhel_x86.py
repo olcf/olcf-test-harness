@@ -64,7 +64,7 @@ class RHELx86(BaseMachine):
             env_vars = rgt_test_config['EnvVars']
 
             # variables needed by the harness
-            replace["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
+            # replace["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
             replace["nccstestharnessmodule"] = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
             replace["resultsdir"] = self.get_rgt_results_dir()
             replace["workdir"] = self.get_rgt_workdir()

@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import string
+import os
 import configparser
 
 #
@@ -39,10 +40,14 @@ class rgt_input_file:
 
             machine_vars = master_cfg['MachineDetails']
             repo_vars = master_cfg['RepoDetails']
+            testshot_vars = master_cfg['TestshotDetails']
 
-            for k in machine_vars:
-                v = machine_vars[k]
-                print(k, v)
+            self.set_rgt_env_vars(machine_vars)
+            self.set_rgt_env_vars(repo_vars)
+            self.set_rgt_env_vars(testshot_vars)
+
+            #print(os.environ.get("RGT_MACHINE_NAME"))
+            #print(os.environ.get("RGT_ACCT_ID"))
         
 
     def __read_file(self):
@@ -97,6 +102,12 @@ class rgt_input_file:
             return True
         else:
             return False
+
+    def set_rgt_env_vars(self,env_vars):
+        for k in env_vars:
+            envk = "RGT_" + str.upper(k)
+            v = env_vars[k]
+            os.environ[envk] = v
 
     def get_harness_tasks(self):
             return self.__harness_task

@@ -8,7 +8,7 @@ from libraries.repositories.repository_factory import RepositoryFactory
 class  apps_test_directory_layout(object):
 
     #organization = os.environ["RGT_ORGANIZATION"]
-    machine = os.environ["RGT_MACHINE_NAME"] 
+    #machine = os.environ["RGT_MACHINE_NAME"] 
     top_level_applications ="applications"
     kill_file = "kill_test"
     rc_file = ".testrc"
