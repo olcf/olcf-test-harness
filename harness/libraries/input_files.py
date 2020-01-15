@@ -40,7 +40,7 @@ class rgt_input_file:
 
             machine_vars = master_cfg['MachineDetails']
             repo_vars = master_cfg['RepoDetails']
-            testshot_vars = master_cfg['TestshotDetails']
+            testshot_vars = master_cfg['TestshotDefaults']
 
             self.set_rgt_env_vars(machine_vars)
             self.set_rgt_env_vars(repo_vars)
