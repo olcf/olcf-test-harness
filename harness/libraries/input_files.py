@@ -107,7 +107,10 @@ class rgt_input_file:
         for k in env_vars:
             envk = "RGT_" + str.upper(k)
             v = env_vars[k]
-            os.environ[envk] = v
+            if envk in os.environ:
+                print(envk + " is already set. Skipping.")
+            else:
+                os.environ[envk] = v
 
     def get_harness_tasks(self):
             return self.__harness_task
