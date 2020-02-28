@@ -5,6 +5,7 @@ import shlex
 import argparse
 import sys
 import string
+import configparser
 
 # My harness package imports
 from libraries import input_files
@@ -41,6 +42,11 @@ def create_a_parser():
                         default="rgt.input",
                         help="Optional argument to pass an input with a name other than rgt.input.")
     
+    parser.add_argument("--configfile",
+                        required=False,
+                        default="master.ini",
+                        help="Optional argument to pass a config with a name other than `master.ini`.")
+    
     parser.add_argument("--loglevel",
                          required=False,
                          choices=["DEBUG","INFO","WARNING", "ERROR", "CRITICAL"],
@@ -75,6 +81,7 @@ def runtests(my_arg_string=None):
     Vargs = parser.parse_args(argv)
     concurrency = Vargs.concurrency
     inputfile = Vargs.inputfile
+    configfile = Vargs.configfile
     loglevel=Vargs.loglevel
     stdout_stderr=Vargs.stdout_and_stderr
 
@@ -83,10 +90,12 @@ def runtests(my_arg_string=None):
     command_options += "runtests.py "
     command_options += "--concurrency {my_concurrency} " 
     command_options += "--inputfile {my_inputfile} "
+    command_options += "--configfile {my_configfile} "
     command_options += "--loglevel {my_loglevel} "
     command_options += "--stdout_and_stderr {my_stdouterr}"
     my_effective_command_line = command_options.format(my_concurrency=concurrency,  
                                                        my_inputfile = inputfile,
+                                                       my_configfile = configfile,
                                                        my_loglevel = loglevel,
                                                        my_stdouterr = stdout_stderr)
     print(my_effective_command_line)
@@ -103,9 +112,9 @@ def runtests(my_arg_string=None):
         print(warning_message)
     
     #
-    # Read the input
+    # Read the input and master config
     #    
-    ifile = input_files.rgt_input_file(inputfilename=inputfile)
+    ifile = input_files.rgt_input_file(inputfilename=inputfile,configfilename=configfile)
     
     rgt = regression_test.Harness(ifile,
                                   concurrency)

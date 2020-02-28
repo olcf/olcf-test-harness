@@ -485,13 +485,13 @@ def test_harness_driver(argv=None):
     # If the file exists then the program will exit
     # without building and submitting scripts.
     #
-    kill_file = apps_test_directory_layout.kill_file
+    kill_file = apps_test_directory_layout.test_kill_file
     if os.path.exists(kill_file):
         message = f'The kill file {kill_file} exists. It must be removed to run this test.'
         sys.exit(message)
 
     # Q: What is the purpose of the testrc file??
-    testrc_file = apps_test_directory_layout.rc_file
+    testrc_file = apps_test_directory_layout.test_rc_file
     if os.path.exists(testrc_file):
         file_obj = open(testrc_file,"r")
         lines = file_obj.readlines()

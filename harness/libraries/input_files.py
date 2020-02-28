@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 import string
+import os
+import configparser
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -15,17 +17,38 @@ class rgt_input_file:
     comment_line_entry = "#"
     harness_task_entry = "harness_task"
 
-    def __init__(self,inputfilename="rgt.input"):
+    def __init__(self,inputfilename="rgt.input", configfilename="master.ini"):
         self.__tests = []
         self.__path_to_tests = ""
         self.__harness_task = []
         self.__inputFileName = inputfilename
+        self.__configFileName = configfilename
 
+        # Read the master config file
+        self.__read_config()
 
         #
         # Read the input file.
         #
         self.__read_file()
+
+    def __read_config(self):
+        if os.path.isfile(self.__configFileName):
+            print("reading master config")
+            master_cfg = configparser.ConfigParser()
+            master_cfg.read(self.__configFileName)
+
+            machine_vars = master_cfg['MachineDetails']
+            repo_vars = master_cfg['RepoDetails']
+            testshot_vars = master_cfg['TestshotDefaults']
+
+            self.set_rgt_env_vars(machine_vars)
+            self.set_rgt_env_vars(repo_vars)
+            self.set_rgt_env_vars(testshot_vars)
+
+            #print(os.environ.get("RGT_MACHINE_NAME"))
+            #print(os.environ.get("RGT_ACCT_ID"))
+        
 
     def __read_file(self):
         ifile_obj = open(self.__inputFileName,"r")
@@ -79,6 +102,16 @@ class rgt_input_file:
             return True
         else:
             return False
+
+    def set_rgt_env_vars(self,env_vars):
+        for k in env_vars:
+            envk = "RGT_" + str.upper(k)
+            v = env_vars[k]
+
+            if envk in os.environ:
+                print(envk + " is already set. Skipping.")
+            else:
+                os.environ[envk] = v
 
     def get_harness_tasks(self):
             return self.__harness_task

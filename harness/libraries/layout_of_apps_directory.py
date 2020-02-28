@@ -2,35 +2,38 @@
 
 import copy
 import os
-import re
+from string import Template
 from libraries.repositories.repository_factory import RepositoryFactory
 
 class  apps_test_directory_layout(object):
 
     #organization = os.environ["RGT_ORGANIZATION"]
-    machine = os.environ["RGT_MACHINE_NAME"] 
+    #machine = os.environ["RGT_MACHINE_NAME"] 
     top_level_applications ="applications"
-    kill_file = "kill_test"
-    rc_file = ".testrc"
 
-    directory_structure = {
-                            "application"                          : ["__application__"],
-                            "application_info.txt"                 : ["__application__","application_info.txt"],
-                            "test"                                 : ["__application__","__test__"],
-                            "Performance"                          : ["__application__","__test__","Performance"],
-                            "Source"                               : ["__application__","Source"],
-                            "Scripts"                              : ["__application__","__test__","Scripts"],
-                            "kill_file"                            : ["__application__","__test__","Scripts",kill_file],
-                            "Status"                               : ["__application__","__test__","Status"],
-                            "status.txt"                           : ["__application__","__test__","Status","rgt_status.txt"],
-                            "Correct_Results"                      : ["__application__","__test__","Correct_Results"],
-                            "Run_Archive"                          : ["__application__","__test__","Run_Archive"],
-                            "test_info.txt"                        : ["__application__","__test__","test_info.txt"],
-                            ".testrc"                              : ["__application__","__test__",".testrc"],
-                           }
+    app_info_file = "application_info.txt"
+    test_info_file = "test_info.txt"
+    test_kill_file = ".kill_test"
+    test_rc_file = ".testrc"
+    test_status_file = "rgt_status.txt"
+
+    directory_structure_template = {
+        'application'       : os.path.join("${pdir}","${app}"),
+        'application_info'  : os.path.join("${pdir}","${app}",app_info_file),
+        'Source'            : os.path.join("${pdir}","${app}","Source"),
+        'test'              : os.path.join("${pdir}","${app}","${test}"),
+        'test_info'         : os.path.join("${pdir}","${app}","${test}",test_info_file),
+        'test_rc'           : os.path.join("${pdir}","${app}","${test}",test_rc_file),
+        'Correct_Results'   : os.path.join("${pdir}","${app}","${test}","Correct_Results"),
+        'Performance'       : os.path.join("${pdir}","${app}","${test}","Performance"),
+        'Run_Archive'       : os.path.join("${pdir}","${app}","${test}","Run_Archive"),
+        'Scripts'           : os.path.join("${pdir}","${app}","${test}","Scripts"),
+        'kill_file'         : os.path.join("${pdir}","${app}","${test}","Scripts",test_kill_file),
+        'Status'            : os.path.join("${pdir}","${app}","${test}","Status"),
+        'status_file'       : os.path.join("${pdir}","${app}","${test}","Status",test_status_file)}
 
     suffix_for_ignored_tests = '.ignore_test'
-    suffix_for_ignored_apps = '.ignore_app'
+    suffix_for_ignored_apps  = '.ignore_app'
 
     #
     # Constructor
@@ -41,13 +44,10 @@ class  apps_test_directory_layout(object):
         self.__name_of_subtest = name_of_subtest
         self.__local_path_to_tests_wd = local_path_to_tests
 
-        # Make deep copies of directory_structure
-        self.__appTestDirectoryStructure = copy.deepcopy(apps_test_directory_layout.directory_structure)
-        self.__local_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure)
-
         # Set the application and test layout
-        self.__setApplicationTestLayout(name_of_application,
-                                        name_of_subtest)
+        self.__appTestDirectoryStructure = copy.deepcopy(apps_test_directory_layout.directory_structure_template)
+        self.__local_app_test_directory_structure = copy.deepcopy(apps_test_directory_layout.directory_structure_template)
+        self.__setApplicationTestLayout()
 
         return
 
@@ -116,7 +116,7 @@ class  apps_test_directory_layout(object):
     # Returns the path to the status file.
     #
     def get_path_to_status_file(self):
-        return self.__local_app_test_directory_structure["status.txt"]
+        return self.__local_app_test_directory_structure["status_file"]
 
 
     def get_local_path_to_performance_dir(self):
@@ -147,39 +147,18 @@ class  apps_test_directory_layout(object):
     #
     # Sets the application and test directory structure.
     #
-    def __setApplicationTestLayout(self,application,name_of_subtest):
+    def __setApplicationTestLayout(self):
+
+        app_dict = dict(app=self.__name_of_application,
+                        test=self.__name_of_subtest,
+                        pdir=RepositoryFactory.get_fully_qualified_url_of_application_parent_directory())
+
+        local_dict = dict(app=self.__name_of_application,
+                          test=self.__name_of_subtest,
+                          pdir=self.__local_path_to_tests_wd)
 
         #Setting name of the application and subtest for the directory structure.
-        for key in self.__appTestDirectoryStructure.keys():
-            tmpstringarray = self.__appTestDirectoryStructure[key]
-            ip = -1
-            for string1 in self.__appTestDirectoryStructure[key]:
-                ip = ip + 1
-                if string1 == "__application__":
-                    self.__appTestDirectoryStructure[key][ip] = application
-    
-                if string1 == "__test__":
-                    self.__appTestDirectoryStructure[key][ip] = name_of_subtest
-
-
-        #Setting local directory structure.
-        self.__local_app_test_directory_structure = copy.deepcopy(self.__appTestDirectoryStructure)
-        path_a = os.path.join(self.__local_path_to_tests_wd,application)
-        for key in self.__local_app_test_directory_structure.keys():
-            pathb = path_a
-            ip = 0
-            for string1 in self.__local_app_test_directory_structure[key]:
-                if ip > 0:
-                    pathb = os.path.join(pathb,string1)
-                ip = ip + 1
-            self.__local_app_test_directory_structure[key] = pathb
-
-
-        # Now join names to make the fully qualified path names to repository.
-        # The repository should do this.
-        path_1 = RepositoryFactory.get_fully_qualified_url_of_application_parent_directory() 
-        for key in self.__appTestDirectoryStructure.keys():
-            path_2 = path_1
-            for string1 in self.__appTestDirectoryStructure[key]:
-                path_2 = os.path.join(path_2,string1)
-            self.__appTestDirectoryStructure[key] = path_2
+        for key in apps_test_directory_layout.directory_structure_template.keys():
+            path_template = Template(self.__appTestDirectoryStructure[key])
+            self.__appTestDirectoryStructure[key] = path_template.substitute(app_dict)
+            self.__local_app_test_directory_structure[key] = path_template.substitute(local_dict)
