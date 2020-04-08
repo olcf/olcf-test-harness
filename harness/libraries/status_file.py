@@ -113,7 +113,7 @@ class StatusFile:
         'rgt_system_log_tag',
         'user',
         'hostname',
-        'rgt_job_accnt_id',
+        'job_account_id',
         'rgt_path_to_sspace',
         'path_to_rgt_package',
         'build_directory',
@@ -434,9 +434,9 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test'],
         test_instance_info['test_id'], 'workdir')
 
-    test_instance_info['rgt_job_accnt_id'] = (
-        os.environ['RGT_JOB_ACCNT_ID']
-        if 'RGT_JOB_ACCNT_ID' in os.environ else no_value)
+    test_instance_info['job_account_id'] = (
+        os.environ['RGT_ACCT_ID']
+        if 'RGT_ACCT_ID' in os.environ else no_value)
 
     test_instance_info['path_to_rgt_package'] = (
         os.environ['PATH_TO_RGT_PACKAGE']

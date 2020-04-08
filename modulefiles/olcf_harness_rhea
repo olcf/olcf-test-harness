@@ -1,37 +1,36 @@
 #%Module
 
-#-----------------------------------------------------
-# This module is for the Crest acceptance.           -
-#                                                    -
-#-----------------------------------------------------
+#-------------------------------------------
+# This module is for the Rhea acceptance.  -
+#                                          -
+#-------------------------------------------
 
 proc ModulesHelp { } {
     puts stderr "Sets up environment to use the OLCF Test Harness on Rhea"
   }
 
-  #-----------------------------------------------------
-  # Base path to test harness python scripts.          -
-  #                                                    -
-  #-----------------------------------------------------
-  set apppath $env(OLCF_HARNESS_DIR)/harness
+  #---------------------------------------------
+  # Base path to test harness python scripts.  -
+  #---------------------------------------------
+  set harness $env(OLCF_HARNESS_DIR)/harness
 
-  #-----------------------------------------------------
-  #Set path to harness driver programs, binaries, ...  -
-  #-----------------------------------------------------
-  setenv PATH_TO_RGT_PACKAGE    $apppath
-  prepend-path PATH             $apppath/bin
-  prepend-path PATH             $apppath/utilities
-  prepend-path LD_LIBRARY_PATH  $apppath/libraries
-  prepend-path LIBRARY_PATH     $apppath/libraries
-  prepend-path PYTHONPATH       $apppath/utilities
-  prepend-path PYTHONPATH       $apppath/bin
-  prepend-path PYTHONPATH       $apppath/libraries
-  prepend-path PYTHONPATH       $apppath
+  #------------------------------------------------------
+  # Set path to harness driver programs, binaries, ...  -
+  #------------------------------------------------------
+  setenv PATH_TO_RGT_PACKAGE     $harness
+  prepend-path PATH              $harness/bin
+  prepend-path PATH              $harness/utilities
+  prepend-path LD_LIBRARY_PATH   $harness/libraries
+  prepend-path LIBRARY_PATH      $harness/libraries
+  prepend-path PYTHONPATH        $harness/utilities
+  prepend-path PYTHONPATH        $harness/bin
+  prepend-path PYTHONPATH        $harness/libraries
+  prepend-path PYTHONPATH        $harness
 
-#  #-----------------------------------------------------
-#  # Set path to the svn repository that contains the   -
-#  # applications and tests.                            -
-#  #-----------------------------------------------------
+#  #------------------------------------------------
+#  # Set path to the repository that contains the  -
+#  # applications and tests.                       -
+#  #------------------------------------------------
 #  setenv RGT_PATH_TO_REPS $apprep
 #  setenv RGT_PATH_TO_REPS_INTERNAL "rhea"
 #  setenv RGT_MACHINE_NAME "rhea"
