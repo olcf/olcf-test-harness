@@ -58,7 +58,7 @@ class IBMpower9(BaseMachine):
                 template_dict[k.strip().lower()] = v.strip()
 
         # Variables needed by the harness
-        template_dict["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
+        #template_dict["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
         template_dict["nccstestharnessmodule"] = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
         template_dict["resultsdir"] = self.get_rgt_results_dir()
         template_dict["workdir"] = self.get_rgt_workdir()
