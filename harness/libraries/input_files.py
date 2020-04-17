@@ -30,20 +30,36 @@ class rgt_input_file:
         # Read the input file.
         self.__read_file()
 
-        if self.__harness_task == [] and runmodecmd != None:
-            if runmodecmd == "checkout":
-                runmodetask = ["check_out_tests",None,None]
-            elif runmodecmd == "start":
-                runmodetask = ["start_tests",None,None]
-            elif runmodecmd == "stop":
-                runmodetask = ["stop_tests",None,None]
-            elif runmodecmd == "status":
-                runmodetask = ["display_tests",None,None]
-            else:
-                print("No valid tasks found in the command line")
+        # If a CLI task was input use that instead
+        if runmodecmd != None:
+            print("Overriding tasks in inputfile since CLI mode was provided")
+            print("runmodecmd = ", runmodecmd)
+            modetasklist = runmodecmd.split(",")
+            print("modetasklist = ", modetasklist)
+            self.__harness_task = []
+            for modetask in modetasklist:
+                if modetask == "checkout":
+                    runmodetask = ["check_out_tests",None,None]
+                elif modetask == "start":
+                    runmodetask = ["start_tests",None,None]
+                elif modetask == "stop":
+                    runmodetask = ["stop_tests",None,None]
+                elif modetask == "status":
+                    runmodetask = ["display_tests",None,None]
+                else:
+                    runmodetask = None
+                    print("Found invalid task in the command line: ", modetask)
 
-            self.__harness_task.append(runmodetask)
-            print("self.__harness_task: ", self.__harness_task)
+                # Append task to this harness instance
+                if runmodetask != None:
+                    self.__harness_task.append(runmodetask)
+                    print("self.__harness_task: ", self.__harness_task)
+                
+                # Clear mode to avoid duplicate
+                runmodetask = None
+
+        if self.__harness_task == []:
+            print("ERROR: No valid tasks found in the inputfile or the CLI")
 
     def __read_config(self):
         if os.path.isfile(self.__configFileName):

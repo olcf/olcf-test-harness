@@ -73,8 +73,8 @@ def create_parser():
                  "  'status'   - check status of application tests listed in input file")
     parser.add_argument('-m', '--mode',
                         required=False,
-                        choices=['checkout', 'start', 'stop', 'status'],
                         help=mode_help)
+                        #choices=['checkout', 'start', 'stop', 'status'],
 
     return parser
 
