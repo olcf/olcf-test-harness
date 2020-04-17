@@ -17,20 +17,33 @@ class rgt_input_file:
     comment_line_entry = "#"
     harness_task_entry = "harness_task"
 
-    def __init__(self,inputfilename="rgt.input", configfilename="master.ini"):
+    def __init__(self,inputfilename="rgt.input", configfilename="master.ini", runmodecmd=None):
         self.__tests = []
-        self.__path_to_tests = ""
         self.__harness_task = []
+        self.__path_to_tests = ""
         self.__inputFileName = inputfilename
         self.__configFileName = configfilename
 
         # Read the master config file
         self.__read_config()
 
-        #
         # Read the input file.
-        #
         self.__read_file()
+
+        if self.__harness_task == [] and runmodecmd != None:
+            if runmodecmd == "checkout":
+                runmodetask = ["check_out_tests",None,None]
+            elif runmodecmd == "start":
+                runmodetask = ["start_tests",None,None]
+            elif runmodecmd == "stop":
+                runmodetask = ["stop_tests",None,None]
+            elif runmodecmd == "status":
+                runmodetask = ["display_tests",None,None]
+            else:
+                print("No valid tasks found in the command line")
+
+            self.__harness_task.append(runmodetask)
+            print("self.__harness_task: ", self.__harness_task)
 
     def __read_config(self):
         if os.path.isfile(self.__configFileName):
@@ -57,14 +70,14 @@ class rgt_input_file:
         
         for tmpline in lines:
 
+            #If this is a comment line, the continue to next line.
+            if self.__is_comment_line(tmpline):
+                continue
+
             words = str.split(tmpline)
 
             #If there are no words, then continue to next line.
             if len(words) == 0:
-                continue
-
-            #If this is a comment line, the continue to next line.
-            if self.__is_comment_line(words[0]):
                 continue
 
             #Convert the first word to lower case.
@@ -79,22 +92,30 @@ class rgt_input_file:
                 app = words[2]
                 subtest = words[3]
                 nm_iters = -1
-                if (len(words) == 4):
-                    nm_iters = -1
-                elif len(words) == 5:
+                if len(words) == 5:
                     nm_iters = int(words[4])
-                self.__tests = self.__tests + [[app,subtest,nm_iters]]
+                elif len(words) > 5:
+                    log_message = "Invalid number of words in test line: " + tmpline
+                    print(log_message)
+                self.__tests.append([app,subtest,nm_iters])
                     
             elif firstword == rgt_input_file.path_to_test_entry:
-                self.__path_to_tests = words[2]
+                if (len(words) == 3):
+                    self.__path_to_tests = words[2]
+                elif len(words) > 3:
+                    log_message = "Invalid number of words in path line: " + tmpline
+                    print(log_message)
 
             elif firstword == rgt_input_file.harness_task_entry:
                 if (len(words) == 3):
-                    self.__harness_task = self.__harness_task + [[words[2],None,None]]
+                    self.__harness_task.append([words[2],None,None])
                 elif (len(words) == 5):
-                    self.__harness_task = self.__harness_task + [[words[2],words[3],words[4]]]
+                    self.__harness_task.append([words[2],words[3],words[4]])
+                else:
+                    log_message = "Invalid number of words in task line: " + tmpline
+                    print(log_message)
             else:
-                log_message = "Undefined entry:  " + tmpline
+                log_message = "Invalid line: " + tmpline
                 print(log_message)
 
     def __is_comment_line(self,word):

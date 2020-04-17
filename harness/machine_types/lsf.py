@@ -32,7 +32,7 @@ class LSF(BaseScheduler):
 
         qargs = ""
         if "RGT_SUBMIT_QUEUE" in os.environ:
-            qargs = " -q $RGT_SUBMIT_QUEUE "
+            qargs = " -q " + os.environ.get('RGT_SUBMIT_QUEUE') 
 
         if "RGT_SUBMIT_ARGS" in os.environ:
             qargs = qargs + os.getenv('RGT_SUBMIT_ARGS')

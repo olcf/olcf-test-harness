@@ -16,6 +16,7 @@ from datetime import datetime
 from libraries.apptest import subtest
 from libraries import apptest
 from libraries.base_apptest import base_apptest
+from libraries import regression_test
 import abc
 import copy
 import random
@@ -47,11 +48,11 @@ class BaseAppThreadDecorator(threading.Thread,base_apptest):
 
 class ThreadDecorator(BaseAppThreadDecorator):
     """
-    When this class is instatiated, the working directory must be 
+    When this class is instantiated, the working directory must be
     in the same directory as the "rgt.input" file location. This
     class instantiates a "python" thread over an application. Each
     application contains tests on which tasks are done on. Each test
-    is threaded with the "multiprocessing.Process" thread. Each 
+    is threaded with the "multiprocessing.Process" thread. Each
     multiprocessing.Process test thread does the tasks on the on the
     test.
 
@@ -131,7 +132,7 @@ class ThreadDecorator(BaseAppThreadDecorator):
           
         # The application source checkout must be performed first,
         # then all other harnes tasks may proceed.
-        if subtest.checkout in self.__harnessTasks:
+        if Harness.checkout in self.__harnessTasks:
             self.__checkoutApplicationSource()
 
         #Start the application tests.
@@ -236,7 +237,7 @@ class ThreadDecorator(BaseAppThreadDecorator):
             tmp_string = "Current directory is {}".format(os.getcwd())
             self.__writeToLogFile(tmp_string)
             
-            if subtest.checkout in self.__harnessTasks:
+            if Harness.checkout in self.__harnessTasks:
                 job.check_out_source()
                 tmp_string = "Checked out the source of application {application1}".format(application1=self.__nameOfApplication)
                 self.__writeToLogFile(tmp_string)

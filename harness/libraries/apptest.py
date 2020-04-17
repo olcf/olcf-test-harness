@@ -18,13 +18,12 @@ import logging
 from types import *
 
 # NCCS Test Harness Package Imports
-from libraries.rgt_logging import rgt_logger
 from libraries.base_apptest import base_apptest
 from libraries.layout_of_apps_directory import apps_test_directory_layout
+from libraries.rgt_logging import rgt_logger
 from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
 from libraries.status_file import summarize_status_file
-from bin.test_harness_driver import test_harness_driver
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
@@ -34,15 +33,6 @@ from libraries.repositories.common_repository_utility_functions import run_as_su
 # Inherits "apps_test_directory_layout".
 #
 class subtest(base_apptest,apps_test_directory_layout):
-    #These strings define the tasks that the tests can do.
-    checkout = "check_out_tests"
-    starttest = "start_tests"
-    stoptest = "stop_tests"
-    displaystatus = "display_status"
-    summarize_results = "summarize_results"
-    status_file = "applications_status.txt"
-    
-
 
     #
     # Constructor
@@ -100,6 +90,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                                         harness task to be preformed on this app/test
         """
 
+        from libraries.regression_test import Harness
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
@@ -110,7 +101,7 @@ class subtest(base_apptest,apps_test_directory_layout):
             tasks = subtest.reorderTaskList(tasks)
 
         for harness_task in tasks:
-            if harness_task == subtest.checkout:
+            if harness_task == Harness.checkout:
 
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
@@ -138,7 +129,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                 if test_checkout_lock:
                     test_checkout_lock.release()
 
-            elif harness_task == subtest.starttest:
+            elif harness_task == Harness.starttest:
                 message = "Start of starting test."
                 self.__myLogger.doInfoLogging(message)
                 
@@ -146,10 +137,10 @@ class subtest(base_apptest,apps_test_directory_layout):
                 message = "End of starting test"
                 self.__myLogger.doInfoLogging(message)
 
-            elif harness_task == subtest.stoptest:
+            elif harness_task == Harness.stoptest:
                 self.stop_test()
 
-            elif harness_task == subtest.displaystatus:
+            elif harness_task == Harness.displaystatus:
                 if test_display_lock:
                     test_display_lock.acquire()
 
@@ -158,7 +149,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                 if test_display_lock:
                     test_display_lock.release()
 
-            elif harness_task == subtest.summarize_results:
+            elif harness_task == Harness.summarize_results:
                 self.generateReport() 
 
     def getTestName(self):
@@ -384,8 +375,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                                           attempts=str(self.__summary["number_of_tests"]),
                                           passes=str(self.__summary["number_of_passed_tests"]),
                                           failures=str(self.__summary["number_of_failed_tests"]),
-                                          inconclusive=str(self.__summary["number_of_inconclusive_tests"]),
-)
+                                          inconclusive=str(self.__summary["number_of_inconclusive_tests"]))
 
         bheader = "\n====================\n"
 
@@ -425,6 +415,7 @@ class subtest(base_apptest,apps_test_directory_layout):
 
     @classmethod
     def reorderTaskList(cls,tasks):
+        from libraries.regression_test import Harness
         taskwords1 = []
         for taskwords in tasks:
             task = None
@@ -436,25 +427,25 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         app_tasks1 = []
 
-        if (cls.checkout in taskwords1) :
-            app_tasks1.append(cls.checkout)
-            taskwords1.remove(cls.checkout)
+        if (Harness.checkout in taskwords1):
+            app_tasks1.append(Harness.checkout)
+            taskwords1.remove(Harness.checkout)
 
-        if (cls.starttest in taskwords1) :
-            app_tasks1.append(cls.starttest)
-            taskwords1.remove(cls.starttest)
+        if (Harness.starttest in taskwords1) :
+            app_tasks1.append(Harness.starttest)
+            taskwords1.remove(Harness.starttest)
 
-        if (cls.stoptest in taskwords1):
-            app_tasks1.append(cls.stoptest)
-            taskwords1.remove(cls.stoptest)
+        if (Harness.stoptest in taskwords1):
+            app_tasks1.append(Harness.stoptest)
+            taskwords1.remove(Harness.stoptest)
 
-        if (cls.displaystatus in taskwords1):
-            app_tasks1.append(cls.displaystatus)
-            taskwords1.remove(cls.displaystatus)
+        if (Harness.displaystatus in taskwords1):
+            app_tasks1.append(Harness.displaystatus)
+            taskwords1.remove(Harness.displaystatus)
 
-        if (cls.summarize_results in taskwords1):
-            app_tasks1.append(cls.summarize_results)
-            taskwords1.remove(cls.summarize_results)
+        if (Harness.summarize_results in taskwords1):
+            app_tasks1.append(Harness.summarize_results)
+            taskwords1.remove(Harness.summarize_results)
             
         return app_tasks1
 

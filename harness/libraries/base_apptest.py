@@ -20,42 +20,49 @@ class base_apptest(object):
                  local_path_to_tests,
                  time_stamp=None):
 
-        if time_stamp:
-            self.__master_log_files_dir = os.path.join(os.getcwd(), 'harness_log_files.' + time_stamp)
-        else:
-            self.__master_log_files_dir = os.path.join(os.getcwd(), 'harness_log_files')
-
-        if not os.path.exists(self.__master_log_files_dir):
-            os.mkdir(self.__master_log_files_dir)
-
-        self.__nameOfApplication = name_of_application
-        self.__name_of_subtest = name_of_subtest
+        self.__appName = name_of_application
+        self.__testName = name_of_subtest
         self.__threadTag = "<" + str(name_of_application) + "::" + str(name_of_subtest) + ">"
         self.__localPathToTests = local_path_to_tests
-        self.__dirPathToLogFiles = os.path.join(self.__master_log_files_dir, name_of_application + "_Logfiles")
-        self.__appLogFilePath = os.path.join(self.__dirPathToLogFiles, self.__nameOfApplication + ".logfile.txt")
-        self.__appTestLogFilePath = os.path.join(self.__dirPathToLogFiles,
-                                                 self.__nameOfApplication + "__" + self.__name_of_subtest + ".logfile.txt")
 
-        self.__appCheckOutLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".appcheckout.stdout.txt")
-        self.__appCheckOutLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".appcheckout.stderr.txt")
-        self.__appTestCheckOutLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".testcheckout.stdout.txt")
-        self.__appTestCheckOutLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".testcheckout.stderr.txt")
-        self.__appTestUpdateSourceOutLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".sourceupdate.stdout.txt")
-        self.__appTestUpdateSourceOutLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".sourceupdate.stderr.txt")
-        self.__appStartTestLogFilePathStdOut = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".starttest.stdout.txt")
-        self.__appStartTestLogFilePathStdErr = os.path.join(self.__dirPathToLogFiles,self.__nameOfApplication + "__" + self.__name_of_subtest + ".starttest.stderr.txt")
-
+        # Create harness log directories
+        logdir_name = 'harness_log_files'
+        if time_stamp:
+            logdir_name += '.' + time_stamp
+        self.__dirPathToLogFiles = os.path.join(os.getcwd(), logdir_name)
         if not os.path.exists(self.__dirPathToLogFiles):
             os.mkdir(self.__dirPathToLogFiles)
-    
+
+        self.__appLogFileBaseDir = os.path.join(self.__dirPathToLogFiles, self.__appName)
+        if not os.path.exists(self.__appLogFileBaseDir):
+            os.mkdir(self.__appLogFileBaseDir)
+
+        self.__appTestLogFileBaseDir = os.path.join(self.__dirPathToLogFiles, self.__appName, self.__testName)
+        if not os.path.exists(self.__appTestLogFileBaseDir):
+            os.mkdir(self.__appTestLogFileBaseDir)
+
+        # Set harness log file names
+        self.__appLogFilePathBase = os.path.join(self.__appLogFileBaseDir, self.__appName)
+        self.__appTestLogFilePathBase = os.path.join(self.__appTestLogFileBaseDir, self.__appName + '__' + self.__testName)
+
+        self.__appLogFilePath = self.__appLogFilePathBase + ".logfile.txt"
+        self.__appTestLogFilePath = self.__appTestLogFilePathBase + ".logfile.txt"
+        self.__appCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".appcheckout.stdout.txt"
+        self.__appCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".appcheckout.stderr.txt"
+        self.__appTestCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".testcheckout.stdout.txt"
+        self.__appTestCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".testcheckout.stderr.txt"
+        self.__appTestUpdateSourceOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".sourceupdate.stdout.txt"
+        self.__appTestUpdateSourceOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".sourceupdate.stderr.txt"
+        self.__appStartTestLogFilePathStdOut = self.__appTestLogFilePathBase + ".starttest.stdout.txt"
+        self.__appStartTestLogFilePathStdErr = self.__appTestLogFilePathBase + ".starttest.stderr.txt"
+
         self.__initializeLogFiles()
 
     def getNameOfApplication(self):
-        return self.__nameOfApplication
+        return self.__appName
 
     def getNameOfSubtest(self):
-        return self.__name_of_subtest
+        return self.__testName
 
     def getLocalPathToTests(self):
         return self.__localPathToTests
@@ -63,8 +70,8 @@ class base_apptest(object):
     def getDirPathToLogFiles(self):
         return self.__dirPathToLogFiles
     
-    def getPathToApplicationTestLogFiles(self,test_name):
-        return os.path.join(self.__dirPathToLogFiles,test_name + ".logfile.txt")
+    def getPathToApplicationTestLogFile(self,test_name):
+        return self.__appTestLogFilePath
 
     def getPathToAppCheckoutLogFiles(self):
         return {"stdout":self.__appCheckOutLogFilePathStdOut,
@@ -137,9 +144,9 @@ class base_apptest(object):
     #                                                    -
     #-----------------------------------------------------
     def __str__(self):
-        tmp_string = "--\n"
-        tmp_string += "Application name: {}\n".format(str(self.__nameOfApplication))
-        tmp_string += "Subtest name: {}\n".format(str(self.__name_of_subtest))
+        tmp_string  = "--\n"
+        tmp_string += "Application name: {}\n".format(str(self.__appName))
+        tmp_string += "Subtest name: {}\n".format(str(self.__testName))
         tmp_string += "Local path to tests: {}\n".format(str(self.__localPathToTests))
         tmp_string += "--\n"
 

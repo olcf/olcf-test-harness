@@ -1,11 +1,11 @@
 #%Module
 
 #----------------------------
-# This module is for Rhea.  -
+# This module is for Lyra.  -
 #----------------------------
 
 proc ModulesHelp { } {
-   puts stderr "Sets up environment to use the OLCF Test Harness on Rhea"
+   puts stderr "Sets up environment to use the OLCF Test Harness on Lyra"
 }
 
 #---------------------------------------------

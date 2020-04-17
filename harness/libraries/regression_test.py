@@ -21,12 +21,14 @@ from libraries.rgt_logging import rgt_logger
 
 class Harness:
 
-    #These strings define the tasks that the tests can do.
+    # These strings define the tasks that the tests can do.
     checkout = "check_out_tests"
     starttest = "start_tests"
     stoptest = "stop_tests"
     displaystatus = "display_status"
     summarize_results = "summarize_results"
+
+    # Base name for app status file
     status_file = "applications_status.txt"
 
     # Defines the harness log file name.
@@ -35,28 +37,33 @@ class Harness:
     
     def __init__(self,
                  rgt_input_file,
-                 concurrency):
+                 concurrency,
+                 log_level,
+                 stdout_stderr):
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
         self.__local_path_to_tests = rgt_input_file.get_local_path_to_tests()
         self.__appsubtest = []
         self.__concurrency = concurrency
+        self.__log_level = log_level
         self.__myLogger = None
+        self.__stdout_stderr = stdout_stderr
 
-        mycomputer_with_events_record = None
+        # Set number of thread workers based on concurrency
+        self.__num_workers = 1
+        if self.__concurrency == 'parallel':
+            self.__num_workers = 2
+
 
     def run_me(self,
-               log_level=None,
                my_effective_command_line=None,
-               my_warning_messages=None,
-               nm_workers=1,
-               stdout_stderr=None):
+               my_warning_messages=None):
         
         # Define a logger that streams to file.
         currenttime = time.localtime()
-        time_stamp = time.strftime("%Y%b%d_%H:%M:%S",currenttime)
+        time_stamp = time.strftime("%Y%m%d_%H%M%S",currenttime)
         self.__myLogger = rgt_logger(Harness.LOG_FILE_NAME2,
-                                     log_level,
+                                     self.__log_level,
                                      time_stamp)
 
         # Log the start of the harness.
@@ -84,8 +91,7 @@ class Harness:
         for application_test in my_tests:
             list_of_applications.append(application_test)
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=nm_workers) as application_executor:
-            app_future = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.__num_workers) as executor:
             for ip in range(len(list_of_applications)):
                 app_test = list_of_applications[ip]
                 my_app_name = app_test.ApplicationName
@@ -93,6 +99,7 @@ class Harness:
 
                 list_of_applications_names.append(my_app_name)
                 app_test_dict[my_app_name] = []
+
                 for test in my_tests:
                     my_application_name = test[0]
                     my_subtest_name = test[1]
@@ -100,12 +107,17 @@ class Harness:
                     app_test_dict[my_application_name].append(apptest.subtest(name_of_application=my_application_name,
                                                               name_of_subtest=my_subtest_name,
                                                               local_path_to_tests=self.__local_path_to_tests,
-                                                              application_log_level=log_level,
+                                                              application_log_level=self.__log_level,
                                                               timestamp=time_stamp))
 
             future_to_application_name = {}
             for my_application_name in list_of_applications_names:
-                future_to_application_name[application_executor.submit(apptest.do_application_tasks,my_application_name,app_test_dict[my_application_name],self.__tasks,stdout_stderr)] = my_application_name 
+                future = executor.submit(apptest.do_application_tasks,
+                                         my_application_name,
+                                         app_test_dict[my_application_name],
+                                         self.__tasks,
+                                         self.__stdout_stderr)
+                future_to_application_name[future] = my_application_name
 
                 # Log that the application has been submitted for tasks.
                 message = "Application " + my_application_name + " has been submitted for running tasks."
@@ -162,7 +174,7 @@ class Harness:
             application_sequence_index[application_name] = ip
             my_tests.append(application_test_dictionary.ApplicationSubtestDictionary(application_name))
 
-        # We now add the subtests for each appication.
+        # We now add the subtests for each application.
         for test in self.__tests:
             name_of_application=test[0]
             name_of_subtest=test[1]
@@ -184,7 +196,7 @@ class Harness:
         apptest1.stop_test()
 
     def __display_status(self,apptest1,taskwords,mycomputer_with_events_record):
-        #Display the test status.
+        # Display the test status.
         if mycomputer_with_events_record == None:
             apptest1.display_status()
         else:
@@ -193,32 +205,20 @@ class Harness:
     def __summarize_results(self,taskwords,mycomputer_with_events_record):
         failed_list = []
         inconclusive_list = []
+        tests_with_no_passes = []
         results = {"Test_has_at_least_1_pass" : 0,
-                   "Number_attemps" : 0,
+                   "Number_attempts" : 0,
                    "Number_passed" : 0,
                    "Number_failed" : 0,
                    "Number_inconclusive" : 0,
                    "Failed_jobs" : [] ,
                    "Inconclusive_jobs" : []}
 
-        #-----------------------------------------------------
-        #                                                    -
-        #                                                    -
-        #-----------------------------------------------------
-        tests_with_no_passes = []
-
-        #-----------------------------------------------------
-        # Generate a time stamp of the current time.         -
-        #                                                    -
-        #-----------------------------------------------------
+        # Generate current time stamp
         currenttime = time.localtime()
         timestamp = time.strftime("%Y%b%d_%H:%M:%S",currenttime)
 
-        #-----------------------------------------------------
-        # Generate the name of the logfile.                  -
-        #                                                    -
-        #-----------------------------------------------------
-        logfile = Harness.status_file + "__" + str(timestamp)
+        # Collect status results for each subtest
         for appsubtest1 in self.__appsubtest:
             app_status = appsubtest1.generateReport(logfile,taskwords,mycomputer_with_events_record)
 
@@ -235,20 +235,20 @@ class Harness:
                     log_message = "Inconclusive job: " + tmpjob
                     print(log_message)
 
-
             for key in app_status.keys():
                 results[key] = results[key] + app_status[key]
 
+        # Print test status results
+        logfile = Harness.status_file + '.' + timestamp
         dfile_obj = open(logfile,"a")
-        dfile_obj.write("\n\n\nTest with 0 passes\n")
-        dfile_obj.write("==================\n")
+
+        dfile_obj.write("\n\n\nTest with 0 passes\n==================\n")
         for [application,subtest] in tests_with_no_passes:
             appname = "{app:20s} {test:20s}\n".format(app=application,test=subtest)
             dfile_obj.write(appname)
 
-        dfile_obj.write("\n\n\nSummary\n")
-        dfile_obj.write("==================\n")
-        tmp_string = "Number of attempts = {attemps:10s}\n".format(attemps=str(results["Number_attemps"]))
+        dfile_obj.write("\n\n\n    Summary    \n===============\n")
+        tmp_string = "Number of attempts = {attempts:10s}\n".format(attempts=str(results["Number_attempts"]))
         dfile_obj.write(tmp_string)
         tmp_string = "Number of passes = {passes:10s}\n".format(passes=str(results["Number_passed"]))
         dfile_obj.write(tmp_string)

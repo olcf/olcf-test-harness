@@ -17,7 +17,7 @@ from libraries import regression_test
 # Oak Ridge National Laboratory
 #
 
-def create_a_parser():
+def create_parser():
     """Parses the command line arguments.
 
     Arguments:
@@ -28,42 +28,54 @@ def create_a_parser():
     command line arguments.
 
     """
-    parser = argparse.ArgumentParser(description="Runs the harness tasks of the selected Application and tests",
-                                     add_help=True)
-        
-    parser.add_argument("--concurrency", 
-                        required=False,
-                        choices=["serial","parallel"],
-                        default="serial",
-                        help="The manner of concurrency to run. Serial performs each Application/Subtest in sequence. Parallel is concurrency over the Application/Subtest.")
+    parser = argparse.ArgumentParser(description="Execute specified harness task for application tests listed in input file",
+                                     allow_abbrev=False,
+                                     formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("--inputfile",
+    con_help = ("Harness concurrency: (default: 'serial')\n"
+                "  'serial'   - application tests are processed sequentially (one after the other)\n"
+                "  'parallel' - harness may use threads to process application tests concurrently")
+    parser.add_argument('-c', '--concurrency',
+                        required=False,
+                        choices=['serial', 'parallel'],
+                        default='serial',
+                        help=con_help)
+
+    parser.add_argument('-i', '--inputfile',
                         required=False,
                         default="rgt.input",
-                        help="Optional argument to pass an input with a name other than rgt.input.")
+                        help="Input file name (default: %(default)s)")
     
     parser.add_argument("--configfile",
                         required=False,
                         default="master.ini",
-                        help="Optional argument to pass a config with a name other than `master.ini`.")
+                        help="Configuration file name (default: %(default)s)")
     
     parser.add_argument("--loglevel",
                          required=False,
                          choices=["DEBUG","INFO","WARNING", "ERROR", "CRITICAL"],
                          default="INFO",
-                         help="Optional argument for logging level")
+                         help="Logging level (default: %(default)s)")
 
-
-    help_message =  "This argument controls where stdout and stderr of the submit_executable and build_executable go to. "
-    help_message += "The destination can be to the screen, '--stdout_and_stderr==screen', or to logfile(s), '--stdout_and_stderr==logfile'." 
-    help_message += "If the concurrency is set to serial, '--concurrency=serial', then stdout and stderr will default to the screen " 
-    help_message += "unless '--stdout_and_stderr==logfile'. If concurrency is set to parallel, '--concurrency=parallel', then stdout and stderr " 
-    help_message += "will default to logfile(s) unless '--stdout_and_stderr==screen'."
-    parser.add_argument("--stdout_and_stderr",
+    out_help = ("Destination for harness stdout/stderr messages:\n"
+                "  'screen'  - print messages to console (default for '--concurrency=serial')\n"
+                "  'logfile' - print messages to log file (default for '--concurrency=parallel')")
+    parser.add_argument('-o', '--output',
                         required=False,
-                        choices=["logfile","screen"],
-                        default="screen",
-                        help=help_message)
+                        choices=['logfile','screen'],
+                        default='screen',
+                        help=out_help)
+
+    mode_help = ("Harness task:\n"
+                 "  'checkout' - checkout application tests listed in input file\n"
+                 "  'start'    - start application tests listed in input file\n"
+                 "  'stop'     - stop application tests listed in input file\n"
+                 "  'status'   - check status of application tests listed in input file")
+    parser.add_argument('-m', '--mode',
+                        required=False,
+                        choices=['checkout', 'start', 'stop', 'status'],
+                        help=mode_help)
+
     return parser
 
 def runtests(my_arg_string=None):
@@ -77,57 +89,56 @@ def runtests(my_arg_string=None):
     #
     # Parse command line arguments
     #
-    parser = create_a_parser()
+    parser = create_parser()
     Vargs = parser.parse_args(argv)
     concurrency = Vargs.concurrency
     inputfile = Vargs.inputfile
     configfile = Vargs.configfile
-    loglevel=Vargs.loglevel
-    stdout_stderr=Vargs.stdout_and_stderr
+    loglevel = Vargs.loglevel
+    stdout_stderr = Vargs.output
+    runmode = Vargs.mode
+
+    # Warn user if running in parallel mode and output is written to screen.
+    warning_message = None
+    if (concurrency == 'parallel') and (stdout_stderr == 'screen'):
+        warning_message = ("Warning! You have chosen to run the harness in 'parallel' mode\n"
+                           "with stdout/stderr printed to the 'screen'. This may result in\n"
+                           "incomprehensible output due to interleaved messages from concurrent\n"
+                           "application tests. Resetting output mode to 'logfile'.")
+        print(warning_message)
+        stdout_stderr = 'logfile'
 
     # Print the effective command line to stdout.
-    command_options = "The effective command line is : \n" 
-    command_options += "runtests.py "
-    command_options += "--concurrency {my_concurrency} " 
-    command_options += "--inputfile {my_inputfile} "
-    command_options += "--configfile {my_configfile} "
-    command_options += "--loglevel {my_loglevel} "
-    command_options += "--stdout_and_stderr {my_stdouterr}"
-    my_effective_command_line = command_options.format(my_concurrency=concurrency,  
-                                                       my_inputfile = inputfile,
-                                                       my_configfile = configfile,
-                                                       my_loglevel = loglevel,
-                                                       my_stdouterr = stdout_stderr)
-    print(my_effective_command_line)
+    command_options = ("Effective command line: "
+                       "runtests.py"
+                       " --concurrency {my_concurrency}"
+                       " --inputfile {my_inputfile}"
+                       " --configfile {my_configfile}"
+                       " --loglevel {my_loglevel}"
+                       " --output {my_output}"
+                       " --mode {my_runmode}")
+    effective_command_line = command_options.format(my_concurrency = concurrency,
+                                                    my_inputfile = inputfile,
+                                                    my_configfile = configfile,
+                                                    my_loglevel = loglevel,
+                                                    my_output = stdout_stderr,
+                                                    my_runmode = runmode)
+    print(effective_command_line)
 
-    # Warn user if running in parallel mode and stdout, stderr is written to screen.
-    warning_message = None
-    if (concurrency == "parallel") and ( stdout_stderr == "screen") :
-        warning_message  = "Warning! You have chosen to run the harness in concurrency mode of parallel \n"
-        warning_message += "and writing stdout and stderr of the applications build and submit scripts \n"
-        warning_message += "to screen. This may result in the interleaving of the applications stdout and \n"
-        warning_message += "stderr which may result in incomprehesible output. It is highly advised to \n"
-        warning_message += "to write stderr and stdout to logfiles when running in parallel mode.\n"
-        warning_message += "Run 'runtests.py --help' for usage\n\n"
-        print(warning_message)
-    
+
     #
     # Read the input and master config
     #    
-    ifile = input_files.rgt_input_file(inputfilename=inputfile,configfilename=configfile)
+    ifile = input_files.rgt_input_file(inputfilename=inputfile,configfilename=configfile,runmodecmd=runmode)
     
+    # Create the harness object
     rgt = regression_test.Harness(ifile,
-                                  concurrency)
-    if concurrency == "serial":
-        nm_workers = 1
-    elif concurrency == "parallel":
-        nm_workers = 2
+                                  concurrency,
+                                  loglevel,
+                                  stdout_stderr)
 
-    rgt.run_me(log_level=loglevel,
-               my_effective_command_line=my_effective_command_line,
-               my_warning_messages=warning_message,
-               nm_workers=nm_workers,
-               stdout_stderr=stdout_stderr)
+    rgt.run_me(my_effective_command_line=effective_command_line,
+               my_warning_messages=warning_message)
 
     return rgt
     

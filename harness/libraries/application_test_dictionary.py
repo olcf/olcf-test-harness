@@ -32,7 +32,7 @@ class ApplicationSubtestDictionary:
         application_name = None
         if len(self.__myCollection) > 0:
             view_of_keys = self.__myCollection.keys()
-            # The view_of_keys shpuld only have 1 key.
+            # The view_of_keys should only have 1 key.
             for tmp_application_name in view_of_keys: 
                 application_name = tmp_application_name
         return application_name
