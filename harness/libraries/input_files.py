@@ -62,10 +62,12 @@ class rgt_input_file:
             print("ERROR: No valid tasks found in the inputfile or the CLI")
 
     def __read_config(self):
-        if os.path.isfile(self.__configFileName):
+        if self.__configFileName == "master.ini":
+            configfileused = os.environ["OLCF_HARNESS_DIR"] + "/configs/master.ini"
+        if os.path.isfile(configfileused):
             print("reading master config")
             master_cfg = configparser.ConfigParser()
-            master_cfg.read(self.__configFileName)
+            master_cfg.read(configfileused)
 
             machine_vars = master_cfg['MachineDetails']
             repo_vars = master_cfg['RepoDetails']
