@@ -1,4 +1,4 @@
-""" 
+"""
 .. module:: rgt_test
     :platform: Linux
     :synopsis: Abstracts the rgt_test_input.txt file.
@@ -29,30 +29,32 @@ class RgtTest():
         self.__checkscriptname = None
         self.__reportscriptname = None
         self.__executablename = None
+        self.__replacements = {}
+        self.__env_vars = {}
         self.__template_dict = {}
         self.__builtin_dict = {}
-        self.__builtin_params = {'total_processes', 
-                                 'processes_per_node', 
-                                 'processes_per_socket', 
-                                 'jobname', 
-                                 'batchqueue', 
-                                 'walltime', 
-                                 'batchfilename', 
-                                 'buildscriptname', 
+        self.__builtin_params = {'total_processes',
+                                 'processes_per_node',
+                                 'processes_per_socket',
+                                 'jobname',
+                                 'batchqueue',
+                                 'walltime',
+                                 'batchfilename',
+                                 'buildscriptname',
                                  'checkscriptname',
-                                 'executablename', 
+                                 'executablename',
                                  'reportscriptname'}
 
     def set_test_parameters(self,
-                            total_processes, 
-                            processes_per_node, 
-                            processes_per_socket, 
-                            jobname, batchqueue, 
-                            walltime, 
-                            batchfilename, 
-                            buildscriptname, 
-                            checkscriptname, 
-                            executablename, 
+                            total_processes,
+                            processes_per_node,
+                            processes_per_socket,
+                            jobname, batchqueue,
+                            walltime,
+                            batchfilename,
+                            buildscriptname,
+                            checkscriptname,
+                            executablename,
                             reportscriptname):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
@@ -129,9 +131,9 @@ class RgtTest():
 
     def get_value_from_template_dict(self,k):
         return self.__template_dict[k]
-                     
+
     def check_builtin_parameters(self):
-        if (not self.__total_processes 
+        if (not self.__total_processes
            or not self.__processes_per_node
            or not self.__jobname
            or not self.__batchqueue
@@ -154,11 +156,14 @@ class RgtTest():
             print(" reportscriptname = ",self.__reportscriptname)
             print(" executablename = ",self.__executablename)
             print(" pathtoexecutable = ", self.__pathtoexecutable)
-            
+
             exit(1)
 
     def get_replacements(self):
         return self.__replacements
+
+    def get_env_vars(self):
+        return self.__env_vars
 
     def get_template_dict(self):
         return self.__template_dict
