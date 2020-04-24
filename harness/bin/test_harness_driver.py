@@ -430,7 +430,7 @@ def test_harness_driver(argv=None):
 
     #
     # Parse arguments
-    # 
+    #
     my_parser = create_parser()
     Vargs = None
     if argv == None:
@@ -461,7 +461,7 @@ def test_harness_driver(argv=None):
 
     #
     # Make sure we are executing in app/test/Scripts
-    # 
+    #
     testscripts = Vargs.scriptsdir
     (app, test) = get_app_test_from_scriptdir(testscripts)
     if app == None or test == None:
@@ -553,12 +553,13 @@ def test_harness_driver(argv=None):
         mode_str = 'Old'
     jstatus = status_file.StatusFile(unique_id, mode_str)
 
-    rgt_test_input_file = os.path.join(testscripts,"rgt_test_input.txt")
-    if not os.path.isfile(rgt_test_input_file):
-        exit_values = user_generated_scripts(test_workspace, apptest_dir,
+    rgt_test_input_txt = os.path.join(testscripts,"rgt_test_input.txt")
+    rgt_test_input_ini = os.path.join(testscripts,"rgt_test_input.ini")
+    if (os.path.isfile(rgt_test_input_txt) or os.path.isfile(rgt_test_input_ini)):
+        exit_values = auto_generated_scripts(test_workspace, apptest_dir,
                                              unique_id, jstatus, actions)
     else:
-        exit_values = auto_generated_scripts(test_workspace, apptest_dir,
+        exit_values = user_generated_scripts(test_workspace, apptest_dir,
                                              unique_id, jstatus, actions)
 
     build_exit_value = 0
@@ -570,7 +571,7 @@ def test_harness_driver(argv=None):
     if actions['submit']:
         submit_exit_value = exit_values['submit']
         print("submit_exit_value = " + str(submit_exit_value))
-    
+
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']

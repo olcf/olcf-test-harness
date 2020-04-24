@@ -10,7 +10,7 @@ import re
 import configparser
 
 class RHELx86(BaseMachine):
-    
+
     def __init__(self,
                  name='RHEL x86',
                  scheduler=None,
@@ -60,10 +60,13 @@ class RHELx86(BaseMachine):
             rgt_test_config = configparser.ConfigParser()
             rgt_test_config.read(rgt_test_config_filename)
 
-            replace = rgt_test_config['Replacements']
-            env_vars = rgt_test_config['EnvVars']
+            if not 'Replacements' in rgt_test_config:
+                print("ERROR: missing [Replacements] section in test input")
+                replace = dict()
+            else:
+                replace = rgt_test_config['Replacements']
 
-            # variables needed by the harness
+            # add variables needed by the harness
             # replace["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
             replace["nccstestharnessmodule"] = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
             replace["resultsdir"] = self.get_rgt_results_dir()
@@ -72,8 +75,11 @@ class RHELx86(BaseMachine):
             replace["unique_id_string"] = self.get_rgt_harness_id()
 
             self.__rgt_test.set_test_config_parameters(replace)
-            self.__rgt_test.set_test_config_env_vars(env_vars)
-            
+
+            if 'EnvVars' in rgt_test_config:
+                env_vars = rgt_test_config['EnvVars']
+                self.__rgt_test.set_test_config_env_vars(env_vars)
+
 
         print("[LOG] END: read_rgt_test_config")
 
@@ -135,7 +141,6 @@ class RHELx86(BaseMachine):
         test_replacements = self.__rgt_test.get_replacements()
         for record in templatelines:
             for key in test_replacements:
-                print(key, test_replacements[key])
                 re_tmp = re.compile('__' + key + '__')
                 record = re_tmp.sub(test_replacements[key],record)
             batch_job.write(record)
@@ -143,8 +148,6 @@ class RHELx86(BaseMachine):
         # Close batch job script file
         batch_job.close()
 
-        print("Replacements:")
-        print(test_replacements)
         print("[LOG] END: make_custom_batch_script")
 
     def make_batch_script(self):
@@ -155,6 +158,14 @@ class RHELx86(BaseMachine):
         return self.start_build_script(self.__rgt_test.get_buildscriptname())
 
     def submit_batch_script(self):
+        # Set environment vars using os.putenv() so that submit subprocess will
+        # inherit them
+        env_vars = self.__rgt_test.get_env_vars()
+        for e in env_vars:
+            v = env_vars[e]
+            print("Setting env var", e, "=", v)
+            os.putenv(e.upper(), v)
+
         print("Submitting batch script for x86")
         submit_exit_value = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
         print("Submitting " + self.__rgt_test.get_batchfilename() + " submit_exit_value = " + str(submit_exit_value))
