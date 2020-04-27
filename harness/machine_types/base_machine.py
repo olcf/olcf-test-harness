@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# 
+#
 # Author: Veronica G. Vergara L.
-# 
+#
 #
 
 from .scheduler_factory import SchedulerFactory
@@ -13,7 +13,7 @@ import subprocess
 import shlex
 
 class BaseMachine(metaclass=ABCMeta):
-    
+
     """ BaseMachine represents a compute resource and has the following
         properties:
 
@@ -25,15 +25,15 @@ class BaseMachine(metaclass=ABCMeta):
     Methods:
         get_machine_name:
         print_machine_info:
-        print_scheduler_info: 
-        print_jobLauncher_info: 
+        print_scheduler_info:
+        print_jobLauncher_info:
         set_numNodes:
     """
 
     def __init__(self,name,scheduler_type,jobLauncher_type,numNodes,
                  numSockets,numCoresPerSocket,rgt_test_input_file,workspace,
                  harness_id,scripts_dir):
-        self.__name = name 
+        self.__name = name
         self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
         self.__jobLauncher = JobLauncherFactory.create_jobLauncher(jobLauncher_type)
         self.__numNodes = numNodes
@@ -87,7 +87,7 @@ class BaseMachine(metaclass=ABCMeta):
         """ Return the jobLauncher command."""
         return self.__jobLauncher.build_job_command(template_dict)
 
-    def start_build_script(self,buildscriptname):
+    def start_build_script(self,buildcmd):
         """ Return the status of the build."""
         os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
@@ -101,8 +101,8 @@ class BaseMachine(metaclass=ABCMeta):
         print("Path to Build Dir: ", path_to_build_directory)
         shutil.copytree(path_to_source,path_to_build_directory)
         os.chdir(path_to_build_directory)
-        print("Starting build in directory: " + path_to_build_directory + " using " + buildscriptname)
-        args = shlex.split(buildscriptname)
+        print("Starting build in directory: " + path_to_build_directory + " using " + buildcmd)
+        args = shlex.split(buildcmd)
         build_outfile = "output_build.txt"
         build_stdout = open(build_outfile,"w")
         p = subprocess.Popen(args,stdout=build_stdout,stderr=subprocess.STDOUT)
@@ -113,19 +113,19 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(currentdir)
         return build_exit_status
 
-    def check_results(self,checkscriptname):
+    def check_results(self,checkcmd):
         """ Run the check script provided by the user and log the result to the status file."""
-        jstatus = self.start_check_script(checkscriptname)
+        jstatus = self.start_check_script(checkcmd)
         self.write_check_exit_status(jstatus)
         return jstatus
 
-    def start_check_script(self,checkscriptname):
+    def start_check_script(self,checkcmd):
         """ Check if results are correct. """
         currentdir = os.getcwd()
         print("current directory in base_machine: ",currentdir)
         os.chdir(self.get_rgt_results_dir())
         print("Starting check script in base_machine: ",os.getcwd())
-        path_to_checkscript = os.path.join(self.get_rgt_scripts_dir(),checkscriptname)
+        path_to_checkscript = os.path.join(self.get_rgt_scripts_dir(),checkcmd)
         print("Using check script: ",path_to_checkscript)
 
         args = shlex.split(path_to_checkscript)
@@ -159,14 +159,14 @@ class BaseMachine(metaclass=ABCMeta):
         file1_obj.write(string1)
         file1_obj.close()
 
-    def start_report_script(self,reportscriptname):
+    def start_report_script(self,reportcmd):
         """ Check if results are correct. """
         os.chdir(self.get_rgt_scripts_dir())
         currentdir = os.getcwd()
         print("current directory in base_machine: ",currentdir)
         os.chdir(self.get_rgt_results_dir())
         print("Starting check script in base_machine: ",os.getcwd())
-        path_to_reportscript = os.path.join(self.get_rgt_scripts_dir(),reportscriptname)
+        path_to_reportscript = os.path.join(self.get_rgt_scripts_dir(),reportcmd)
         print("Using report script: ",path_to_reportscript)
 
         args = shlex.split(path_to_reportscript)

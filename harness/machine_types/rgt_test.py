@@ -25,9 +25,9 @@ class RgtTest():
         self.__batchqueue = None
         self.__walltime = None
         self.__batchfilename = None
-        self.__buildscriptname = None
-        self.__checkscriptname = None
-        self.__reportscriptname = None
+        self.__buildcmd = None
+        self.__checkcmd = None
+        self.__reportcmd = None
         self.__executablename = None
         self.__replacements = {}
         self.__env_vars = {}
@@ -40,10 +40,10 @@ class RgtTest():
                                  'batchqueue',
                                  'walltime',
                                  'batchfilename',
-                                 'buildscriptname',
-                                 'checkscriptname',
+                                 'buildcmd',
+                                 'checkcmd',
                                  'executablename',
-                                 'reportscriptname'}
+                                 'reportcmd'}
 
     def set_test_parameters(self,
                             total_processes,
@@ -52,10 +52,10 @@ class RgtTest():
                             jobname, batchqueue,
                             walltime,
                             batchfilename,
-                            buildscriptname,
-                            checkscriptname,
+                            buildcmd,
+                            checkcmd,
                             executablename,
-                            reportscriptname):
+                            reportcmd):
         self.__total_processes = total_processes
         self.__processes_per_node = processes_per_node
         self.__processes_per_socket = processes_per_socket
@@ -63,9 +63,9 @@ class RgtTest():
         self.__batchqueue = batchqueue
         self.__walltime = walltime
         self.__batchfilename = batchfilename
-        self.__buildscriptname = buildscriptname
-        self.__checkscriptname = checkscriptname
-        self.__reportscriptname = reportscriptname
+        self.__buildcmd = buildcmd
+        self.__checkcmd = checkcmd
+        self.__reportcmd = reportcmd
         self.__executablename = executablename
 
     def set_test_config_parameters(self, replacements):
@@ -85,12 +85,12 @@ class RgtTest():
                 self.__walltime = v
             elif k == 'batchfilename':
                 self.__batchfilename = v
-            elif k == 'buildscriptname':
-                self.__buildscriptname = v
-            elif k == 'checkscriptname':
-                self.__checkscriptname = v
-            elif k == 'reportscriptname':
-                self.__reportscriptname = v
+            elif k == 'buildcmd':
+                self.__buildcmd = v
+            elif k == 'checkcmd':
+                self.__checkcmd = v
+            elif k == 'reportcmd':
+                self.__reportcmd = v
             elif k == 'executablename':
                 self.__executablename = v
 
@@ -117,12 +117,12 @@ class RgtTest():
                 self.__walltime = v
             elif k == 'batchfilename':
                 self.__batchfilename = v
-            elif k == 'buildscriptname':
-                self.__buildscriptname = v
-            elif k == 'checkscriptname':
-                self.__checkscriptname = v
-            elif k == 'reportscriptname':
-                self.__reportscriptname = v
+            elif k == 'buildcmd':
+                self.__buildcmd = v
+            elif k == 'checkcmd':
+                self.__checkcmd = v
+            elif k == 'reportcmd':
+                self.__reportcmd = v
             elif k == 'executablename':
                 self.__executablename = v
 
@@ -139,9 +139,9 @@ class RgtTest():
            or not self.__batchqueue
            or not self.__walltime
            or not self.__batchfilename
-           or not self.__buildscriptname
-           or not self.__checkscriptname
-           or not self.__reportscriptname
+           or not self.__buildcmd
+           or not self.__checkcmd
+           or not self.__reportcmd
            or not self.__executablename):
             print("")
             print("Required variable(s) missing!")
@@ -151,11 +151,10 @@ class RgtTest():
             print(" batchqueue = ",self.__batchqueue)
             print(" walltime = ",self.__walltime)
             print(" batchfilename = ",self.__batchfilename)
-            print(" buildscriptname = ",self.__buildscriptname)
-            print(" checkscriptname = ",self.__checkscriptname)
-            print(" reportscriptname = ",self.__reportscriptname)
+            print(" buildcmd = ",self.__buildcmd)
+            print(" checkcmd = ",self.__checkcmd)
+            print(" reportcmd = ",self.__reportcmd)
             print(" executablename = ",self.__executablename)
-            print(" pathtoexecutable = ", self.__pathtoexecutable)
 
             exit(1)
 
@@ -171,20 +170,17 @@ class RgtTest():
     def get_batchfilename(self):
         return self.__batchfilename
 
-    def get_buildscriptname(self):
-        return self.__buildscriptname
+    def get_buildcmd(self):
+        return self.__buildcmd
 
-    def get_checkscriptname(self):
-        return self.__checkscriptname
+    def get_checkcmd(self):
+        return self.__checkcmd
 
-    def get_reportscriptname(self):
-        return self.__reportscriptname
+    def get_reportcmd(self):
+        return self.__reportcmd
 
     def get_executablename(self):
         return self.__executablename
-
-    #def get_pathtoexecutable(self):
-    #    return self.__pathtoexecutable
 
     def get_jobname(self):
         return self.__jobname
@@ -220,9 +216,9 @@ class RgtTest():
         print("batchqueue = " + self.__batchqueue)
         print("walltime = " + str(self.__walltime))
         print("batchfilename = " + self.__batchfilename)
-        print("buildscriptname = " + self.__buildscriptname)
-        print("checkscriptname = " + self.__checkscriptname)
-        print("reportscriptname = " + self.__reportscriptname)
+        print("buildcmd = " + self.__buildcmd)
+        print("checkcmd = " + self.__checkcmd)
+        print("reportcmd = " + self.__reportcmd)
         print("executablename = " + self.__executablename)
 
 if __name__ == "__main__":

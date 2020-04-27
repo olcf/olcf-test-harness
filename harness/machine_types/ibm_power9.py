@@ -9,7 +9,7 @@ import os
 import re
 
 class IBMpower9(BaseMachine):
-    
+
     def __init__(self,
                  name='IBM Power9',
                  scheduler=None,
@@ -82,9 +82,9 @@ class IBMpower9(BaseMachine):
         batchqueue = None
         walltime = None
         batchfilename = None
-        buildscriptname = None
-        checkscriptname = None
-        reportscriptname = None
+        buildcmd = None
+        checkcmd = None
+        reportcmd = None
         testinputfile = None
 
         if os.path.isfile(self.get_rgt_input_file_name()):
@@ -98,9 +98,9 @@ class IBMpower9(BaseMachine):
             batchqueue_pattern = "batchqueue"
             walltime_pattern = "walltime"
             batchfilename_pattern = "batchfilename"
-            buildscriptname_pattern = "buildscriptname"
-            checkscriptname_pattern = "checkscriptname"
-            reportscriptname_pattern = "reportscriptname"
+            buildcmd_pattern = "buildcmd"
+            checkcmd_pattern = "checkcmd"
+            reportcmd_pattern = "reportcmd"
             executablename_pattern = "executablename"
             testinputfile_pattern = "testinputfile"
             delimiter = "="
@@ -202,43 +202,43 @@ class IBMpower9(BaseMachine):
                 print("No batchfilename provided in IBM Power9 machine")
 
             # Find the name for the build script file to use to build the application
-            temp_re = re.compile(buildscriptname_pattern + "$")
+            temp_re = re.compile(buildcmd_pattern + "$")
             for record in filerecords:
                 words = record.split(delimiter)
                 words[0] = words[0].strip().lower()
                 if temp_re.match(words[0]):
-                    buildscriptname = words[1].strip('\n').strip()
+                    buildcmd = words[1].strip('\n').strip()
                     break
-            if buildscriptname:
-                print("Found buildscriptname is " + buildscriptname + " in IBM Power9 machine")
+            if buildcmd:
+                print("Found buildcmd is " + buildcmd + " in IBM Power9 machine")
             else:
-                print("No buildscriptname provided in IBM Power9 machine")
+                print("No buildcmd provided in IBM Power9 machine")
 
             # Find the name for the check script file to use to verify the test results
-            temp_re = re.compile(checkscriptname_pattern + "$")
+            temp_re = re.compile(checkcmd_pattern + "$")
             for record in filerecords:
                 words = record.split(delimiter)
                 words[0] = words[0].strip().lower()
                 if temp_re.match(words[0]):
-                    checkscriptname = words[1].strip('\n').strip()
+                    checkcmd = words[1].strip('\n').strip()
                     break
-            if checkscriptname:
-                print("Found checkscriptname is " + checkscriptname + " in IBM Power9 machine")
+            if checkcmd:
+                print("Found checkcmd is " + checkcmd + " in IBM Power9 machine")
             else:
-                print("No checkscriptname provided in IBM Power9 machine")
+                print("No checkcmd provided in IBM Power9 machine")
 
             # Find the name for the report script file to use to log results
-            temp_re = re.compile(reportscriptname_pattern + "$")
+            temp_re = re.compile(reportcmd_pattern + "$")
             for record in filerecords:
                 words = record.split(delimiter)
                 words[0] = words[0].strip().lower()
                 if temp_re.match(words[0]):
-                    reportscriptname = words[1].strip('\n').strip()
+                    reportcmd = words[1].strip('\n').strip()
                     break
-            if reportscriptname:
-                print("Found reportscriptname is " + reportscriptname + " in IBM Power9 machine")
+            if reportcmd:
+                print("Found reportcmd is " + reportcmd + " in IBM Power9 machine")
             else:
-                print("No reportscriptname provided in IBM Power9 machine")
+                print("No reportcmd provided in IBM Power9 machine")
 
             # Find the name for the executable to use to launch the test
             temp_re = re.compile(executablename_pattern + "$")
@@ -252,7 +252,7 @@ class IBMpower9(BaseMachine):
                 print("Found executablename is " + executablename + " in IBM Power9 machine")
             else:
                 print("No executablename provided in IBM Power9 machine")
-                
+
             # Find the name for the input of the test
             temp_re = re.compile(testinputfile_pattern + "$")
             for record in filerecords:
@@ -267,9 +267,9 @@ class IBMpower9(BaseMachine):
                 print("No testinputfile provided in IBM Power9 machine")
 
 
-            self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket, 
-                                                jobname, batchqueue, walltime, batchfilename, buildscriptname, 
-                                                checkscriptname, executablename, reportscriptname, testinputfile)
+            self.__rgt_test.set_test_parameters(total_processes, processes_per_node, processes_per_socket,
+                                                jobname, batchqueue, walltime, batchfilename, buildcmd,
+                                                checkcmd, executablename, reportcmd, testinputfile)
             self.__rgt_test.print_test_parameters()
         else:
             print("No input found. Provide your own build, submit, check, and report scripts")
@@ -339,8 +339,8 @@ class IBMpower9(BaseMachine):
         return
 
     def build_executable(self):
-        print("Building executable on Power9 using build script " + self.__rgt_test.get_buildscriptname())
-        return self.start_build_script(self.__rgt_test.get_buildscriptname())
+        print("Building executable on Power9 using build script " + self.__rgt_test.get_buildcmd())
+        return self.start_build_script(self.__rgt_test.get_buildcmd())
 
     def submit_batch_script(self):
         print("Submitting batch script for Power9")
@@ -349,12 +349,12 @@ class IBMpower9(BaseMachine):
         return submit_exit_value
 
     def check_executable(self):
-        print("Running check executable script on Power9 using check script " + self.__rgt_test.get_checkscriptname())
-        return self.check_results(self.__rgt_test.get_checkscriptname())
+        print("Running check executable script on Power9 using check script " + self.__rgt_test.get_checkcmd())
+        return self.check_results(self.__rgt_test.get_checkcmd())
 
     def report_executable(self):
-        print("Running report executable script on Power9 using report script " + self.__rgt_test.get_reportscriptname())
-        return self.start_report_script(self.__rgt_test.get_reportscriptname())
+        print("Running report executable script on Power9 using report script " + self.__rgt_test.get_reportcmd())
+        return self.start_report_script(self.__rgt_test.get_reportcmd())
 
 if __name__ == "__main__":
     print('This is the IBM Power9 class')
