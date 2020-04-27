@@ -80,7 +80,6 @@ class RHELx86(BaseMachine):
                 env_vars = rgt_test_config['EnvVars']
                 self.__rgt_test.set_test_config_env_vars(env_vars)
 
-
         print("[LOG] END: read_rgt_test_config")
 
     def read_custom_rgt_test_input(self):
@@ -154,8 +153,8 @@ class RHELx86(BaseMachine):
         print("Not implemented for RHEL x86")
 
     def build_executable(self):
-        print("Building executable on x86 using build script " + self.__rgt_test.get_buildscriptname())
-        return self.start_build_script(self.__rgt_test.get_buildscriptname())
+        print("Building executable on x86 using build script " + self.__rgt_test.get_buildcmd())
+        return self.start_build_script(self.__rgt_test.get_buildcmd())
 
     def submit_batch_script(self):
         # Set environment vars using os.putenv() so that submit subprocess will
@@ -172,12 +171,12 @@ class RHELx86(BaseMachine):
         return submit_exit_value
 
     def check_executable(self):
-        print("Running check executable script on x86 using check script " + self.__rgt_test.get_checkscriptname())
-        return self.check_results(self.__rgt_test.get_checkscriptname())
+        print("Running check executable script on x86 using check script " + self.__rgt_test.get_checkcmd())
+        return self.check_results(self.__rgt_test.get_checkcmd())
 
     def report_executable(self):
-        print("Running report executable script on x86 using report script " + self.__rgt_test.get_reportscriptname())
-        return self.start_report_script(self.__rgt_test.get_reportscriptname())
+        print("Running report executable script on x86 using report script " + self.__rgt_test.get_reportcmd())
+        return self.start_report_script(self.__rgt_test.get_reportcmd())
 
 if __name__ == "__main__":
     print('This is the RHEL x86 class')
