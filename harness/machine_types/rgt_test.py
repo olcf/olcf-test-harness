@@ -85,11 +85,11 @@ class RgtTest():
                 self.__walltime = v
             elif k == 'batchfilename':
                 self.__batchfilename = v
-            elif k == 'buildcmd':
+            elif k == 'build_cmd':
                 self.__buildcmd = v
-            elif k == 'checkcmd':
+            elif k == 'check_cmd':
                 self.__checkcmd = v
-            elif k == 'reportcmd':
+            elif k == 'report_cmd':
                 self.__reportcmd = v
             elif k == 'executablename':
                 self.__executablename = v
@@ -117,11 +117,11 @@ class RgtTest():
                 self.__walltime = v
             elif k == 'batchfilename':
                 self.__batchfilename = v
-            elif k == 'buildcmd':
+            elif k == 'build_cmd':
                 self.__buildcmd = v
-            elif k == 'checkcmd':
+            elif k == 'check_cmd':
                 self.__checkcmd = v
-            elif k == 'reportcmd':
+            elif k == 'report_cmd':
                 self.__reportcmd = v
             elif k == 'executablename':
                 self.__executablename = v
@@ -133,9 +133,7 @@ class RgtTest():
         return self.__template_dict[k]
 
     def check_builtin_parameters(self):
-        if (not self.__total_processes
-           or not self.__processes_per_node
-           or not self.__jobname
+        if (not self.__jobname
            or not self.__batchqueue
            or not self.__walltime
            or not self.__batchfilename
@@ -145,15 +143,13 @@ class RgtTest():
            or not self.__executablename):
             print("")
             print("Required variable(s) missing!")
-            print(" total_processes = ",self.__total_processes)
-            print(" processes_per_node = ",self.__processes_per_node)
             print(" jobname = ",self.__jobname)
             print(" batchqueue = ",self.__batchqueue)
             print(" walltime = ",self.__walltime)
             print(" batchfilename = ",self.__batchfilename)
-            print(" buildcmd = ",self.__buildcmd)
-            print(" checkcmd = ",self.__checkcmd)
-            print(" reportcmd = ",self.__reportcmd)
+            print(" build_cmd = ",self.__buildcmd)
+            print(" check_cmd = ",self.__checkcmd)
+            print(" report_cmd = ",self.__reportcmd)
             print(" executablename = ",self.__executablename)
 
             exit(1)
@@ -207,18 +203,15 @@ class RgtTest():
             print(k,"=",self.__template_dict[k])
 
     def print_test_parameters(self):
-        print("RGT Test parameters")
+        print("RGT Test Required Parameters")
         print("===================")
-        print("total_processes = " + str(self.__total_processes))
-        print("processes_per_node = " + str(self.__processes_per_node))
-        print("processes_per_socket = " + str(self.__processes_per_socket))
         print("jobname = " + self.__jobname)
         print("batchqueue = " + self.__batchqueue)
         print("walltime = " + str(self.__walltime))
         print("batchfilename = " + self.__batchfilename)
-        print("buildcmd = " + self.__buildcmd)
-        print("checkcmd = " + self.__checkcmd)
-        print("reportcmd = " + self.__reportcmd)
+        print("build_cmd = " + self.__buildcmd)
+        print("check_cmd = " + self.__checkcmd)
+        print("report_cmd = " + self.__reportcmd)
         print("executablename = " + self.__executablename)
 
 if __name__ == "__main__":
