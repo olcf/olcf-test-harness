@@ -62,8 +62,19 @@ class rgt_input_file:
             print("ERROR: No valid tasks found in the inputfile or the CLI")
 
     def __read_config(self):
-        if self.__configFileName == "master.ini":
-            configfileused = os.environ["OLCF_HARNESS_DIR"] + "/configs/master.ini"
+        
+        if os.path.basename(self.__configFileName) == self.__configFileName:
+            # Search CWD, then OLCF_HARNESS_DIR/configs
+            if ( os.path.isfile(os.path.join("./", self.__configFileName)) ):
+              configfileused \
+                = os.path.abspath(os.path.join("./", self.__configFileName))
+            else:
+              configfileused \
+                = os.path.join(os.environ["OLCF_HARNESS_DIR"], \
+                                          "configs/", self.__configFileName)
+        else:
+            configfileused = self.__configFileName
+        
         if os.path.isfile(configfileused):
             print("reading master config")
             master_cfg = configparser.ConfigParser()
@@ -79,6 +90,8 @@ class rgt_input_file:
 
             #print(os.environ.get("RGT_MACHINE_NAME"))
             #print(os.environ.get("RGT_ACCT_ID"))
+        else:
+            raise NameError("Cannot find config file: %s" % self.__configFileName)
         
 
     def __read_file(self):
