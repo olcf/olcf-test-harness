@@ -129,6 +129,7 @@ class StatusFile:
         'job_id',
         'event_filename',
         'job_status',
+        'runtag',
         'event_time',
         'event_name',
         'event_type',
@@ -455,6 +456,8 @@ def get_status_info(test_id, event_type, event_subtype,
     event_info['event_filename'] = event_filename
     event_info['event_value'] = (
         str(event_value) if event_value is not None else no_value)
+
+    event_info['runtag'] = test_instance_info['rgt_system_log_tag']
 
     file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
     if os.path.exists(file_job_id):
