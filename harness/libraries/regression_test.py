@@ -6,7 +6,6 @@ import collections
 import queue
 import concurrent.futures
 import logging
-from types import *
 
 from libraries import apptest
 from fundamental_types.rgt_state import RgtState
@@ -34,31 +33,25 @@ class Harness:
     # Defines the harness log file name.
     LOG_FILE_NAME = "harness_log_file.txt"
     LOG_FILE_NAME2 = "harness_log_file"
-    
+
     def __init__(self,
                  rgt_input_file,
-                 concurrency,
                  log_level,
                  stdout_stderr):
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
         self.__local_path_to_tests = rgt_input_file.get_local_path_to_tests()
         self.__appsubtest = []
-        self.__concurrency = concurrency
         self.__log_level = log_level
         self.__myLogger = None
         self.__stdout_stderr = stdout_stderr
-
-        # Set number of thread workers based on concurrency
         self.__num_workers = 1
-        if self.__concurrency == 'parallel':
-            self.__num_workers = 2
 
 
     def run_me(self,
                my_effective_command_line=None,
                my_warning_messages=None):
-        
+
         # Define a logger that streams to file.
         currenttime = time.localtime()
         time_stamp = time.strftime("%Y%m%d_%H%M%S",currenttime)
@@ -82,7 +75,7 @@ class Harness:
         list_of_applications_names = []
         future_to_application_name = {}
         app_test_dict = {}
-        
+
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
@@ -90,7 +83,7 @@ class Harness:
 
         for application_test in my_tests:
             list_of_applications.append(application_test)
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.__num_workers) as executor:
             for ip in range(len(list_of_applications)):
                 app_test = list_of_applications[ip]
@@ -123,7 +116,6 @@ class Harness:
                 message = "Application " + my_application_name + " has been submitted for running tasks."
                 self.__myLogger.doInfoLogging(message)
 
-           
             for my_future in concurrent.futures.as_completed(future_to_application_name):
                 name = future_to_application_name[my_future]
 
@@ -136,17 +128,14 @@ class Harness:
                     message = "Application {} future is completed.".format(name)
                     self.__myLogger.doInfoLogging(message)
 
-
             message = "All applications completed. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
-
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
 
         message = "End of harness."
         self.__myLogger.doInfoLogging(message)
-
         return
 
     def getState(self):
@@ -154,7 +143,7 @@ class Harness:
 
     # Private member functions
     def __formListOfTests(self):
-        """ Returns a list with each element being of type 
+        """ Returns a list with each element being of type
             application_test_dictionary.ApplicationSubtestDictionary.
         """
         # Form a set of application names.
@@ -162,7 +151,7 @@ class Harness:
         for test in self.__tests:
             name_of_application=test[0]
             if name_of_application not in my_set_of_application_names:
-                my_set_of_application_names.add(name_of_application) 
+                my_set_of_application_names.add(name_of_application)
 
         # Form a list of tests without the subtests, and keep
         # the sequence of the the application in a dictionary.
@@ -178,11 +167,11 @@ class Harness:
         for test in self.__tests:
             name_of_application=test[0]
             name_of_subtest=test[1]
-            index = application_sequence_index[name_of_application] 
+            index = application_sequence_index[name_of_application]
             my_tests[index].addAppSubtest(name_of_application,
                                           name_of_subtest)
         return my_tests
-    
+
     def __check_out_test(self,apptest1):
         # Check out the files.
         apptest1.check_out_test()
@@ -203,8 +192,6 @@ class Harness:
             apptest1.display_status2(taskwords,mycomputer_with_events_record)
 
     def __summarize_results(self,taskwords,mycomputer_with_events_record):
-        failed_list = []
-        inconclusive_list = []
         tests_with_no_passes = []
         results = {"Test_has_at_least_1_pass" : 0,
                    "Number_attempts" : 0,
@@ -219,6 +206,7 @@ class Harness:
         timestamp = time.strftime("%Y%b%d_%H:%M:%S",currenttime)
 
         # Collect status results for each subtest
+        logfile = Harness.status_file + '.' + timestamp
         for appsubtest1 in self.__appsubtest:
             app_status = appsubtest1.generateReport(logfile,taskwords,mycomputer_with_events_record)
 
@@ -239,9 +227,7 @@ class Harness:
                 results[key] = results[key] + app_status[key]
 
         # Print test status results
-        logfile = Harness.status_file + '.' + timestamp
         dfile_obj = open(logfile,"a")
-
         dfile_obj.write("\n\n\nTest with 0 passes\n==================\n")
         for [application,subtest] in tests_with_no_passes:
             appname = "{app:20s} {test:20s}\n".format(app=application,test=subtest)
