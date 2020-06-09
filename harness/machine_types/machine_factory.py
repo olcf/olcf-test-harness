@@ -16,17 +16,12 @@ class MachineFactory:
         return
 
     @staticmethod
-    def create_machine(path_to_workspace,
-                       harness_id):
+    def create_machine(app_subtest):
         rgt_machine_name = os.environ.get("RGT_MACHINE_NAME")
         rgt_scheduler_type = os.environ.get("RGT_SCHEDULER_TYPE")
         rgt_jobLauncher_type = os.environ.get("RGT_JOBLAUNCHER_TYPE")
-        rgt_path_to_workspace = path_to_workspace
-        rgt_harness_id = harness_id
-        rgt_scripts_dir = os.getcwd()
 
-
-        # Verify that the environmental variables 'RGT_MACHINE_NAME', 
+        # Verify that the environmental variables 'RGT_MACHINE_NAME',
         # 'RGT_SCHEDULER_TYPE', and 'RGT_JOBLAUNCHER_TYPE' are defined.
         # Otherwise throw an exception and stop.
         try:
@@ -51,63 +46,37 @@ class MachineFactory:
                                                                                                   machine_type=rgt_machine_name,
                                                                                                   scheduler_type=rgt_scheduler_type,
                                                                                                   job_launcher_type = rgt_jobLauncher_type)
-        message += "This machine's starting directory, i.e. path to scripts directory, is '{}'\n".format(rgt_scripts_dir)
-        message += "This machine's workspace is '{}'\n".format(rgt_path_to_workspace)
         print(message)
 
         # We now create a new machine. If the new machine type is not implemented,
         # then warn user, throw an exception and stop.
         tmp_machine = None
         try:
-            if rgt_machine_name == "Crest":
+            if rgt_machine_name == "summitdev":
                 tmp_machine = IBMpower8(name=rgt_machine_name,
                                         scheduler=rgt_scheduler_type,
                                         jobLauncher=rgt_jobLauncher_type,
-                                        workspace=rgt_path_to_workspace,
-                                        harness_id=rgt_harness_id,
-                                        scripts_dir=rgt_scripts_dir)
-            elif rgt_machine_name == "Chester":
-                tmp_machine = CrayXK7(name=rgt_machine_name,
-                                      scheduler=rgt_scheduler_type,
-                                      jobLauncher=rgt_jobLauncher_type,
-                                      workspace=rgt_path_to_workspace,
-                                      harness_id=rgt_harness_id,
-                                      scripts_dir=rgt_scripts_dir)
-            elif rgt_machine_name == "summitdev":
-                tmp_machine = IBMpower8(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler_type,
-                                        jobLauncher=rgt_jobLauncher_type,
-                                        workspace=rgt_path_to_workspace,
-                                        harness_id=rgt_harness_id,
-                                        scripts_dir=rgt_scripts_dir)
+                                        apptest=app_subtest)
             elif rgt_machine_name == "peak":
                 tmp_machine = IBMpower9(name=rgt_machine_name,
                                         scheduler=rgt_scheduler_type,
                                         jobLauncher=rgt_jobLauncher_type,
-                                        workspace=rgt_path_to_workspace,
-                                        harness_id=rgt_harness_id,
-                                        scripts_dir=rgt_scripts_dir)
+                                        apptest=app_subtest)
             elif rgt_machine_name == "summit":
                 tmp_machine = IBMpower9(name=rgt_machine_name,
                                         scheduler=rgt_scheduler_type,
                                         jobLauncher=rgt_jobLauncher_type,
-                                        workspace=rgt_path_to_workspace,
-                                        harness_id=rgt_harness_id,
-                                        scripts_dir=rgt_scripts_dir)
+                                        apptest=app_subtest)
             elif rgt_machine_name == "rhea":
                 tmp_machine = RHELx86(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler_type,
-                                        jobLauncher=rgt_jobLauncher_type,
-                                        workspace=rgt_path_to_workspace,
-                                        harness_id=rgt_harness_id,
-                                        scripts_dir=rgt_scripts_dir)
+                                      scheduler=rgt_scheduler_type,
+                                      jobLauncher=rgt_jobLauncher_type,
+                                      apptest=app_subtest)
             elif rgt_machine_name == "lyra":
                 tmp_machine = RHELx86(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler_type,
-                                        jobLauncher=rgt_jobLauncher_type,
-                                        workspace=rgt_path_to_workspace,
-                                        harness_id=rgt_harness_id,
-                                        scripts_dir=rgt_scripts_dir)
+                                      scheduler=rgt_scheduler_type,
+                                      jobLauncher=rgt_jobLauncher_type,
+                                      apptest=app_subtest)
             else:
                 print("Machine name does not exist. Good bye!")
                 raise MachineTypeNotImplementedError(rgt_machine_name)

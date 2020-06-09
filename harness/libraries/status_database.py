@@ -34,7 +34,7 @@ class StatusDatabase:
 
         #self.__input_file = input_files.rgt_input_file()
         self.__input_file = rgt_input_file
-        self.__path_to_tests = self.__input_file.get_local_path_to_tests()
+        self.__path_to_tests = self.__input_file.get_path_to_tests()
 
         self.__event_data = None
         self.__test_instance_data = None
@@ -80,7 +80,7 @@ class StatusDatabase:
 
             self.__event_data.setdefault(app, {}).setdefault(test, {})
 
-            status_dir = os.path.join(self.__path_to_tests, app, test, 'Status')
+            status_dir = os.path.join(self.__path_to_tests, app, test, apptest_layout.test_status_dirname)
             test_ids = ([d for d in os.listdir(status_dir)
                          if re.search(r'^[0-9.]+$', d)
                          and os.path.isdir(os.path.join(status_dir, d))]

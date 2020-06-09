@@ -24,7 +24,7 @@ class scalers:
         self.__endTime = metric_end_time
         self.__value = metric_value
 
-        starting_dir = os.environ["RGT_PATH_TO_SCRIPTS_DIR"]
+        starting_dir = os.environ["RGT_TEST_SCRIPTS_DIR"]
         (headdir1,taildir1) = os.path.split(starting_dir)
         (headdir2,taildir2) = os.path.split(headdir1)
         (headdir3,taildir3) = os.path.split(headdir2)
@@ -34,38 +34,38 @@ class scalers:
                                          local_path_to_tests=headdir3)
 
         if self.__startTime == None:
-            path = self.__appTest.get_local_path_to_start_binary_time(self.__uniqueID)
+            path = self.__appTest.get_path_to_start_binary_time(self.__uniqueID)
             if path:
                 file_obj = open(path,"r")
                 record = file_obj.readlines()
                 file_obj.close()
                 #print record
-                
+
                 tmp_record = record[0].strip()
                 self.__startTime = tmp_record
 
 
         if self.__endTime == None:
-            path = self.__appTest.get_local_path_to_end_binary_time(self.__uniqueID)
+            path = self.__appTest.get_path_to_end_binary_time(self.__uniqueID)
             if path:
                 file_obj = open(path,"r")
                 record = file_obj.readlines()
                 file_obj.close()
                 #print record
-                
+
                 tmp_record = record[0].strip()
                 self.__endTime = tmp_record
 
-        
+
     def recordMetric(self):
-        dir1 = os.path.join(self.__appTest.get_local_path_to_performance_dir(),
+        dir1 = os.path.join(self.__appTest.get_path_to_performance_dir(),
                              self.__uniqueID)
 
-        path1 = os.path.join(self.__appTest.get_local_path_to_performance_dir(),
+        path1 = os.path.join(self.__appTest.get_path_to_performance_dir(),
                              self.__uniqueID,
                              self.__metricName)
-       
-        if os.path.exists(path1): 
+
+        if os.path.exists(path1):
             pass
             #print("Recording metric in : " + path1)
         else:
@@ -121,5 +121,5 @@ def getTargetMetric(path_to_correct_results,metric):
 
     return correct_result
 
-            
+
 

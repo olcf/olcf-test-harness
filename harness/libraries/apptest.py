@@ -19,7 +19,7 @@ from types import *
 
 # NCCS Test Harness Package Imports
 from libraries.base_apptest import base_apptest
-from libraries.layout_of_apps_directory import apps_test_directory_layout
+from libraries.layout_of_apps_directory import apptest_layout
 from libraries.rgt_logging import rgt_logger
 from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
@@ -30,9 +30,9 @@ from libraries.repositories.common_repository_utility_functions import run_as_su
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
 
 #
-# Inherits "apps_test_directory_layout".
+# Inherits "apptest_layout".
 #
-class subtest(base_apptest,apps_test_directory_layout):
+class subtest(base_apptest, apptest_layout):
 
     #
     # Constructor
@@ -41,6 +41,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                  name_of_application=None,
                  name_of_subtest=None,
                  local_path_to_tests=None,
+                 harness_id=None,
                  application_log_level="CRITICAL",
                  number_of_iterations=-1,
                  timestamp=None):
@@ -51,31 +52,30 @@ class subtest(base_apptest,apps_test_directory_layout):
                               local_path_to_tests,
                               time_stamp=timestamp)
 
-        apps_test_directory_layout.__init__(self,
-                                            name_of_application,
-                                            name_of_subtest,
-                                            local_path_to_tests)
+        apptest_layout.__init__(self,
+                                local_path_to_tests,
+                                name_of_application,
+                                name_of_subtest,
+                                harness_id)
 
-        # Format of data is [<local_path_to_tests>, <application>, <test>] 
+        # Format of data is [<local_path_to_tests>, <application>, <test>]
         self.__apps_test_checked_out = []
-
-        self.__apps_test_checked_out = self.__apps_test_checked_out + [[self.getLocalPathToTests(),
-                                                                        self.getNameOfApplication(),
-                                                                        name_of_subtest]]
+        self.__apps_test_checked_out.append([self.getLocalPathToTests(),
+                                             self.getNameOfApplication(),
+                                             name_of_subtest])
         self.__number_of_iterations = -1
 
-        
+
         # Set the logger for this application and subtest.
+        if timestamp != None:
+            dir1 = self.getDirPathToLogFiles()
+            log_name1 = name_of_application + "." + name_of_subtest
+            log_name2 = os.path.join(dir1,log_name1)
+            log_name3 = os.path.abspath(log_name2)
+            self.__myLogger = rgt_logger(log_name3,
+                                         application_log_level,
+                                         timestamp)
 
-        dir1 = self.getDirPathToLogFiles() 
-        log_name1 = name_of_application + "." + name_of_subtest
-        log_name2 = os.path.join(dir1,log_name1)
-        log_name3 = os.path.abspath(log_name2)
-
-        
-        self.__myLogger = rgt_logger(log_name3,
-                                     application_log_level,
-                                     timestamp)
     ##################
     # Public Methods #
     ##################
@@ -85,7 +85,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                 test_display_lock=None,
                 stdout_stderr=None):
         """
-        :param list_of_string my_tasks: A list of the strings 
+        :param list_of_string my_tasks: A list of the strings
                                         where each element is an application
                                         harness task to be preformed on this app/test
         """
@@ -109,14 +109,14 @@ class subtest(base_apptest,apps_test_directory_layout):
                 from libraries.repositories import RepositoryFactory
 
                 repository_type = RepositoryFactory.get_type_of_repository()
-                name_of_application = self.getNameOfApplication() 
+                name_of_application = self.getNameOfApplication()
                 url_to_remote_repsitory_application = RepositoryFactory.get_repository_url_of_application(name_of_application)
                 my_repository_branch = RepositoryFactory.get_repository_git_branch()
 
                 my_repository = RepositoryFactory.create(repository_type,
                                                          url_to_remote_repsitory_application,
                                                          my_repository_branch)
-                
+
                 self.__myLogger.doInfoLogging("Start of cloning repository")
                 destination = self.getLocalPathToTests()
 
@@ -124,7 +124,7 @@ class subtest(base_apptest,apps_test_directory_layout):
                                      destination)
 
                 self.__myLogger.doInfoLogging("End of cloning repository")
-                
+
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -132,7 +132,7 @@ class subtest(base_apptest,apps_test_directory_layout):
             elif harness_task == Harness.starttest:
                 message = "Start of starting test."
                 self.__myLogger.doInfoLogging(message)
-                
+
                 self.start_test(stdout_stderr)
                 message = "End of starting test"
                 self.__myLogger.doInfoLogging(message)
@@ -150,11 +150,11 @@ class subtest(base_apptest,apps_test_directory_layout):
                     test_display_lock.release()
 
             elif harness_task == Harness.summarize_results:
-                self.generateReport() 
+                self.generateReport()
 
     def getTestName(self):
         return self.getNameOfSubtest()
-    
+
     def appTestName(self):
         return [self.getNameOfApplication(),self.getNameOfSubtest()]
 
@@ -162,15 +162,15 @@ class subtest(base_apptest,apps_test_directory_layout):
 
         #Get the current working directory.
         cwd = os.getcwd()
-        
-        message = "For the cloning, my current directory is " + cwd 
+
+        message = "For the cloning, my current directory is " + cwd
         self.__myLogger.doInfoLogging(message)
 
         my_repository.cloneRepository(destination,
                                       self.__myLogger)
 
         exit_status = 0
-            
+
         if exit_status > 0:
             string1 = "Cloning of repository failed."
             self.__myLogger.doInfoLogging(string1)
@@ -180,30 +180,28 @@ class subtest(base_apptest,apps_test_directory_layout):
             self.__myLogger.doInfoLogging(message)
 
         return
-    
+
     #
     # Starts the regression test.
     #
     def start_test(self,
                    stdout_stderr):
-         
 
         # If the file kill file exits then remove it.
-        pathtokillfile = self.get_local_path_to_kill_file() 
-
+        pathtokillfile = self.get_path_to_kill_file()
         if os.path.lexists(pathtokillfile):
             os.remove(pathtokillfile)
 
         start_test_log_files = self.getPathToStartTestLogFiles()
         stdout_path = start_test_log_files["stdout"]
         stderr_path = start_test_log_files["stderr"]
-        
+
         starttestcomand = "test_harness_driver.py -r"
 
         with open(stdout_path,"a") as out:
             with open(stderr_path,"a") as err:
 
-                pathtoscripts = self.get_local_path_to_scripts() 
+                pathtoscripts = self.get_path_to_scripts()
 
                 if stdout_stderr == "logfile":
                     (stdout,stderr,exit_status) = \
@@ -224,8 +222,8 @@ class subtest(base_apptest,apps_test_directory_layout):
     # Stops the test.
     #
     def stop_test(self):
-         
-        pathtokillfile = self.get_local_path_to_kill_file() 
+
+        pathtokillfile = self.get_path_to_kill_file()
 
         kill_file = open(pathtokillfile,"w")
         kill_file.write("")
@@ -364,8 +362,8 @@ class subtest(base_apptest,apps_test_directory_layout):
         currenttime = time.localtime()
         time1 = time.strftime("%Y %b %d %H:%M:%S\n",currenttime)
         theader = "\n--------------------\n"
-        fieldheader = "{leading_space:41s} {attempts:10s} {passes:10s} {fails:10s} {inconclusive:10s}\n".format(leading_space="", 
-                                                                                attempts="Attemps", 
+        fieldheader = "{leading_space:41s} {attempts:10s} {passes:10s} {fails:10s} {inconclusive:10s}\n".format(leading_space="",
+                                                                                attempts="Attemps",
                                                                                 passes="Passed",
                                                                                 fails="Failures",
                                                                                 inconclusive="Inconclusive")
@@ -399,8 +397,8 @@ class subtest(base_apptest,apps_test_directory_layout):
                 "Number_inconclusive" : self.__summary["number_of_inconclusive_tests"],
                 "Failed_jobs" : self.__summary["failed_jobs"],
                 "Inconclusive_jobs" : self.__summary["inconclusive_jobs"]}
-            
-        
+
+
     #
     # Debug apptest.
     #
@@ -410,7 +408,7 @@ class subtest(base_apptest,apps_test_directory_layout):
         print ("Debugging apptest ")
         print ("================================================================")
         for tmp_test in self.__apps_test_checked_out:
-            print( "%-20s  %-20s %-20s" % (tmp_test[0],tmp_test[1], tmp_test[2]))
+            print( "%-20s  %-20s %-20s" % (tmp_test[0], tmp_test[1], tmp_test[2]))
         print( "================================================================\n\n")
 
     @classmethod
@@ -446,19 +444,17 @@ class subtest(base_apptest,apps_test_directory_layout):
         if (Harness.summarize_results in taskwords1):
             app_tasks1.append(Harness.summarize_results)
             taskwords1.remove(Harness.summarize_results)
-            
+
         return app_tasks1
 
-def do_application_tasks(application_name,
-                         app_test_list,
+def do_application_tasks(app_test_list,
                          tasks,
                          stdout_stderr):
     import random
 
-    for ip in range(len(app_test_list)):
-        app_test = app_test_list[ip]
+    for app_test in app_test_list:
         app_test.doTasks(tasks=tasks,
                          stdout_stderr=stdout_stderr)
 
     return
-        
+

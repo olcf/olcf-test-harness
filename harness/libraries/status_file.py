@@ -16,6 +16,7 @@ import socket
 import pprint
 
 #from libraries import computers_1
+from libraries.layout_of_apps_directory import apptest_layout
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""
@@ -41,7 +42,7 @@ class StatusFile:
     header += header2
 
     # Name of the input file.
-    FILENAME = 'rgt_status.txt'
+    FILENAME = apptest_layout.test_status_filename
 
     COMMENT_LINE_INDICATOR = '#'
 
@@ -249,12 +250,12 @@ class StatusFile:
         # to avoid possibility of a partially completed file.
 
         dir_head = os.path.split(os.getcwd())[0]
-        file_path = os.path.join(dir_head, 'Status', str(self.__test_id),
+        file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
                                  event_filename)
         if os.path.exists(file_path):
             print('Warning: event log file already exists. ' + file_path)
 
-        file_path_partial = os.path.join(dir_head, 'Status',
+        file_path_partial = os.path.join(dir_head, apptest_layout.test_status_dirname,
                                          str(self.__test_id),
                                          'partial.' + event_filename)
 
@@ -296,7 +297,7 @@ class StatusFile:
         dir_head1 = os.path.split(cwd)[0]
 
         # Form path to rgt status file.
-        self.__status_file_path = os.path.join(dir_head1, "Status",
+        self.__status_file_path = os.path.join(dir_head1, apptest_layout.test_status_dirname,
                                            StatusFile.FILENAME)
 
         # Create.
@@ -348,8 +349,8 @@ class StatusFile:
                 words[5] = binary_running_value
 
                 dir_head = os.path.split(os.getcwd())[0]
-                path2 = os.path.join(dir_head, 'Status', test_id,
-                                     'job_status.txt')
+                path2 = os.path.join(dir_head, apptest_layout.test_status_dirname, test_id,
+                                     apptest_layout.job_status_filename)
                 file_obj2 = open(path2, 'w')
                 file_obj2.write(binary_running_value)
                 file_obj2.close()
@@ -359,8 +360,8 @@ class StatusFile:
                 words[5] = aborning_run_value
 
                 dir_head = os.path.split(os.getcwd())[0]
-                path2 = os.path.join(dir_head, 'Status', test_id,
-                                     'job_status.txt')
+                path2 = os.path.join(dir_head, apptest_layout.test_status_dirname, test_id,
+                                     apptest_layout.job_status_filename)
                 file_obj2 = open(path2, 'w')
                 file_obj2.write(aborning_run_value)
                 file_obj2.close()
@@ -404,7 +405,7 @@ def get_status_info(test_id, event_type, event_subtype,
     test_instance_info['cwd'] = os.getcwd()
 
     (dir_head1, dir_scripts) = os.path.split(test_instance_info['cwd'])
-    assert dir_scripts == 'Scripts', (
+    assert dir_scripts == apptest_layout.test_scripts_dirname, (
         'harness function being executed from wrong directory.')
     (dir_head2, test_) = os.path.split(dir_head1)
     test_instance_info['test'] = test_
@@ -415,10 +416,10 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test'] + ',' +
         test_instance_info['test_id'])
 
-    dir_status = os.path.join(dir_head1, 'Status')
+    dir_status = os.path.join(dir_head1, apptest_layout.test_status_dirname)
     dir_status_this_test = os.path.join(dir_status, test_id)
 
-    run_archive_all = os.path.join(dir_head1, 'Run_Archive')
+    run_archive_all = os.path.join(dir_head1, apptest_layout.test_run_archive_dirname)
     test_instance_info['run_archive'] = os.path.join(run_archive_all, test_id)
 
     test_instance_info['rgt_path_to_sspace'] = os.environ['RGT_PATH_TO_SSPACE']
@@ -427,13 +428,13 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['rgt_path_to_sspace'],
         test_instance_info['app'],
         test_instance_info['test'],
-        test_instance_info['test_id'], 'build_directory')
+        test_instance_info['test_id'], apptest_layout.test_build_dirname)
 
     test_instance_info['workdir'] = os.path.join(
         test_instance_info['rgt_path_to_sspace'],
         test_instance_info['app'],
         test_instance_info['test'],
-        test_instance_info['test_id'], 'workdir')
+        test_instance_info['test_id'], apptest_layout.test_run_dirname)
 
     test_instance_info['job_account_id'] = (
         os.environ['RGT_ACCT_ID']
@@ -459,7 +460,7 @@ def get_status_info(test_id, event_type, event_subtype,
 
     event_info['runtag'] = test_instance_info['rgt_system_log_tag']
 
-    file_job_id = os.path.join(dir_status_this_test, 'job_id.txt')
+    file_job_id = os.path.join(dir_status_this_test, apptest_layout.job_id_filename)
     if os.path.exists(file_job_id):
         file_ = open(file_job_id, 'r')
         job_id_ = file_.read()
@@ -468,7 +469,7 @@ def get_status_info(test_id, event_type, event_subtype,
     else:
         event_info['job_id'] = no_value
 
-    file_job_status = os.path.join(dir_status_this_test, 'job_status.txt')
+    file_job_status = os.path.join(dir_status_this_test, apptest_layout.job_status_filename)
     if os.path.exists(file_job_status):
         file_ = open(file_job_status, 'r')
         job_status_ = file_.read()
