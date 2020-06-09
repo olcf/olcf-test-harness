@@ -7,7 +7,6 @@ from .base_machine import BaseMachine
 from .rgt_test import RgtTest
 import os
 import re
-import configparser
 
 class RHELx86(BaseMachine):
 
@@ -18,11 +17,8 @@ class RHELx86(BaseMachine):
                  numNodes=1,
                  numSocketsPerNode=1,
                  numCoresPerSocket=16,
-                 rgt_test_input_file="rgt_test_input.txt",
-                 rgt_test_config_file="rgt_test_input.ini",
-                 workspace=None,
-                 harness_id=None,
-                 scripts_dir=None):
+                 rgt_test_input_file="rgt_test_input.ini",
+                 apptest=None):
         BaseMachine.__init__(self,
                              name,
                              scheduler,
@@ -30,153 +26,87 @@ class RHELx86(BaseMachine):
                              numNodes,
                              numSocketsPerNode,
                              numCoresPerSocket,
-                             rgt_test_input_file,
-                             workspace,harness_id,
-                             scripts_dir)
+                             apptest)
 
-        self.__rgt_test_config_file = rgt_test_config_file
-        self.__rgt_test = RgtTest()
+        # process test input file
+        self.__rgt_test = RgtTest(rgt_test_input_file)
+        self.__rgt_test.read_input_file()
 
-        #self.read_rgt_test_input()
-        #self.read_custom_rgt_test_input()
-        self.read_rgt_test_config()
+        test_params = {}
 
-    def read_rgt_test_input():
-        print("This is not implemented for RHELx86")
-        return
+        # add test parameters needed by the harness
+        test_params['results_dir'] = self.apptest.get_path_to_runarchive()
+        test_params['working_dir'] = self.apptest.get_path_to_workspace_run()
+        test_params['build_dir'] = self.apptest.get_path_to_workspace_build()
+        test_params['scripts_dir'] = self.apptest.get_path_to_scripts()
+        test_params['harness_id'] = self.apptest.get_harness_id()
 
-    def get_rgt_test_config_filename(self):
-        return self.__rgt_test_config_file
+        # update the test parameters
+        self.__rgt_test.set_test_parameters(test_params.items())
+
+        # is this actually used? if so, it has to come after updating test parameters
+        #joblaunch_cmd = self.get_jobLauncher_command()
+        #self.__rgt_test.set_user_param("joblaunchcommand", joblaunch_cmd)
 
 
-    def read_rgt_test_config(self):
-
-        print("[LOG] BEGIN: read_rgt_test_config")
-        rgt_test_config_filename = self.get_rgt_test_config_filename()
-
-        if os.path.isfile(rgt_test_config_filename):
-            print("reading test config from x86 input")
-
-            rgt_test_config = configparser.ConfigParser()
-            rgt_test_config.read(rgt_test_config_filename)
-
-            if not 'Replacements' in rgt_test_config:
-                print("ERROR: missing [Replacements] section in test input")
-                replace = dict()
-            else:
-                replace = rgt_test_config['Replacements']
-
-            # add variables needed by the harness
-            # replace["rgtenvironmentalfile"] = os.environ["RGT_ENVIRONMENTAL_FILE"]
-            replace["nccstestharnessmodule"] = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
-            replace["resultsdir"] = self.get_rgt_results_dir()
-            replace["workdir"] = self.get_rgt_workdir()
-            replace["startingdirectory"] = self.get_rgt_scripts_dir()
-            replace["unique_id_string"] = self.get_rgt_harness_id()
-
-            self.__rgt_test.set_test_config_parameters(replace)
-
-            if 'EnvVars' in rgt_test_config:
-                env_vars = rgt_test_config['EnvVars']
-                self.__rgt_test.set_test_config_env_vars(env_vars)
-
-        print("[LOG] END: read_rgt_test_config")
-
-    def read_custom_rgt_test_input(self):
-
-        template_dict = {}
-
-        if os.path.isfile(self.get_rgt_input_file_name()):
-            print("reading custom key-value pairs from x86 input")
-
-            # read the custom parameters from rgt test input
-            delimiter = "="
-
-            fileobj = open(self.get_rgt_input_file_name())
-            filerecords = fileobj.readlines()
-            fileobj.close()
-
-            for record in filerecords:
-                if not record.strip() or record.strip()[0] == '#':
-                  continue
-                (k,v) = record.split('=')
-                template_dict[k.strip().lower()] = v.strip()
-
-        # variables needed by the harness
-        template_dict["rgtenvironmentalfile"] = os.environ["rgt_environmental_file"]
-        template_dict["nccstestharnessmodule"] = os.environ["rgt_nccs_test_harness_module"]
-        template_dict["resultsdir"] = self.get_rgt_results_dir()
-        template_dict["workdir"] = self.get_rgt_workdir()
-        template_dict["startingdirectory"] = self.get_rgt_scripts_dir()
-        template_dict["unique_id_string"] = self.get_rgt_harness_id()
-
-        print(template_dict)
-
-        self.__rgt_test.set_custom_test_parameters(template_dict)
-        self.__rgt_test.print_custom_test_parameters()
-        self.__rgt_test.check_builtin_parameters()
-
-        self.__rgt_test.append_to_template_dict("pathtoexecutable",os.path.join(self.get_rgt_workspace(),"build_directory/bin",self.__rgt_test.get_executablename()))
-        self.__rgt_test.append_to_template_dict("joblaunchcommand",self.get_joblauncher_command(self.__rgt_test.get_value_from_template_dict("pathtoexecutable")))
-
-    def get_jobLauncher_command(self,path_to_executable):
+    def get_jobLauncher_command(self):
         print("Building jobLauncher command for x86")
-        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_template_dict())
+        jobLauncher_command = self.build_jobLauncher_command(self.__rgt_test.get_test_parameters())
         return jobLauncher_command
 
-    def make_custom_batch_script(self):
-        print("[LOG] BEGIN: make_custom_batch_script")
-        print("Creating a batch script for a RHEL x86 system using " + self.get_scheduler_template_file_name())
+    def make_batch_script(self):
+        #print("[LOG] BEGIN: make_batch_script")
+        print("Making batch script for a RHEL x86 system using " + self.get_scheduler_template_file_name())
 
-        templatefileobj = open(self.get_scheduler_template_file_name(),"r")
+        # Get batch job template lines
+        templatefileobj = open(self.get_scheduler_template_file_name(), "r")
         templatelines = templatefileobj.readlines()
         templatefileobj.close()
 
-        # Open file for the test batch job script
-        batch_job = open(self.__rgt_test.get_batchfilename(),"w")
+        # Create test batch job script in run archive directory
+        batch_file_path = os.path.join(self.apptest.get_path_to_runarchive(),
+                                       self.__rgt_test.get_batch_file())
+        batch_job = open(batch_file_path, "w")
 
         # Replace all the wildcards in the batch job template with the values in
         # the test config
-        test_replacements = self.__rgt_test.get_replacements()
+        test_replacements = self.__rgt_test.get_test_replacements()
         for record in templatelines:
-            for key in test_replacements:
-                re_tmp = re.compile('__' + key + '__')
-                record = re_tmp.sub(test_replacements[key],record)
+            for (replace_key,val) in test_replacements.items():
+                re_tmp = re.compile(replace_key)
+                record = re_tmp.sub(val, record)
             batch_job.write(record)
 
         # Close batch job script file
         batch_job.close()
-
-        print("[LOG] END: make_custom_batch_script")
-
-    def make_batch_script(self):
-        print("Not implemented for RHEL x86")
+        #print("[LOG] END: make_batch_script")
 
     def build_executable(self):
-        print("Building executable on x86 using build script " + self.__rgt_test.get_buildcmd())
-        return self.start_build_script(self.__rgt_test.get_buildcmd())
+        print("Building executable on x86 using build script " + self.__rgt_test.get_build_command())
+        return self.start_build_script(self.__rgt_test.get_build_command())
 
     def submit_batch_script(self):
         # Set environment vars using os.putenv() so that submit subprocess will
         # inherit them
-        env_vars = self.__rgt_test.get_env_vars()
+        env_vars = self.__rgt_test.get_test_environment()
         for e in env_vars:
             v = env_vars[e]
             print("Setting env var", e, "=", v)
             os.putenv(e.upper(), v)
 
         print("Submitting batch script for x86")
-        submit_exit_value = self.submit_to_scheduler(self.__rgt_test.get_batchfilename(),self.get_rgt_harness_id())
-        print("Submitting " + self.__rgt_test.get_batchfilename() + " submit_exit_value = " + str(submit_exit_value))
+        batch_script = self.__rgt_test.get_batch_file()
+        submit_exit_value = self.submit_to_scheduler(batch_script)
+        print("Submitting " + batch_script + " submit_exit_value = " + str(submit_exit_value))
         return submit_exit_value
 
     def check_executable(self):
-        print("Running check executable script on x86 using check script " + self.__rgt_test.get_checkcmd())
-        return self.check_results(self.__rgt_test.get_checkcmd())
+        print("Running check executable script on x86 using check script " + self.__rgt_test.get_check_command())
+        return self.check_results(self.__rgt_test.get_check_command())
 
     def report_executable(self):
-        print("Running report executable script on x86 using report script " + self.__rgt_test.get_reportcmd())
-        return self.start_report_script(self.__rgt_test.get_reportcmd())
+        print("Running report executable script on x86 using report script " + self.__rgt_test.get_report_command())
+        return self.start_report_script(self.__rgt_test.get_report_command())
 
 if __name__ == "__main__":
     print('This is the RHEL x86 class')

@@ -4,6 +4,7 @@
 #
 #
 
+from libraries.layout_of_apps_directory import apptest_layout
 from .base_scheduler import BaseScheduler
 import shlex
 import subprocess
@@ -32,7 +33,7 @@ class LSF(BaseScheduler):
 
         qargs = ""
         if "RGT_SUBMIT_QUEUE" in os.environ:
-            qargs = " -q " + os.environ.get('RGT_SUBMIT_QUEUE') 
+            qargs = " -q " + os.environ.get('RGT_SUBMIT_QUEUE')
 
         if "RGT_SUBMIT_ARGS" in os.environ:
             qargs = qargs + os.getenv('RGT_SUBMIT_ARGS')
@@ -76,31 +77,6 @@ class LSF(BaseScheduler):
 
         return p.returncode
 
-    def write_jobid_to_status(self,unique_id):
-        #
-        # Get the current working directory.
-        #
-        cwd = os.getcwd()
-
-        #
-        # Get the 1 head path in the cwd.
-        #
-        (dir_head1, dir_tail1) = os.path.split(cwd)
-
-        #
-        # Now join dir_head1 to make the path. This path should be unique.
-        #
-        path1 = os.path.join(dir_head1,"Status",unique_id,"job_id.txt")
-
-        #
-        # Write the pbs job id to the file.
-        #
-        fileobj = open(path1,"w")
-        string1 = "%20s\n" % (self.get_job_id())
-        fileobj.write(string1)
-        fileobj.close()
-
-        return path1
 
 if __name__ == '__main__':
     print('This is the LSF scheduler class')

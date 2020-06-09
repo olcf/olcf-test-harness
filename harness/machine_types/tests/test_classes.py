@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ..machine_types.cray_xk7 import CrayXK7 
+from ..machine_types.cray_xk7 import CrayXK7
 from ..machine_types.ibm_power8 import IBMpower8
 from ..machine_types.machine_factory import MachineFactory
 from ..machine_types.lsf import LSF
@@ -17,9 +17,9 @@ from ..machine_types.poe import Poe
 #my_machine.print_machine_info()
 
 #fc = MachineFactory.create_machine('Chester','XK7','PBS')
-fc = MachineFactory.create_machine('./somedir','12345')
-print(fc)
-fc.make_custom_batch_script()
+#fc = MachineFactory.create_machine('./somedir','12345')
+#print(fc)
+#fc.make_batch_script()
 
 #my_scheduler = LSF()
 #print my_scheduler.get_scheduler_name()

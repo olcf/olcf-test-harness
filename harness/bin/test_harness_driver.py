@@ -8,8 +8,10 @@ import datetime
 import shutil
 from shlex import split
 
-from libraries.rgt_utilities import unique_text_string, test_work_space, try_symlink
-from libraries.layout_of_apps_directory import apps_test_directory_layout
+from libraries.apptest import subtest
+from libraries.layout_of_apps_directory import apptest_layout as layout
+from libraries.layout_of_apps_directory import get_layout_from_scriptdir
+from libraries import rgt_utilities
 from libraries import status_file
 from machine_types.machine_factory import MachineFactory
 
@@ -48,117 +50,22 @@ def create_parser():
     return my_parser
 
 
-def get_app_test_from_scriptdir(scriptdir_path):
-    """
-    Convert given scripts directory path into app and test names,
-    after checking that it is actually a scripts directory
-    """
-    app = None
-    test = None
-
-    (dir_head1, scriptdir) = os.path.split(scriptdir_path)
-    if scriptdir == 'Scripts':
-        (dir_head2, test) = os.path.split(dir_head1)
-        (__, app) = os.path.split(dir_head2)
-
-    return app, test
-
-
-def get_test_status_dir(apptest_dir, id_string):
-    """
-    Get Status directory for test instance with given id_string.
-    Create directory if it does not exist.
-    """
-    #
-    # spath = apptest_dir/Status/id_string
-    # This path should be unique.
-    #
-    spath = os.path.join(apptest_dir, 'Status', id_string)
-    if not os.path.exists(spath):
-        os.makedirs(spath)
-
-        #
-        # Create convenience link to latest status dir
-        #
-        latest_lnk = os.path.join(apptest_dir, 'Status', 'latest')
-        if os.path.exists(latest_lnk):
-            os.unlink(latest_lnk)
-        try_symlink(id_string, latest_lnk)
-
-    return spath
-
-
-def get_test_runarchive_dir(apptest_dir, id_string):
-    """
-    Get Run_Archive directory for test instance with given id_string.
-    Create directory if it does not exist.
-    """
-    #
-    # rpath = apptest_dir/Run_Archive/id_string
-    # This path should be unique.
-    #
-    rpath = os.path.join(apptest_dir, 'Run_Archive', id_string)
-    if not os.path.exists(rpath):
-        os.makedirs(rpath)
-
-        #
-        # Create convenience link to latest Run_Archive dir
-        #
-        latest_lnk = os.path.join(apptest_dir, 'Run_Archive', 'latest')
-        if os.path.exists(latest_lnk):
-            os.unlink(latest_lnk)
-        try_symlink(id_string, latest_lnk)
-
-    return rpath
-
-
-def get_test_workspace_path(path_to_workspace, app, test, id_string):
-    """
-    Get temporary workspace path for apptest instance with given id_string.
-    Create it if it does not exist.
-    """
-    wpath = os.path.join(path_to_workspace, app, test, id_string)
-    os.makedirs(wpath, exist_ok=True)
-    return wpath
-
-
-def create_links_from_workspace(test_workspace, status_dir, runarchive_dir):
-    #
-    # Create convenience links from this workspace to associated
-    # Status and Run_Archive directories.
-    #
-    try_symlink(status_dir, os.path.join(test_workspace, 'Status'))
-    try_symlink(runarchive_dir, os.path.join(test_workspace, 'Run_Archive'))
-    return
-
-
-def create_links_to_workspace(srcdir, test_workspace):
-    #
-    # Create convenience links to associated workspace directories
-    #
-    try_symlink(os.path.join(test_workspace, 'build_directory'),
-                os.path.join(srcdir, 'build_directory'))
-    try_symlink(os.path.join(test_workspace, 'workdir'),
-                os.path.join(srcdir, 'workdir'))
-    return
-
-
-def backup_status_file(status_dir):
+def backup_status_file(test_status_dir):
     """ Make a backup copy of master status file """
     #
     # Set the name of the source file (i.e., the status file to backup).
-    # parent_dir = status_dir/.. (app/test/Status)
+    # status_dir = test_status_dir/.. (i.e., app/test/Status)
     #
-    parent_dir = os.path.dirname(status_dir)
+    status_dir = os.path.dirname(test_status_dir)
     fname = status_file.StatusFile.FILENAME
-    src = os.path.join(parent_dir, fname)
+    src = os.path.join(status_dir, fname)
 
     #
     # Set the name of the destination file (i.e., the backup file)
     #
     currenttime = datetime.datetime.now().isoformat()
     backup_filename = ".backup." + fname + "." + currenttime
-    dest = os.path.join(parent_dir, backup_filename)
+    dest = os.path.join(status_dir, backup_filename)
 
     #
     # Now copy the status file to the backup file.
@@ -167,22 +74,10 @@ def backup_status_file(status_dir):
         shutil.copyfile(src, dest)
 
 
-def read_status_file(test_status_dir):
-    """ Read test_status_dir/job_status.txt to get job status """
-    job_correctness = ""
-    fpath = os.path.join(test_status_dir, 'job_status.txt')
-    if os.path.exists(fpath):
-        jfile = open(fpath, "r")
-        job_line = jfile.readline()
-        jfile.close()
-        job_correctness = str.strip(job_line)
-    return job_correctness
-
-
 def read_job_file(test_status_dir):
     """ Read test_status_dir/job_id.txt to get job id """
     job_id = "0"
-    fpath = os.path.join(test_status_dir, 'job_id.txt')
+    fpath = os.path.join(test_status_dir, layout.job_id_filename)
     if os.path.exists(fpath):
         jfile = open(fpath, "r")
         job_line = jfile.readline()
@@ -191,8 +86,8 @@ def read_job_file(test_status_dir):
     return job_id
 
 
-def auto_generated_scripts(test_workspace,
-                           apptest_dir,
+def auto_generated_scripts(apptest,
+                           test_workspace,
                            unique_id,
                            jstatus,
                            actions):
@@ -203,11 +98,10 @@ def auto_generated_scripts(test_workspace,
 
     """
 
-    status_dir = get_test_status_dir(apptest_dir, unique_id)
+    status_dir = apptest.get_path_to_status()
 
     # Instantiate the machine for this computer.
-    mymachine = MachineFactory.create_machine(test_workspace,
-                                              unique_id)
+    mymachine = MachineFactory.create_machine(apptest)
 
     build_exit_value = 0
     if actions['build']:
@@ -224,7 +118,7 @@ def auto_generated_scripts(test_workspace,
             submit_exit_value = 1
         else:
             # Create and submit the batch script
-            mymachine.make_custom_batch_script()
+            mymachine.make_batch_script()
             jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
             submit_exit_value = mymachine.submit_batch_script()
             jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
@@ -256,8 +150,8 @@ def auto_generated_scripts(test_workspace,
     return exit_values
 
 
-def user_generated_scripts(test_workspace,
-                           apptest_dir,
+def user_generated_scripts(apptest,
+                           test_workspace,
                            unique_id,
                            jstatus,
                            actions):
@@ -265,8 +159,8 @@ def user_generated_scripts(test_workspace,
     Executes user-provided build, submit, and check scripts for a test.
     """
 
-    status_dir = get_test_status_dir(apptest_dir, unique_id)
-    runarchive_dir = get_test_runarchive_dir(apptest_dir, unique_id)
+    status_dir = apptest.get_path_to_status()
+    runarchive_dir = apptest.get_path_to_runarchive()
 
     build_exit_value = 0
     if actions['build']:
@@ -459,39 +353,41 @@ def test_harness_driver(argv=None):
                'submit'   : do_submit,
                'resubmit' : do_resubmit}
 
-    #
+    # Get the unique id for this test instance.
+    existing_id = True
+    unique_id = Vargs.uniqueid
+    if unique_id == None:
+        existing_id = False
+        unique_id = rgt_utilities.unique_harness_id()
+        print(f'Generated test unique id: {unique_id}')
+
     # Make sure we are executing in app/test/Scripts
-    #
     testscripts = Vargs.scriptsdir
-    (app, test) = get_app_test_from_scriptdir(testscripts)
-    if app == None or test == None:
-        sys.exit(f'HARNESS ERROR: Invalid test scripts directory {testscripts}.')
+    (apps_root, app, test) = get_layout_from_scriptdir(testscripts)
     if os.getcwd() != testscripts:
         os.chdir(testscripts)
-    apptest_dir = os.path.dirname(testscripts)
 
-    #
-    # Update my environment with the path to the Scripts directory
-    #
-    os.putenv('RGT_PATH_TO_SCRIPTS_DIR', testscripts)
-
-    #
     # Prepend path to Scripts directory to my PYTHONPATH
-    #
     sys.path.insert(0, testscripts)
+
+    # Instantiate application subtest
+    apptest = subtest(name_of_application=app,
+                      name_of_subtest=test,
+                      local_path_to_tests=apps_root,
+                      harness_id=unique_id)
 
     #
     # Check for the existence of the file "kill_test".
     # If the file exists then the program will exit
     # without building and submitting scripts.
     #
-    kill_file = apps_test_directory_layout.test_kill_file
+    kill_file = apptest.get_path_to_kill_file()
     if os.path.exists(kill_file):
         message = f'The kill file {kill_file} exists. It must be removed to run this test.'
         sys.exit(message)
 
     # Q: What is the purpose of the testrc file??
-    testrc_file = apps_test_directory_layout.test_rc_file
+    testrc_file = apptest.get_path_to_rc_file()
     if os.path.exists(testrc_file):
         file_obj = open(testrc_file,"r")
         lines = file_obj.readlines()
@@ -511,55 +407,42 @@ def test_harness_driver(argv=None):
             file_obj.write(string2)
             file_obj.close()
 
-    #
-    # Get the unique id for this test instance.
-    #
-    existing_id = True
-    unique_id = Vargs.uniqueid
-    if unique_id == None:
-        existing_id = False
-        unique_id = unique_text_string()
-        print(f'Generated test unique id: {unique_id}')
+    # Create the status and run archive directories for this test instance
+    status_dir = apptest.create_test_status()
+    ra_dir = apptest.create_test_runarchive()
 
-    #
-    # Get the Status and Run_Archive dirs for this test instance
-    #
-    status_dir = get_test_status_dir(apptest_dir, unique_id)
-    runarchive_dir = get_test_runarchive_dir(apptest_dir, unique_id)
+    # Create the temporary workspace path for this test instance
+    workspace = rgt_utilities.harness_work_space()
+    test_workspace = apptest.create_test_workspace(workspace)
 
-    #
-    # Get the temporary workspace path for this test instance
-    #
-    workspace = test_work_space()
-    test_workspace = get_test_workspace_path(workspace, app, test, unique_id)
+    # Update environment with the paths to test directories
+    os.putenv('RGT_APP_SOURCE_DIR', apptest.get_path_to_source())
+    os.putenv('RGT_TEST_SCRIPTS_DIR', testscripts)
+    os.putenv('RGT_TEST_BUILD_DIR', apptest.get_path_to_workspace_build())
+    os.putenv('RGT_TEST_WORK_DIR', apptest.get_path_to_workspace_run())
+    os.putenv('RGT_TEST_STATUS_DIR', status_dir)
+    os.putenv('RGT_TEST_RUNARCHIVE_DIR', ra_dir)
 
-    #
-    # Create links between test workspace and Status and Run_Archive dirs
-    #
-    create_links_to_workspace(status_dir, test_workspace)
-    create_links_to_workspace(runarchive_dir, test_workspace)
-    create_links_from_workspace(test_workspace, status_dir, runarchive_dir)
-
-    #
-    # Make backup of master status file.
-    #
+    # Make backup of master status file
     backup_status_file(status_dir)
 
-    #
-    # Add entry to status file.
-    #
+    # Add entry to status file
     mode_str = 'New'
     if existing_id:
         mode_str = 'Old'
     jstatus = status_file.StatusFile(unique_id, mode_str)
 
-    rgt_test_input_txt = os.path.join(testscripts,"rgt_test_input.txt")
-    rgt_test_input_ini = os.path.join(testscripts,"rgt_test_input.ini")
-    if (os.path.isfile(rgt_test_input_txt) or os.path.isfile(rgt_test_input_ini)):
-        exit_values = auto_generated_scripts(test_workspace, apptest_dir,
+    #
+    # Determine whether we are using auto-generated or user-generated
+    # scripts based on existence of rgt_test_input file
+    #
+    input_txt = os.path.join(testscripts, layout.test_input_txt_filename)
+    input_ini = os.path.join(testscripts, layout.test_input_ini_filename)
+    if (os.path.isfile(input_txt) or os.path.isfile(input_ini)):
+        exit_values = auto_generated_scripts(apptest, test_workspace,
                                              unique_id, jstatus, actions)
     else:
-        exit_values = user_generated_scripts(test_workspace, apptest_dir,
+        exit_values = user_generated_scripts(apptest, test_workspace,
                                              unique_id, jstatus, actions)
 
     build_exit_value = 0
@@ -578,7 +461,7 @@ def test_harness_driver(argv=None):
         print("check_exit_value = " + str(check_exit_value))
 
         # Now read the result from the job_status.txt file.
-        jspath = os.path.join(status_dir, 'job_status.txt')
+        jspath = os.path.join(status_dir, layout.job_status_filename)
         jsfile = open(jspath, "r")
         job_correctness = jsfile.readline()
         jsfile.close()
