@@ -8,6 +8,9 @@ import re
 import time
 import subprocess
 import shlex
+
+from libraries.layout_of_apps_directory import apptest_layout
+
 #
 # Author: Arnold Tharrington
 # Email: arnoldt@ornl.gov
@@ -78,7 +81,7 @@ def make_batch_script(batch_recursive_mode,path_to_workspace,test_id_string):
     batchfilename = "hw.batch.x"
 
     #
-    # Define the parse definitons and the regular expressions. 
+    # Define the parse definitons and the regular expressions.
     #
     nccstestharnessmodule = os.environ["RGT_NCCS_TEST_HARNESS_MODULE"]
     rgtenvironmentalfile = os.environ["RGT_ENVIRONMENTAL_FILE"]
@@ -87,14 +90,14 @@ def make_batch_script(batch_recursive_mode,path_to_workspace,test_id_string):
     size = "16"
     batchqueue = "batch"
     pbsaccountid = os.environ["RGT_PBS_JOB_ACCNT_ID"]
-    pathtoexecutable = os.path.join(path_to_workspace,"build_directory","helloworld.x") 
+    pathtoexecutable = os.path.join(path_to_workspace, apptest_layout.test_build_dirname, "helloworld.x")
     startingdirectory = os.getcwd()
     resultsdir = get_path_to_results_dir(test_id_string)
-    workdir = os.path.join(path_to_workspace,"workdir") 
+    workdir = os.path.join(path_to_workspace, apptest_layout.test_run_dirname)
     resubmitme = batch_recursive_mode
     joblaunchcommand = "aprun -n 16 $EXECUTABLE 1> std.out.txt 2> std.err.txt"
 
-    rg_array = [ 
+    rg_array = [
                 (re.compile("__jobname__"),jobname),
                 (re.compile("__walltime__"),walltime),
                 (re.compile("__size__"),size),
@@ -111,7 +114,7 @@ def make_batch_script(batch_recursive_mode,path_to_workspace,test_id_string):
                 (re.compile("__unique_id_string__"),test_id_string),
                 (re.compile("__batchfilename__"),batchfilename),
                ]
-    
+
     #
     # Read the lines of the batch template file.
     #
@@ -146,7 +149,7 @@ def get_path_to_results_dir(test_id_string):
     #
     # Now join dir_head1 to make the path. This path should be unique.
     #
-    path1 = os.path.join(dir_head1,"Run_Archive",test_id_string)
+    path1 = os.path.join(dir_head1, apptest_layout.test_run_archive_dirname, test_id_string)
 
     return path1
 
@@ -164,7 +167,7 @@ def write_job_id_to_status(pbs_job_id,test_id_string):
     #
     # Now join dir_head1 to make the path. This path should be unique.
     #
-    path1 = os.path.join(dir_head1,"Status",test_id_string,"job_id.txt")
+    path1 = os.path.join(dir_head1, apptest_layout.test_status_dirname, test_id_string, apptest_layout.job_id_filename)
 
     #
     # Write the pbs job id to the file.
@@ -200,7 +203,7 @@ def send_to_scheduler(batchfilename):
     records = my_stdout.readlines()
     jobid = records[0].strip()
     my_stdout.close()
-    
+
 #    args = shlex.split(qcommand)
 #    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 #    p.wait()
@@ -208,7 +211,7 @@ def send_to_scheduler(batchfilename):
 #    jobid = records[0].strip()
 
     return jobid
-    
+
 
 
 def usage():
@@ -218,7 +221,7 @@ def usage():
     print("The submit program also writes the job id of the submitted batch job to the file")
     print("'Status/<test_id_string>/job_id.txt'. The only line in job_id.txt is the job id.")
     print()
-    print("-h, --help           Prints usage information.")                              
+    print("-h, --help           Prints usage information.")
     print("-p                   The absolute path to the workspace. This path   ")
     print("                     must have the appropiate permissions to permit  ")
     print("                     the user of the test to r,w, and x.             ")

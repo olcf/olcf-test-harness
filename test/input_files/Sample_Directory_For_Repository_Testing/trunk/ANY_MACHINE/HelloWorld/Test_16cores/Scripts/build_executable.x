@@ -6,6 +6,10 @@ import os
 import shutil
 #import popen2
 import subprocess
+
+from libraries.layout_of_apps_directory import apptest_layout
+
+
 #
 # Author: Arnold Tharrington
 # Email: arnoldt@ornl.gov
@@ -81,17 +85,17 @@ def make_binary(path_to_workspace):
     #
     # Get the path to the Source directory for the application.
     #
-    path_to_source = os.path.join(dir_head2,"Source")
+    path_to_source = os.path.join(dir_head2, apptest_layout.app_source_dirname)
 
     #
     # Now make the path to the build directory.
     #
-    path_to_build_directory = os.path.join(path_to_workspace,"build_directory")
+    path_to_build_directory = os.path.join(path_to_workspace, apptest_layout.test_build_dirname)
 
     #
     #Copy Source to build directory.
     #
-#    shutil.copytree(path_to_source,path_to_build_directory)   
+#    shutil.copytree(path_to_source,path_to_build_directory)
     cmd1 = "cp -rf " + path_to_source + " " +  path_to_build_directory
     os.system(cmd1)
     #
@@ -110,7 +114,7 @@ def usage():
     print("Usage: build_executable.x [-h|--help] -p <path_to_worspace> -i <test_id_string>")
     print("A driver program that the build the binary for the test.")
     print()
-    print("-h, --help           Prints usage information.")                              
+    print("-h, --help           Prints usage information.")
     print("-p                   The absolute path to the workspace. This path   ")
     print("                     must have the appropiate permissions to permit  ")
     print("                     the user of the test to r,w, and x.             ")

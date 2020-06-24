@@ -6,10 +6,10 @@ import getopt
 import filecmp
 import re
 
-
+from libraries.layout_of_apps_directory import apptest_layout
 
 def main():
-    
+
     #
     # Get the command line arguments.
     #
@@ -49,7 +49,7 @@ def main():
     # Write the statis of the results to job data file.
     #
     write_to_job_data(path_to_results,jstatus)
-    
+
 def get_path_to_correct_results():
     cwd = os.getcwd()
 
@@ -61,8 +61,8 @@ def get_path_to_correct_results():
     #
     # This is the path to the correct results.
     #
-    crslts = os.path.join(dir_head1,"Correct_Results")
-    
+    crslts = os.path.join(dir_head1, apptest_layout.test_run_archive_dirname)
+
     return crslts
 
 
@@ -94,7 +94,7 @@ def check_results(path_to_results):
         ival = GOOD_RESULTS
     else:
         ival = BAD_RESULTS
- 
+
     return ival
 
 def write_to_job_data(path_to_results,jstatus):
@@ -102,7 +102,7 @@ def write_to_job_data(path_to_results,jstatus):
     (dir_head1, dir_tail1) = os.path.split(path_to_results)
     (dir_head2, dir_tail2) = os.path.split(dir_head1)
 
-    file1 = os.path.join(dir_head2,"Status",dir_tail1,"job_status.txt")
+    file1 = os.path.join(dir_head2, apptest_layout.test_status_dirname, dir_tail1, apptest_layout.job_status_filename)
     file1_obj = open(file1,"w")
 
     # Set the string to write to the job_status.txt file.
@@ -125,7 +125,7 @@ def usage():
     print("The check executable must write the status of the results to the file")
     print("Status/<test_id_string>/job_status.txt'.")
     print("")
-    print("-h, --help            Prints usage information.")                              
+    print("-h, --help            Prints usage information.")
     print("-p <path_to_results>  The absoulte path to the results of a test.")
     print("-i <test_id_string>   The test string unique id.")
 

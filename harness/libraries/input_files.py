@@ -54,7 +54,7 @@ class rgt_input_file:
                 if runmodetask != None:
                     self.__harness_task.append(runmodetask)
                     print("self.__harness_task: ", self.__harness_task)
-                
+
                 # Clear mode to avoid duplicate
                 runmodetask = None
 
@@ -62,7 +62,7 @@ class rgt_input_file:
             print("ERROR: No valid tasks found in the inputfile or the CLI")
 
     def __read_config(self):
-        
+
         if os.path.basename(self.__configFileName) == self.__configFileName:
             # Search CWD, then OLCF_HARNESS_DIR/configs
             if ( os.path.isfile(os.path.join("./", self.__configFileName)) ):
@@ -74,7 +74,7 @@ class rgt_input_file:
                                           "configs/", self.__configFileName)
         else:
             configfileused = self.__configFileName
-        
+
         if os.path.isfile(configfileused):
             print("reading master config")
             master_cfg = configparser.ConfigParser()
@@ -92,13 +92,13 @@ class rgt_input_file:
             #print(os.environ.get("RGT_ACCT_ID"))
         else:
             raise NameError("Cannot find config file: %s" % self.__configFileName)
-        
+
 
     def __read_file(self):
         ifile_obj = open(self.__inputFileName,"r")
         lines = ifile_obj.readlines()
         ifile_obj.close()
-        
+
         for tmpline in lines:
 
             #If this is a comment line, the continue to next line.
@@ -129,7 +129,7 @@ class rgt_input_file:
                     log_message = "Invalid number of words in test line: " + tmpline
                     print(log_message)
                 self.__tests.append([app,subtest,nm_iters])
-                    
+
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
                     self.__path_to_tests = words[2]
@@ -171,5 +171,5 @@ class rgt_input_file:
     def get_tests(self):
             return self.__tests
 
-    def get_local_path_to_tests(self):
+    def get_path_to_tests(self):
             return self.__path_to_tests

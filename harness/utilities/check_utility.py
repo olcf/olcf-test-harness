@@ -4,6 +4,8 @@ import os
 import sys
 import getopt
 
+from libraries.layout_of_apps_directory import apptest_layout
+
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
 # National Center for Computational Sciences, Scientific Computing Group.
@@ -46,12 +48,13 @@ def main():
     # For each test run the checks of all runs.          -
     #                                                    -
     #-----------------------------------------------------
-    
+
     for test1 in tests:
         rerun_checks(test1)
+
 def get_list_of_run_dirs(test1):
     #Open the status file and read.
-    path_to_status_file = os.path.join(test1,"Status","rgt_status.txt")
+    path_to_status_file = os.path.join(test1, apptest_layout.test_status_dirname, apptest_layout.test_status_filename)
     fileobj = open(path_to_status_file)
     lines = fileobj.readlines()
     fileobj.close()
@@ -64,9 +67,9 @@ def get_list_of_run_dirs(test1):
     for ip in range(nlines-5):
         jp = ip + 5
         tmpline = lines[jp]
-        words = tmpline.split() 
+        words = tmpline.split()
         rundirs = rundirs + [words[1]]
-        
+
     return rundirs
 
 def rerun_checks(test1):
@@ -82,7 +85,7 @@ def rerun_checks(test1):
     #                                                    -
     #-----------------------------------------------------
     rundirs = get_list_of_run_dirs(test1)
-    path1 = os.path.join(test1,"Run_Archive")
+    path1 = os.path.join(test1, apptest_layout.test_run_archive_dirname)
 
     #-----------------------------------------------------
     # For each run directory generate the unique id and  -
@@ -115,7 +118,7 @@ def rerun_checks(test1):
     #-----------------------------------------------------
     #--Get the path to the Scripts directory and change
     #--to the scripts directory.
-    path3 = os.path.join(test1,"Scripts")
+    path3 = os.path.join(test1, apptest_layout.test_scripts_dirname)
     os.chdir(path3)
 
     #--Get a list of the completed runs.
@@ -153,7 +156,7 @@ def printsummary(test1):
     nm_notcmp = 0
 
     #--Get path to rgt_status.txt file.
-    path1 = "../Status/rgt_status.txt"
+    path1 = os.path.join("..", apptest_layout.test_status_dirname, apptest_layout.test_status_filename)
 
     #--Read the records of the rgt_status.txt file
     fileobj = open(path1,'r')
@@ -174,15 +177,16 @@ def printsummary(test1):
         nm_total = nm_total + 1
         if words[-1] == "***": #Not completed
              nm_notcmp = nm_notcmp + 1
-             nc_array = nc_array + [uid]  
+             nc_array = nc_array + [uid]
         elif words[-1] == "0" :
              nm_passed = nm_passed + 1
-             passed_array = passed_array + [uid]  
-        else: 
+             passed_array = passed_array + [uid]
+        else:
             nm_failed = nm_failed + 1
-            failed_array = failed_array + [uid]  
+            failed_array = failed_array + [uid]
 
-    sfileobj = open("../../summary.txt",'a')
+    sfile = os.path.join("../..", apptest_layout.test_summary_filename)
+    sfileobj = open(sfile, 'a')
     tmpstring = "Test: " + test1 + "\n"
     sfileobj.write(tmpstring)
 
@@ -201,22 +205,22 @@ def printsummary(test1):
     tmpstring = "Number not completed = " + str(nm_notcmp) + "\n\n"
     sfileobj.write(tmpstring)
 
-   
-    tmpstring = "List of failed:\n" 
+
+    tmpstring = "List of failed:\n"
     sfileobj.write(tmpstring)
     for ip in failed_array:
         tmpstring = ip + "\n"
         sfileobj.write(tmpstring)
-    
+
     tmpstring = "\n"
     sfileobj.write(tmpstring)
 
-    tmpstring = "List of incompleted:\n" 
+    tmpstring = "List of incompleted:\n"
     sfileobj.write(tmpstring)
     for ip in nc_array:
         tmpstring = ip + "\n"
         sfileobj.write(tmpstring)
-    
+
     tmpstring = "\n\n\n"
     sfileobj.write(tmpstring)
 
@@ -229,7 +233,7 @@ def get_dict_of_completed_runs():
     cr_dict = {}
 
     #--Get path to rgt_status.txt file.
-    path1 = "../Status/rgt_status.txt"
+    path1 = os.path.join("..", apptest_layout.test_status_dirname, apptest_layout.test_status_filename)
 
     #--Read the records of the rgt_status.txt file
     fileobj = open(path1,'r')
@@ -252,7 +256,7 @@ def get_dict_of_completed_runs():
         else:                  #Completed
             uid = words[1]
             cr_dict[uid] = tmprecord
-            
+
     return cr_dict
 
 def has_run_completed(lid,crdict):
@@ -268,7 +272,7 @@ def has_run_completed(lid,crdict):
 def usage():
     print "Usage: check_utility [-h|--help] [-p 'Unix regular expression']"
     print ""
-    print "-h, --help            Prints usage information."                              
+    print "-h, --help            Prints usage information."
     print "-p                    A unix regular expression."
 
 main()

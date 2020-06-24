@@ -5,11 +5,11 @@ import os
 from datetime import datetime
 
 class base_apptest(object):
-    
+
     """
     An abstract base class that implements the apptest interface.
 
-    When a concrete class is instatiated, the working directory must be 
+    When a concrete class is instatiated, the working directory must be
     in the same directory as the "rgt.input" file location.
     """
     __metaclass__ = abc.ABCMeta
@@ -25,38 +25,30 @@ class base_apptest(object):
         self.__threadTag = "<" + str(name_of_application) + "::" + str(name_of_subtest) + ">"
         self.__localPathToTests = local_path_to_tests
 
-        # Create harness log directories
-        logdir_name = 'harness_log_files'
+        # Create harness log directories if given a timestamp
         if time_stamp:
-            logdir_name += '.' + time_stamp
-        self.__dirPathToLogFiles = os.path.join(os.getcwd(), logdir_name)
-        if not os.path.exists(self.__dirPathToLogFiles):
-            os.mkdir(self.__dirPathToLogFiles)
+            logdir_name = 'harness_log_files.' + time_stamp
+            self.__dirPathToLogFiles = os.path.join(os.getcwd(), logdir_name)
+            self.__appLogFileBaseDir = os.path.join(self.__dirPathToLogFiles, self.__appName)
+            self.__appTestLogFileBaseDir = os.path.join(self.__appLogFileBaseDir, self.__testName)
+            os.makedirs(self.__appTestLogFileBaseDir, exist_ok=True)
 
-        self.__appLogFileBaseDir = os.path.join(self.__dirPathToLogFiles, self.__appName)
-        if not os.path.exists(self.__appLogFileBaseDir):
-            os.mkdir(self.__appLogFileBaseDir)
+            # Set harness log file names
+            self.__appLogFilePathBase = os.path.join(self.__appLogFileBaseDir, self.__appName)
+            self.__appTestLogFilePathBase = os.path.join(self.__appTestLogFileBaseDir, self.__appName + '__' + self.__testName)
 
-        self.__appTestLogFileBaseDir = os.path.join(self.__dirPathToLogFiles, self.__appName, self.__testName)
-        if not os.path.exists(self.__appTestLogFileBaseDir):
-            os.mkdir(self.__appTestLogFileBaseDir)
+            self.__appLogFilePath = self.__appLogFilePathBase + ".logfile.txt"
+            self.__appTestLogFilePath = self.__appTestLogFilePathBase + ".logfile.txt"
+            self.__appCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".appcheckout.stdout.txt"
+            self.__appCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".appcheckout.stderr.txt"
+            self.__appTestCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".testcheckout.stdout.txt"
+            self.__appTestCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".testcheckout.stderr.txt"
+            self.__appTestUpdateSourceOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".sourceupdate.stdout.txt"
+            self.__appTestUpdateSourceOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".sourceupdate.stderr.txt"
+            self.__appStartTestLogFilePathStdOut = self.__appTestLogFilePathBase + ".starttest.stdout.txt"
+            self.__appStartTestLogFilePathStdErr = self.__appTestLogFilePathBase + ".starttest.stderr.txt"
 
-        # Set harness log file names
-        self.__appLogFilePathBase = os.path.join(self.__appLogFileBaseDir, self.__appName)
-        self.__appTestLogFilePathBase = os.path.join(self.__appTestLogFileBaseDir, self.__appName + '__' + self.__testName)
-
-        self.__appLogFilePath = self.__appLogFilePathBase + ".logfile.txt"
-        self.__appTestLogFilePath = self.__appTestLogFilePathBase + ".logfile.txt"
-        self.__appCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".appcheckout.stdout.txt"
-        self.__appCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".appcheckout.stderr.txt"
-        self.__appTestCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".testcheckout.stdout.txt"
-        self.__appTestCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".testcheckout.stderr.txt"
-        self.__appTestUpdateSourceOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".sourceupdate.stdout.txt"
-        self.__appTestUpdateSourceOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".sourceupdate.stderr.txt"
-        self.__appStartTestLogFilePathStdOut = self.__appTestLogFilePathBase + ".starttest.stdout.txt"
-        self.__appStartTestLogFilePathStdErr = self.__appTestLogFilePathBase + ".starttest.stderr.txt"
-
-        self.__initializeLogFiles()
+            self.__initializeLogFiles()
 
     def getNameOfApplication(self):
         return self.__appName
@@ -69,18 +61,18 @@ class base_apptest(object):
 
     def getDirPathToLogFiles(self):
         return self.__dirPathToLogFiles
-    
+
     def getPathToApplicationTestLogFile(self,test_name):
         return self.__appTestLogFilePath
 
     def getPathToAppCheckoutLogFiles(self):
         return {"stdout":self.__appCheckOutLogFilePathStdOut,
                 "stderr":self.__appCheckOutLogFilePathStdErr}
- 
+
     def getPathToTestCheckoutLogFiles(self):
         return {"stdout":self.__appTestCheckOutLogFilePathStdOut,
                 "stderr":self.__appTestCheckOutLogFilePathStdErr}
-    
+
     def getPathToSourceUpdateLogFiles(self):
         return {"stdout":self.__appTestUpdateSourceOutLogFilePathStdOut,
                 "stderr":self.__appTestUpdateSourceOutLogFilePathStdErr}
@@ -88,7 +80,7 @@ class base_apptest(object):
     def getPathToStartTestLogFiles(self):
         return {"stdout":self.__appStartTestLogFilePathStdOut,
                 "stderr":self.__appStartTestLogFilePathStdErr}
-    
+
     # def writeToLogFile(self,
     #                    message):
     #     now = str(datetime.now())
@@ -97,7 +89,7 @@ class base_apptest(object):
     #     log_filehandle = open(self.__appLogFilePath,"a")
     #     log_filehandle.write(message2)
     #     log_filehandle.close()
-    #     
+    #
     # def writeToLogTestFile(self,message):
     #     now = str(datetime.now())
     #     now = now.strip()
@@ -105,11 +97,11 @@ class base_apptest(object):
     #     log_filehandle = open(self.__appTestLogFilePath,"a")
     #     log_filehandle.write(message2)
     #     log_filehandle.close()
-  
+
     @abc.abstractmethod
     def doTasks(self,myTasks,myTestCheckoutLock):
         return
-    
+
     @abc.abstractmethod
     def appTestName(self):
         return
@@ -156,11 +148,11 @@ class base_apptest(object):
     #-----------------------------------------------------
     # Private methods                                    -
     #                                                    -
-    #-----------------------------------------------------  
+    #-----------------------------------------------------
     def __initializeLogFiles(self):
         file_handle = open(self.__appLogFilePath,"a")
         file_handle.close()
-        
+
         file_handle = open(self.__appTestLogFilePath,"a")
         file_handle.close()
 

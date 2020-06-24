@@ -9,7 +9,6 @@ import logging
 
 from libraries import apptest
 from fundamental_types.rgt_state import RgtState
-from libraries import application_test_dictionary
 from libraries.rgt_logging import rgt_logger
 
 #
@@ -27,12 +26,8 @@ class Harness:
     displaystatus = "display_status"
     summarize_results = "summarize_results"
 
-    # Base name for app status file
-    status_file = "applications_status.txt"
-
     # Defines the harness log file name.
-    LOG_FILE_NAME = "harness_log_file.txt"
-    LOG_FILE_NAME2 = "harness_log_file"
+    LOG_FILE_NAME = "harness_log_file"
 
     def __init__(self,
                  rgt_input_file,
@@ -40,12 +35,14 @@ class Harness:
                  stdout_stderr):
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
-        self.__local_path_to_tests = rgt_input_file.get_local_path_to_tests()
-        self.__appsubtest = []
+        self.__local_path_to_tests = rgt_input_file.get_path_to_tests()
+        self.__apptests_dict = collections.OrderedDict()
         self.__log_level = log_level
         self.__myLogger = None
         self.__stdout_stderr = stdout_stderr
         self.__num_workers = 1
+
+        self.__formAppTests()
 
 
     def run_me(self,
@@ -55,7 +52,7 @@ class Harness:
         # Define a logger that streams to file.
         currenttime = time.localtime()
         time_stamp = time.strftime("%Y%m%d_%H%M%S",currenttime)
-        self.__myLogger = rgt_logger(Harness.LOG_FILE_NAME2,
+        self.__myLogger = rgt_logger(Harness.LOG_FILE_NAME,
                                      self.__log_level,
                                      time_stamp)
 
@@ -71,61 +68,44 @@ class Harness:
         if my_warning_messages:
             self.__myLogger.doInfoLogging(my_warning_messages)
 
-        list_of_applications = []
-        list_of_applications_names = []
-        future_to_application_name = {}
-        app_test_dict = {}
-
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
 
-        my_tests = self.__formListOfTests()
-
-        for application_test in my_tests:
-            list_of_applications.append(application_test)
-
+        app_subtests = collections.OrderedDict()
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.__num_workers) as executor:
-            for ip in range(len(list_of_applications)):
-                app_test = list_of_applications[ip]
-                my_app_name = app_test.ApplicationName
-                my_tests = app_test.Tests
+            for (appname, tests) in self.__apptests_dict.items():
+                if appname not in app_subtests:
+                    app_subtests[appname] = []
+                for testname in tests:
+                    subtest = apptest.subtest(name_of_application=appname,
+                                              name_of_subtest=testname,
+                                              local_path_to_tests=self.__local_path_to_tests,
+                                              application_log_level=self.__log_level,
+                                              timestamp=time_stamp)
+                    app_subtests[appname].append(subtest)
 
-                list_of_applications_names.append(my_app_name)
-                app_test_dict[my_app_name] = []
-
-                for test in my_tests:
-                    my_application_name = test[0]
-                    my_subtest_name = test[1]
-
-                    app_test_dict[my_application_name].append(apptest.subtest(name_of_application=my_application_name,
-                                                              name_of_subtest=my_subtest_name,
-                                                              local_path_to_tests=self.__local_path_to_tests,
-                                                              application_log_level=self.__log_level,
-                                                              timestamp=time_stamp))
-
-            future_to_application_name = {}
-            for my_application_name in list_of_applications_names:
+            future_to_appname = {}
+            for appname in app_subtests.keys():
                 future = executor.submit(apptest.do_application_tasks,
-                                         my_application_name,
-                                         app_test_dict[my_application_name],
+                                         app_subtests[appname],
                                          self.__tasks,
                                          self.__stdout_stderr)
-                future_to_application_name[future] = my_application_name
+                future_to_appname[future] = appname
 
                 # Log that the application has been submitted for tasks.
-                message = "Application " + my_application_name + " has been submitted for running tasks."
+                message = "Application " + appname + " has been submitted for running tasks."
                 self.__myLogger.doInfoLogging(message)
 
-            for my_future in concurrent.futures.as_completed(future_to_application_name):
-                name = future_to_application_name[my_future]
+            for my_future in concurrent.futures.as_completed(future_to_appname):
+                appname = future_to_appname[my_future]
 
                 # Check if an exception has been raised
                 my_future_exception = my_future.exception()
                 if my_future_exception:
-                    message = "Application {} future exception:\n{}".format(name,my_future_exception)
+                    message = "Application {} future exception:\n{}".format(appname, my_future_exception)
                     self.__myLogger.doInfoLogging(message)
                 else:
-                    message = "Application {} future is completed.".format(name)
+                    message = "Application {} future is completed.".format(appname)
                     self.__myLogger.doInfoLogging(message)
 
             message = "All applications completed. Yahoo!!"
@@ -142,105 +122,13 @@ class Harness:
         return self.__returnState
 
     # Private member functions
-    def __formListOfTests(self):
-        """ Returns a list with each element being of type
-            application_test_dictionary.ApplicationSubtestDictionary.
-        """
-        # Form a set of application names.
-        my_set_of_application_names = set([])
+    def __formAppTests(self):
+        """ Sets up __apptests_dict. Keys are application name, values are list of test names. """
+        application_names = set()
         for test in self.__tests:
-            name_of_application=test[0]
-            if name_of_application not in my_set_of_application_names:
-                my_set_of_application_names.add(name_of_application)
-
-        # Form a list of tests without the subtests, and keep
-        # the sequence of the the application in a dictionary.
-        ip = -1
-        my_tests = []
-        application_sequence_index = {}
-        for application_name in my_set_of_application_names:
-            ip += 1
-            application_sequence_index[application_name] = ip
-            my_tests.append(application_test_dictionary.ApplicationSubtestDictionary(application_name))
-
-        # We now add the subtests for each application.
-        for test in self.__tests:
-            name_of_application=test[0]
-            name_of_subtest=test[1]
-            index = application_sequence_index[name_of_application]
-            my_tests[index].addAppSubtest(name_of_application,
-                                          name_of_subtest)
-        return my_tests
-
-    def __check_out_test(self,apptest1):
-        # Check out the files.
-        apptest1.check_out_test()
-
-    def __start_test(self,apptest1):
-        #Start the test.
-        apptest1.start_test()
-
-    def __stop_test(self,apptest1):
-        #Stop the test.
-        apptest1.stop_test()
-
-    def __display_status(self,apptest1,taskwords,mycomputer_with_events_record):
-        # Display the test status.
-        if mycomputer_with_events_record == None:
-            apptest1.display_status()
-        else:
-            apptest1.display_status2(taskwords,mycomputer_with_events_record)
-
-    def __summarize_results(self,taskwords,mycomputer_with_events_record):
-        tests_with_no_passes = []
-        results = {"Test_has_at_least_1_pass" : 0,
-                   "Number_attempts" : 0,
-                   "Number_passed" : 0,
-                   "Number_failed" : 0,
-                   "Number_inconclusive" : 0,
-                   "Failed_jobs" : [] ,
-                   "Inconclusive_jobs" : []}
-
-        # Generate current time stamp
-        currenttime = time.localtime()
-        timestamp = time.strftime("%Y%b%d_%H:%M:%S",currenttime)
-
-        # Collect status results for each subtest
-        logfile = Harness.status_file + '.' + timestamp
-        for appsubtest1 in self.__appsubtest:
-            app_status = appsubtest1.generateReport(logfile,taskwords,mycomputer_with_events_record)
-
-            if app_status["Number_passed"] == 0:
-                tests_with_no_passes = tests_with_no_passes + [appsubtest1.name()]
-
-            if app_status["Number_failed"] > 0:
-                for tmpjob in app_status["Failed_jobs"]:
-                    log_message = "Failed job: " + tmpjob
-                    print(log_message)
-
-            if app_status["Number_inconclusive"] > 0:
-                for tmpjob in app_status["Inconclusive_jobs"]:
-                    log_message = "Inconclusive job: " + tmpjob
-                    print(log_message)
-
-            for key in app_status.keys():
-                results[key] = results[key] + app_status[key]
-
-        # Print test status results
-        dfile_obj = open(logfile,"a")
-        dfile_obj.write("\n\n\nTest with 0 passes\n==================\n")
-        for [application,subtest] in tests_with_no_passes:
-            appname = "{app:20s} {test:20s}\n".format(app=application,test=subtest)
-            dfile_obj.write(appname)
-
-        dfile_obj.write("\n\n\n    Summary    \n===============\n")
-        tmp_string = "Number of attempts = {attempts:10s}\n".format(attempts=str(results["Number_attempts"]))
-        dfile_obj.write(tmp_string)
-        tmp_string = "Number of passes = {passes:10s}\n".format(passes=str(results["Number_passed"]))
-        dfile_obj.write(tmp_string)
-        tmp_string = "Number of fails = {fails:10s}\n".format(fails=str(results["Number_failed"]))
-        dfile_obj.write(tmp_string)
-        tmp_string = "Number inconclusive = {inconclusive:10s}\n".format(inconclusive=str(results["Number_inconclusive"]))
-        dfile_obj.write(tmp_string)
-
-        dfile_obj.close()
+            appname = test[0]
+            testname = test[1]
+            if appname not in application_names:
+                application_names.add(appname)
+                self.__apptests_dict[appname] = []
+            self.__apptests_dict[appname].append(testname)
