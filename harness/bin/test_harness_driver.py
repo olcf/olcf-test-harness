@@ -376,36 +376,36 @@ def test_harness_driver(argv=None):
                       local_path_to_tests=apps_root,
                       harness_id=unique_id)
 
-    #
-    # Check for the existence of the file "kill_test".
-    # If the file exists then the program will exit
-    # without building and submitting scripts.
-    #
-    kill_file = apptest.get_path_to_kill_file()
-    if os.path.exists(kill_file):
-        message = f'The kill file {kill_file} exists. It must be removed to run this test.'
-        sys.exit(message)
+    if do_submit:
+        # Check for the existence of the file "kill_test".
+        # If the file exists then the program will exit
+        # without building and submitting scripts.
+        kill_file = apptest.get_path_to_kill_file()
+        if os.path.exists(kill_file):
+            message = f'The kill file {kill_file} exists. It must be removed to run this test.'
+            sys.exit(message)
 
-    # Q: What is the purpose of the testrc file??
-    testrc_file = apptest.get_path_to_rc_file()
-    if os.path.exists(testrc_file):
-        file_obj = open(testrc_file,"r")
-        lines = file_obj.readlines()
-        file_obj.close()
-
-        attempts = int(lines[0].strip())
-        limits = int(lines[1].strip())
-
-        if attempts >= limits:
-            return
-        else:
-            attempts = attempts + 1
-            file_obj = open(testrc_file,"w")
-            string1 = str(attempts) + "\n"
-            string2 = str(limits) + "\n"
-            file_obj.write(string1)
-            file_obj.write(string2)
+        # Q: What is the purpose of the testrc file??
+        testrc_file = apptest.get_path_to_rc_file()
+        if os.path.exists(testrc_file):
+            file_obj = open(testrc_file,"r")
+            lines = file_obj.readlines()
             file_obj.close()
+
+            attempts = int(lines[0].strip())
+            limits = int(lines[1].strip())
+
+            if attempts >= limits:
+                message = f'Number of tests {attempts} exceeds limit {limits}.'
+                sys.exit(message)
+            else:
+                attempts = attempts + 1
+                file_obj = open(testrc_file,"w")
+                string1 = str(attempts) + "\n"
+                string2 = str(limits) + "\n"
+                file_obj.write(string1)
+                file_obj.write(string2)
+                file_obj.close()
 
     # Create the status and run archive directories for this test instance
     status_dir = apptest.create_test_status()
