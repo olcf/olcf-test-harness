@@ -1,12 +1,10 @@
 #! /usr/bin/env python3
 
-"""
-.. module:: apptest
-   :synopsis: This module implements an abstraction of an application and subtest.
+""" The apptest module encapsulates the application-test directory structure layout.
 
-.. moduleauthor:: Arnold Tharrington
 """
 
+# Python package imports
 import subprocess
 import shlex
 import time
@@ -14,18 +12,15 @@ import datetime
 import os
 import sys
 import copy
-import logging
 from types import *
 
 # NCCS Test Harness Package Imports
 from libraries.base_apptest import base_apptest
+from libraries.base_apptest import BaseApptestError
 from libraries.layout_of_apps_directory import apptest_layout
-from libraries.rgt_logging import rgt_logger
 from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
 from libraries.status_file import summarize_status_file
-from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command
-from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
 
@@ -33,30 +28,47 @@ from libraries.repositories.common_repository_utility_functions import run_as_su
 # Inherits "apptest_layout".
 #
 class subtest(base_apptest, apptest_layout):
+    """Encapsulates the application-test layout.
 
-    #
-    # Constructor
-    #
+    Only one method is public and it exposes the doing of harness tasks:
+        * do_tasks.
+
+    The class is derived from classes base_apptest and apptest_layout.
+
+
+    """
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Special methods                                                 @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     def __init__(self,
                  name_of_application=None,
                  name_of_subtest=None,
                  local_path_to_tests=None,
-                 harness_id=None,
-                 application_log_level="CRITICAL",
                  number_of_iterations=-1,
-                 timestamp=None):
+                 logger=None,
+                 tag=None):
+
+        # Ensure that tag is not None.
+        if (tag == None):
+            keywords = {"timestamp" : tag}
+            message = "The argument tag must not be None."
+            raise ApptestImproperInstantiationError(message,keywords)
 
         base_apptest.__init__(self,
                               name_of_application,
                               name_of_subtest,
                               local_path_to_tests,
-                              time_stamp=timestamp)
+                              tag)
 
         apptest_layout.__init__(self,
                                 local_path_to_tests,
                                 name_of_application,
                                 name_of_subtest,
-                                harness_id)
+                                tag)
 
         # Format of data is [<local_path_to_tests>, <application>, <test>]
         self.__apps_test_checked_out = []
@@ -64,21 +76,26 @@ class subtest(base_apptest, apptest_layout):
                                              self.getNameOfApplication(),
                                              name_of_subtest])
         self.__number_of_iterations = -1
+        self.__myLogger = logger
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of special methods                                          @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-        # Set the logger for this application and subtest.
-        if timestamp != None:
-            dir1 = self.getDirPathToLogFiles()
-            log_name1 = name_of_application + "." + name_of_subtest
-            log_name2 = os.path.join(dir1,log_name1)
-            log_name3 = os.path.abspath(log_name2)
-            self.__myLogger = rgt_logger(log_name3,
-                                         application_log_level,
-                                         timestamp)
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Public methods.                                                 @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    ##################
-    # Public Methods #
-    ##################
+    @property
+    def logger(self):
+        """logger: Returns the logger of the subtest class. """
+        return self.__myLogger
+
     def doTasks(self,
                 tasks=None,
                 test_checkout_lock=None,
@@ -91,14 +108,16 @@ class subtest(base_apptest, apptest_layout):
         """
 
         from libraries.regression_test import Harness
-        message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
-                                                                test1=self.getNameOfSubtest(),
-                                                                task1=tasks)
-        self.__myLogger.doInfoLogging(message)
+
 
         if tasks != None:
             tasks = copy.deepcopy(tasks)
             tasks = subtest.reorderTaskList(tasks)
+
+        message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
+                                                                test1=self.getNameOfSubtest(),
+                                                                task1=tasks)
+        self.doInfoLogging(message)
 
         for harness_task in tasks:
             if harness_task == Harness.checkout:
@@ -117,13 +136,13 @@ class subtest(base_apptest, apptest_layout):
                                                          url_to_remote_repsitory_application,
                                                          my_repository_branch)
 
-                self.__myLogger.doInfoLogging("Start of cloning repository")
+                self.doInfoLogging("Start of cloning repository")
                 destination = self.getLocalPathToTests()
 
                 self.cloneRepository(my_repository,
                                      destination)
 
-                self.__myLogger.doInfoLogging("End of cloning repository")
+                self.doInfoLogging("End of cloning repository")
 
 
                 if test_checkout_lock:
@@ -131,14 +150,15 @@ class subtest(base_apptest, apptest_layout):
 
             elif harness_task == Harness.starttest:
                 message = "Start of starting test."
-                self.__myLogger.doInfoLogging(message)
+                self.doInfoLogging(message)
 
-                self.start_test(stdout_stderr)
+                self._start_test(stdout_stderr)
+
                 message = "End of starting test"
-                self.__myLogger.doInfoLogging(message)
+                self.doInfoLogging(message)
 
             elif harness_task == Harness.stoptest:
-                self.stop_test()
+                self._stop_test()
 
             elif harness_task == Harness.displaystatus:
                 if test_display_lock:
@@ -152,19 +172,13 @@ class subtest(base_apptest, apptest_layout):
             elif harness_task == Harness.summarize_results:
                 self.generateReport()
 
-    def getTestName(self):
-        return self.getNameOfSubtest()
-
-    def appTestName(self):
-        return [self.getNameOfApplication(),self.getNameOfSubtest()]
-
     def cloneRepository(self,my_repository,destination):
 
         #Get the current working directory.
         cwd = os.getcwd()
 
         message = "For the cloning, my current directory is " + cwd
-        self.__myLogger.doInfoLogging(message)
+        self.doInfoLogging(message)
 
         my_repository.cloneRepository(destination,
                                       self.__myLogger)
@@ -173,61 +187,18 @@ class subtest(base_apptest, apptest_layout):
 
         if exit_status > 0:
             string1 = "Cloning of repository failed."
-            self.__myLogger.doInfoLogging(string1)
+            self.doInfoLogging(string1)
             sys.exit(string1)
         else:
             message = "Cloning of repository passed"
-            self.__myLogger.doInfoLogging(message)
+            self.doInfoLogging(message)
 
         return
 
-    #
-    # Starts the regression test.
-    #
-    def start_test(self,
-                   stdout_stderr):
-
-        # If the file kill file exits then remove it.
-        pathtokillfile = self.get_path_to_kill_file()
-        if os.path.lexists(pathtokillfile):
-            os.remove(pathtokillfile)
-
-        start_test_log_files = self.getPathToStartTestLogFiles()
-        stdout_path = start_test_log_files["stdout"]
-        stderr_path = start_test_log_files["stderr"]
-
-        starttestcomand = "test_harness_driver.py -r"
-
-        with open(stdout_path,"a") as out:
-            with open(stderr_path,"a") as err:
-
-                pathtoscripts = self.get_path_to_scripts()
-
-                if stdout_stderr == "logfile":
-                    (stdout,stderr,exit_status) = \
-                    run_as_subprocess_command_return_stdout_stderr_exitstatus(starttestcomand,
-                                                                              command_execution_directory=pathtoscripts)
-                elif stdout_stderr == "screen":
-                    (stdout,stderr,exit_status) = \
-                    run_as_subprocess_command_return_exitstatus(starttestcomand,
-                                                                command_execution_directory=pathtoscripts)
-                out.writelines(stdout)
-                err.writelines(stderr)
-
-                if exit_status > 0:
-                    string1 = "Command failed: " + starttestcomand
-                    sys.exit(string1)
 
     #
     # Stops the test.
     #
-    def stop_test(self):
-
-        pathtokillfile = self.get_path_to_kill_file()
-
-        kill_file = open(pathtokillfile,"w")
-        kill_file.write("")
-        kill_file.close()
 
     #
     # Displays the status of the tests.
@@ -254,8 +225,8 @@ class subtest(base_apptest, apptest_layout):
                                        )
         bheader = "\n====================\n"
 
-
-        dfile_obj = open("test_status.txt","a")
+        filename= apptest_layout.test_status_filename
+        dfile_obj = open(filename,"a")
         dfile_obj.write(theader)
         dfile_obj.write(time1)
         dfile_obj.write(appname)
@@ -316,7 +287,8 @@ class subtest(base_apptest, apptest_layout):
         bheader = "\n====================\n"
 
 
-        dfile_obj = open("test_status.txt","a")
+        filename= apptest_layout.test_status_filename
+        dfile_obj = open(filename,"a")
         dfile_obj.write(theader)
         dfile_obj.write(time1)
         dfile_obj.write(appname)
@@ -447,14 +419,189 @@ class subtest(base_apptest, apptest_layout):
 
         return app_tasks1
 
+    def doInfoLogging(self,message):
+        if self.__myLogger:
+            self.__myLogger.doInfoLogging(message)
+
+    def doCriticalLogging(self,message):
+        if self.__myLogger:
+            self.__myLogger.doCriticalLogging(message)
+
+    def waitForAllJobsToCompleteQueue(self, harness_config, timeout):
+        """Waits for subtest cycle to end.
+
+        A subtest cycle is the build, submit to job scheduler, and the
+        completion of the subtest in the scheduler.
+
+        Parameters
+        ----------
+        timeout : int
+            The maximum time to wait in minutes till the subtest cycle is complete.
+
+        Returns
+        -------
+        None
+
+        """
+
+        from machine_types.machine_factory import MachineFactory
+        import datetime
+
+        # Set the time counters and other flags for ensuring a maximum
+        # wait time while checking completion of the test cycle.
+        time_between_checks = 5.0
+        timeout_secs = timeout*60.0
+        elapsed_time = 0.0
+
+        # Print an informational message on the maximum wait time.
+        message  = 'Waiting for all {} : {} tests to complete the testing cycle.\n'.format(self.getNameOfApplication(),self.getNameOfSubtest())
+        message += 'The maximum wait time is {}.\n'.format(str(timeout_secs))
+        message += 'The time between checks is {}.\n'.format(str(time_between_checks))
+        print(message)
+
+        # Instantiate the machine for this computer.
+        mymachine = MachineFactory.create_machine(harness_config, self)
+
+        continue_checking = True
+        start_time = datetime.datetime.now()
+        while continue_checking:
+            time.sleep(time_between_checks)
+            elapsed_time = datetime.datetime.now() - start_time
+            message = 'Checking for subtest cycle completion at {} seconds.\n'.format(str(elapsed_time))
+            print(message)
+
+            if mymachine.isTestCycleComplete(self):
+               continue_checking = False
+               break
+
+            elapsed_time = datetime.datetime.now() - start_time
+            if elapsed_time.total_seconds() > timeout_secs:
+                continue_checking = False
+                message_elapsed_time = 'After {} seconds the testing cycle has exceeded the maximum wait time.\n'.format(str(elapsed_time))
+                print(message_elapsed_time)
+
+        return
+
+    def did_all_tests_pass(self, harness_config):
+        from machine_types.machine_factory import MachineFactory
+        from libraries.status_file_factory import StatusFileFactory
+
+        # Instantiate the machine for this computer.
+        mymachine = MachineFactory.create_machine(harness_config, self)
+
+        ret_val = mymachine.did_all_tests_pass(self)
+
+        return ret_val
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of public methods.                                          @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Private methods.                                                @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    def _start_test(self,
+                    stdout_stderr):
+
+        # If the file kill file exits then remove it.
+        pathtokillfile = self.get_path_to_kill_file()
+        if os.path.lexists(pathtokillfile):
+            os.remove(pathtokillfile)
+
+        starttestcomand = "test_harness_driver.py -r"
+
+        pathtoscripts = self.get_path_to_scripts()
+
+        if stdout_stderr == "logfile":
+            (stdout,stderr,exit_status) = \
+            run_as_subprocess_command_return_stdout_stderr_exitstatus(starttestcomand,
+                                                                      command_execution_directory=pathtoscripts)
+        elif stdout_stderr == "screen":
+            (stdout,stderr,exit_status) = \
+            run_as_subprocess_command_return_exitstatus(starttestcomand,
+                                                        command_execution_directory=pathtoscripts)
+        if exit_status > 0:
+            message = ( "In function {function_name} we have a critical error.\n"
+                        "The command '{cmd}' has exited with a failure.\n"
+                        "The exit return value is {value}\n.").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
+            self.doCriticalLogging(message)
+
+            string1 = "Command failed: " + starttestcomand
+            sys.exit(string1)
+        else:
+            message =  "In function {function_name}, the command '{cmd}' has executed sucessfully.\n".format(function_name=self.__name_of_current_function(),cmd=starttestcomand)
+            message += "stdout of command : {}\n".format(stdout)
+            message += "stderr of command : {}\n".format(stderr)
+            self.doInfoLogging(message)
+
+    def _stop_test(self):
+
+        pathtokillfile = self.get_path_to_kill_file()
+        with open(pathtokillfile,"w") as kill_file:
+            kill_file.write("")
+
+        message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
+        self.doInfoLogging(message)
+
+    def __name_of_current_function(self):
+        classname = self.__class__.__name__
+        functionname = sys._getframe(1).f_code.co_name
+        my_name = classname + "." + functionname
+        return my_name
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of private methods.                                         @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+class ApptestImproperInstantiationError(BaseApptestError):
+    """Raised when the class subtest is instantiated with improper parameters."""
+    def __init__(self,
+                 message,
+                 args):
+        self.__message = message
+        self.__args = args
+        return
+
+    @property
+    def message(self):
+        return self.__message
+
 def do_application_tasks(app_test_list,
                          tasks,
                          stdout_stderr):
-    import random
-
     for app_test in app_test_list:
         app_test.doTasks(tasks=tasks,
                          stdout_stderr=stdout_stderr)
+    return
+
+def wait_for_jobs_to_complete_in_queue(harness_config,
+                                       app_test_list,
+                                       timeout):
+    """ Waits for the list of subtests to complete a subtestb cycle.
+
+    Parameters
+    ----------
+    app_test_list : subtest
+        A list of subtests.
+
+    timeout : int
+        The maximum time in minutes to wait for the subtest cycle to complete.
+
+    Returns
+    -------
+    ???
+
+    """
+    for app_test in app_test_list:
+        app_test.waitForAllJobsToCompleteQueue(harness_config, timeout)
 
     return
+
 

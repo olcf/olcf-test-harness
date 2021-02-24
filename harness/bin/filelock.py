@@ -60,7 +60,7 @@ def main ():
 
                 for line in lines:
                     if test_id_regexp.match(line):
-                        print "macthing lock, removing lock"
+                        print("matching lock, removing lock")
                         os.remove(path_to_lock_file)
                         try_again = 0
                         break
@@ -71,13 +71,13 @@ def main ():
 
         
 def usage():
-    print "Usage: filelock.py [-h|--help] [-i <test_id_string>] [-p <path_to_lock_file>] [-c <lock_command>]"
-    print "A program that manipulates the harness file locks"
+    print ("Usage: filelock.py [-h|--help] [-i <test_id_string>] [-p <path_to_lock_file>] [-c <lock_command>]")
+    print ("A program that manipulates the harness file locks")
     print
-    print "-h, --help            Prints usage information."                              
-    print "-p <path_to_lock_file>  The absoulte path to the lock file."
-    print "-i <test_id_string>   The test string unique id."
-    print "-c <lock_command>     The lock command [lock | unlock ]."
+    print ("-h, --help            Prints usage information.")
+    print ("-p <path_to_lock_file>  The absoulte path to the lock file.")
+    print ("-i <test_id_string>   The test string unique id.")
+    print ("-c <lock_command>     The lock command [lock | unlock ].")
 
 
 

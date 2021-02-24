@@ -5,7 +5,8 @@ __all__ = [
             "parse_test_status",
             "test_harness_driver",
             "runtests",
-            "record_application_metric"
+            "record_application_metric",
+            "create_alt_config_file"
           ]
 
 version = 2.0

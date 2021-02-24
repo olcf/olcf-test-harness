@@ -1,21 +1,5 @@
 #! /usr/bin/env python3
 
-import os
-import sys
-import string
-import argparse
-import datetime
-import shutil
-from shlex import split
-
-from libraries.apptest import subtest
-from libraries.layout_of_apps_directory import apptest_layout as layout
-from libraries.layout_of_apps_directory import get_layout_from_scriptdir
-from libraries import rgt_utilities
-from libraries import status_file
-from machine_types.machine_factory import MachineFactory
-
-
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
 # Scientific Computing Group.
@@ -27,6 +11,62 @@ from machine_types.machine_factory import MachineFactory
 # Oak Ridge National Laboratory
 #
 
+# Python imports
+import argparse
+import datetime
+import logging
+import os
+import shutil
+import stat
+import string
+import subprocess
+import sys
+
+from shlex import split
+
+# Harness imports
+from libraries.subtest_factory import SubtestFactory
+from libraries.layout_of_apps_directory import apptest_layout as layout
+from libraries.layout_of_apps_directory import get_layout_from_scriptdir
+from libraries.layout_of_apps_directory import get_path_to_logfile_from_scriptdir
+from libraries import rgt_utilities
+from libraries.config_file import rgt_config_file
+from libraries.status_file_factory import StatusFileFactory
+from libraries import status_file
+from libraries.rgt_loggers import rgt_logger_factory
+from machine_types.machine_factory import MachineFactory
+from machine_types.base_machine import SetBuildRTEError
+
+DEFAULT_CONFIGURE_FILE = rgt_config_file.getDefaultConfigFile()
+"""
+The default configuration filename.
+
+The configuration file contains the machine settings, number of CPUs
+per node, etc., for the machine the harness is being run on. Each machine
+has a default configuration file that will be used unless another
+configuration is specified by the command line or input file.
+
+"""
+
+MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
+"""str : The logging level for this module. """
+
+MODULE_LOGGER_NAME = __name__
+"""The logger name for this module."""
+
+def get_log_level():
+    """Returns the test harness driver threshold log level.
+
+    Returns
+    -------
+    int 
+    """
+    return MODULE_THRESHOLD_LOG_LEVEL
+
+def get_logger_name():
+    """Returns the logger name for this module."""
+    return MODULE_LOGGER_NAME
+
 def create_parser():
     my_parser = argparse.ArgumentParser(description="Application Test Driver",
                                         allow_abbrev=False)
@@ -36,6 +76,11 @@ def create_parser():
     my_parser.add_argument('-c', '--check',
                            help='Check the application test results',
                            action='store_true')
+    my_parser.add_argument('-C', '--configfile',
+                           required=False,
+                           default=DEFAULT_CONFIGURE_FILE,
+                           type=str,
+                           help="Configuration file name (default: %(default)s)")
     my_parser.add_argument('-d', '--scriptsdir',
                            default=os.getcwd(),
                            help='Provide full path to app/test/Scripts directory (default: current working directory)')
@@ -43,6 +88,9 @@ def create_parser():
                            help='Use previously generated unique id')
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself',
+                           action='store_true')
+    my_parser.add_argument('-R', '--run',
+                           help='Run the application test batch script (NOTE: for use within a job)',
                            action='store_true')
     my_parser.add_argument('-s', '--submit',
                            help='Submit the application test batch script',
@@ -73,7 +121,6 @@ def backup_status_file(test_status_dir):
     if os.path.exists(src):
         shutil.copyfile(src, dest)
 
-
 def read_job_file(test_status_dir):
     """ Read test_status_dir/job_id.txt to get job id """
     job_id = "0"
@@ -86,11 +133,11 @@ def read_job_file(test_status_dir):
     return job_id
 
 
-def auto_generated_scripts(apptest,
-                           test_workspace,
-                           unique_id,
+def auto_generated_scripts(harness_config,
+                           apptest,
                            jstatus,
-                           actions):
+                           actions,
+                           a_logger):
     """
     Generates and executes scripts to build, run, and check a test.
 
@@ -98,40 +145,100 @@ def auto_generated_scripts(apptest,
 
     """
 
+    messloc = "In function {functionname}:".format(functionname="auto_generated_scripts") 
+
     status_dir = apptest.get_path_to_status()
+    ra_dir = apptest.get_path_to_runarchive()
 
     # Instantiate the machine for this computer.
-    mymachine = MachineFactory.create_machine(apptest)
+    mymachine = MachineFactory.create_machine(harness_config, apptest)
 
+    #-----------------------------------------------------
+    # In this section we build the binary.               -
+    #                                                    -
+    #-----------------------------------------------------
     build_exit_value = 0
     if actions['build']:
         # Build the executable for this test on the specified machine
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
-        build_exit_value = mymachine.build_executable()
-        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+        try:
+            build_exit_value = mymachine.build_executable()
+        except SetBuildRTEError as error: 
+            message = f"{messloc} Unable to set the build runtime environnment."
+            message += error.message
+            a_logger.doCriticalLogging(message)
+        finally:
+            jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
 
-    submit_exit_value = 0
+    #-----------------------------------------------------
+    # In this section we run the the binary.             -
+    #                                                    -
+    #-----------------------------------------------------
     job_id = "0"
-    if actions['submit']:
-        if build_exit_value != 0:
-            # do not submit a failed build
-            submit_exit_value = 1
-        else:
-            # Create and submit the batch script
-            mymachine.make_batch_script()
+    submit_exit_value = 0
+    if actions['submit'] and (build_exit_value != 0):
+        submit_exit_value = 1
+        message = f"{messloc} No submit action due to prior failed build."
+        a_logger.doCriticalLogging(message)
+    elif actions['submit'] and (build_exit_value == 0):
+        # Create the batch script
+        make_batch_script_status = mymachine.make_batch_script()
+
+        # Submit the batch script
+        if make_batch_script_status:
+            # Submit the batch script
             jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
-            submit_exit_value = mymachine.submit_batch_script()
-            jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
+            try:
+                submit_exit_value = mymachine.submit_batch_script()
+            finally:
+                jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
 
-        if 0 == submit_exit_value:
-            # Log the job id.
-            job_id = read_job_file(status_dir)
-            if job_id != "0":
-                jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
-            else:
-                print("SUBMIT ERROR: failed to retrieve job id!")
-                submit_exit_value = 1
+            if submit_exit_value == 0:
+                # Log the job id.
+                job_id = read_job_file(status_dir)
+                if job_id != "0":
+                    jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
+                else:
+                    print("SUBMIT ERROR: failed to retrieve job id!")
+                    message = f"{messloc} Failed to retrieve the job id."
+                    a_logger.doCriticalLogging(message)
+                    submit_exit_value = 1
 
+    run_exit_value = 0
+    if actions['run']:
+        # The 'run' action should be executed within a job
+
+        # Create the batch script
+        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
+        make_batch_script_status = mymachine.make_batch_script()
+        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, 0)
+
+        # Find the current job id and write it to the associated status file
+        mymachine.write_jobid_to_status()
+        job_id = read_job_file(status_dir)
+        if make_batch_script_status and job_id != "0":
+            jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
+
+            # now run the batch script as a subprocess
+            batch_script = os.path.join(ra_dir, mymachine.test_config.get_batch_file())
+            os.chmod(batch_script, (stat.S_IREAD|stat.S_IWRITE|stat.S_IEXEC))
+            args = [batch_script]
+            run_outfile = os.path.join(ra_dir, "output_run.txt")
+            run_stdout = open(run_outfile, "w")
+            p = subprocess.Popen(args, stdout=run_stdout, stderr=subprocess.STDOUT)
+            p.wait()
+            run_exit_value = p.returncode
+            run_stdout.close()
+        else:
+            print("RUN ERROR: failed to retrieve job id!")
+            message = f"{messloc} Failed to retrieve the job id."
+            a_logger.doCriticalLogging(message)
+            run_exit_value = 1
+
+    #-----------------------------------------------------
+    # In this section we check the the results.          -
+    #                                                    -
+    #-----------------------------------------------------
     check_exit_value = 0
     if actions['check']:
         if not actions['submit']:
@@ -139,184 +246,20 @@ def auto_generated_scripts(apptest,
         if job_id != "0":
             jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
             check_exit_value = mymachine.check_executable()
-            mymachine.report_executable()
+            mymachine.start_report_executable()
         else:
             print("CHECK ERROR: failed to retrieve job id!")
             check_exit_value = 1
 
-    exit_values = {'build': build_exit_value,
-                   'check': check_exit_value,
-                   'submit': submit_exit_value}
+    exit_values = {
+        'build'  : build_exit_value,
+        'check'  : check_exit_value,
+        'run'    : run_exit_value,
+        'submit' : submit_exit_value
+    }
     return exit_values
 
 
-def user_generated_scripts(apptest,
-                           test_workspace,
-                           unique_id,
-                           jstatus,
-                           actions):
-    """
-    Executes user-provided build, submit, and check scripts for a test.
-    """
-
-    status_dir = apptest.get_path_to_status()
-    runarchive_dir = apptest.get_path_to_runarchive()
-
-    build_exit_value = 0
-    if actions['build']:
-        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
-        build_exit_value = execute_user_build_script(test_workspace, unique_id)
-        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
-
-    submit_exit_value = 0
-    job_id = "0"
-    if actions['submit']:
-        if build_exit_value != 0:
-            # do not submit a failed build
-            submit_exit_value = 1
-        else:
-            jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
-            submit_exit_value = execute_user_submit_script(test_workspace,
-                                                           unique_id,
-                                                           actions['resubmit'])
-            jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
-
-        if 0 == submit_exit_value:
-            # Log the job id.
-            job_id = read_job_file(status_dir)
-            if job_id != "0":
-                jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
-            else:
-                print("SUBMIT ERROR: failed to retrieve job id!")
-                submit_exit_value = 1
-
-    check_exit_value = 0
-    if actions['check']:
-        if not actions['submit']:
-            job_id = read_job_file(status_dir)
-        if job_id != "0":
-            jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
-            check_exit_value = execute_user_check_script(runarchive_dir, unique_id)
-        else:
-            print("CHECK ERROR: failed to retrieve job id!")
-            check_exit_value = 1
-
-    exit_values = {'build': build_exit_value,
-                   'check': check_exit_value,
-                   'submit': submit_exit_value}
-    return exit_values
-
-
-def execute_user_build_script(test_workspace, unique_id):
-    # save current dir
-    path_to_scripts_dir = os.getcwd()
-
-    #
-    # Use build_executable.py if it exists.
-    # Otherwise, use build_executable.x script.
-    #
-    python_file = "./build_executable.py"
-    script_file = "./build_executable.x"
-    if os.path.isfile(python_file):
-        # Call build_executable.py as a main program.
-        import build_executable
-        build_exit_value = build_executable.build_executable(test_workspace,
-                                                             unique_id)
-    elif os.path.isfile(script_file):
-        # Execute the build script via os.system().
-        build_command = script_file + " -p " + test_workspace + " -i " + unique_id
-        build_exit_value = os.system(build_command)
-    else:
-        print("BUILD ERROR: no build script found!")
-        build_exit_value = 1
-
-    # restore current dir
-    os.chdir(path_to_scripts_dir)
-
-    return build_exit_value
-
-
-def execute_user_submit_script(test_workspace, unique_id, resubmit):
-    # save current dir
-    path_to_scripts_dir = os.getcwd()
-
-    #
-    # Use submit_executable.py if it exists.
-    # Otherwise, use submit_executable.x script.
-    #
-    python_file = "./submit_executable.py"
-    script_file = "./submit_executable.x"
-    if os.path.isfile(python_file):
-        # Call submit_executable.py as a main program.
-        import submit_executable
-        submit_exit_value = submit_executable.submit_executable(test_workspace,
-                                                                unique_id,
-                                                                batch_recursive_mode=resubmit)
-    elif os.path.isfile(script_file):
-        # Execute the submit script via os.system().
-        submit_command = script_file + " -p " + test_workspace + " -i " + unique_id
-        if resubmit:
-            submit_command += " -r"
-        submit_exit_value = os.system(submit_command)
-    else:
-        print("SUBMIT ERROR: no submit script found!")
-        submit_exit_value = 1
-
-    # restore current dir
-    os.chdir(path_to_scripts_dir)
-
-    return submit_exit_value
-
-
-def execute_user_check_script(path_to_results, unique_id):
-    # save current dir
-    path_to_scripts_dir = os.getcwd()
-
-    #
-    # Use check_executable.py if it exists.
-    # Otherwise, use check_executable.x script.
-    #
-    python_file = "./check_executable.py"
-    script_file = "./check_executable.x"
-    if os.path.isfile(python_file):
-        # Call check_executable.py as a main program.
-        import check_executable
-        check_exit_value = check_executable.check_executable(path_to_results, unique_id)
-    elif os.path.isfile(script_file):
-        # Execute the check script via os.system().
-        check_command = script_file + " -p " + path_to_results + " -i " + unique_id
-        check_exit_value = os.system(check_command)
-    else:
-        # check scripts are optional
-        check_exit_value = 0
-
-    #
-    # Use report_executable.py if it exists.
-    # Otherwise, use report_executable.x script.
-    #
-    report_python_file = "./report_executable.py"
-    report_script_file = "./report_executable.x"
-    report_exit_value = 0
-    if os.path.isfile(report_python_file):
-        # Call report_executable.py as a main program.
-        import report_executable
-        report_exit_value = report_executable.report_executable(path_to_results, unique_id)
-    elif os.path.isfile(report_script_file):
-        # Execute the report script via os.system().
-        report_command = report_script_file + " -p " + path_to_results + " -i " + unique_id
-        report_exit_value = os.system(report_command)
-    else:
-        # check scripts are optional
-        report_exit_value = 0
-
-    # restore current dir
-    os.chdir(path_to_scripts_dir)
-
-    # Q: Do we care if report_executable fails?
-    return check_exit_value + report_exit_value
-
-
-#
 # This program coordinates the scripts build_executable.x and submit_executable.x
 # and is designed such that it will be called from the Scripts directory.
 #
@@ -335,12 +278,13 @@ def test_harness_driver(argv=None):
     do_build = Vargs.build
     do_check = Vargs.check
     do_submit = Vargs.submit
+    do_run = Vargs.run
 
     #
     # If none of the individual actions were specified, act
-    # like the previous version and do build + submit
+    # like the previous version and do 'build + submit'
     #
-    if not (do_build or do_submit or do_check):
+    if not (do_build or do_submit or do_check or do_run):
         do_build  = True
         do_submit = True
 
@@ -348,16 +292,21 @@ def test_harness_driver(argv=None):
     if do_submit:
         do_resubmit = Vargs.resubmit
 
-    actions = {'build'    : do_build,
-               'check'    : do_check,
-               'submit'   : do_submit,
-               'resubmit' : do_resubmit}
+    actions = {
+        'build'    : do_build,
+        'check'    : do_check,
+        'submit'   : do_submit,
+        'resubmit' : do_resubmit,
+        'run'      : do_run
+    }
+
+
+    # Create a harness config (which sets harness env vars)
+    harness_cfg = rgt_config_file(configfilename=Vargs.configfile)
 
     # Get the unique id for this test instance.
-    existing_id = True
     unique_id = Vargs.uniqueid
     if unique_id == None:
-        existing_id = False
         unique_id = rgt_utilities.unique_harness_id()
         print(f'Generated test unique id: {unique_id}')
 
@@ -371,41 +320,43 @@ def test_harness_driver(argv=None):
     sys.path.insert(0, testscripts)
 
     # Instantiate application subtest
-    apptest = subtest(name_of_application=app,
-                      name_of_subtest=test,
-                      local_path_to_tests=apps_root,
-                      harness_id=unique_id)
+    logger_name = get_logger_name()
+    fh_filepath = get_path_to_logfile_from_scriptdir(testscripts,unique_id)
+    logger_threshold = "INFO"
+    fh_threshold_log_level = "INFO"
+    ch_threshold_log_level = "CRITICAL"
+    a_logger = rgt_logger_factory.create_rgt_logger(
+                                         logger_name=logger_name,
+                                         fh_filepath=fh_filepath,
+                                         logger_threshold_log_level=logger_threshold,
+                                         fh_threshold_log_level=fh_threshold_log_level,
+                                         ch_threshold_log_level=ch_threshold_log_level)
 
-    if do_submit:
-        # Check for the existence of the file "kill_test".
-        # If the file exists then the program will exit
-        # without building and submitting scripts.
+    apptest = SubtestFactory.make_subtest(name_of_application=app,
+                                          name_of_subtest=test,
+                                          local_path_to_tests=apps_root,
+                                          logger=a_logger,
+                                          tag=unique_id)
+    message = "The length of sys.path is " + str(len(sys.path))
+    apptest.doInfoLogging(message)
+
+    #
+    # Check for the existence of the file "kill_test".
+    # If the file exists then the program will return
+    # without building and submitting scripts.
+    #
+    if do_submit: 
         kill_file = apptest.get_path_to_kill_file()
         if os.path.exists(kill_file):
-            message = f'The kill file {kill_file} exists. It must be removed to run this test.'
-            sys.exit(message)
-
-        # Q: What is the purpose of the testrc file??
-        testrc_file = apptest.get_path_to_rc_file()
-        if os.path.exists(testrc_file):
-            file_obj = open(testrc_file,"r")
-            lines = file_obj.readlines()
-            file_obj.close()
-
-            attempts = int(lines[0].strip())
-            limits = int(lines[1].strip())
-
-            if attempts >= limits:
-                message = f'Number of tests {attempts} exceeds limit {limits}.'
-                sys.exit(message)
-            else:
-                attempts = attempts + 1
-                file_obj = open(testrc_file,"w")
-                string1 = str(attempts) + "\n"
-                string2 = str(limits) + "\n"
-                file_obj.write(string1)
-                file_obj.write(string2)
-                file_obj.close()
+            import time
+            import shutil
+            message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
+            message += "Stopping test cycle."
+            print(message)
+            runarchive_dir = apptest.get_path_to_runarchive()
+            logging.shutdown()
+            shutil.rmtree(runarchive_dir,ignore_errors=True)
+            return
 
     # Create the status and run archive directories for this test instance
     status_dir = apptest.create_test_status()
@@ -413,24 +364,40 @@ def test_harness_driver(argv=None):
 
     # Create the temporary workspace path for this test instance
     workspace = rgt_utilities.harness_work_space()
-    test_workspace = apptest.create_test_workspace(workspace)
+    apptest.create_test_workspace(workspace)
 
     # Update environment with the paths to test directories
-    os.putenv('RGT_APP_SOURCE_DIR', apptest.get_path_to_source())
-    os.putenv('RGT_TEST_SCRIPTS_DIR', testscripts)
-    os.putenv('RGT_TEST_BUILD_DIR', apptest.get_path_to_workspace_build())
-    os.putenv('RGT_TEST_WORK_DIR', apptest.get_path_to_workspace_run())
-    os.putenv('RGT_TEST_STATUS_DIR', status_dir)
-    os.putenv('RGT_TEST_RUNARCHIVE_DIR', ra_dir)
+    apptest_env_vars = {
+        'APP_SOURCE_DIR'      : apptest.get_path_to_source(),
+        'TEST_SCRIPTS_DIR'    : testscripts,
+        'TEST_BUILD_DIR'      : apptest.get_path_to_workspace_build(),
+        'TEST_WORK_DIR'       : apptest.get_path_to_workspace_run(),
+        'TEST_STATUS_DIR'     : status_dir,
+        'TEST_RUNARCHIVE_DIR' : ra_dir
+    }
+    rgt_utilities.set_harness_environment(apptest_env_vars)
 
     # Make backup of master status file
     backup_status_file(status_dir)
 
-    # Add entry to status file
-    mode_str = 'New'
-    if existing_id:
-        mode_str = 'Old'
-    jstatus = status_file.StatusFile(unique_id, mode_str)
+    # We now create the status file if it doesn't already exist.
+    logger_name = "status_file."+ app + "__" + test
+    fh_filepath = apptest.path_to_status_logfile
+    logger_threshold = "INFO"
+    fh_threshold_log_level = "INFO"
+    ch_threshold_log_level = "CRITICAL"
+    sfile_logger = rgt_logger_factory.create_rgt_logger(
+                                         logger_name=logger_name,
+                                         fh_filepath=fh_filepath,
+                                         logger_threshold_log_level=logger_threshold,
+                                         fh_threshold_log_level=fh_threshold_log_level,
+                                         ch_threshold_log_level=ch_threshold_log_level)
+    path_to_status_file = apptest.get_path_to_status_file()
+    jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file,
+                                       logger=sfile_logger)
+
+    # Initialize subtest entry 'unique_id' to status file. 
+    jstatus.initialize_subtest(unique_id)
 
     #
     # Determine whether we are using auto-generated or user-generated
@@ -439,26 +406,35 @@ def test_harness_driver(argv=None):
     input_txt = os.path.join(testscripts, layout.test_input_txt_filename)
     input_ini = os.path.join(testscripts, layout.test_input_ini_filename)
     if (os.path.isfile(input_txt) or os.path.isfile(input_ini)):
-        exit_values = auto_generated_scripts(apptest, test_workspace,
-                                             unique_id, jstatus, actions)
+        exit_values = auto_generated_scripts(harness_cfg,
+                                             apptest,
+                                             jstatus,
+                                             actions,
+                                             a_logger)
     else:
-        exit_values = user_generated_scripts(apptest, test_workspace,
-                                             unique_id, jstatus, actions)
+        error_message = "The user generated scripts functionality is no longer supported"
+        a_logger.doCriticalLogging(error_message)
+        sys.exit(error_message)
 
     build_exit_value = 0
     if actions['build']:
         build_exit_value = exit_values['build']
-        print("build_exit_value = " + str(build_exit_value))
+        print(f'build exit value = {build_exit_value}')
 
     submit_exit_value = 0
     if actions['submit']:
         submit_exit_value = exit_values['submit']
-        print("submit_exit_value = " + str(submit_exit_value))
+        print(f'submit exit value = {submit_exit_value}')
+
+    run_exit_value = 0
+    if actions['run']:
+        run_exit_value = exit_values['run']
+        print(f'run exit value = {run_exit_value}')
 
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
-        print("check_exit_value = " + str(check_exit_value))
+        print(f'check exit value = {check_exit_value}')
 
         # Now read the result from the job_status.txt file.
         jspath = os.path.join(status_dir, layout.job_status_filename)
@@ -470,7 +446,7 @@ def test_harness_driver(argv=None):
         jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END,
                           job_correctness)
 
-    return build_exit_value + submit_exit_value + check_exit_value
+    return build_exit_value + submit_exit_value + run_exit_value + check_exit_value
 
 
 if __name__ == "__main__":

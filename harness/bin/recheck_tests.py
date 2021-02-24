@@ -66,7 +66,7 @@ def doReTest(test_name):
         records = file_obj.readlines()
         for tmp_record in records:
             message = "    {}".format(tmp_record.strip())
-            print message
+            print (message)
         file_obj.close()
         print
 
@@ -78,7 +78,7 @@ def doReTest(test_name):
         records = file_obj.readlines()
         for tmp_record in records:
             message = "    {}".format(tmp_record.strip())
-            print message
+            print (message)
         file_obj.close()
         print
 

@@ -1,8 +1,10 @@
 #! /usr/bin/python
 
+# Python package imports
 import re
 
-
+# NCCS Test Harness Package Imports
+from libraries.layout_of_apps_directory import apptest_layout
 
 class teststatusfile:
     def __init__(self,test_status_file):
@@ -64,10 +66,12 @@ class teststatusfile:
                                         str(float(self.__totalfailed)/float(self.__totaltests)),
                                         str(float(self.__totalincinclusive)/float(self.__totaltests))
                                        )
-        print s1,s2,s3
+        print (s1,s2,s3)
+
 def main():
-    
-     t1 = teststatusfile("test_status.txt")   
+    filename=apptest_layout.test_pass_failed_status_filename
+    t1 = teststatusfile(filename)   
 
 
-main()
+if __name__ == "__main__" :
+    main()

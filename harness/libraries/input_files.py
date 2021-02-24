@@ -1,7 +1,14 @@
 #! /usr/bin/env python3
+
+# Python package imports
 import string
 import os
 import configparser
+
+# My harness package imports
+from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
+from runtests import get_main_logger
+from libraries import rgt_utilities
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -17,27 +24,23 @@ class rgt_input_file:
     comment_line_entry = "#"
     harness_task_entry = "harness_task"
 
-    def __init__(self,inputfilename="rgt.input", configfilename="master.ini", runmodecmd=None):
+    def __init__(self,
+                 inputfilename="rgt.input",
+                 runmodecmd=None):
         self.__tests = []
         self.__harness_task = []
         self.__path_to_tests = ""
         self.__inputFileName = inputfilename
-        self.__configFileName = configfilename
-
-        # Read the master config file
-        self.__read_config()
 
         # Read the input file.
         self.__read_file()
 
         # If a CLI task was input use that instead
-        if runmodecmd != None:
+        if USE_HARNESS_TASKS_IN_RGT_INPUT_FILE not in runmodecmd :
             print("Overriding tasks in inputfile since CLI mode was provided")
             print("runmodecmd = ", runmodecmd)
-            modetasklist = runmodecmd.split(",")
-            print("modetasklist = ", modetasklist)
             self.__harness_task = []
-            for modetask in modetasklist:
+            for modetask in runmodecmd:
                 if modetask == "checkout":
                     runmodetask = ["check_out_tests",None,None]
                 elif modetask == "start":
@@ -60,39 +63,6 @@ class rgt_input_file:
 
         if self.__harness_task == []:
             print("ERROR: No valid tasks found in the inputfile or the CLI")
-
-    def __read_config(self):
-
-        if os.path.basename(self.__configFileName) == self.__configFileName:
-            # Search CWD, then OLCF_HARNESS_DIR/configs
-            if ( os.path.isfile(os.path.join("./", self.__configFileName)) ):
-              configfileused \
-                = os.path.abspath(os.path.join("./", self.__configFileName))
-            else:
-              configfileused \
-                = os.path.join(os.environ["OLCF_HARNESS_DIR"], \
-                                          "configs/", self.__configFileName)
-        else:
-            configfileused = self.__configFileName
-
-        if os.path.isfile(configfileused):
-            print("reading master config")
-            master_cfg = configparser.ConfigParser()
-            master_cfg.read(configfileused)
-
-            machine_vars = master_cfg['MachineDetails']
-            repo_vars = master_cfg['RepoDetails']
-            testshot_vars = master_cfg['TestshotDefaults']
-
-            self.set_rgt_env_vars(machine_vars)
-            self.set_rgt_env_vars(repo_vars)
-            self.set_rgt_env_vars(testshot_vars)
-
-            #print(os.environ.get("RGT_MACHINE_NAME"))
-            #print(os.environ.get("RGT_ACCT_ID"))
-        else:
-            raise NameError("Cannot find config file: %s" % self.__configFileName)
-
 
     def __read_file(self):
         ifile_obj = open(self.__inputFileName,"r")
@@ -155,16 +125,6 @@ class rgt_input_file:
         else:
             return False
 
-    def set_rgt_env_vars(self,env_vars):
-        for k in env_vars:
-            envk = "RGT_" + str.upper(k)
-            v = env_vars[k]
-
-            if envk in os.environ:
-                print(envk + " is already set. Skipping.")
-            else:
-                os.environ[envk] = v
-
     def get_harness_tasks(self):
             return self.__harness_task
 
@@ -173,3 +133,5 @@ class rgt_input_file:
 
     def get_path_to_tests(self):
             return self.__path_to_tests
+
+

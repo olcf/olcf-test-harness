@@ -13,13 +13,13 @@ class MachineTypeNotImplementedError(MachineTypeError):
         message = "The machine type '{}' is not implemented.".format(self.machine_type)
         print(message)
     
-class MachineTypeUndefinedEnvironmentalVariableError(MachineTypeError):
-    """An environmental variable is undefined"""
+class MachineTypeUndefinedVariableError(MachineTypeError):
+    """A machine configuration variable is undefined"""
     def __init__(self,
-                 env_variable):
-        self.env_variable = env_variable
+                 cfg_variable):
+        self.cfg_variable = cfg_variable
         return
 
     def what(self):
-        message = "The environmental varaible '{}' is undefined.".format(self.env_variable)
+        message = "The machine configuration variable '{}' is undefined.".format(self.cfg_variable)
         print(message)

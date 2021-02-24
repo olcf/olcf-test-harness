@@ -3,15 +3,28 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to NCCS_Test_Harness's documentation!
+OLCF Test Harness Documentation
 =============================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: User Guide
 
-   intro
-   modules
-   packages
+   user_guide/overview
+   user_guide/launching
+   user_guide/adding_new_test
+   user_guide/adding_new_machine
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer Guide
+
+   developer_guide/notational_conventions
+   developer_guide/intro
+   developer_guide/unit_test_framework 
+   developer_guide/packages
+   developer_guide/modules
+   developer_guide/references
 
 
 Indices and tables

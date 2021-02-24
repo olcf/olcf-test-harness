@@ -1,0 +1,123 @@
+#-----------------------------------------------------
+# GIT_STRATEGY :                                     -
+#   Set the GIT_STRATEGY used for getting recent     -
+#   application code. See                            -
+#   https://docs.gitlab.com/ee/ci/yaml/README.html   -
+#   for more details on GIT_STRATEGY.                -
+#                                                    -
+# HUT_MACHINE_NAME :                                 -
+#   The name of the machine the unit tests.          -
+#   We use this variable to select the correct       -
+#   runtime environment.                             - 
+#                                                    -
+# HUT_CONFIG_TAG :                                   -
+#   A unique identifier that corresponds to the      -
+#   HARNESS test configuration for a particular      -
+#   machine.                                         -
+#                                                    -
+# HUT_PATH_TO_SSPACE:                                -
+#   The path to the scratch space directory          -
+#   where the unit machine specfifc unit tests       -
+#   are run.                                         -
+#                                                    -
+# HUT_RTE_ENV_FILE:                                  -
+#   A Lua module file, lmod, that when  set ups the  -
+#   Harness unit test runtime environment.           -
+#   The lmod filename is formed by the combining the - 
+#   HUT_CONFIG_TAG and HUT_RTE_ENV_FILE              -
+#   variables as follows:                            -
+#       "${HUT_MACHINE_NAME}-${HUT_CONFIG_TAG}.environment.sh" -
+#                                                    -
+# HUT_SCHED_ACCT_ID:                                 -
+#   The account to be used with the job resource     -
+#   manager and scheduler.                           -
+#                                                    -
+#-----------------------------------------------------
+variables:
+    GIT_STRATEGY : fetch
+    HUT_MACHINE_NAME : 'GenericMachine'
+    HUT_CONFIG_TAG: 'GenericConfigTag'
+    HUT_RTE_ENV_FILE: "${HUT_MACHINE_NAME}-${HUT_CONFIG_TAG}.environment.sh"
+    HUT_PATH_TO_SSPACE: 'NOT_SET'
+    HUT_SCHED_ACCT_ID: 'NOT_SET'
+
+#-----------------------------------------------------
+# This hidden job defines a template for a set of    -
+# command commands to setup the Harness unit tests   -
+# rutime environment.                                -
+#                                                    -
+#-----------------------------------------------------
+.core_tests_template:
+    timeout : 15 minutes
+    script : 
+        - bash # Change to the bash shell.
+        - export OLCF_HARNESS_DIR=${CI_PROJECT_DIR} # Set the HARNESS top level directory.
+        - export HUT_MACHINE_NAME 
+        - export HUT_CONFIG_TAG
+        - export HUT_RTE_ENV_FILE 
+        - module --ignore-cache use ${OLCF_HARNESS_DIR}/modulefiles
+        - module load olcf_harness
+        - ci_testing_utilities/bin/run_generic_unit_tests.py
+        - ci_testing_utilities/bin/run_machine_specific_unit_tests.py --machine ${HUT_MACHINE_NAME} --harness-config-tag ${HUT_CONFIG_TAG}
+
+#-----------------------------------------------------
+# This section defines jobs for machine Ascent.      -
+#                                                    -
+# Machine: Ascent (OLCF training cluster)            -
+# Description:                                       -
+#       LSB Version: core-4.1-noarch:core-4.1-ppc64le-
+#       Distributor ID: RedHatEnterpriseServer       -
+#       Description: Red Hat Enterprise Linux        -
+#                    Server release 7.6 (Maipo)      -
+#       Release:        7.6                          -
+#       Codename:       Maipo                        -
+#                                                    -
+#       Architecture:          ppc64le               -
+#       Byte Order:            Little Endian         -
+#       CPU(s):                128                   -
+#       On-line CPU(s) list:   0-127                 -
+#       Thread(s) per core:    4                     -
+#       Core(s) per socket:    16                    -
+#       Socket(s):             2                     -
+#       NUMA node(s):          6                     -
+#       Model: 2.1 (pvr 004e 1201)                   -
+#       Model name: POWER9, altivec supported        -
+#                                                    -
+#       CUDA Version: 10.1                           -
+#       Driver Version: 418.40.04                    -
+#       3 GPUs                                       -
+#       Product Name: Tesla V100-SXM2-16GB           -
+#-----------------------------------------------------
+
+# This job performs basic tests on machine Ascent
+.Ascent_Basic_Tests :
+    extends : .core_tests_template
+    variables :
+        HUT_MACHINE_NAME : 'Ascent'
+        HUT_CONFIG_TAG : 'olcf5_acceptance'
+        HUT_SCHED_ACCT_ID: 'stf006'
+    tags :
+        - olcf_harness_unit_tests
+
+#-----------------------------------------------------
+# This section defines jobs for machine Lyra.        -
+#                                                    -
+# Machine: Lyra                                      -
+# Description:                                       -
+#   Intentionally left blank                         -
+#                                                    -
+# This runners runs under user arnoldt on Lyra.      -
+# Hence we must set the scratch space to a directory -
+# user arnoldt can write to, and the account is to   -
+# stf006.                                            -
+#-----------------------------------------------------
+Lyra_Basic_Tests :
+    extends : .core_tests_template
+    variables :
+        HUT_MACHINE_NAME : 'lyra'
+        HUT_CONFIG_TAG : 'olcf5_acceptance'
+        HUT_PATH_TO_SSPACE : '/ccs/home/arnoldt/scratch_hut' 
+        HUT_SCHED_ACCT_ID: 'stf006'
+    tags :
+        - Lyra_OLCF_Harness
+

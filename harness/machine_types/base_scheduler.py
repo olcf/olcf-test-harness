@@ -4,7 +4,9 @@
 #
 #
 
-class BaseScheduler:
+from abc import abstractmethod, ABCMeta
+
+class BaseScheduler(metaclass=ABCMeta):
     
     """ BaseScheduler represents a batch scheduler and has the following
         properties:
@@ -15,8 +17,8 @@ class BaseScheduler:
         print_scheduler_info:
     """
     
-    def __init__(self,type,submitCmd,statusCmd,deleteCmd,
-                 walltimeOpt,numTasksOpt,jobNameOpt,templateFile):
+    def __init__(self, type, submitCmd, statusCmd, deleteCmd,
+                 walltimeOpt, numTasksOpt, jobNameOpt, templateFile):
         self.__type = type
         self.__submitCmd = submitCmd
         self.__statusCmd = statusCmd
@@ -35,6 +37,11 @@ class BaseScheduler:
 
     def set_job_id(self,jobid):
         self.__job_id = jobid
+        return
+
+    @abstractmethod
+    def set_job_id_from_environ(self):
+        print("Setting job id from environment in BaseScheduler class")
         return
 
     def get_scheduler_template_file_name(self):

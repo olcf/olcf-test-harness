@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 
-sphinx-apidoc -f -o source ../harness_source_documentation
+#-----------------------------------------------------
+# Build the documentaion using the provided          -
+# makefile.                                          -
+#                                                    -
+#-----------------------------------------------------
+make clean
 make html

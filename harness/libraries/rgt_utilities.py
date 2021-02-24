@@ -64,3 +64,32 @@ def try_symlink(target, link_name):
         raise
     except:
         print(f'HARNESS ERROR: Failed to create symlink {link_name} to {target}.')
+
+########################################################################
+# Set environment variables that control harness behavior.
+########################################################################
+def set_harness_environment(env_vars, override=False):
+    for k in env_vars:
+        envk = rgt_variable_name_modification(k)
+        v = env_vars[k]
+        if envk in os.environ and not override:
+            print(envk + " is already set. Skipping.")
+        else:
+            os.environ[envk] = v
+
+def rgt_variable_name_modification(variable_name):
+    """Transforms the variable name.
+
+    Parameters
+    ----------
+    variable_name : str
+        The name of the variable to be transformed.
+
+    Returns
+    -------
+    str:
+        The transformed variable name.
+    """
+    new_var_name = "RGT_" + str.upper(variable_name)
+    return new_var_name
+

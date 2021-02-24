@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -57,7 +58,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'NCCS_Test_Harness'
 copyright = '2016'
-author = 'Arnold Tharrington, Veronica Vergara, Wayne Joubert, Reuben Budiardja, Mark Berrill'
+author = 'Arnold Tharrington, Veronica Vergara, Wayne Joubert, Reuben Budiardja, Mark Berrill, and Mike Brim'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -65,6 +66,7 @@ author = 'Arnold Tharrington, Veronica Vergara, Wayne Joubert, Reuben Budiardja,
 #
 # The short X.Y version.
 version = '1.0'
+
 # The full version, including alpha/beta/rc tags.
 release = '1.0'
 
@@ -95,6 +97,13 @@ language = None
 # 'inherited-members' and 'show-inheritance'.
 # autodoc_default_flags = ['members','prvate-members']
 
+
+# This value selects if automatically documented members are sorted alphabetical
+# (value 'alphabetical'), by member type (value 'groupwise') or by source order
+# (value 'bysource'). The default is alphabetical.
+# Note that for source order, the module must be a Python module with the source code available.
+autodoc_member_order = 'bysource'
+
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 #
@@ -107,7 +116,7 @@ language = None
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 #
-# add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -135,13 +144,32 @@ auto_class_content = ['both']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+#html_theme = 'classic'
+html_theme = 'sphinx_rtd_theme'
+
+html_css_files = [
+    'css/theme_overrides.css',
+]
+
+html_js_files = [
+    'js/custom.js',
+]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
+# see https://sphinx-rtd-theme.readthedocs.io/en/stable/configuring.html
+html_theme_options = {
+#    'canonical_url': 'https://docs.olcf.ornl.gov',
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'style_external_links': True,
+    'style_nav_header_background': '#efefef',
+    'logo_only': True,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -159,6 +187,7 @@ html_theme = 'alabaster'
 # of the sidebar.
 #
 # html_logo = None
+html_logo = 'images/olcf_logo.png'
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

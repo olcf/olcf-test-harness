@@ -14,42 +14,43 @@ class base_apptest(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Special methods                                                 @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     def __init__(self,
                  name_of_application,
                  name_of_subtest,
                  local_path_to_tests,
-                 time_stamp=None):
+                 tag):
 
         self.__appName = name_of_application
         self.__testName = name_of_subtest
         self.__threadTag = "<" + str(name_of_application) + "::" + str(name_of_subtest) + ">"
         self.__localPathToTests = local_path_to_tests
 
-        # Create harness log directories if given a timestamp
-        if time_stamp:
-            logdir_name = 'harness_log_files.' + time_stamp
-            self.__dirPathToLogFiles = os.path.join(os.getcwd(), logdir_name)
-            self.__appLogFileBaseDir = os.path.join(self.__dirPathToLogFiles, self.__appName)
-            self.__appTestLogFileBaseDir = os.path.join(self.__appLogFileBaseDir, self.__testName)
-            os.makedirs(self.__appTestLogFileBaseDir, exist_ok=True)
+    def __str__(self):
+        tmp_string  = "--\n"
+        tmp_string += "Application name: {}\n".format(str(self.__appName))
+        tmp_string += "Subtest name: {}\n".format(str(self.__testName))
+        tmp_string += "Local path to tests: {}\n".format(str(self.__localPathToTests))
+        tmp_string += "--\n"
+        return tmp_string
 
-            # Set harness log file names
-            self.__appLogFilePathBase = os.path.join(self.__appLogFileBaseDir, self.__appName)
-            self.__appTestLogFilePathBase = os.path.join(self.__appTestLogFileBaseDir, self.__appName + '__' + self.__testName)
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of special methods                                          @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-            self.__appLogFilePath = self.__appLogFilePathBase + ".logfile.txt"
-            self.__appTestLogFilePath = self.__appTestLogFilePathBase + ".logfile.txt"
-            self.__appCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".appcheckout.stdout.txt"
-            self.__appCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".appcheckout.stderr.txt"
-            self.__appTestCheckOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".testcheckout.stdout.txt"
-            self.__appTestCheckOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".testcheckout.stderr.txt"
-            self.__appTestUpdateSourceOutLogFilePathStdOut = self.__appTestLogFilePathBase + ".sourceupdate.stdout.txt"
-            self.__appTestUpdateSourceOutLogFilePathStdErr = self.__appTestLogFilePathBase + ".sourceupdate.stderr.txt"
-            self.__appStartTestLogFilePathStdOut = self.__appTestLogFilePathBase + ".starttest.stdout.txt"
-            self.__appStartTestLogFilePathStdErr = self.__appTestLogFilePathBase + ".starttest.stderr.txt"
 
-            self.__initializeLogFiles()
-
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Public methods.                                                 @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     def getNameOfApplication(self):
         return self.__appName
 
@@ -58,9 +59,6 @@ class base_apptest(object):
 
     def getLocalPathToTests(self):
         return self.__localPathToTests
-
-    def getDirPathToLogFiles(self):
-        return self.__dirPathToLogFiles
 
     def getPathToApplicationTestLogFile(self,test_name):
         return self.__appTestLogFilePath
@@ -81,41 +79,18 @@ class base_apptest(object):
         return {"stdout":self.__appStartTestLogFilePathStdOut,
                 "stderr":self.__appStartTestLogFilePathStdErr}
 
-    # def writeToLogFile(self,
-    #                    message):
-    #     now = str(datetime.now())
-    #     now = now.strip()
-    #     message2 = "{0!s:<32} {1!s:<}\n".format(now, message)
-    #     log_filehandle = open(self.__appLogFilePath,"a")
-    #     log_filehandle.write(message2)
-    #     log_filehandle.close()
-    #
-    # def writeToLogTestFile(self,message):
-    #     now = str(datetime.now())
-    #     now = now.strip()
-    #     message2 = "{0!s:<32} Thread tag={1!s:<}  {2!s:<}\n".format(now, self.__threadTag, message)
-    #     log_filehandle = open(self.__appTestLogFilePath,"a")
-    #     log_filehandle.write(message2)
-    #     log_filehandle.close()
+
+    @property
+    @abc.abstractmethod
+    def logger(self):
+        return
 
     @abc.abstractmethod
     def doTasks(self,myTasks,myTestCheckoutLock):
         return
 
     @abc.abstractmethod
-    def appTestName(self):
-        return
-
-    @abc.abstractmethod
     def check_out_test(self):
-        return
-
-    @abc.abstractmethod
-    def start_test(self):
-        return
-
-    @abc.abstractmethod
-    def stop_test(self):
         return
 
     @abc.abstractmethod
@@ -130,31 +105,43 @@ class base_apptest(object):
     def debug_apptest(self):
         return
 
+    @abc.abstractmethod
+    def waitForAllJobsToCompleteQueue(self):
+        return
 
-    #-----------------------------------------------------
-    # Special methods                                    -
-    #                                                    -
-    #-----------------------------------------------------
-    def __str__(self):
-        tmp_string  = "--\n"
-        tmp_string += "Application name: {}\n".format(str(self.__appName))
-        tmp_string += "Subtest name: {}\n".format(str(self.__testName))
-        tmp_string += "Local path to tests: {}\n".format(str(self.__localPathToTests))
-        tmp_string += "--\n"
-
-        return tmp_string
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of public methods.                                          @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-    #-----------------------------------------------------
-    # Private methods                                    -
-    #                                                    -
-    #-----------------------------------------------------
-    def __initializeLogFiles(self):
-        file_handle = open(self.__appLogFilePath,"a")
-        file_handle.close()
 
-        file_handle = open(self.__appTestLogFilePath,"a")
-        file_handle.close()
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Private methods.                                                @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def __absolutePathToStdOut(self):
-        pass
+    @abc.abstractmethod
+    def _start_test(self):
+        return
+
+    @abc.abstractmethod
+    def _stop_test(self):
+        return
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of private methods.                                         @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+class BaseApptestError(Exception):
+    """The base error class for this module."""
+
+    @property
+    @abc.abstractmethod
+    def message(self):
+        return
+
