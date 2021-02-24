@@ -89,7 +89,7 @@ class base_scheduler:
         return self.batchfilename
 
     def is_job_still_in_queue(self):
-        print "Stub to check if generic job ", self.get_jobname()," is in queue."
+        print ("Stub to check if generic job ", self.get_jobname()," is in queue.")
 
 ###############################################################################################################
 #
@@ -114,10 +114,10 @@ class pbs_scheduler(base_scheduler):
         self.set_jobstate(pbsjobstate)
         self.set_jobid(pbsjobid)
         self.set_batchfilename(pbsfilename)
-	if pbsprecommand:
-		self.__submit_command = pbsprecommand + "; qsub -V "
-	else:
-        	self.__submit_command = "qsub "
+        if pbsprecommand:
+            self.__submit_command = pbsprecommand + "; qsub -V "
+        else:
+            self.__submit_command = "qsub "
 
     def submit_batch_script(self,batch_file_name):
         commandstring = "qsub " + batch_file_name

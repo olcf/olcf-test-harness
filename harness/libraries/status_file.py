@@ -14,8 +14,8 @@ import datetime
 import re
 import socket
 import pprint
+import abc
 
-#from libraries import computers_1
 from libraries.layout_of_apps_directory import apptest_layout
 
 class StatusFile:
@@ -43,14 +43,10 @@ class StatusFile:
 
     # Name of the input file.
     FILENAME = apptest_layout.test_status_filename
+    """str: The filename of the subtest status file."""
 
     COMMENT_LINE_INDICATOR = '#'
-
-#    FAILURE_CODES = {'Pass_Fail': 0,
-#                     'Hardware_Failure': 1,
-#                     'Performance_Failure': 2,
-#                     'Incorrect_Result': 3
-#                    }
+    """str: The comment character for the subtest status file."""
 
     #---Event identifiers.
 
@@ -100,14 +96,6 @@ class StatusFile:
             ['Event_200_check_end.txt', 'check', 'end']
     }
 
-#    @staticmethod
-#    def event_name_from_event_filename(event_filename):
-#        """
-#        """
-#        assert isinstance(event_filename, str)
-#        return re.subst(r'^Event_[^_]+_', '',
-#               re.subst(r'.txt$', '', event_filename))
-
     #---Field identifiers.
 
     FIELDS_PER_TEST_INSTANCE = [
@@ -141,8 +129,86 @@ class StatusFile:
 
     NO_VALUE = '[NO_VALUE]'
 
+    #-----------------------------------------------------
+    #                                                    -
+    # Start of section for StatusFiles modes.            -
+    #                                                    -
+    #-----------------------------------------------------
     MODE_NEW = 'New'
+    """str: Indicates that we logging a new subtest entry in the status file."""
+
     MODE_OLD = 'Old'
+    """str: Indicates that we updating an old subtest entry in the status file."""
+
+    #-----------------------------------------------------
+    #                                                    -
+    # End of section for StatusFiles modes.              -
+    #                                                    -
+    #-----------------------------------------------------
+
+    #-----------------------------------------------------
+    #                                                    -
+    # Standard values for test results of the status file-
+    #                                                    -
+    #-----------------------------------------------------
+    PENDING = "-1"
+    PASS = "0"
+    FAIL = "1"
+    PLACE_HOLDER = r"***"
+    #-----------------------------------------------------
+    #                                                    -
+    # End of section for standard values of the          -
+    # status file.                                       -
+    #                                                    -
+    #                                                    -
+    #-----------------------------------------------------
+   
+    #-----------------------------------------------------
+    #                                                    -
+    # Values for the build results in the status file.   -
+    #                                                    -
+    #-----------------------------------------------------
+    BUILD_RESULTS = {"Pending" : PENDING,
+                     "Pass" : PASS,
+                     "Failure" : FAIL}
+    #-----------------------------------------------------
+    #                                                    -
+    # End of section for values for the build results in -
+    # the status file.                                   -
+    #                                                    -
+    #-----------------------------------------------------
+
+    #-----------------------------------------------------
+    #                                                    -
+    # Values for the submit results in the status file.  -
+    #                                                    -
+    #-----------------------------------------------------
+    SUBMIT_RESULTS = {"Pending" : PENDING,
+                      "Pass" : PASS,
+                      "Failure" : FAIL}
+    #-----------------------------------------------------
+    #                                                    -
+    # End of section for values for the submit results   -
+    # in the status file.                                -
+    #                                                    -
+    #-----------------------------------------------------
+
+    #-----------------------------------------------------
+    #                                                    -
+    # Values for the correct results in the status file. -
+    #                                                    -
+    #-----------------------------------------------------
+    CORRECT_RESULTS = {"Pending" : PENDING,
+                       "In progress" : 17,
+                       "Pass" : PASS,
+                       "Failure" : FAIL,
+                       "Performance failure" : 5}
+    #-----------------------------------------------------
+    #                                                    -
+    # End of section for values for the correct results  -
+    # in the status file.                                -
+    #                                                    -
+    #-----------------------------------------------------
 
     #################
     # Class methods #
@@ -163,35 +229,90 @@ class StatusFile:
 
         return result
 
+    @classmethod
+    def validate_mode(cls,mode):
+        """Validates that we are using a valid mode."""
+        if mode == cls.MODE_NEW :
+            pass
+        elif mode == cls.MODE_OLD:
+            pass
+        else:
+            raise 
+
     ###################
     # Special methods #
     ###################
 
-    def __init__(self, test_id, mode):
-        """Constructor."""
-        self.__job_id = ''
-        self.__status_file_path = ''
-        self.__test_id = test_id
+    def __init__(self,logger,path_to_status_file):
+        """Constructor.
 
-        # Make the status file.
-        self.__status_file_make()
+        Parameters
+        ----------
+        path_to_status_file : str
+            The fully qualified path to the subtest status file.
 
-        # Add job to status file.
-        if mode == StatusFile.MODE_NEW:
-            event_time = self.log_event(StatusFile.EVENT_LOGGING_START)
-            #currenttime = datetime.datetime.now()
-            self.__status_file_add_test_instance(event_time)
+        """
+        self.__logger = logger
+        self.__job_id = None
+        self.__test_id = None
 
-        elif mode == StatusFile.MODE_OLD:
-            pass
+        # The first task is set the path to status file.
+        self.__status_file_path = path_to_status_file
+
+        # The second task is to create the status file.
+        self.__create_status_file(path_to_status_file)
 
     ###################
     # Public methods  #
     ###################
 
+    @property
+    def status_file_path(self):
+        return self.__status_file_path
+
+    def initialize_subtest(self,unique_id):
+        """Initializes a new entry to the status file.
+
+        Parameters
+        ----------
+        unique_id : str
+            The unique is for the subtest.
+        """
+
+
+        self.__test_id = unique_id
+        if self._subtest_already_initialized(unique_id):
+            pass
+        else:
+            event_time = self.log_event(StatusFile.EVENT_LOGGING_START)
+            self.__status_file_add_test_instance(event_time,unique_id)
+        return
+
+    def getLastHarnessID(self):
+        """Returns the last harness ID of the subtest status file.
+       
+       If there are no entries, then None is returned. If the
+       status file doesn\'t exist then an error is raised.
+
+        Returns
+        -------
+        str
+            The harness id of the latest entry in the subtest status file.
+        """
+        with open(self.__status_file_path, "r") as file_obj:
+            records = file_obj.readlines()
+
+        line = records[-1]
+        words = line.rstrip().split()
+        if len(words) > 2:
+            subtest_harness_id = words[1]
+        else:
+            subtest_harness_id = None
+        return subtest_harness_id
+
     def log_event(self, event_id, event_value=NO_VALUE):
         """Log the occurrence of a harness event.
-           This version logs a predefined event specified in the dictionary.
+           This version logs a predefined event specified in the EVENT_DICT dictionary.
         """
 
         if event_id in StatusFile.EVENT_DICT:
@@ -224,9 +345,125 @@ class StatusFile:
         return self.__log_event(event_id, event_filename,
                                 event_type, event_subtype, str(event_value))
 
+    def isTestFinished(self, subtest_harness_id):
+        """Checks if the subtest of subtest_harness_id has completed.
+
+        Parameters
+        ----------
+        subtest_harness_id : str
+            The harness id of the subest that we wish to check.
+
+        Returns
+        -------
+        bool 
+            If the subtest with subtest_harness_id is complete, then True is
+            returned, otherwise False is returned.
+        """
+        # Get the corresponding record from the status file that
+        # lists the test results for subtest_harness_id.
+        record = self.__get_harness_id_record(subtest_harness_id)
+
+        if record == None:
+            test_finished = False
+        else:
+            # Strip line/record of all leading and trailing whitespace.
+            record = record.strip()
+      
+            # If words[2], words[3], words[4], or words[5] equals StatusFile.PLACE_HOLDER
+            # then we are not finished. The test is still in progress.
+            words = record.split()
+            tmp_words = words[2:] 
+            if tmp_words.count(self.PLACE_HOLDER) > 1:
+                test_finished = False
+            # The last word must indicate that the test is no longer pending and not in progress. 
+            elif (int(words[5]) > int(self.CORRECT_RESULTS["Pending"])) and (int(words[5]) != int(self.CORRECT_RESULTS["In progress"])) :
+                test_finished = True
+            else:
+                test_finished = False
+
+        return test_finished
+
+    def didAllTestsPass(self):
+        """ Checks if all tests have passed.
+
+        Returns
+        -------
+        bool
+            A True value is returned when all tests have passed. Explicitly stated, this
+            means all tests have 0's for build, sumbit, and correct results. Otherwise a 
+            False value is returned.
+        """
+        ret_value = True
+
+        with open(self.__status_file_path, 'r') as status_file_obj:
+            records = status_file_obj.readlines()
+        
+        verify_test_passed = lambda a_list : True if a_list.count(self.PASS) == 3 else False 
+
+        for index, line in enumerate(records):
+            if self.ignore_line(line):
+                continue
+
+            words = line.rstrip().split()
+
+            tmp_words = words[2:] 
+
+            ret_value = ret_value and verify_test_passed(tmp_words)
+                
+        return ret_value
+
     ###################
     # Private methods #
     ###################
+    def _subtest_already_initialized(self,unique_id):
+        found_instance = False
+
+        with open(self.__status_file_path, 'r') as status_file_obj:
+            records = status_file_obj.readlines()
+
+        for index, line in enumerate(records):
+            words = line.rstrip().split()
+
+            if self.ignore_line(line):
+                continue
+
+            if len(words) > 1:
+                test_id = words[1]
+                if test_id == unique_id:
+                    found_instance = True
+                    break
+
+        return found_instance
+
+    def __get_harness_id_record(self,harness_id):
+        record = None
+        with open(self.__status_file_path, 'r') as status_file_obj:
+            records = status_file_obj.readlines()
+
+        for index, line in enumerate(records):
+            if self.ignore_line(line):
+                continue
+            words = line.rstrip().split()
+            if len(words) > 1:
+                test_id = words[1]
+                if test_id == harness_id:
+                    record = line
+                    break
+        return record
+
+    def __get_all_harness_id(self):
+        with open(self.__status_file_path, 'r') as status_file_obj:
+            records = status_file_obj.readlines()
+        
+        harness_ids = []
+        for index, line in enumerate(records):
+            if self.ignore_line(line):
+                continue
+            words = line.rstrip().split()
+            if len(words) > 1:
+                harness_ids.append(words[1])
+
+        return harness_ids
 
     def __log_event(self, event_id, event_filename, event_type, event_subtype,
                     event_value):
@@ -289,22 +526,11 @@ class StatusFile:
 
     #----------
 
-    def __status_file_make(self):
-        """Create the status file for this app/test if doesn't exist."""
-
-        # Get the head dir in cwd.
-        cwd = os.getcwd()
-        dir_head1 = os.path.split(cwd)[0]
-
-        # Form path to rgt status file.
-        self.__status_file_path = os.path.join(dir_head1, apptest_layout.test_status_dirname,
-                                           StatusFile.FILENAME)
-
-        # Create.
-        if not os.path.lexists(self.__status_file_path):
-            file_obj = open(self.__status_file_path, "w")
-            file_obj.write(StatusFile.header)
-            file_obj.close()
+    def __create_status_file(self,path_to_status_file):
+        """Create the status file for this app/test if it doesn't exist."""
+        if not os.path.exists(path_to_status_file):
+            with open(self.__status_file_path, "w") as file_obj :
+                file_obj.write(StatusFile.header)
 
     #----------
 
@@ -376,14 +602,13 @@ class StatusFile:
 
     #----------
 
-    def __status_file_add_test_instance(self, event_time):
+    def __status_file_add_test_instance(self, event_time,unique_id):
         """Start new line in master status file for app/test."""
 
-        file_obj = open(self.__status_file_path, "a")
-        format_ = StatusFile.__LINE_FORMAT % (
-            (event_time, self.__test_id, "***", "***", "***", "***"))
-        file_obj.write(format_)
-        file_obj.close()
+        with open(self.__status_file_path, "a") as file_obj:
+            format_ = StatusFile.__LINE_FORMAT % (
+                (event_time, unique_id, "***", "***", "***", "***"))
+            file_obj.write(format_)
 
 #------------------------------------------------------------------------------
 
@@ -436,9 +661,12 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_run_dirname)
 
-    test_instance_info['job_account_id'] = (
-        os.environ['RGT_ACCT_ID']
-        if 'RGT_ACCT_ID' in os.environ else no_value)
+    job_account = no_value
+    if 'RGT_PROJECT_ID' in os.environ:
+        job_account = os.environ['RGT_PROJECT_ID']
+    elif 'RGT_ACCT_ID' in os.environ:
+        job_account = os.environ['RGT_ACCT_ID']
+    test_instance_info['job_account_id'] = job_account
 
     test_instance_info['path_to_rgt_package'] = (
         os.environ['PATH_TO_RGT_PACKAGE']
@@ -555,88 +783,6 @@ def write_system_log(test_id, status_info):
         file_.write(log_string + '\n')
         file_.close()
 
-#------------------------------------------------------------------------------
-
-#class JobExitStatus:
-#    """Class to tally different kinds of job errors."""
-#
-#    def __init__(self):
-#        """Constructor."""
-#        self.status = {"Pass_Fail": 0,
-#                       "Hardware_Failure": 0,
-#                       "Performance_Failure": 0,
-#                       "Incorrect_Result": 0}
-#
-#    def change_job_exit_status(self, category="Pass_Fail",
-#                               new_status="FAILURE"):
-#        """Change the exit status for a specific failure."""
-#
-#        if category == "Pass_Fail":
-#            self.add_pass_fail(pf_failure=new_status)
-#        elif category == "Hardware_Failure":
-#            self.add_hardware_failure(hw_failure=new_status)
-#        elif category == "Performance_Failure":
-#            self.add_performance_failure(pf_failure=new_status)
-#        elif category == "Incorrect_Result":
-#            self.add_incorrect_result_failure(ir_failure=new_status)
-#        else:
-#            print("Warning! The category " + category + " is not defined.")
-#            print("The failure will be categorized a general Pass_Fail.")
-#            self.add_pass_fail(pf_failure=new_status)
-#
-#    def add_pass_fail(self, pf_failure="NO_FAILURE"):
-#        """
-#        """
-#        if pf_failure == "FAILURE":
-#            self.status["Pass_Fail"] = 1
-#        elif pf_failure == "NO_FAILURE":
-#            self.status["Pass_Fail"] = 0
-#
-#    def add_hardware_failure(self, hw_failure="NO_FAILURE"):
-#        """
-#        """
-#        if hw_failure == "FAILURE":
-#            self.status["Hardware_Failure"] = 1
-#        elif hw_failure == "NO_FAILURE":
-#            self.status["Hardware_Failure"] = 0
-#
-#    def add_performance_failure(self, pf_failure="NO_FAILURE"):
-#        """
-#        """
-#        if pf_failure == "FAILURE":
-#            self.status["Performance_Failure"] = 1
-#        elif pf_failure == "NO_FAILURE":
-#            self.status["Performance_Failure"] = 0
-#
-#    def add_incorrect_result_failure(self, ir_failure="NO_FAILURE"):
-#        """
-#        """
-#        if ir_failure == "FAILURE":
-#            self.status["Incorrect_Result"] = 1
-#        elif ir_failure == "NO_FAILURE":
-#            self.status["Incorrect_Result"] = 0
-#
-##------------------------------------------------------------------------------
-#
-#def convert_to_job_status(job_exit_status):
-#    """Convert job status to numerical value. """
-#
-#    tmpsum = 0
-#
-#    ival = job_exit_status.status["Pass_Fail"]
-#    tmpsum = tmpsum + ival*1
-#
-#    ival = job_exit_status.status["Hardware_Failure"]
-#    tmpsum = tmpsum + ival*2
-#
-#    ival = job_exit_status.status["Performance_Failure"]
-#    tmpsum = tmpsum + ival*4
-#
-#    ival = job_exit_status.status["Incorrect_Result"]
-#    tmpsum = tmpsum + ival*8
-#
-#    return tmpsum
-#
 #------------------------------------------------------------------------------
 
 def parse_status_file(path_to_status_file, startdate, enddate,
@@ -903,3 +1049,76 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
     return shash
 
 #------------------------------------------------------------------------------
+
+#-----------------------------------------------------
+#                                                    -
+# Start of defining errors classes for this module.  -
+#                                                    -
+#-----------------------------------------------------
+
+class StatusFileError(Exception):
+    """Base class for exceptions of the StatusFile"""
+    def __init__(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def message(self):
+        pass
+
+class IncompatibleStatusFileModeError(StatusFileError):
+    """Exception raised for errors of incompatible modes for various StatusFile tasks."""
+    def __init__(self,message):
+        """The class constructor
+
+        Parameters
+        ----------
+        message : string
+            The error message for this exception.
+        """
+        self._message = message
+    
+    @property
+    def message(self):
+        """str: The error message."""
+        return self._message
+
+class InvalidStatusFileModeError(StatusFileError):
+    """Exception raised for error of invalid mode for StatusFile."""
+    def __init__(self,message):
+        """The class constructor
+
+        Parameters
+        ----------
+        message : string
+            The error message for this exception.
+        """
+        self._message = message
+    
+    @property
+    def message(self):
+        """str: The error message."""
+        return self._message
+
+class StatusFileMissingError(StatusFileError):
+    """Exception raised for missing status file."""
+    def __init__(self,message):
+        """The class constructor
+
+        Parameters
+        ----------
+        message : string
+            The error message for this exception.
+        """
+        self._message = message
+    
+    @property
+    def message(self):
+        """str: The error message."""
+        return self._message
+
+#-----------------------------------------------------
+#                                                    -
+# End of defining errors classes for this module.    -
+#                                                    -
+#-----------------------------------------------------

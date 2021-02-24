@@ -18,7 +18,7 @@ prepend-path PATH             $harness/utilities
 prepend-path LD_LIBRARY_PATH  $harness/libraries
 prepend-path LIBRARY_PATH     $harness/libraries
 
-module load python
+#module load python
 prepend-path PYTHONPATH       $harness/utilities
 prepend-path PYTHONPATH       $harness/bin
 prepend-path PYTHONPATH       $harness/libraries

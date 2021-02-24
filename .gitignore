@@ -1,3 +1,20 @@
 # Ignore python bytecode file.
 # *.pyc
 **/__pycache__
+
+#Ignore all html files.
+*.html
+
+# Ignore all *.doctree files. These files are
+# generated when sphinx-doc creates python documentation.
+*.doctree
+
+# Ignore all files in the sphinx documentation build directory.
+doc-sphinx/build
+
+# Ignore all files with *.orig suffix
+*.orig"
+
+# Ignore all vim temporary files.
+*.swp
+*.swo

@@ -3,12 +3,10 @@ import os
 import sys
 
 # Local package imports
-from .cray_xk7 import CrayXK7
-from .ibm_power8 import IBMpower8
 from .ibm_power9 import IBMpower9
-from .rhel_x86 import RHELx86
+from .linux_x86_64 import Linux_x86_64
 from .machine_factory_exceptions import MachineTypeNotImplementedError
-from .machine_factory_exceptions import MachineTypeUndefinedEnvironmentalVariableError
+from .machine_factory_exceptions import MachineTypeUndefinedVariableError
 
 class MachineFactory:
 
@@ -16,70 +14,82 @@ class MachineFactory:
         return
 
     @staticmethod
-    def create_machine(app_subtest):
-        rgt_machine_name = os.environ.get("RGT_MACHINE_NAME")
-        rgt_scheduler_type = os.environ.get("RGT_SCHEDULER_TYPE")
-        rgt_jobLauncher_type = os.environ.get("RGT_JOBLAUNCHER_TYPE")
+    def create_machine(harness_config,
+                       app_subtest):
 
-        # Verify that the environmental variables 'RGT_MACHINE_NAME',
-        # 'RGT_SCHEDULER_TYPE', and 'RGT_JOBLAUNCHER_TYPE' are defined.
+        machine_config = harness_config.get_machine_config()
+
+        # Verify that the machine configuration variables 'machine_name',
+        # 'scheduler_type', and 'joblauncher_type' are defined.
         # Otherwise throw an exception and stop.
+        rgt_machine_name = None
+        rgt_machine_type = None
+        rgt_scheduler = None
+        rgt_launcher = None
         try:
+            rgt_machine_name = machine_config.get('machine_name')
             if rgt_machine_name == None:
-                print('No machine name provided. Please set the RGT_MACHINE_NAME variable'.format(rgt_machine_name))
-                raise MachineTypeUndefinedEnvironmentalVariableError("RGT_MACHINE_NAME")
+                print('No machine name provided by harness configuration!')
+                raise MachineTypeUndefinedVariableError("MachineDetails.machine_name")
 
-            if rgt_scheduler_type == None:
-                print('No scheduler type provided. Please set the RGT_SCHEDULER_TYPE variable'.format(rgt_scheduler_type))
-                raise MachineTypeUndefinedEnvironmentalVariableError("RGT_SCHEDULER_TYPE")
+            rgt_machine_type = machine_config.get('machine_type')
+            if rgt_machine_type == None:
+                print('No machine type provided by harness configuration!')
+                raise MachineTypeUndefinedVariableError("MachineDetails.machine_type")
 
-            if rgt_jobLauncher_type == None:
-                print('No scheduler type provided. Please set the RGT_JOBLAUNCHER_TYPE variable'.format(rgt_jobLauncher_type))
-                raise MachineTypeUndefinedEnvironmentalVariableError("RGT_JOBLAUNCHER_TYPE")
+            rgt_scheduler = machine_config.get('scheduler_type')
+            if rgt_scheduler == None:
+                print('No scheduler type provided by harness configuration!')
+                raise MachineTypeUndefinedVariableError("MachineDetails.scheduler_type")
 
-        except MachineTypeUndefinedEnvironmentalVariableError as my_exception:
+            rgt_launcher = machine_config.get('joblauncher_type')
+            if rgt_launcher == None:
+                print('No scheduler type provided by harness configuration!')
+                raise MachineTypeUndefinedVariableError("MachineDetails.joblauncher_type")
+
+        except MachineTypeUndefinedVariableError as my_exception:
             my_exception.what()
             sys.exit()
 
+        rgt_num_nodes = machine_config.get('node_count')
+        if rgt_num_nodes == None:
+            rgt_num_nodes = 1
 
-        message = "Creating machine of type {machine_type} with scheduler of type {scheduler_type} and job launcher of type {job_launcher_type}\n".format(
-                                                                                                  machine_type=rgt_machine_name,
-                                                                                                  scheduler_type=rgt_scheduler_type,
-                                                                                                  job_launcher_type = rgt_jobLauncher_type)
+        rgt_cores_per_node = machine_config.get('cpus_per_node')
+        if rgt_cores_per_node == None:
+            rgt_cores_per_node = 1
+
+        rgt_sockets_per_node = machine_config.get('sockets_per_node')
+        if rgt_sockets_per_node == None:
+            rgt_sockets_per_node = 1
+
+        rgt_cores_per_socket = int(rgt_cores_per_node) / int(rgt_sockets_per_node)
+
+        message = f'Creating machine {rgt_machine_name}: Type = {rgt_machine_type} ; Scheduler = {rgt_scheduler} ; Job launcher = {rgt_launcher}'
         print(message)
 
         # We now create a new machine. If the new machine type is not implemented,
         # then warn user, throw an exception and stop.
         tmp_machine = None
         try:
-            if rgt_machine_name == "summitdev":
-                tmp_machine = IBMpower8(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler_type,
-                                        jobLauncher=rgt_jobLauncher_type,
-                                        apptest=app_subtest)
-            elif rgt_machine_name == "peak":
+            if rgt_machine_type == "ibm_power9":
                 tmp_machine = IBMpower9(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler_type,
-                                        jobLauncher=rgt_jobLauncher_type,
+                                        scheduler=rgt_scheduler,
+                                        jobLauncher=rgt_launcher,
+                                        numNodes=int(rgt_num_nodes),
+                                        numSocketsPerNode=int(rgt_sockets_per_node),
+                                        numCoresPerSocket=int(rgt_cores_per_socket),
                                         apptest=app_subtest)
-            elif rgt_machine_name == "summit":
-                tmp_machine = IBMpower9(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler_type,
-                                        jobLauncher=rgt_jobLauncher_type,
-                                        apptest=app_subtest)
-            elif rgt_machine_name == "rhea":
-                tmp_machine = RHELx86(name=rgt_machine_name,
-                                      scheduler=rgt_scheduler_type,
-                                      jobLauncher=rgt_jobLauncher_type,
-                                      apptest=app_subtest)
-            elif rgt_machine_name == "lyra":
-                tmp_machine = RHELx86(name=rgt_machine_name,
-                                      scheduler=rgt_scheduler_type,
-                                      jobLauncher=rgt_jobLauncher_type,
-                                      apptest=app_subtest)
+            elif rgt_machine_type == "linux_x86_64":
+                tmp_machine = Linux_x86_64(name=rgt_machine_name,
+                                           scheduler=rgt_scheduler,
+                                           jobLauncher=rgt_launcher,
+                                           numNodes=int(rgt_num_nodes),
+                                           numSocketsPerNode=int(rgt_sockets_per_node),
+                                           numCoresPerSocket=int(rgt_cores_per_socket),
+                                           apptest=app_subtest)
             else:
-                print("Machine name does not exist. Good bye!")
-                raise MachineTypeNotImplementedError(rgt_machine_name)
+                raise MachineTypeNotImplementedError(rgt_machine_type)
         except MachineTypeNotImplementedError as my_exception:
             my_exception.what()
             sys.exit()

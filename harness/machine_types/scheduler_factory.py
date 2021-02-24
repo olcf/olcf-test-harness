@@ -21,7 +21,6 @@ class SchedulerFactory:
 
         return tmp_scheduler
 
-
     def __init__(self):
         pass
 

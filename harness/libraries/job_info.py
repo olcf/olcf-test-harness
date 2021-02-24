@@ -143,12 +143,12 @@ class new_job_status(base_rgt_job_status):
                 line1 = string.rstrip(line)
                 words1 = string.split(line1)
                 jid1 = words1[1]
-                print "jid :  ",jid
-                print "jid1:  ",jid1
+                print ("jid :  ",jid)
+                print ("jid1:  ",jid1)
                 if jid == jid1:
-                    print "Modifying lines"
+                    print ("Modifying lines")
                     lines[ip-1] = "%(line1)s %(pass_fail)20s\n" % {"line1":line1, "pass_fail":jstatus}
-                    print lines[ip-1]
+                    print (lines[ip-1])
             
         fname_obj = open(fname,"w")
         fname_obj.writelines(lines)
