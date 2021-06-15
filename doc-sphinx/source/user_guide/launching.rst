@@ -107,7 +107,7 @@ default is set but this lets you change the default):
 
 The latest version of the harness supports command line tasks as well as input
 file tasks. If no tasks are provided in the input file, it will use the command
-line mode. To launch via the CLI:
+line mode. To launch via the CLI, use a command like the following:
 
 .. code-block:: bash
 
