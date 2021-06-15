@@ -48,7 +48,7 @@ Clone the repo on the target system:
 
 .. code-block:: bash
 
-    git clone gitlab@gitlab.ccs.ornl.gov:olcf-system-test/olcf-test-harness.git
+    git clone https://github.com/olcf/olcf-test-harness.git
 
 Setup the environment:
 
@@ -60,6 +60,11 @@ Setup the environment:
     module load olcf_harness
     export OLCF_HARNESS_MACHINE=<machine>
 
+.. note::
+    You must have the <machine>.ini file in a directory searched by your PATH
+    environment variable for your specified machine. On Spock and Lyra, this
+    is provided for you in the centralized harness. An example_machine.ini
+    file is provided in the configs directory.
 
 Launching the OTH
 -----------------
@@ -112,7 +117,8 @@ line mode. To launch via the CLI:
 
 
 When using the checkout mode, the application source repository will be cloned
-to the *<Path_to_tests>/<app-name>* directory.
+to the *<Path_to_tests>/<app-name>* directory for all the tests, but no tests
+will be run.
 
 
 After using the start mode, results of the most recent test run can be found in
