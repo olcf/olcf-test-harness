@@ -2,7 +2,7 @@
 Overview of the Test Harness
 ============================
 
-OLCF Test Harness
+Purpose
 =================
 
 .. toctree::
@@ -15,8 +15,8 @@ large collection of tests continuously. Each test provides its own scripts that
 support the core operations of building executables, running jobs, and checking
 test results.
 
-OLCF Test Harness Execution Overview
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Execution Overview
+=====================
 
 *runtests.py* is the program used to execute the OTH. Users provide a test
 input file that lists the set of application tests to run, and a command-line
@@ -24,26 +24,26 @@ run mode option controls whether to run a single iteration (**\-\-mode start sto
 or continuously (**\-\-mode start**). In continuous mode, the test job script has the
 option to resubmit another iteration of the test.  
 
-A brief logical flow of harness execution follows: 
+A brief logical flow of harness execution follows:
 
-* read 'RGT_PATH_TO_SSPACE' from environment (OTH_SCRATCH)
-* read 'Path_to_tests' from inputfile (OTH_APPS) 
-* foreach (app,test) in inputfile 
+....
 
-  1. generate unique id (UID) 
-  2. create *Run_Archive* and *Status* directories @ *OTH_APPS/app/test/{Run_Archive,Status}/UID* 
-  3. create scratch directory (APPTEST_SCRATCH) @ *OTH_SCRATCH/app/test/UID*
-  4. recursively copy *OTH_APPS/app/Source/ to APPTEST_SCRATCH/build_directory/*
-  5. change working directory to *APPTEST_SCRATCH/build_directory/*, and execute test's build 
-     command
-  6. if build script succeeds, generate test's job script from template in *OTH_APPS/app/test/Scripts*
-  7. submit job script to scheduler - when job runs, it:
-
-     - changes working directory to *APPTEST_SCRATCH/workdir* (after creating it
-       if necessary)
-     - copies any needed input files from *OTH_APPS/app/test*
-     - runs the test executable
-     - copies any needed output files back to the *Run_Archive* directory
-     - runs the test's check command, passing it the *Run_Archive* directory
-       location
-     - if in continuous mode, start another iteration of the harness test end
+* Read 'RGT_PATH_TO_SSPACE' from environment (OTH_SCRATCH)
+* Read 'Path_to_tests' from inputfile (OTH_APPS)
+* Read Machine configurations from <machine>.ini
+* foreach (app,test) in inputfile:
+    #. generate unique id (UID) 
+    #. create *Run_Archive* and *Status* directories @ *OTH_APPS/app/test/{Run_Archive,Status}/UID* 
+    #. create scratch directory (APPTEST_SCRATCH) @ *OTH_SCRATCH/app/test/UID*
+    #. recursively copy *OTH_APPS/app/Source/ to APPTEST_SCRATCH/build_directory/*
+    #. change working directory to *APPTEST_SCRATCH/build_directory/*, and execute test's build command
+    #. if build script succeeds, generate test's job script from template in *OTH_APPS/app/test/Scripts*
+    #. submit job script to scheduler - when job runs, it:
+         - changes working directory to *APPTEST_SCRATCH/workdir* (after creating it
+           if necessary)
+         - copies any needed input files from *OTH_APPS/app/test*
+         - runs the test executable
+         - copies any needed output files back to the *Run_Archive* directory
+         - runs the test's check command, passing it the *Run_Archive* directory
+           location
+         - if in continuous mode, start another iteration of the harness test end
