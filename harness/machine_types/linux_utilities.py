@@ -386,23 +386,34 @@ def build_executable(a_machine, new_env):
     frame = inspect.currentframe()
     function_name = inspect.getframeinfo(frame).function
     messloc = "In function {functionname}:".format(functionname=function_name ) 
-    
+
+    # Update the build environment
+    env_vars = a_machine.test_config.test_environment
+    message = ""
+    for e in env_vars:
+        v = env_vars[e]
+        eu = e.upper()
+        #print("Setting env var", eu, "=", v)
+        os.putenv(eu, v)
+        message += f"Set build environment variable {eu}={v}\n"
+    if new_env is not None:
+        for e in new_env:
+            v = new_env[e]
+            eu = e.upper()
+            os.putenv(eu, v)
+            message += f"Set build environment variable {eu}={v}\n"
+    a_machine.logger.doInfoLogging(message)
+
     # We get the command for bulding the binary.
     buildcmd = a_machine.test_config.get_build_command()
     build_std_out = "output_build.stdout.txt"
     build_std_err = "output_build.stderr.txt"
     message = f"{messloc} The build command: {buildcmd}"
     a_machine.logger.doInfoLogging(message)
+
     with open(build_std_out,"w") as build_std_out :
         with open(build_std_err,"w") as build_std_err :
-            if new_env is not None:
-                message = f"{messloc} Setting new environment for build."
-                p = subprocess.Popen(buildcmd,shell=True,env=new_env,stdout=build_std_out,stderr=build_std_err)
-                a_machine.logger.doInfoLogging(message)
-            else:
-                message = f"{messloc} Using old environment for build."
-                p = subprocess.Popen(buildcmd,shell=True,stdout=build_std_out,stderr=build_std_err)
-                a_machine.logger.doInfoLogging(message)
+            p = subprocess.Popen(buildcmd, shell=True, stdout=build_std_out, stderr=build_std_err)
             p.wait()
             build_exit_status = p.returncode
 
@@ -414,20 +425,24 @@ def submit_batch_script(a_machine, new_env):
     function_name = inspect.getframeinfo(frame).function
     messloc = "In function {functionname}:".format(functionname=function_name) 
 
+    # Update the batch submission environment
     env_vars = a_machine.test_config.test_environment
     message = ""
     for e in env_vars:
         v = env_vars[e]
-        print("Setting env var", e, "=", v)
-        os.putenv(e.upper(), v)
-        message += f"Set environmental variable {e}={v}\n"
+        eu = e.upper()
+        #print("Setting env var", eu, "=", v)
+        os.putenv(eu, v)
+        message += f"Set batch environment variable {eu}={v}\n"
     if new_env is not None:
         for e in new_env:
             v = new_env[e]
-            os.putenv(e.upper(), v)
-            message += f"Set environmental variable {e}={v}\n"
+            eu = e.upper()
+            os.putenv(eu, v)
+            message += f"Set batch environment variable {eu}={v}\n"
     a_machine.logger.doInfoLogging(message)
 
+    # Submit the test's batch script
     batch_script = a_machine.test_config.get_batch_file()
     submit_exit_value = a_machine.submit_to_scheduler(batch_script)
 
