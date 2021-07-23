@@ -1,0 +1,370 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>NCCS Harness repositories package &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/js/custom.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="NCCS Harness bin package" href="bin.html" />
+    <link rel="prev" title="NCCS Harness Python Packages" href="../packages.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #efefef" >
+          
+
+          
+            <a href="../../index.html">
+          
+
+          
+            
+            <img src="../../_static/olcf_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/overview.html">Overview of the Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/overview.html#purpose">Purpose</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/overview.html#execution-overview">Execution Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/launching.html">Launching the OLCF Test Harness (OTH)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/launching.html#oth-setup">OTH Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../user_guide/launching.html#on-lyra">On Lyra</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../user_guide/launching.html#on-spock">On Spock</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/launching.html#launching-the-oth">Launching the OTH</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/adding_new_test.html">Adding a New Test to the OTH</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#repository-url">Repository URL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#repository-structure">Repository structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#example-repository">Example Repository</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/adding_new_test.html#application-test-input">Application Test Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/adding_new_test.html#required-application-test-scripts">Required Application Test Scripts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#build-script">Build Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#job-script-template">Job Script Template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#check-script">Check Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/adding_new_test.html#notes-on-where-things-are">Notes on Where Things Are</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/adding_new_machine.html">Adding a New Machine to the OTH</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../notational_conventions.html">Notational Conventions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../notational_conventions.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../intro.html#raison-d-etre">Raison d’etre</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../intro.html#organizational-structure">Organizational Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../intro.html#prequisites">Prequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../intro.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../unit_test_framework.html">Harness’s Git Unit Test Framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../unit_test_framework.html#organizational-structure">Organizational Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unit_test_framework.html#setting-up-the-harness-unit-testing-runtime-environment">Setting Up the Harness Unit Testing Runtime Environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../unit_test_framework.html#generic-tests">Generic Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../unit_test_framework.html#machine-specific-tests">Machine Specific Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../unit_test_framework.html#running-the-harness-unit-tests">Running the Harness Unit Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../unit_test_framework.html#id1">Generic Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../unit_test_framework.html#id2">Machine Specific Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../unit_test_framework.html#harness-unit-testing-api">Harness Unit Testing API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../unit_test_framework/git_ci_test_framework.html">Usage and Developer Documentation for GitLab CI/CD</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../unit_test_framework/pytest_test_framework.html">Usage and Developer Documentation for Harness’ pytest Unit Tests</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../packages.html">NCCS Harness Python Packages</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">NCCS Harness repositories package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#intoduction">Intoduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisite-environmental-variables">Prerequisite Environmental Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modules">Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bin.html">NCCS Harness bin package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bin.html#intoduction">Intoduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bin.html#modules">Modules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">harness</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">NCCS_Test_Harness</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content style-external-links">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../packages.html">NCCS Harness Python Packages</a> &raquo;</li>
+        
+      <li>NCCS Harness repositories package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/developer_guide/packages/repositories.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="nccs-harness-repositories-package">
+<h1>NCCS Harness repositories package<a class="headerlink" href="#nccs-harness-repositories-package" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<section id="intoduction">
+<h2>Intoduction<a class="headerlink" href="#intoduction" title="Permalink to this headline">¶</a></h2>
+<p>This package provides the harness the functionality to clone the repositories
+that contain the applications and tests. Currently only git repositories are supported, and
+the git commands be passwordless authentication.</p>
+</section>
+<section id="prerequisite-environmental-variables">
+<h2>Prerequisite Environmental Variables<a class="headerlink" href="#prerequisite-environmental-variables" title="Permalink to this headline">¶</a></h2>
+<p>The following environmental variable must be set:</p>
+<ul>
+<li><p><strong>RGT_TYPE_OF_REPOSITORY</strong> : The type of repository. Currently only git remote repositories are supported.</p>
+<blockquote>
+<div><p>Permitted values: git</p>
+</div></blockquote>
+</li>
+<li><p><strong>RGT_GIT_DATA_TRANSFER_PROTOCOL</strong> : The data transfer protocol for the git repository. Currently on the ssh protocol is supported.</p>
+<blockquote>
+<div><p>Permitted values: ssh</p>
+</div></blockquote>
+</li>
+<li><p><strong>RGT_GIT_HTTPS_SERVER_URL</strong> : The base part of the URL used in the https protocol git clone.</p></li>
+<li><p><strong>RGT_GIT_SSH_SERVER_URL</strong> :  The base part of the URL used in the ssh protocol git clone.</p></li>
+<li><p><strong>RGT_GIT_SERVER_APPLICATION_PARENT_DIR</strong> : The parent part of the URL used in the ssh or https protocol git clone</p></li>
+<li><p><strong>RGT_GIT_MACHINE_NAME</strong> : The machine name part of the application URL</p></li>
+<li><p><strong>RGT_GIT_REPS_BRANCH</strong> : The branch of the repository to check out.</p></li>
+</ul>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Consider the following test repository “<a class="reference external" href="https://gitlab.ccs.ornl.gov/olcf-system-test/applications/summit/HelloWorld">https://gitlab.ccs.ornl.gov/olcf-system-test/applications/summit/HelloWorld</a>”
+located on the git server “<a class="reference external" href="https://gitlab.ccs.ornl.gov">https://gitlab.ccs.ornl.gov</a>”. We will use the ssh data transfer protocol and checkout
+the branch master. As given by the repository the git URL for cloning
+is</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gitlab</span><span class="nd">@gitlab</span><span class="o">.</span><span class="n">ccs</span><span class="o">.</span><span class="n">ornl</span><span class="o">.</span><span class="n">gov</span><span class="p">:</span><span class="n">olcf</span><span class="o">-</span><span class="n">system</span><span class="o">-</span><span class="n">test</span><span class="o">/</span><span class="n">applications</span><span class="o">/</span><span class="n">summit</span><span class="o">/</span><span class="n">HelloWorld</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>The above environmental variables needs the following values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RGT_TYPE_OF_REPOSITORY</span><span class="o">=</span><span class="s1">&#39;git&#39;</span>
+<span class="n">RGT_GIT_REPS_BRANCH</span><span class="o">=</span><span class="s1">&#39;master&#39;</span>
+<span class="n">RGT_GIT_DATA_TRANSFER_PROTOCOL</span><span class="o">=</span><span class="s1">&#39;ssh&#39;</span>
+<span class="n">RGT_GIT_HTTPS_SERVER_URL</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+<span class="n">RGT_GIT_SSH_SERVER_URL</span><span class="o">=</span><span class="s1">&#39;gitlab@gitlab.ccs.ornl.gov&#39;</span>
+<span class="n">RGT_GIT_SERVER_APPLICATION_PARENT_DIR</span><span class="o">=</span><span class="s1">&#39;olcf-system-test/applications&#39;</span>
+<span class="n">RGT_GIT_MACHINE_NAME</span><span class="o">=</span><span class="s1">&#39;summit&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="modules">
+<h2>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="../modules/repositories/git_repository.html#git-repository-module"><span class="std std-ref">git_repository Module Documentation</span></a></p>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="bin.html" class="btn btn-neutral float-right" title="NCCS Harness bin package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../packages.html" class="btn btn-neutral float-left" title="NCCS Harness Python Packages" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
