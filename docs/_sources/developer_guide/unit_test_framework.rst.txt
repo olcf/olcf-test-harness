@@ -1,4 +1,4 @@
-Harness's Git Unit Test Framework
+Git Unit Test Framework
 =================================
 
 .. .. toctree::

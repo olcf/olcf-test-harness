@@ -9,22 +9,14 @@ application and associated tests for a specific system to the harness.
 Application Source Code Repository Structure
 --------------------------------------------
 
-All OTH application tests reside in this GitLab group:
-`https://gitlab.ccs.ornl.gov/olcf-system-test/applications
-<https://gitlab.ccs.ornl.gov/olcf-system-test/applications>`_. This
-top-level 'applications' group contains a sub-group per target machine.
-For example, there are sub-groups for the OLCF machines 'summit' and
-'rhea'. 
+The top-level group in a GitLab group (or GitHub repo) contains
+a sub-group for each target machine.
 
 Repository URL
 ^^^^^^^^^^^^^^
 
 Each application that can be tested on a given machine has a repository
 within the machine's group.
-
-.. code-block:: bash
-
-    https://gitlab.ccs.ornl.gov/olcf-system-test/applications/<machine name>/<application name>.git
 
 
 Repository structure
@@ -55,10 +47,8 @@ within the *Source* directory of the repository.
 Example Repository
 ^^^^^^^^^^^^^^^^^^
 
-For instance, to add a new application called *hello_mpi* to the Lyra system, we
-would create the following repo:
-`https://gitlab.ccs.ornl.gov/olcf-system-test/applications/lyra/hello_mpi.git
-<https://gitlab.ccs.ornl.gov/olcf-system-test/applications/lyra/hello_mpi.git>`_.
+For instance, let's assume we have a Git repository for an application
+called *hello_mpi*.
 
 To add a single node test and a two node test, we would create a separate
 subdirectory for each test, including their required *Scripts* subdirectory:
@@ -95,7 +85,7 @@ application mentioned above:
     job_name = hello_mpi_c
     batch_queue = batch
     walltime = 10
-    project_id = stf006accept
+    project_id = my_project
     executable_path = hello
     batch_filename = run_hello_mpi_c.sh
     build_cmd = ./build_hello_mpi_c.sh

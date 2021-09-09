@@ -151,7 +151,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#indices-and-tables">Indices and tables</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/unit_test_framework.html">Harness’s Git Unit Test Framework</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/unit_test_framework.html">Git Unit Test Framework</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#organizational-structure">Organizational Structure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#setting-up-the-harness-unit-testing-runtime-environment">Setting Up the Harness Unit Testing Runtime Environment</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#generic-tests">Generic Tests</a></li>
@@ -267,18 +267,12 @@ structure for application tests. This document describes how to add an
 application and associated tests for a specific system to the harness.</p>
 <section id="application-source-code-repository-structure">
 <h2>Application Source Code Repository Structure<a class="headerlink" href="#application-source-code-repository-structure" title="Permalink to this headline">¶</a></h2>
-<p>All OTH application tests reside in this GitLab group:
-<a class="reference external" href="https://gitlab.ccs.ornl.gov/olcf-system-test/applications">https://gitlab.ccs.ornl.gov/olcf-system-test/applications</a>. This
-top-level ‘applications’ group contains a sub-group per target machine.
-For example, there are sub-groups for the OLCF machines ‘summit’ and
-‘rhea’.</p>
+<p>The top-level group in a GitLab group (or GitHub repo) contains
+a sub-group for each target machine.</p>
 <section id="repository-url">
 <h3>Repository URL<a class="headerlink" href="#repository-url" title="Permalink to this headline">¶</a></h3>
 <p>Each application that can be tested on a given machine has a repository
 within the machine’s group.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>https://gitlab.ccs.ornl.gov/olcf-system-test/applications/&lt;machine name&gt;/&lt;application name&gt;.git
-</pre></div>
-</div>
 </section>
 <section id="repository-structure">
 <h3>Repository structure<a class="headerlink" href="#repository-structure" title="Permalink to this headline">¶</a></h3>
@@ -302,9 +296,8 @@ within the <em>Source</em> directory of the repository.</p>
 </section>
 <section id="example-repository">
 <h3>Example Repository<a class="headerlink" href="#example-repository" title="Permalink to this headline">¶</a></h3>
-<p>For instance, to add a new application called <em>hello_mpi</em> to the Lyra system, we
-would create the following repo:
-<a class="reference external" href="https://gitlab.ccs.ornl.gov/olcf-system-test/applications/lyra/hello_mpi.git">https://gitlab.ccs.ornl.gov/olcf-system-test/applications/lyra/hello_mpi.git</a>.</p>
+<p>For instance, let’s assume we have a Git repository for an application
+called <em>hello_mpi</em>.</p>
 <p>To add a single node test and a two node test, we would create a separate
 subdirectory for each test, including their required <em>Scripts</em> subdirectory:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hello_mpi/c_n001/Scripts/
@@ -332,7 +325,7 @@ application mentioned above:</p>
 <span class="nv">job_name</span> <span class="o">=</span> hello_mpi_c
 <span class="nv">batch_queue</span> <span class="o">=</span> batch
 <span class="nv">walltime</span> <span class="o">=</span> <span class="m">10</span>
-<span class="nv">project_id</span> <span class="o">=</span> stf006accept
+<span class="nv">project_id</span> <span class="o">=</span> my_project
 <span class="nv">executable_path</span> <span class="o">=</span> hello
 <span class="nv">batch_filename</span> <span class="o">=</span> run_hello_mpi_c.sh
 <span class="nv">build_cmd</span> <span class="o">=</span> ./build_hello_mpi_c.sh
