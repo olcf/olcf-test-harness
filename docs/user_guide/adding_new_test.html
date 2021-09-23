@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Adding a New Test to the OTH &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/js/custom.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding a New Machine to the OTH" href="adding_new_machine.html" />
+    <link rel="prev" title="Launching the OLCF Test Harness (OTH)" href="launching.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #efefef" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/olcf_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#execution-overview">Execution Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="launching.html">Launching the OLCF Test Harness (OTH)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#oth-setup">OTH Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-lyra">On Lyra</a></li>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-spock">On Spock</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#launching-the-oth">Launching the OTH</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Test to the OTH</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#repository-url">Repository URL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#repository-structure">Repository structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-repository">Example Repository</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#application-test-input">Application Test Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#required-application-test-scripts">Required Application Test Scripts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build-script">Build Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#job-script-template">Job Script Template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-script">Check Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#notes-on-where-things-are">Notes on Where Things Are</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/notational_conventions.html">Notational Conventions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/notational_conventions.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#raison-d-etre">Raison d’etre</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#organizational-structure">Organizational Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#prequisites">Prequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/unit_test_framework.html">Git Unit Test Framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#organizational-structure">Organizational Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#setting-up-the-harness-unit-testing-runtime-environment">Setting Up the Harness Unit Testing Runtime Environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#generic-tests">Generic Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#machine-specific-tests">Machine Specific Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#running-the-harness-unit-tests">Running the Harness Unit Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#id1">Generic Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#id2">Machine Specific Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#harness-unit-testing-api">Harness Unit Testing API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework/git_ci_test_framework.html">Usage and Developer Documentation for GitLab CI/CD</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework/pytest_test_framework.html">Usage and Developer Documentation for Harness’ pytest Unit Tests</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/packages.html">NCCS Harness Python Packages</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/packages/repositories.html">NCCS Harness repositories package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#intoduction">Intoduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#prerequisite-environmental-variables">Prerequisite Environmental Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#modules">Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide/packages/bin.html">NCCS Harness bin package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/bin.html#intoduction">Intoduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/bin.html#modules">Modules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/modules.html">harness</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NCCS_Test_Harness</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content style-external-links">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Adding a New Test to the OTH</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/user_guide/adding_new_test.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="adding-a-new-test-to-the-oth">
+<h1>Adding a New Test to the OTH<a class="headerlink" href="#adding-a-new-test-to-the-oth" title="Permalink to this headline">¶</a></h1>
+<p>The OLCF Test Harness (OTH) requires a specific source code repository
+structure for application tests. This document describes how to add an
+application and associated tests for a specific system to the harness.</p>
+<section id="application-source-code-repository-structure">
+<h2>Application Source Code Repository Structure<a class="headerlink" href="#application-source-code-repository-structure" title="Permalink to this headline">¶</a></h2>
+<p>The top-level group in a GitLab group (or GitHub repo) contains
+a sub-group for each target machine.</p>
+<section id="repository-url">
+<h3>Repository URL<a class="headerlink" href="#repository-url" title="Permalink to this headline">¶</a></h3>
+<p>Each application that can be tested on a given machine has a repository
+within the machine’s group.</p>
+</section>
+<section id="repository-structure">
+<h3>Repository structure<a class="headerlink" href="#repository-structure" title="Permalink to this headline">¶</a></h3>
+<p>The application repository must be structured as shown below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">application</span> <span class="n">name</span><span class="o">&gt;/&lt;</span><span class="n">test</span> <span class="n">name</span><span class="o">&gt;/</span><span class="n">Scripts</span><span class="o">/</span>
+                                      <span class="o">/</span><span class="n">rgt_test_input</span><span class="o">.</span><span class="n">ini</span>
+                                      <span class="o">/&lt;</span><span class="n">check</span> <span class="n">script</span><span class="o">&gt;</span>
+                                      <span class="o">/&lt;</span><span class="n">report</span> <span class="n">script</span><span class="o">&gt;</span>
+                                      <span class="o">/&lt;</span><span class="n">job</span> <span class="n">script</span> <span class="n">template</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">application</span> <span class="n">name</span><span class="o">&gt;/</span><span class="n">Source</span><span class="o">/</span>
+                         <span class="o">/&lt;</span><span class="n">build</span> <span class="n">script</span><span class="o">&gt;</span>
+                         <span class="o">/&lt;</span><span class="n">other</span> <span class="n">application</span> <span class="n">source</span> <span class="ow">and</span> <span class="n">build</span> <span class="n">files</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>First, each application test must have its own subdirectory. The test directory
+has a mandatory <em>Scripts</em> subdirectory, which should contain the test input file
+(see <a class="reference internal" href="#application-test-input"><span class="std std-ref">Application Test Input</span></a> below) and other required scripts (see
+<a class="reference internal" href="#required-application-test-scripts"><span class="std std-ref">Required Application Test Scripts</span></a> below).</p>
+<p>Second, the application’s source code and required build script should reside
+within the <em>Source</em> directory of the repository.</p>
+</section>
+<section id="example-repository">
+<h3>Example Repository<a class="headerlink" href="#example-repository" title="Permalink to this headline">¶</a></h3>
+<p>For instance, let’s assume we have a Git repository for an application
+called <em>hello_mpi</em>.</p>
+<p>To add a single node test and a two node test, we would create a separate
+subdirectory for each test, including their required <em>Scripts</em> subdirectory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hello_mpi/c_n001/Scripts/
+         /c_n002/Scripts/
+</pre></div>
+</div>
+<p>Note that the test names are not required to follow any specific naming convention,
+but you should avoid spaces in the names.</p>
+</section>
+</section>
+<section id="application-test-input">
+<span id="id1"></span><h2>Application Test Input<a class="headerlink" href="#application-test-input" title="Permalink to this headline">¶</a></h2>
+<p>Each test scripts directory should contain a test input file named
+<em>rgt_test_input.ini</em>. The test input file contains information that is used by the
+OTH to build, submit, and check the results of application tests. All the fields in
+the <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section can be used in the job script template and will be
+replaced when creating the batch script (see <a class="reference internal" href="#job-script-template"><span class="std std-ref">Job Script Template</span></a> section below).
+The fields in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section allow you to set environment variables that
+your job will be able to use.</p>
+<p>The following is a sample input for the single node test of the <em>hello_mpi</em>
+application mentioned above:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>Replacements<span class="o">]</span>
+<span class="c1">#-- This is a comment</span>
+<span class="c1">#-- The following variables are required</span>
+<span class="nv">job_name</span> <span class="o">=</span> hello_mpi_c
+<span class="nv">batch_queue</span> <span class="o">=</span> batch
+<span class="nv">walltime</span> <span class="o">=</span> <span class="m">10</span>
+<span class="nv">project_id</span> <span class="o">=</span> my_project
+<span class="nv">executable_path</span> <span class="o">=</span> hello
+<span class="nv">batch_filename</span> <span class="o">=</span> run_hello_mpi_c.sh
+<span class="nv">build_cmd</span> <span class="o">=</span> ./build_hello_mpi_c.sh
+<span class="nv">check_cmd</span> <span class="o">=</span> ./check_hello_mpi_c.sh
+<span class="nv">report_cmd</span> <span class="o">=</span> ./report_hello_mpi_c.sh
+<span class="nv">resubmit</span> <span class="o">=</span> <span class="m">0</span>
+
+<span class="c1">#-- The following are user&#39;s defined and used for Key-Value replacements</span>
+<span class="nv">nodes</span> <span class="o">=</span> <span class="m">1</span>
+<span class="nv">total_processes</span> <span class="o">=</span> <span class="m">16</span>
+<span class="nv">processes_per_node</span> <span class="o">=</span> <span class="m">16</span>
+
+<span class="o">[</span>EnvVars<span class="o">]</span>
+<span class="nv">FOO</span> <span class="o">=</span> bar
+</pre></div>
+</div>
+</section>
+<section id="required-application-test-scripts">
+<span id="id2"></span><h2>Required Application Test Scripts<a class="headerlink" href="#required-application-test-scripts" title="Permalink to this headline">¶</a></h2>
+<p>The OTH requires each application test to provide a build script, a check
+script, and a job script template. An optional report script may also be
+provided. These scripts should be placed in the locations described above.
+If the OTH cannot find the scripts specified in the test input, it will
+fail to launch.</p>
+<section id="build-script">
+<h3>Build Script<a class="headerlink" href="#build-script" title="Permalink to this headline">¶</a></h3>
+<p>The build script can be a shell script, a Python script, or other executable
+command. It is specified in the test input file as <em>build_cmd</em>, and the OTH
+will execute the provided value as a subprocess. The build script should
+return 0 on success, non-zero otherwise.</p>
+<p>For <em>hello_mpi</em>, an example build script named <em>build_hello_mpi_c.sh</em> may
+contain the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash -l</span>
+
+module load gcc
+module load openmpi
+module list
+
+mkdir -p bin
+mpicc hello_mpi.c -o bin/hello
+</pre></div>
+</div>
+<p>The first step of building the application will be executed from the directory
+<strong>$BUILD_DIR</strong>, which will be a copy of <em>Source/</em>. This means the build script
+should be written as if it were executed from <em>Source/</em>, regardless of where it
+actually is.</p>
+<p>Correspondingly, the path to the build script given in <em>rgt_test_input.ini</em>
+should be relative to the <em>Source/</em> directory.</p>
+</section>
+<section id="job-script-template">
+<span id="id3"></span><h3>Job Script Template<a class="headerlink" href="#job-script-template" title="Permalink to this headline">¶</a></h3>
+<p>The OTH will generate the batch job script from the job script template by
+replacing keywords of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> with the values specified in
+the test input <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section.</p>
+<p>The job script template must be named appropriately to match the specific
+scheduler of the target machine. For SLURM systems, use <em>slurm.template.x</em> as
+the name. For LSF systems, use <em>lsf.template.x</em>. An example SLURM template
+script for the <em>hello_mpi</em> application follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash -l</span>
+<span class="c1">#SBATCH -J __job_name__</span>
+<span class="c1">#SBATCH -N __nodes__</span>
+<span class="c1">#SBATCH -t __walltime__</span>
+<span class="c1">#SBATCH -A __project_id__</span>
+<span class="c1">#SBATCH -o __job_name__.o%j</span>
+
+module load openmpi
+module list
+
+<span class="c1"># Define environment variables needed</span>
+<span class="nv">EXECUTABLE</span><span class="o">=</span><span class="s2">&quot;__executable_path__&quot;</span>
+<span class="nv">SCRIPTS_DIR</span><span class="o">=</span><span class="s2">&quot;__scripts_dir__&quot;</span>
+<span class="nv">WORK_DIR</span><span class="o">=</span><span class="s2">&quot;__working_dir__&quot;</span>
+<span class="nv">RESULTS_DIR</span><span class="o">=</span><span class="s2">&quot;__results_dir__&quot;</span>
+<span class="nv">HARNESS_ID</span><span class="o">=</span><span class="s2">&quot;__harness_id__&quot;</span>
+<span class="nv">BUILD_DIR</span><span class="o">=</span><span class="s2">&quot;__build_dir__&quot;</span>
+
+<span class="nb">echo</span> <span class="s2">&quot;Printing test directory environment variables:&quot;</span>
+env <span class="p">|</span> fgrep RGT_APP_SOURCE_
+env <span class="p">|</span> fgrep RGT_TEST_
+<span class="nb">echo</span>
+
+<span class="c1"># Ensure we are in the starting directory</span>
+<span class="nb">cd</span> <span class="nv">$SCRIPTS_DIR</span>
+
+<span class="c1"># Make the working scratch space directory.</span>
+<span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$WORK_DIR</span> <span class="o">]</span>
+<span class="k">then</span>
+    mkdir -p <span class="nv">$WORK_DIR</span>
+<span class="k">fi</span>
+
+<span class="c1"># Change directory to the working directory.</span>
+<span class="nb">cd</span> <span class="nv">$WORK_DIR</span>
+
+env <span class="p">&amp;</span>&gt; job.environ
+scontrol show hostnames &gt; job.nodes
+
+<span class="c1"># Run the executable.</span>
+log_binary_execution_time.py --scriptsdir <span class="nv">$SCRIPTS_DIR</span> --uniqueid <span class="nv">$HARNESS_ID</span> --mode start
+
+<span class="c1">#CMD=&quot;srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE&quot;</span>
+<span class="nv">CMD</span><span class="o">=</span><span class="s2">&quot;mpirun -n __total_processes__ --map-by node --hostfile job.nodes </span><span class="nv">$BUILD_DIR</span><span class="s2">/</span><span class="nv">$EXECUTABLE</span><span class="s2">&quot;</span>
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span>
+<span class="nv">$CMD</span>
+
+log_binary_execution_time.py --scriptsdir <span class="nv">$SCRIPTS_DIR</span> --uniqueid <span class="nv">$HARNESS_ID</span> --mode final
+
+<span class="c1"># Ensure we return to the starting directory.</span>
+<span class="nb">cd</span> <span class="nv">$SCRIPTS_DIR</span>
+
+<span class="c1"># Copy the output and results back to the $RESULTS_DIR</span>
+cp -rf <span class="nv">$WORK_DIR</span>/* <span class="nv">$RESULTS_DIR</span>
+cp <span class="nv">$BUILD_DIR</span>/output_build.*.txt <span class="nv">$RESULTS_DIR</span>
+
+<span class="c1"># Check the final results.</span>
+check_executable_driver.py -p <span class="nv">$RESULTS_DIR</span> -i <span class="nv">$HARNESS_ID</span>
+
+<span class="c1"># Resubmit if needed</span>
+<span class="k">case</span> __resubmit__ <span class="k">in</span>
+    <span class="m">0</span><span class="o">)</span>
+       <span class="nb">echo</span> <span class="s2">&quot;No resubmit&quot;</span><span class="p">;;</span>
+    <span class="m">1</span><span class="o">)</span>
+       test_harness_driver.py -r<span class="p">;;</span>
+<span class="k">esac</span>
+</pre></div>
+</div>
+<p>Using the job template above, the job will be submitted from the test <em>Scripts/</em>
+directory and starts there. This is <strong>$SCRIPT_DIR</strong> in the job template. The
+executable will then be run from <strong>$WORK_DIR</strong> directory, an entirely new directory.</p>
+<p>One can access or copy any files relative to the <em>Scripts/</em> directory using the
+<strong>$SCRIPT_DIR</strong> environment variable. For example, if one stores a <em>CorrectResults</em>
+directory for a test case, it can be be copied by adding the line</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cp -a <span class="si">${</span><span class="nv">SCRIPT_DIR</span><span class="si">}</span>/../CorrectResults <span class="si">${</span><span class="nv">WORK_DIR</span><span class="si">}</span>/
+</pre></div>
+</div>
+<p>inside the job script.</p>
+<p>The environment variable <strong>$EXECUTABLE</strong> is also populated based on
+<code class="docutils literal notranslate"><span class="pre">executable_path</span></code> entry in <em>rgt_test_input.ini</em> file. This is relative to the
+<strong>$WORK_DIR</strong>, an entirely new directory created for every harness run.</p>
+<p>Since the actual executable may still be inside <strong>$BUILD_DIR</strong> from the previous
+step, one would need to either copy it to <strong>$WORK_DIR</strong> or prepend the path in the
+job script such as <strong>$BUILD_DIR/$EXECUTABLE</strong>.</p>
+</section>
+<section id="check-script">
+<h3>Check Script<a class="headerlink" href="#check-script" title="Permalink to this headline">¶</a></h3>
+<p>The check script can be a shell script, Python script, or other executable
+command.</p>
+<p>Check scripts are used to verify that application tests ran as expected, and
+thus use standardized return codes to inform the OTH on the test result. The
+check script return value must be one of the following:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code>: test succeeded</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code>: test failed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">5</span></code>: test completed correctly but failed a performance target</p></li>
+</ul>
+<p>For <em>hello_mpi</em>, an example check script named <em>check_hello_mpi_c.sh</em> may
+contain the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="nb">echo</span> <span class="s2">&quot;This is the check script for hello_mpi.&quot;</span>
+<span class="nb">echo</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;Working Directory: &quot;</span><span class="p">;</span> <span class="nb">pwd</span>
+<span class="nb">echo</span>
+<span class="nb">echo</span> <span class="s2">&quot;Test Result Files:&quot;</span>
+ls ./*
+<span class="nb">echo</span>
+<span class="nb">exit</span> <span class="m">0</span>
+</pre></div>
+</div>
+</section>
+<section id="notes-on-where-things-are">
+<h3>Notes on Where Things Are<a class="headerlink" href="#notes-on-where-things-are" title="Permalink to this headline">¶</a></h3>
+<p>It can be a little bit confusing to know where everything is and from which
+directory they are executed. These are explained briefly in <a class="reference internal" href="overview.html"><span class="doc">Overview of the Test Harness</span></a>.
+The following elaborates on this topic a bit more with some concrete examples.</p>
+<p>In reading these notes, please keep in mind the application repository structure
+describe above.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="adding_new_machine.html" class="btn btn-neutral float-right" title="Adding a New Machine to the OTH" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="launching.html" class="btn btn-neutral float-left" title="Launching the OLCF Test Harness (OTH)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
