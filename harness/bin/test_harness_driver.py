@@ -88,7 +88,7 @@ def create_parser():
                            help='Use previously generated unique id')
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
-                           action='store', nargs='?', type=int, const=True, default=False)
+                           action='store', nargs='?', type=int, const=0, default=False)
     my_parser.add_argument('-R', '--run',
                            help='Run the application test batch script (NOTE: for use within a job)',
                            action='store_true')
@@ -308,19 +308,11 @@ def test_harness_driver(argv=None):
 
     do_resubmit = False
     if do_submit:
-        # No -r == None
-        # -r == True
-        # -r N == int(N)
-        #
-        # Only resubmit if -r N is > 1 
-        # -r is set
+        # Skip this logic if resubmit is not specified, or is set to 0 (indefinite resubmissions)
         if Vargs.resubmit:
-            # More than 1 iteration left, or no max was specified (infinite resubmissions). 
-            # Pass value from command line
-            if Vargs.resubmit > 1 or Vargs.resubmit is True:
+            if Vargs.resubmit > 1:
                 do_resubmit = Vargs.resubmit
             elif Vargs.resubmit <= 1:
-                # If -r N is <= 1, stop resubmissions
                 do_resubmit = False
                 do_submit = False
 
