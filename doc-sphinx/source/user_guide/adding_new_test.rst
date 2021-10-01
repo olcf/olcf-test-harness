@@ -92,6 +92,10 @@ application mentioned above:
     check_cmd = ./check_hello_mpi_c.sh 
     report_cmd = ./report_hello_mpi_c.sh
     resubmit = 0
+    # Use in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
+    # Set to 0 for indefinite resubmissions
+    max_submissions = 3 
+
     
     #-- The following are user's defined and used for Key-Value replacements 
     nodes = 1
@@ -221,7 +225,7 @@ script for the *hello_mpi* application follows:
         0)
            echo "No resubmit";;
         1)
-           test_harness_driver.py -r;;
+           test_harness_driver.py -r __max_submissions__ ;;
     esac
 
 Using the job template above, the job will be submitted from the test *Scripts/*
