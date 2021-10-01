@@ -188,10 +188,14 @@ def auto_generated_scripts(harness_config,
         # On further iterations, we'll take the count from `test_harness_driver.py -r  N` invocation, passed through actons['resubmit]
         #
         max_subs_cfg = mymachine.test_config.get_max_submissions() 
+        if max_subs_cfg is None:
+            # Ensure we have at least an empty string so the template variable can resolve
+            mymachine.test_config.set_max_submissions("")
+
         if actions['resubmit'] is 0 and max_subs_cfg is not False:
             # First iteration, decrement value from config. We have not invoked -r yet.
             max_subs_cfg = int(max_subs_cfg)
-            mymachine.test_config.set_max_submissions(str(max_subs_cfg-1))
+            mymachine.test_config.set_max_submissions(str(int(max_subs_cfg)-1))
         elif actions['resubmit'] and type(actions['resubmit']) == int:
             mymachine.test_config.set_max_submissions(str(actions['resubmit']-1))
 
