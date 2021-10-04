@@ -73,6 +73,9 @@ def create_parser():
     my_parser.add_argument('-b', '--build',
                            help='Build the application test',
                            action='store_true')
+    my_parser.add_argument('-sb', '--separate-build',
+                           help='Separate the stdout and stderr of a build',
+                           action='store_true')
     my_parser.add_argument('-c', '--check',
                            help='Check the application test results',
                            action='store_true')
@@ -137,7 +140,8 @@ def auto_generated_scripts(harness_config,
                            apptest,
                            jstatus,
                            actions,
-                           a_logger):
+                           a_logger,
+                           separate_build=False):
     """
     Generates and executes scripts to build, run, and check a test.
 
@@ -151,7 +155,7 @@ def auto_generated_scripts(harness_config,
     ra_dir = apptest.get_path_to_runarchive()
 
     # Instantiate the machine for this computer.
-    mymachine = MachineFactory.create_machine(harness_config, apptest)
+    mymachine = MachineFactory.create_machine(harness_config, apptest, separate_build=separate_build)
 
     #-----------------------------------------------------
     # In this section we build the binary.               -
@@ -410,7 +414,8 @@ def test_harness_driver(argv=None):
                                              apptest,
                                              jstatus,
                                              actions,
-                                             a_logger)
+                                             a_logger,
+                                             Vargs.separate_build)
     else:
         error_message = "The user generated scripts functionality is no longer supported"
         a_logger.doCriticalLogging(error_message)

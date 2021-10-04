@@ -46,7 +46,7 @@ class BaseMachine(metaclass=ABCMeta):
     # The constructor of class base_machine.
     def __init__(self, name, scheduler_type, jobLauncher_type,
                  numNodes, numSockets, numCoresPerSocket,
-                 apptest):
+                 apptest, separate_build=False):
 
         self.__name = name
 
@@ -59,6 +59,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.__numSockets = numSockets
         self.__numCoresPerSocket = numCoresPerSocket
         self.__apptest = apptest
+        self.__separate_build = separate_build
 
         runarchive_dir = self.apptest.get_path_to_runarchive()
         log_filepath = os.path.join(runarchive_dir,self.__class__.__module__)
@@ -92,6 +93,11 @@ class BaseMachine(metaclass=ABCMeta):
     def machine_name(self):
         """str: The name of the machine."""
         return self.__name
+
+    @property
+    def separate_build(self):
+        """bool: If true, separate build into stdout and stderr"""
+        return self.__separate_build
 
     @property
     def check_command(self):

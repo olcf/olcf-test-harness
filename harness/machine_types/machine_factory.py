@@ -15,7 +15,8 @@ class MachineFactory:
 
     @staticmethod
     def create_machine(harness_config,
-                       app_subtest):
+                       app_subtest,
+                       separate_build=False):
 
         machine_config = harness_config.get_machine_config()
 
@@ -79,6 +80,7 @@ class MachineFactory:
                                         numNodes=int(rgt_num_nodes),
                                         numSocketsPerNode=int(rgt_sockets_per_node),
                                         numCoresPerSocket=int(rgt_cores_per_socket),
+                                        separate_build=separate_build,
                                         apptest=app_subtest)
             elif rgt_machine_type == "linux_x86_64":
                 tmp_machine = Linux_x86_64(name=rgt_machine_name,
@@ -87,6 +89,7 @@ class MachineFactory:
                                            numNodes=int(rgt_num_nodes),
                                            numSocketsPerNode=int(rgt_sockets_per_node),
                                            numCoresPerSocket=int(rgt_cores_per_socket),
+                                           separate_build=separate_build,
                                            apptest=app_subtest)
             else:
                 raise MachineTypeNotImplementedError(rgt_machine_type)

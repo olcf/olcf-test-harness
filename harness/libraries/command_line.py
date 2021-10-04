@@ -14,7 +14,8 @@ class HarnessParsedArguments:
                        configfile=None,
                        runmode=None,
                        stdout_stderr=None,
-                       use_fireworks=False):
+                       use_fireworks=False,
+                       separate_build=False):
 
         self.__inputfile = inputfile
         self.__loglevel = loglevel
@@ -22,6 +23,7 @@ class HarnessParsedArguments:
         self.__mode = runmode
         self.__stdout_stderr = stdout_stderr
         self.__use_fireworks = use_fireworks
+        self.__separate_build = separate_build
 
         self.__verify_attributes()
 
@@ -61,6 +63,10 @@ class HarnessParsedArguments:
     @property
     def use_fireworks(self):
         return self.__use_fireworks
+
+    @property
+    def separate_build(self):
+        return self.__separate_build
 
     @property
     def effective_command_line(self):

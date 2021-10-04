@@ -406,14 +406,21 @@ def build_executable(a_machine, new_env):
 
     # We get the command for bulding the binary.
     buildcmd = a_machine.test_config.get_build_command()
-    build_std_out = "output_build.stdout.txt"
-    build_std_err = "output_build.stderr.txt"
     message = f"{messloc} The build command: {buildcmd}"
     a_machine.logger.doInfoLogging(message)
 
-    with open(build_std_out,"w") as build_std_out :
-        with open(build_std_err,"w") as build_std_err :
-            p = subprocess.Popen(buildcmd, shell=True, stdout=build_std_out, stderr=build_std_err)
+    if a_machine.separate_build:
+        build_std_out = "output_build.stdout.txt"
+        build_std_err = "output_build.stderr.txt"
+        with open(build_std_out,"w") as build_std_out :
+            with open(build_std_err,"w") as build_std_err :
+                p = subprocess.Popen(buildcmd, shell=True, stdout=build_std_out, stderr=build_std_err)
+                p.wait()
+                build_exit_status = p.returncode
+    else:
+        build_out = "output_build.txt"
+        with open(build_out,"w") as build_out :
+            p = subprocess.Popen(buildcmd, shell=True, stdout=build_out, stderr=subprocess.STDOUT)
             p.wait()
             build_exit_status = p.returncode
 
