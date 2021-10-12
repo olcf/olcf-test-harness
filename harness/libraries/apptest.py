@@ -101,7 +101,7 @@ class subtest(base_apptest, apptest_layout):
                 test_checkout_lock=None,
                 test_display_lock=None,
                 stdout_stderr=None,
-                separate_build=False):
+                separate_build_stdio=False):
         """
         :param list_of_string my_tasks: A list of the strings
                                         where each element is an application
@@ -153,7 +153,7 @@ class subtest(base_apptest, apptest_layout):
                 message = "Start of starting test."
                 self.doInfoLogging(message)
 
-                self._start_test(stdout_stderr, separate_build=separate_build)
+                self._start_test(stdout_stderr, separate_build_stdio=separate_build_stdio)
 
                 message = "End of starting test"
                 self.doInfoLogging(message)
@@ -508,7 +508,7 @@ class subtest(base_apptest, apptest_layout):
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     def _start_test(self,
                     stdout_stderr,
-                    separate_build=False):
+                    separate_build_stdio=False):
 
         # If the file kill file exits then remove it.
         pathtokillfile = self.get_path_to_kill_file()
@@ -516,8 +516,8 @@ class subtest(base_apptest, apptest_layout):
             os.remove(pathtokillfile)
 
         # This will automatically build & submit
-        if separate_build:
-            starttestcomand = "test_harness_driver.py -r --separate-build"
+        if separate_build_stdio:
+            starttestcomand = "test_harness_driver.py -r --separate-build-stdio"
         else:
             starttestcomand = "test_harness_driver.py -r"
 
@@ -582,13 +582,13 @@ class ApptestImproperInstantiationError(BaseApptestError):
 def do_application_tasks(app_test_list,
                          tasks,
                          stdout_stderr,
-                         separate_build=False):
+                         separate_build_stdio=False):
     print(f"App_test_list: {app_test_list}")
     print(f"Tasks: {tasks}")
     for app_test in app_test_list:
         app_test.doTasks(tasks=tasks,
                          stdout_stderr=stdout_stderr,
-                         separate_build=separate_build)
+                         separate_build_stdio=separate_build_stdio)
     return
 
 def wait_for_jobs_to_complete_in_queue(harness_config,

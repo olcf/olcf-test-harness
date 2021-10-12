@@ -25,7 +25,7 @@ class IBMpower9(BaseMachine):
                  numCoresPerSocket=21,
                  rgt_test_input_file=None,
                  apptest=None,
-                 separate_build=False):
+                 separate_build_stdio=False):
 
         BaseMachine.__init__(self,
                              name=name,
@@ -35,7 +35,7 @@ class IBMpower9(BaseMachine):
                              numSockets = numSocketsPerNode,
                              numCoresPerSocket = numCoresPerSocket,
                              apptest=apptest,
-                             separate_build=separate_build)
+                             separate_build_stdio=separate_build_stdio)
 
         # process test input file. The subtest knows the path to the 
         # the test input file.

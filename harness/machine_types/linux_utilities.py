@@ -409,7 +409,7 @@ def build_executable(a_machine, new_env):
     message = f"{messloc} The build command: {buildcmd}"
     a_machine.logger.doInfoLogging(message)
 
-    if a_machine.separate_build:
+    if a_machine.separate_build_stdio:
         build_std_out = "output_build.stdout.txt"
         build_std_err = "output_build.stderr.txt"
         with open(build_std_out,"w") as build_std_out :

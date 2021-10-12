@@ -44,7 +44,7 @@ class Harness:
                  log_level,
                  stdout_stderr,
                  use_fireworks,
-                 separate_build):
+                 separate_build_stdio):
         self.__config = config
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
@@ -56,7 +56,7 @@ class Harness:
         self.__stdout_stderr = stdout_stderr
         self.__num_workers = 1
         self.__use_fireworks = use_fireworks
-        self.__separate_build = separate_build
+        self.__separate_build_stdio = separate_build_stdio
         self.__formAppTests()
 
         currenttime = time.localtime()
@@ -247,7 +247,7 @@ class Harness:
                                          self.__app_subtests[appname],
                                          self.__tasks,
                                          self.__stdout_stderr,
-                                         self.__separate_build)
+                                         self.__separate_build_stdio)
                 future_to_appname[future] = appname
 
             # Log when all job tasks are initiated.
@@ -300,8 +300,8 @@ class Harness:
 
                 # create build FireWork
                 taskname = f'OTH-BLD.{machine_name}.{task_suffix}'
-                if self.__separate_build:
-                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --separate-build --scriptsdir {scripts_dir} --uniqueid {uid}'
+                if self.__separate_build_stdio:
+                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --separate-build-stdio --scriptsdir {scripts_dir} --uniqueid {uid}'
                 else:
                     driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --scriptsdir {scripts_dir} --uniqueid {uid}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwbuild.log'
