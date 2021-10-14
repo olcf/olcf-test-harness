@@ -141,6 +141,7 @@ class RgtTest():
             "check_cmd": True,
             "executable_path" : False,
             "job_name" : True,
+            "max_submissions" : False,
             "nodes" : True,
             "processes_per_node" : False,
             "project_id" : False,
@@ -354,6 +355,12 @@ class RgtTest():
         return replacements
 
     #
+    # Convenience methods for setting specific parameters
+    #
+    def set_max_submissions(self, value):
+        self._set_builtin_param("max_submissions", value)
+
+    #
     # Convenience methods for retrieving specific parameters
     #
 
@@ -377,6 +384,9 @@ class RgtTest():
 
     def get_jobname(self):
         return self._get_builtin_param("job_name")
+
+    def get_max_submissions(self):
+        return self._get_builtin_param("max_submissions")
 
     def get_nodes(self):
         return self._get_builtin_param("nodes")
@@ -428,6 +438,9 @@ class RgtTest():
             sys.exit(err.message)
 
     # Private methods
+
+    def _set_builtin_param(self, key, value):
+        self.builtin_parameters[key] = value
 
     def _get_builtin_param(self, key):
         if key in self.builtin_parameters:

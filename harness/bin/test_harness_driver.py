@@ -87,8 +87,8 @@ def create_parser():
     my_parser.add_argument('-i', '--uniqueid',
                            help='Use previously generated unique id')
     my_parser.add_argument('-r', '--resubmit',
-                           help='Have the application test batch script resubmit itself',
-                           action='store_true')
+                           help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
+                           action='store', nargs='?', type=int, const=-1, default=False)
     my_parser.add_argument('-R', '--run',
                            help='Run the application test batch script (NOTE: for use within a job)',
                            action='store_true')
@@ -181,6 +181,24 @@ def auto_generated_scripts(harness_config,
         message = f"{messloc} No submit action due to prior failed build."
         a_logger.doCriticalLogging(message)
     elif actions['submit'] and (build_exit_value == 0):
+
+
+        # If we have specified a finite amount of submissions, override config
+        # On the first iteration, we'll have a value from the ini file that needs to be decremented here.
+        # On further iterations, we'll take the count from `test_harness_driver.py -r  N` invocation, passed through actons['resubmit]
+        #
+        max_subs_cfg = mymachine.test_config.get_max_submissions() 
+        if max_subs_cfg is None:
+            # Ensure we have at least an empty string so the template variable can resolve
+            mymachine.test_config.set_max_submissions("")
+
+        if actions['resubmit'] is 0 and max_subs_cfg is not False:
+            # First iteration, decrement value from config. We have not invoked -r yet.
+            max_subs_cfg = int(max_subs_cfg)
+            mymachine.test_config.set_max_submissions(str(int(max_subs_cfg)-1))
+        elif actions['resubmit'] and type(actions['resubmit']) == int:
+            mymachine.test_config.set_max_submissions(str(actions['resubmit']-1))
+
         # Create the batch script
         make_batch_script_status = mymachine.make_batch_script()
 
@@ -290,7 +308,14 @@ def test_harness_driver(argv=None):
 
     do_resubmit = False
     if do_submit:
-        do_resubmit = Vargs.resubmit
+        # Skip this logic if resubmit is not specified, or is set to 0 (indefinite resubmissions)
+        if Vargs.resubmit and Vargs.resubmit != -1:
+            if Vargs.resubmit > 1:
+                do_resubmit = Vargs.resubmit
+            elif Vargs.resubmit <= 1:
+                do_resubmit = False
+                do_submit = False
+
 
     actions = {
         'build'    : do_build,
@@ -357,6 +382,7 @@ def test_harness_driver(argv=None):
             logging.shutdown()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
             return
+
 
     # Create the status and run archive directories for this test instance
     status_dir = apptest.create_test_status()
