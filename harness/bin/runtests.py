@@ -319,6 +319,12 @@ def create_parser():
                         action='store_true',
                         help="Use FireWorks to run harness tasks")
 
+    parser.add_argument("-sb", "--separate-build-stdio",
+                        action='store_true',
+                        required=False,
+                        default=False,
+                        help="Separate output from build into build_out.stderr.txt and build_out.stdout.txt")
+
     return parser
 
 def parse_commandline_argv(argv):
@@ -349,7 +355,8 @@ def parse_commandline_argv(argv):
                                                               configfile=Vargs.configfile,
                                                               stdout_stderr=Vargs.output,
                                                               runmode=Vargs.mode,
-                                                              use_fireworks=Vargs.fireworks)
+                                                              use_fireworks=Vargs.fireworks,
+                                                              separate_build_stdio=Vargs.separate_build_stdio)
     return harness_parsed_args
 
 def runtests(my_arg_string=None):
@@ -402,7 +409,8 @@ def runtests(my_arg_string=None):
     rgt = regression_test.Harness(config, ifile,
                                   harness_arguments.loglevel,
                                   harness_arguments.stdout_stderr,
-                                  harness_arguments.use_fireworks)
+                                  harness_arguments.use_fireworks,
+                                  harness_arguments.separate_build_stdio)
 
     main_logger.info("Created an instance of the harness.")
     main_logger.info("Harness: " + str(rgt))

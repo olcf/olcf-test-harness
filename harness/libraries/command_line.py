@@ -14,7 +14,8 @@ class HarnessParsedArguments:
                        configfile=None,
                        runmode=None,
                        stdout_stderr=None,
-                       use_fireworks=False):
+                       use_fireworks=False,
+                       separate_build_stdio=False):
 
         self.__inputfile = inputfile
         self.__loglevel = loglevel
@@ -22,6 +23,7 @@ class HarnessParsedArguments:
         self.__mode = runmode
         self.__stdout_stderr = stdout_stderr
         self.__use_fireworks = use_fireworks
+        self.__separate_build_stdio = separate_build_stdio
 
         self.__verify_attributes()
 
@@ -63,6 +65,10 @@ class HarnessParsedArguments:
         return self.__use_fireworks
 
     @property
+    def separate_build_stdio(self):
+        return self.__separate_build_stdio
+
+    @property
     def effective_command_line(self):
         command_options = ("Effective command line: "
                            "runtests.py"
@@ -70,6 +76,7 @@ class HarnessParsedArguments:
                            " --configfile {my_configfile}"
                            " --loglevel {my_loglevel}"
                            " --output {my_output}"
+                           " --separate-build-stdio"
                            " --mode {my_runmode}")
 
         run_mode_args=" ".join(self.runmode) 

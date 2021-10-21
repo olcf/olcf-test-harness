@@ -24,7 +24,8 @@ class Linux_x86_64(BaseMachine):
                  numSocketsPerNode=1,
                  numCoresPerSocket=1,
                  rgt_test_input_file=None,
-                 apptest=None):
+                 apptest=None,
+                 separate_build_stdio=False):
 
         BaseMachine.__init__(self,
                              name=name,
@@ -33,7 +34,8 @@ class Linux_x86_64(BaseMachine):
                              numNodes=numNodes,
                              numSockets=numSocketsPerNode,
                              numCoresPerSocket=numCoresPerSocket,
-                             apptest=apptest)
+                             apptest=apptest,
+                             separate_build_stdio=separate_build_stdio)
 
         # process test input file. The subtest knows the path to the
         # the test input file.
