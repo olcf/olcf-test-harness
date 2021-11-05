@@ -583,9 +583,8 @@ def do_application_tasks(app_test_list,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False):
-    print(f"App_test_list: {app_test_list}")
-    print(f"Tasks: {tasks}")
     for app_test in app_test_list:
+        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
         app_test.doTasks(tasks=tasks,
                          stdout_stderr=stdout_stderr,
                          separate_build_stdio=separate_build_stdio)
