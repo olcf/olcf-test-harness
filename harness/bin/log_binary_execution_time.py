@@ -24,12 +24,11 @@ def create_a_parser():
                                                   status execution log file.",
                                      add_help=True)
         
-    parser.add_argument("--scriptsdir", nargs=1, required=True,
+    parser.add_argument("--scriptsdir", type=str, required=True,
                         help="The location of the test scripts directory. Must be an absolute path.")
     
-    parser.add_argument("--uniqueid", nargs=1, required=True,
+    parser.add_argument("--uniqueid", type=str, required=True,
                         help="The unique id of the test.")
-    
 
     parser.add_argument("--mode", required=True, nargs=1, choices=["start","final"],
                         help="Used to decide to where log the current time the start or final execution log file")
@@ -45,8 +44,8 @@ def main():
     Vargs = parser.parse_args()
 
     log_mode = str(Vargs.mode[0])
-    unique_id = Vargs.uniqueid[0]
-    scriptsdir = Vargs.scriptsdir[0]
+    unique_id = Vargs.uniqueid
+    scriptsdir = Vargs.scriptsdir
 
     # Change to the scripts directory of the test
     cwd = os.getcwd()
@@ -61,7 +60,7 @@ def main():
                                           tag=unique_id)
     path_to_status_file = apptest.get_path_to_status_file()
     jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file)
-    jstatus.initialize_subtest(unique_id)
+    jstatus.initialize_subtest(None, unique_id)
 
     # Log the appropriate event to the status file
     if log_mode == "start":

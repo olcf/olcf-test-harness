@@ -97,6 +97,7 @@ class subtest(base_apptest, apptest_layout):
         return self.__myLogger
 
     def doTasks(self,
+                launchid=None,
                 tasks=None,
                 test_checkout_lock=None,
                 test_display_lock=None,
@@ -153,7 +154,7 @@ class subtest(base_apptest, apptest_layout):
                 message = "Start of starting test."
                 self.doInfoLogging(message)
 
-                self._start_test(stdout_stderr, separate_build_stdio=separate_build_stdio)
+                self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
 
                 message = "End of starting test"
                 self.doInfoLogging(message)
@@ -507,6 +508,7 @@ class subtest(base_apptest, apptest_layout):
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     def _start_test(self,
+                    launchid,
                     stdout_stderr,
                     separate_build_stdio=False):
 
@@ -516,10 +518,9 @@ class subtest(base_apptest, apptest_layout):
             os.remove(pathtokillfile)
 
         # This will automatically build & submit
+        starttestcomand = f"test_harness_driver.py -r -l {launchid}"
         if separate_build_stdio:
-            starttestcomand = "test_harness_driver.py -r --separate-build-stdio"
-        else:
-            starttestcomand = "test_harness_driver.py -r"
+            starttestcomand += "--separate-build-stdio"
 
         pathtoscripts = self.get_path_to_scripts()
 
@@ -579,13 +580,15 @@ class ApptestImproperInstantiationError(BaseApptestError):
     def message(self):
         return self.__message
 
-def do_application_tasks(app_test_list,
+def do_application_tasks(launch_id,
+                         app_test_list,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False):
     for app_test in app_test_list:
         print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
-        app_test.doTasks(tasks=tasks,
+        app_test.doTasks(launchid=launch_id,
+                         tasks=tasks,
                          stdout_stderr=stdout_stderr,
                          separate_build_stdio=separate_build_stdio)
     return

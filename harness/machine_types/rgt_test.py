@@ -141,6 +141,7 @@ class RgtTest():
             "check_cmd": True,
             "executable_path" : False,
             "job_name" : True,
+            "launch_id" : False,
             "max_submissions" : False,
             "nodes" : True,
             "processes_per_node" : False,
@@ -357,6 +358,9 @@ class RgtTest():
     #
     # Convenience methods for setting specific parameters
     #
+    def set_launch_id(self, value):
+        self._set_builtin_param("launch_id", value)
+
     def set_max_submissions(self, value):
         self._set_builtin_param("max_submissions", value)
 
@@ -384,6 +388,9 @@ class RgtTest():
 
     def get_jobname(self):
         return self._get_builtin_param("job_name")
+
+    def get_launch_id(self):
+        return self._get_builtin_param("launch_id")
 
     def get_max_submissions(self):
         return self._get_builtin_param("max_submissions")

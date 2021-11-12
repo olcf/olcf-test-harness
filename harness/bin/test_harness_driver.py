@@ -14,6 +14,7 @@
 # Python imports
 import argparse
 import datetime
+import getpass
 import logging
 import os
 import shutil
@@ -59,7 +60,7 @@ def get_log_level():
 
     Returns
     -------
-    int 
+    int
     """
     return MODULE_THRESHOLD_LOG_LEVEL
 
@@ -89,6 +90,10 @@ def create_parser():
                            help='Provide full path to app/test/Scripts directory (default: current working directory)')
     my_parser.add_argument('-i', '--uniqueid',
                            help='Use previously generated unique id')
+    my_parser.add_argument('-l', '--launchid',
+                           required=False,
+                           type=str,
+                           help='Annotate test status with given harness launch id')
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
                            action='store', nargs='?', type=int, const=-1, default=False)
@@ -139,6 +144,7 @@ def read_job_file(test_status_dir):
 def auto_generated_scripts(harness_config,
                            apptest,
                            jstatus,
+                           launch_id,
                            actions,
                            a_logger,
                            separate_build_stdio=False):
@@ -149,7 +155,7 @@ def auto_generated_scripts(harness_config,
 
     """
 
-    messloc = "In function {functionname}:".format(functionname="auto_generated_scripts") 
+    messloc = "In function {functionname}:".format(functionname="auto_generated_scripts")
 
     status_dir = apptest.get_path_to_status()
     ra_dir = apptest.get_path_to_runarchive()
@@ -167,7 +173,7 @@ def auto_generated_scripts(harness_config,
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
         try:
             build_exit_value = mymachine.build_executable()
-        except SetBuildRTEError as error: 
+        except SetBuildRTEError as error:
             message = f"{messloc} Unable to set the build runtime environnment."
             message += error.message
             a_logger.doCriticalLogging(message)
@@ -178,6 +184,10 @@ def auto_generated_scripts(harness_config,
     # In this section we run the the binary.             -
     #                                                    -
     #-----------------------------------------------------
+
+    # set launch id
+    mymachine.test_config.set_launch_id(launch_id)
+
     job_id = "0"
     submit_exit_value = 0
     if actions['submit'] and (build_exit_value != 0):
@@ -186,22 +196,34 @@ def auto_generated_scripts(harness_config,
         a_logger.doCriticalLogging(message)
     elif actions['submit'] and (build_exit_value == 0):
 
-
-        # If we have specified a finite amount of submissions, override config
-        # On the first iteration, we'll have a value from the ini file that needs to be decremented here.
-        # On further iterations, we'll take the count from `test_harness_driver.py -r  N` invocation, passed through actons['resubmit]
-        #
-        max_subs_cfg = mymachine.test_config.get_max_submissions() 
+        # determine run count and max
+        run_count = 1
+        max_count = 1
+        max_subs_cfg = mymachine.test_config.get_max_submissions()
         if max_subs_cfg is None:
-            # Ensure we have at least an empty string so the template variable can resolve
-            mymachine.test_config.set_max_submissions("")
+            # Ensure we have a valid string so the template variable can resolve
+            mymachine.test_config.set_max_submissions("-1")
+        else:
+            # If test.ini specified a finite amount of submissions (max_submissions):
+            #   on 1st iteration, use the value from test.ini file
+            #   on further iterations, get the resubmit count from `test_harness_driver.py -r N` invocation, passed through actions['resubmit']
+            max_subs_count = int(max_subs_cfg)
 
-        if actions['resubmit'] is 0 and max_subs_cfg is not False:
-            # First iteration, decrement value from config. We have not invoked -r yet.
-            max_subs_cfg = int(max_subs_cfg)
-            mymachine.test_config.set_max_submissions(str(int(max_subs_cfg)-1))
-        elif actions['resubmit'] and type(actions['resubmit']) == int:
-            mymachine.test_config.set_max_submissions(str(actions['resubmit']-1))
+            resub_count = actions['resubmit']
+            if resub_count == -1: # 1st iteration
+                resub_count = max_subs_count
+
+            # decrement the value to set the resubmission count for the next test_harness_driver run
+            resub_count -= 1
+
+            run_count = max_subs_count - resub_count
+            max_count = max_subs_count
+
+            # update test config parameter for substitution in batch script we're about to create
+            mymachine.test_config.set_max_submissions(str(resub_count))
+
+        run_count_str = f'{run_count}/{max_count}'
+
 
         # Create the batch script
         make_batch_script_status = mymachine.make_batch_script()
@@ -209,7 +231,7 @@ def auto_generated_scripts(harness_config,
         # Submit the batch script
         if make_batch_script_status:
             # Submit the batch script
-            jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
+            jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START, run_count_str)
             try:
                 submit_exit_value = mymachine.submit_batch_script()
             finally:
@@ -231,7 +253,7 @@ def auto_generated_scripts(harness_config,
         # The 'run' action should be executed within a job
 
         # Create the batch script
-        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START)
+        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START, str('1/1'))
         make_batch_script_status = mymachine.make_batch_script()
         jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, 0)
 
@@ -286,6 +308,7 @@ def auto_generated_scripts(harness_config,
 # and is designed such that it will be called from the Scripts directory.
 #
 def test_harness_driver(argv=None):
+    import time
 
     #
     # Parse arguments
@@ -310,28 +333,45 @@ def test_harness_driver(argv=None):
         do_build  = True
         do_submit = True
 
-    do_resubmit = False
+    resubmit_count = -1 # -1 means resubmit forever until stopped
     if do_submit:
-        # Skip this logic if resubmit is not specified, or is set to 0 (indefinite resubmissions)
-        if Vargs.resubmit and Vargs.resubmit != -1:
-            if Vargs.resubmit > 1:
-                do_resubmit = Vargs.resubmit
-            elif Vargs.resubmit <= 1:
-                do_resubmit = False
-                do_submit = False
-
+        if Vargs.resubmit is not False:
+            resubmit_count = int(Vargs.resubmit)
+            if resubmit_count == 0:
+                # end of max_submissions
+                message = 'Resubmit count is 0. Stopping test cycle.\n'
+                print(message)
+                return 0
 
     actions = {
         'build'    : do_build,
         'check'    : do_check,
+        'run'      : do_run,
         'submit'   : do_submit,
-        'resubmit' : do_resubmit,
-        'run'      : do_run
+        'resubmit' : resubmit_count
     }
-
 
     # Create a harness config (which sets harness env vars)
     harness_cfg = rgt_config_file(configfilename=Vargs.configfile)
+
+    # Get the launch id for this test instance.
+    launch_id = Vargs.launchid
+    if launch_id == None:
+        now_str = datetime.datetime.now().isoformat()
+        if len(now_str) == 26: # now_str includes microseconds
+            time_str = now_str[0:-4] # strip off last four characters
+        else:
+            time_str = now_str
+        user_str = getpass.getuser()
+        testshot_key = 'system_log_tag'
+        testshot_str = 'notag'
+        testshot_cfg = harness_cfg.get_testshot_config()
+        if testshot_key in testshot_cfg.keys():
+            testshot_str = testshot_cfg[testshot_key]
+        launch_id = f'{testshot_str}/{user_str}@{time_str}'
+        print(f'Generated launch id: {launch_id}')
+    else:
+        print(f'Using launch id: {launch_id}')
 
     # Get the unique id for this test instance.
     unique_id = Vargs.uniqueid
@@ -374,10 +414,9 @@ def test_harness_driver(argv=None):
     # If the file exists then the program will return
     # without building and submitting scripts.
     #
-    if do_submit: 
+    if do_submit:
         kill_file = apptest.get_path_to_kill_file()
         if os.path.exists(kill_file):
-            import time
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
@@ -426,8 +465,8 @@ def test_harness_driver(argv=None):
     jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file,
                                        logger=sfile_logger)
 
-    # Initialize subtest entry 'unique_id' to status file. 
-    jstatus.initialize_subtest(unique_id)
+    # Initialize subtest entry 'unique_id' to status file.
+    jstatus.initialize_subtest(launch_id, unique_id)
 
     #
     # Determine whether we are using auto-generated or user-generated
@@ -439,6 +478,7 @@ def test_harness_driver(argv=None):
         exit_values = auto_generated_scripts(harness_cfg,
                                              apptest,
                                              jstatus,
+                                             launch_id,
                                              actions,
                                              a_logger,
                                              Vargs.separate_build_stdio)
