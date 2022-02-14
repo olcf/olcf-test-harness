@@ -513,6 +513,25 @@ class StatusFile:
         event_record_string = event_time + '\t' + event_value
         for key_value in status_info:
             event_record_string += '\t' + key_value[0] + '=' + key_value[1]
+
+        if event_type == 'binary_execute' or event_type == 'job' \
+                or event_type == 'submit':
+            # Status related to job, append the walltime to the status string
+            dir_head = os.path.split(os.getcwd())[0]
+            test_ini_path = os.path.join(dir_head, apptest_layout.test_scripts_dirname, apptest_layout.test_input_ini_filename)
+            added_walltime = False
+            test_ini_file = open(test_ini_path, 'r')
+            for line in test_ini_file:
+                line = line.split(' ')
+                if line[0] == 'walltime' and not added_walltime:
+                    # then line[2] is the walltime supplied
+                    event_record_string += '\t' + 'walltime=' + line[2]
+                    added_walltime = True
+                elif line[0] == 'walltime' and added_walltime:
+                    print(f"Found unexpected occurrence of walltime in test ini file for test {self.__test_id}")
+            if not added_walltime:
+                print(f"Didn't find walltime for {self.__test_id}")
+
         event_record_string += '\n'
 
         # Write a temporary file with the event info, then
