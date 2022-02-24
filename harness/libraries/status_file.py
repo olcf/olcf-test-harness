@@ -15,6 +15,11 @@ import re
 import socket
 import pprint
 import abc
+import requests
+import urllib
+import glob
+import dateutil.parser
+
 
 from libraries.layout_of_apps_directory import apptest_layout
 
@@ -504,16 +509,61 @@ class StatusFile:
         """
 
         # THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
-        event_time = datetime.datetime.now().isoformat()
+        event_time = datetime.datetime.now()
+        event_time_unix = event_time.timestamp()
+        event_time = event_time.isoformat()
+
 
         # THE FOLLOWING FORMS THE OFFICIAL TEXT DESCRIBING THE EVENT.
         status_info = get_status_info(self.__test_id, event_type,
                                       event_subtype, event_value,
                                       event_time, event_filename)
         event_record_string = event_time + '\t' + event_value
+        influx_event_record_string = "events,job_id=" + str(self.__test_id) + " "
+        status_info_dict = {}
         for key_value in status_info:
             event_record_string += '\t' + key_value[0] + '=' + key_value[1]
+            influx_event_record_string += key_value[0] + '="' + key_value[1] + '",'
+            # Remap into an easier to use format
+            status_info_dict[key_value[0]] = key_value[1]
         event_record_string += '\n'
+
+        event_time_unix = dateutil.parser.parse(status_info_dict['event_time']).strftime('%s%f') + "000"
+
+        # Add handling for pasting outputs to influxdb
+
+        if status_info_dict['event_name'] == "build_end":
+            file_name = status_info_dict['run_archive'] + "/build_directory/" + "output_build.txt"
+            print(file_name)
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    output = f.read()
+                    # Truncate to 64 kb
+                    output = output[-65534:].replace('"', '\\"')
+                    influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
+
+        if status_info_dict['event_name'] == "submit_end":
+            file_name = status_info_dict['run_archive'] + "/" + "submit.err"
+            print(file_name)
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    output = f.read()
+                    # Truncate to 64 kb
+                    output = output[-65534:].replace('"', '\\"')
+                    influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
+
+        if status_info_dict['event_name'] == "binary_execute_end":
+            for file_name in glob.glob(status_info_dict['run_archive'] + "/*.o" + status_info_dict['job_id']):
+                print(file_name)
+                if os.path.exists(file_name):
+                    with open(file_name, "r") as f:
+                        output = f.read()
+                        # Truncate to 64 kb
+                        output = output[-65534:].replace('"', '\\"')
+                        influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
+
+        influx_event_record_string = influx_event_record_string.strip(',') + " " + str(event_time_unix)
+
 
         # Write a temporary file with the event info, then
         # (atomically) rename it to the permanent file,
@@ -540,6 +590,20 @@ class StatusFile:
         # Put the same event data on the system log.
 
         write_system_log(self.__test_id, status_info)
+
+        # Write event to InfluxDB
+        if 'RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ:
+            influx_url = os.environ['RGT_INFLUX_URI']
+            influx_token = os.environ['RGT_INFLUX_TOKEN']
+            
+            print("Logging event to influx")
+            print(influx_event_record_string)
+            headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
+
+            try:
+                r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+            except:
+                print(r.text)
 
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
