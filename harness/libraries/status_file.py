@@ -562,6 +562,16 @@ class StatusFile:
                         output = output[-65534:].replace('"', '\\"')
                         influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
 
+        if status_info_dict['event_name'] == "check_end":
+            file_name = status_info_dict['run_archive'] + "/" + "output_check.txt"
+            print(file_name)
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    output = f.read()
+                    # Truncate to 64 kb
+                    output = output[-65534:].replace('"', '\\"')
+                    influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
+
         influx_event_record_string = influx_event_record_string.strip(',') + " " + str(event_time_unix)
 
 
