@@ -519,14 +519,16 @@ class StatusFile:
                                       event_subtype, event_value,
                                       event_time, event_filename)
         event_record_string = event_time + '\t' + event_value
-        influx_event_record_string = "events,job_id=" + str(self.__test_id) + " "
         status_info_dict = {}
         for key_value in status_info:
             event_record_string += '\t' + key_value[0] + '=' + key_value[1]
-            influx_event_record_string += key_value[0] + '="' + key_value[1] + '",'
             # Remap into an easier to use format
             status_info_dict[key_value[0]] = key_value[1]
         event_record_string += '\n'
+
+        influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + " "
+        for key_value in status_info:
+            influx_event_record_string += key_value[0] + '="' + key_value[1] + '",'
 
         event_time_unix = dateutil.parser.parse(status_info_dict['event_time']).strftime('%s%f') + "000"
 
