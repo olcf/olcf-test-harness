@@ -446,7 +446,8 @@ class BaseMachine(metaclass=ABCMeta):
         print("Path to Build Dir:", path_to_build_directory)
 
         shutil.copytree(src=path_to_source,
-                        dst=path_to_build_directory)
+                        dst=path_to_build_directory,
+                        symlinks=True)
 
     def _write_check_exit_status(self, cstatus):
         """ Write the status of checking results to the status directory."""
