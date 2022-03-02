@@ -46,7 +46,7 @@ class BaseMachine(metaclass=ABCMeta):
     # The constructor of class base_machine.
     def __init__(self, name, scheduler_type, jobLauncher_type,
                  numNodes, numSockets, numCoresPerSocket,
-                 apptest):
+                 apptest, separate_build_stdio=False):
 
         self.__name = name
 
@@ -59,6 +59,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.__numSockets = numSockets
         self.__numCoresPerSocket = numCoresPerSocket
         self.__apptest = apptest
+        self.__separate_build_stdio = separate_build_stdio
 
         runarchive_dir = self.apptest.get_path_to_runarchive()
         log_filepath = os.path.join(runarchive_dir,self.__class__.__module__)
@@ -92,6 +93,11 @@ class BaseMachine(metaclass=ABCMeta):
     def machine_name(self):
         """str: The name of the machine."""
         return self.__name
+
+    @property
+    def separate_build_stdio(self):
+        """bool: If true, separate build into stdout and stderr"""
+        return self.__separate_build_stdio
 
     @property
     def check_command(self):
@@ -440,7 +446,8 @@ class BaseMachine(metaclass=ABCMeta):
         print("Path to Build Dir:", path_to_build_directory)
 
         shutil.copytree(src=path_to_source,
-                        dst=path_to_build_directory)
+                        dst=path_to_build_directory,
+                        symlinks=True)
 
     def _write_check_exit_status(self, cstatus):
         """ Write the status of checking results to the status directory."""
