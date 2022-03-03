@@ -13,7 +13,7 @@ class GitRepository(BaseRepository):
     """
     def __init__(self,
                  git_remote_repository_url=None,
-                 my_repository_branch="master") :
+                 my_repository_branch="default") :
 
         
         self.binaryName = "git"
@@ -51,9 +51,13 @@ class GitRepository(BaseRepository):
     def cloneRepository(self,
                         destination_directory="."):
 
-        my_clone_command="{gitbinary} clone --branch {branch} --recurse-submodules {repository} {directory}".format(
+        clone_branch = ""
+        if self.repository_branch != "default":
+            clone_branch = f'--branch {self.repository_branch}'
+
+        my_clone_command="{gitbinary} clone {branch} --recurse-submodules {repository} {directory}".format(
                   gitbinary=self.binaryName,
-                  branch=self.repository_branch, 
+                  branch=clone_branch,
                   repository=self.remote_repository_URL,
                   directory=destination_directory)
 
