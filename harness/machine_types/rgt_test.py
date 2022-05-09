@@ -503,7 +503,7 @@ class RgtTest():
         proj = self.get_project()
         if proj is not None:
             env_dict = {'project_id' : proj}
-        rgt_utilities.set_harness_environment(env_dict, override=True)
+        rgt_utilities.set_harness_environment(env_dict, override=False)
 
         if 'EnvVars' in rgt_test_config:
             env_vars = rgt_test_config['EnvVars']
