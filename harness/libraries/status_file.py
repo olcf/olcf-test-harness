@@ -19,6 +19,7 @@ import requests
 import urllib
 import glob
 import dateutil.parser
+import subprocess
 
 
 from libraries.layout_of_apps_directory import apptest_layout
@@ -530,7 +531,7 @@ class StatusFile:
         if 'LMOD_SYSTEM_NAME' in os.environ:
             machine_name = os.environ['LMOD_SYSTEM_NAME']
         else:
-            machine_name = subprocess.run("hostname --fqdn", shell=True, stdout=subprocess.PIPE).stdout.strip()
+            machine_name = str(subprocess.run("hostname --fqdn", shell=True, stdout=subprocess.PIPE).stdout.strip())
 
         influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + ",machine="  + machine_name + " "
         for key_value in status_info:
