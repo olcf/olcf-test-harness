@@ -526,6 +526,12 @@ class StatusFile:
             status_info_dict[key_value[0]] = key_value[1]
         event_record_string += '\n'
 
+        machine_name=""
+        if 'LMOD_SYSTEM_NAME' in os.environ:
+            machine_name = os.environ['LMOD_SYSTEM_NAME']
+        else:
+            machine_name = subprocess.run("hostname --fqdn", shell=True, stdout=subprocess.PIPE).stdout.strip()
+
         influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + " "
         for key_value in status_info:
             influx_event_record_string += key_value[0] + '="' + key_value[1] + '",'
