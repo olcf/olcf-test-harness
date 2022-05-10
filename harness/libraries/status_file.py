@@ -532,7 +532,7 @@ class StatusFile:
         else:
             machine_name = subprocess.run("hostname --fqdn", shell=True, stdout=subprocess.PIPE).stdout.strip()
 
-        influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + " "
+        influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + ",machine="  + machine_name + " "
         for key_value in status_info:
             influx_event_record_string += key_value[0] + '="' + key_value[1] + '",'
 
