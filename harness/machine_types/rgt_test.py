@@ -135,21 +135,21 @@ class RgtTest():
 
         # dict of builtin keys - value indicates whether it is required
         self.__builtin_keys = {
-            "batch_filename" : True,
-            "batch_queue" : False,
-            "build_cmd" : True,
-            "check_cmd": True,
-            "executable_path" : False,
-            "job_name" : True,
-            "launch_id" : False,
-            "max_submissions" : False,
-            "nodes" : True,
-            "processes_per_node" : False,
-            "project_id" : False,
-            "report_cmd" : True,
-            "resubmit" : False,
-            "total_processes" : False,
-            "walltime" : True
+
+            "batch_filename" :     {"required": True, "type": str },
+            "batch_queue" :        {"required": False, "type": str },
+            "build_cmd" :          {"required": True, "type": str},
+            "check_cmd":           {"required": True, "type": str},
+            "executable_path" :    {"required": False, "type": str},
+            "job_name" :           {"required": True, "type": str},
+            "max_submissions" :    {"required": False, "type": int, "valid": lambda x : True if (int(x) >= 1 or int(x) == -1) else False},
+            "nodes" :              {"required": True, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "processes_per_node" : {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "project_id" :         {"required": False, "type": str},
+            "report_cmd" :         {"required": True, "type": str},
+            "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
+            "total_processes" :    {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "walltime" :           {"required": True, "type": str},
         }
 
     def __str__(self):
@@ -432,7 +432,7 @@ class RgtTest():
             if os.path.isfile(self.test_input_filename):
                 self._read_rgt_input_ini()
                 self._reconcile_with_shell_environment_variables()
-                self._check_required_parameters()
+                self._check_parameters()
                 self._print_test_parameters()
             else:
                 error_message = "Test input file {} not found".format(self.test_input_filename)
@@ -560,16 +560,43 @@ class RgtTest():
                     raise ErrorRgtParameterReconcile(error_message)
         return
 
-    def _check_required_parameters(self):
-        missing = 0
+    def _check_parameters(self):
+        # Check validation parameters for input
+        # Start with the required flag
         error_message = ""
-        for (k,required) in self.__builtin_keys.items():
-            if required and k not in self.builtin_parameters:
-                missing = 1
+        for (k,params) in self.__builtin_keys.items():
+            if 'required' in params and params['required'] and k not in self.builtin_parameters:
                 error_message += "ERROR: required test input parameter {} is not set!\n".format(k)
-        if missing:
+
+        # Check type
+        for (k,params) in self.__builtin_keys.items():
+            valid_type = True
+            if 'type' in params and k in self.builtin_parameters:
+                # All params are strings, so no need to test that
+                # Check int
+                if params['type'] is int and not self.builtin_parameters[k].lstrip("-").isdigit():
+                    valid_type = False # Need to reference in lambda function
+                    error_message += "ERROR: test input parameter {} is not type {}!\n".format(k, str(params['type']))
+
+                # Check file
+                if params['type'] is 'file':
+                    # Check whether it exists
+                    if not os.path.exists(self.builtin_parameters[k]):
+                        error_message += "ERROR: test input parameter {} does not exist {}!\n".format(k, self.builtin_parameters[k])
+
+                    # Check whether is executable
+                    if not os.access(self.builtin_parameters[k], os.X_OK):
+                        error_message += "ERROR: test input parameter {} is not executable {}!\n".format(k, self.builtin_parameters[k])
+
+            if 'valid' in params and k in self.builtin_parameters:
+                # Run our validation function
+                if valid_type == False or not params['valid'](self.builtin_parameters[k]):
+                    error_message += "ERROR: test input parameter {} failed validation!\n".format(k)
+
+
+        # Print and bail if any errors
+        if error_message != "":
             self.__logger.doCriticalLogging(error_message)
-            print(error_message)
             exit(1)
 
     def _print_builtin_parameters(self):
