@@ -408,6 +408,22 @@ class BaseMachine(metaclass=ABCMeta):
         exit_status = self._start_report_script(self.test_config.get_report_command())
         return exit_status
 
+    def log_to_influx(self):
+        """Logs the results to influx if able
+        
+        Return
+        ------
+        bool: Success (True), otherwise, not logged to influxDB
+        """
+        messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function()) 
+        message = f"{messloc} attempting to log to influxDB."
+
+        print(message)
+        self.logger.doInfoLogging(message)
+        
+        exit_status = self._log_to_influx()
+        return exit_status
+
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of public methods.                                          @
@@ -486,6 +502,95 @@ class BaseMachine(metaclass=ABCMeta):
         report_exit_status = p.returncode
         os.chdir(currentdir)
         return report_exit_status
+
+    def _log_to_influx(self):
+        """ Check if metrics.txt exists, is proper format, and log to influxDB. """
+        currentdir = os.getcwd()
+        print("current directory in base_machine:", currentdir)
+        runarchive_dir = self.apptest.get_path_to_runarchive()
+        os.chdir(runarchive_dir)
+        print("Starting influxDB logging in base_machine:", os.getcwd())
+
+        if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
+            print("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
+            os.chdir(currentdir)
+            return False
+
+        influx_url = os.environ['RGT_INFLUX_URI']
+        influx_token = os.environ['RGT_INFLUX_TOKEN']
+
+        headers = {
+            'Authorization': "Token " + self.influx_token,
+            'Content-Type': "text/plain; charset=utf-8",
+            'Accept': "application/json"
+        }
+
+        # Inherited from environment or 'unknown'
+        # This may be set as `unknown` if run outside of harness job
+        influx_runtag = (
+            os.environ['RGT_SYSTEM_LOG_TAG']
+            if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown')
+        # Fields defined by subtest class
+        influx_app = self.apptest.getNameOfApplication()
+        influx_test = self.apptest.getNameOfSubtest()
+        # Fields defined from apptest_layout class inherited in subtest
+        influx_test_id = self.apptest.get_harness_id()
+        # Machine name
+        if not 'LMOD_SYSTEM_NAME' in os.environ:
+            influx_machine_name = subprocess.check_output(['hostname', '--long'])
+            print(f"WARNING: LMOD_SYSTEM_NAME not found in os.environ, setting to {self.influx_machine_name}")
+        else:
+            influx_machine_name = os.environ['LMOD_SYSTEM_NAME']
+
+        metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+
+        if len(metrics) == 0:
+            print(f"No metrics found to log to influxDB")
+            os.chdir(currentdir)
+            return False
+
+        influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
+        influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
+        num_metrics_printed = 0
+        for k, v in self.metrics.items():
+            if num_metrics_printed == 0:
+                influx_event_record_string += f" {k}={v}"
+            else:
+                influx_event_record_string += f",{k}={v}"
+            num_metrics_printed += 1
+        try:
+            r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+            print(f"Successfully sent {influx_event_record_string} to {influx_url}")
+        except:
+            print(f"Failed to send {influx_event_record_string} to {influx_url}:")
+            print(r.text)
+            os.chdir(currentdir)
+            return False
+
+        os.chdir(currentdir)
+        # if we make it to the end, return True
+        return True
+
+    def _get_metrics(self, machine_name, app_name, test_name):
+        """ Parse the metrics.txt file for InfluxDB reporting """
+        metrics = {}
+        if not os.path.isfile('metrics.txt'):
+            print(f"File metrics.txt not found")
+            return metrics
+        with open('metrics.txt', 'r') as metric_f:
+            # Each line is in format "metric = value" (space around '=' optional)
+            # All whitespace in metric name will be replaced with underscores
+            for line in metric_f:
+                # Allows comment lines
+                if not line[0] == '#':
+                    line = line.split('=')
+                    if len(line) == 2:
+                        # Replace spaces with underscores, and strip whitespace before/after
+                        line[0] = line[0].strip().replace(' ', '_')
+                        line[1] = line[1].strip().replace(' ', '_')
+                        metric_name = f"{machine_name}-{app_name}-{test_name}-{line[0]}"
+                        metrics[metric_name] = line[1]
+        return metrics
 
     def _build_jobLauncher_command(self,template_dict):
         """ Return the jobLauncher command."""
