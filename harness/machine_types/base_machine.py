@@ -516,11 +516,13 @@ class BaseMachine(metaclass=ABCMeta):
             os.chdir(currentdir)
             return False
 
+        import requests
+
         influx_url = os.environ['RGT_INFLUX_URI']
         influx_token = os.environ['RGT_INFLUX_TOKEN']
 
         headers = {
-            'Authorization': "Token " + self.influx_token,
+            'Authorization': "Token " + influx_token,
             'Content-Type': "text/plain; charset=utf-8",
             'Accept': "application/json"
         }
@@ -552,7 +554,7 @@ class BaseMachine(metaclass=ABCMeta):
         influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
         influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
         num_metrics_printed = 0
-        for k, v in self.metrics.items():
+        for k, v in metrics.items():
             if num_metrics_printed == 0:
                 influx_event_record_string += f" {k}={v}"
             else:
