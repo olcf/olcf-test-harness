@@ -590,7 +590,7 @@ class BaseMachine(metaclass=ABCMeta):
                         # Replace spaces with underscores, and strip whitespace before/after
                         line[0] = line[0].strip().replace(' ', '_')
                         line[1] = line[1].strip().replace(' ', '_')
-                        metric_name = f"{machine_name}-{app_name}-{test_name}-{line[0]}"
+                        metric_name = f"{app_name}-{test_name}-{line[0]}"
                         metrics[metric_name] = line[1]
         return metrics
 
