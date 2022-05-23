@@ -575,6 +575,22 @@ class BaseMachine(metaclass=ABCMeta):
 
     def _get_metrics(self, machine_name, app_name, test_name):
         """ Parse the metrics.txt file for InfluxDB reporting """
+        def is_numeric(s):
+            """ Checks if an entry (RHS) is numeric """
+            # Local function. s is assumed to be a whitespace-stripped string
+            # checks if a decimal place or preceding negative sign exists, strip/remove as needed
+            if s[0] == '-':
+                s = s[1:]
+            # for decimal places, we split the string on '.', then check if each side is numeric
+            s = s.split('.')
+            if len(s) == 0 or len(s) > 2:
+                return False
+            if not s[0].isnumeric():
+                return False
+            if len(s) == 2 and not s[1].isnumeric():
+                return False
+            return True
+
         metrics = {}
         if not os.path.isfile('metrics.txt'):
             print(f"File metrics.txt not found")
@@ -589,9 +605,17 @@ class BaseMachine(metaclass=ABCMeta):
                     if len(line) == 2:
                         # Replace spaces with underscores, and strip whitespace before/after
                         line[0] = line[0].strip().replace(' ', '_')
-                        line[1] = line[1].strip().replace(' ', '_')
                         metric_name = f"{app_name}-{test_name}-{line[0]}"
-                        metrics[metric_name] = line[1]
+                        # if it's not numeric, replace spaces with underscores and wrap in quotes
+                        line[1] = line[1].strip()
+                        if is_numeric(line[1]):
+                            metrics[metric_name] = line[1]
+                        else:
+                            line[1] = line[1].replace(' ', '_')
+                            # Wrap strings in double quotes to send to Influx
+                            metrics[metric_name] = f'"{line[1]}"'
+                    else:
+                        print(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
         return metrics
 
     def _build_jobLauncher_command(self,template_dict):
