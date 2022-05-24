@@ -516,6 +516,11 @@ class BaseMachine(metaclass=ABCMeta):
             os.chdir(currentdir)
             return False
 
+        # Check if the .influx_logged file already exists - it shouldn't, but just in case
+        if os.path.exists('.influxdb_logged'):
+            print("The .influxdb_logged file already exists. To be safe, influxDB logging is aborting")
+            return False
+
         import requests
 
         influx_url = os.environ['RGT_INFLUX_URI']
@@ -568,6 +573,10 @@ class BaseMachine(metaclass=ABCMeta):
             print(r.text)
             os.chdir(currentdir)
             return False
+
+        # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
+        # so let's create a .influxdb_logged file
+        os.mknod('.influxdb_logged')
 
         os.chdir(currentdir)
         # if we make it to the end, return True
