@@ -553,6 +553,7 @@ class subtest(base_apptest, apptest_layout):
         message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
         self.doInfoLogging(message)
 
+    # Used when --mode influx_log is run after a harness run
     def _influx_log_mode(self):
         """ Logs available tests to InfluxDB, via --mode influx_log """
         currentdir = os.getcwd()
@@ -580,6 +581,7 @@ class subtest(base_apptest, apptest_layout):
 
         os.chdir(currentdir)
 
+    # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
     def _log_to_influx(self, influx_test_id):
         """ Check if metrics.txt exists, is proper format, and log to influxDB. """
         currentdir = os.getcwd()
