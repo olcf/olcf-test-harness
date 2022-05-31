@@ -197,23 +197,6 @@ class subtest(base_apptest, apptest_layout):
 
         return
 
-    # Logs run to InfluxDB, if able
-    def log_to_influx(self):
-        """Logs the results to influx if able
-
-        Return
-        ------
-        bool: Success (True), otherwise, not logged to influxDB
-        """
-        messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function())
-        message = f"{messloc} attempting to log to influxDB."
-
-        print(message)
-        self.logger.doInfoLogging(message)
-
-        exit_status = self._log_to_influx()
-        return exit_status
-
     #
     # Displays the status of the tests.
     #
@@ -551,7 +534,7 @@ class subtest(base_apptest, apptest_layout):
         if exit_status > 0:
             message = ( "In function {function_name} we have a critical error.\n"
                         "The command '{cmd}' has exited with a failure.\n"
-                        "The exit return value is {value}\n.").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
+                        "The exit return value is {value}\n.").format(function_name=self._name_of_current_function(), cmd=starttestcomand,value=exit_status)
             self.doCriticalLogging(message)
 
             string1 = "Command failed: " + starttestcomand
@@ -573,7 +556,7 @@ class subtest(base_apptest, apptest_layout):
     def _influx_log_mode(self):
         """ Logs available tests to InfluxDB, via --mode influx_log """
         currentdir = os.getcwd()
-        print("In apptest.py:_influx_log, cwd: ", currentdir)
+        print(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
         # Run_Archive adds an odd ID on to the end, so this is a portable solution
         testdir = self.get_path_to_test()
         os.chdir(testdir)
@@ -582,7 +565,7 @@ class subtest(base_apptest, apptest_layout):
             os.chdir(currentdir)
             print("Could not find Run_Archive directory in ", testdir)
             print("This is likely caused by no tests being run")
-            return False
+            return
         os.chdir('./Run_Archive')
 
         # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
@@ -590,10 +573,12 @@ class subtest(base_apptest, apptest_layout):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
                     not os.path.exists(f"./{test_id}/.influx_disabled"):
                 print(f"Attempting to log {test_id}")
-                self._log_to_influx(test_id)
+                if self._log_to_influx(test_id):
+                    print(f"Successfully logged {test_id}")
+                else:
+                    print(f"Unable to log {test_id}")
 
         os.chdir(currentdir)
-        return True
 
     def _log_to_influx(self, influx_test_id):
         """ Check if metrics.txt exists, is proper format, and log to influxDB. """
