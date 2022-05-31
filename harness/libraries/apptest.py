@@ -119,10 +119,8 @@ class subtest(base_apptest, apptest_layout):
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
         self.doInfoLogging(message)
-        print("In doTasks: ",tasks)
 
         for harness_task in tasks:
-            print(harness_task)
             if harness_task == Harness.checkout:
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
