@@ -612,17 +612,20 @@ class StatusFile:
 
         # Write event to InfluxDB
         if 'RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ:
-            influx_url = os.environ['RGT_INFLUX_URI']
-            influx_token = os.environ['RGT_INFLUX_TOKEN']
-            
-            print("Logging event to influx")
-            print(influx_event_record_string)
-            headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
+            if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
+                print("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            else:
+                influx_url = os.environ['RGT_INFLUX_URI']
+                influx_token = os.environ['RGT_INFLUX_TOKEN']
+        
+                print("Logging event to influx")
+                print(influx_event_record_string)
+                headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
 
-            try:
-                r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-            except:
-                print(r.text)
+                try:
+                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+                except:
+                    print(r.text)
 
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:

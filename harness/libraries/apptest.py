@@ -590,16 +590,15 @@ class subtest(base_apptest, apptest_layout):
         os.chdir(runarchive_dir)
         print("Starting influxDB logging in apptest:", os.getcwd())
 
-        if 'RGT_DISABLE_INFLUX' in os.environ:
-            if str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-                print("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
-                print("Creating .influx_disabled file in Run_Archive")
-                print("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
-                os.mknod('.influx_disabled')
-                os.chdir(currentdir)
-                return False
-            else:
-                print("Unrecognized value of RGT_DISABLE_INFLUX: ", os.environ['RGT_DISABLE_INFLUX'])
+        if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
+            print("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            print("Creating .influx_disabled file in Run_Archive")
+            print("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
+            os.mknod('.influx_disabled')
+            os.chdir(currentdir)
+            return False
+        else:
+            print("Unrecognized value of RGT_DISABLE_INFLUX: ", os.environ['RGT_DISABLE_INFLUX'])
         if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
             print("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
             os.chdir(currentdir)
