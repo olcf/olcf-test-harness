@@ -641,8 +641,8 @@ class subtest(base_apptest, apptest_layout):
             influx_machine_name = os.environ['LMOD_SYSTEM_NAME']
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
-        metrics['build_time'] = self._get_build_time(influx_test_id)
-        metrics['execution_time'] = self._get_execution_time(influx_test_id)
+        metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
+        metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
 
         if len(metrics) == 0:
             print(f"No metrics found to log to influxDB")
