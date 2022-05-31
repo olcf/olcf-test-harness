@@ -111,7 +111,6 @@ class subtest(base_apptest, apptest_layout):
 
         from libraries.regression_test import Harness
 
-
         if tasks != None:
             tasks = copy.deepcopy(tasks)
             tasks = subtest.reorderTaskList(tasks)
@@ -120,10 +119,11 @@ class subtest(base_apptest, apptest_layout):
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
         self.doInfoLogging(message)
+        print("In doTasks: ",tasks)
 
         for harness_task in tasks:
+            print(harness_task)
             if harness_task == Harness.checkout:
-
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
@@ -162,6 +162,9 @@ class subtest(base_apptest, apptest_layout):
             elif harness_task == Harness.stoptest:
                 self._stop_test()
 
+            elif harness_task == Harness.influx_log:
+                self._influx_log_mode()
+
             elif harness_task == Harness.displaystatus:
                 if test_display_lock:
                     test_display_lock.acquire()
@@ -175,7 +178,6 @@ class subtest(base_apptest, apptest_layout):
                 self.generateReport()
 
     def cloneRepository(self,my_repository,destination):
-
         #Get the current working directory.
         cwd = os.getcwd()
 
@@ -197,10 +199,22 @@ class subtest(base_apptest, apptest_layout):
 
         return
 
+    # Logs run to InfluxDB, if able
+    def log_to_influx(self):
+        """Logs the results to influx if able
 
-    #
-    # Stops the test.
-    #
+        Return
+        ------
+        bool: Success (True), otherwise, not logged to influxDB
+        """
+        messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function())
+        message = f"{messloc} attempting to log to influxDB."
+
+        print(message)
+        self.logger.doInfoLogging(message)
+
+        exit_status = self._log_to_influx()
+        return exit_status
 
     #
     # Displays the status of the tests.
@@ -419,6 +433,10 @@ class subtest(base_apptest, apptest_layout):
             app_tasks1.append(Harness.summarize_results)
             taskwords1.remove(Harness.summarize_results)
 
+        if (Harness.influx_log in taskwords1):
+            app_tasks1.append(Harness.influx_log)
+            taskwords1.remove(Harness.influx_log)
+
         return app_tasks1
 
     def doInfoLogging(self,message):
@@ -547,13 +565,173 @@ class subtest(base_apptest, apptest_layout):
             self.doInfoLogging(message)
 
     def _stop_test(self):
-
         pathtokillfile = self.get_path_to_kill_file()
         with open(pathtokillfile,"w") as kill_file:
             kill_file.write("")
 
         message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
         self.doInfoLogging(message)
+
+    def _influx_log_mode(self):
+        """ Logs available tests to InfluxDB, via --mode influx_log """
+        currentdir = os.getcwd()
+        print("In apptest.py:_influx_log, cwd: ", currentdir)
+        # Run_Archive adds an odd ID on to the end, so this is a portable solution
+        testdir = self.get_path_to_test()
+        os.chdir(testdir)
+        # If Run_Archive exists, continue, else terminate because no tests have been run
+        if not os.path.exists('./Run_Archive'):
+            os.chdir(currentdir)
+            print("Could not find Run_Archive directory in ", testdir)
+            print("This is likely caused by no tests being run")
+            return False
+        os.chdir('./Run_Archive')
+
+        # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
+        for test_id in os.listdir('.'):
+            if not os.path.exists(f"./{test_id}/.influx_logged") and \
+                    not os.path.exists(f"./{test_id}/.influx_disabled"):
+                print(f"Attempting to log {test_id}")
+                self._log_to_influx(test_id)
+
+        os.chdir(currentdir)
+        return True
+
+    def _log_to_influx(self, influx_test_id):
+        """ Check if metrics.txt exists, is proper format, and log to influxDB. """
+        currentdir = os.getcwd()
+        print("current directory in apptest:", currentdir)
+        runarchive_dir = f"{self.get_path_to_test()}/Run_Archive/{influx_test_id}"
+        os.chdir(runarchive_dir)
+        print("Starting influxDB logging in apptest:", os.getcwd())
+
+        if 'RGT_DISABLE_INFLUX' in os.environ:
+            if str(os.environ['RGT_DISABLE_INFLUX']) == '1':
+                print("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+                print("Creating .influx_disabled file in Run_Archive")
+                print("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
+                os.mknod('.influx_disabled')
+                os.chdir(currentdir)
+                return False
+            else:
+                print("Unrecognized value of RGT_DISABLE_INFLUX: ", os.environ['RGT_DISABLE_INFLUX'])
+        if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
+            print("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
+            os.chdir(currentdir)
+            return False
+
+        # Check if influx was disabled for this run
+        if os.path.exists('.influx_disabled'):
+            print("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
+            return False
+        # Check if the .influx_logged file already exists - it shouldn't, but just in case
+        if os.path.exists('.influx_logged'):
+            print("The .influx_logged file already exists.")
+            return False
+
+        import requests
+
+        influx_url = os.environ['RGT_INFLUX_URI']
+        influx_token = os.environ['RGT_INFLUX_TOKEN']
+
+        headers = {
+            'Authorization': "Token " + influx_token,
+            'Content-Type': "text/plain; charset=utf-8",
+            'Accept': "application/json"
+        }
+
+        # Inherited from environment or 'unknown'
+        # This may be set as `unknown` if run outside of harness job
+        influx_runtag = (
+            os.environ['RGT_SYSTEM_LOG_TAG']
+            if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown')
+        # Fields defined by subtest class
+        influx_app = self.getNameOfApplication()
+        influx_test = self.getNameOfSubtest()
+        # Machine name
+        if not 'LMOD_SYSTEM_NAME' in os.environ:
+            influx_machine_name = subprocess.check_output(['hostname', '--long'])
+            print(f"WARNING: LMOD_SYSTEM_NAME not found in os.environ, setting to {self.influx_machine_name}")
+        else:
+            influx_machine_name = os.environ['LMOD_SYSTEM_NAME']
+
+        metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+
+        if len(metrics) == 0:
+            print(f"No metrics found to log to influxDB")
+            os.chdir(currentdir)
+            return False
+
+        influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
+        influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
+        num_metrics_printed = 0
+        for k, v in metrics.items():
+            if num_metrics_printed == 0:
+                influx_event_record_string += f" {k}={v}"
+            else:
+                influx_event_record_string += f",{k}={v}"
+            num_metrics_printed += 1
+        try:
+            r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+            print(f"Successfully sent {influx_event_record_string} to {influx_url}")
+        except:
+            print(f"Failed to send {influx_event_record_string} to {influx_url}:")
+            print(r.text)
+            os.chdir(currentdir)
+            return False
+
+        # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
+        # so let's create a .influx_logged file
+        os.mknod('.influx_logged')
+
+        os.chdir(currentdir)
+        # if we make it to the end, return True
+        return True
+
+    def _get_metrics(self, machine_name, app_name, test_name):
+        """ Parse the metrics.txt file for InfluxDB reporting """
+        def is_numeric(s):
+            """ Checks if an entry (RHS) is numeric """
+            # Local function. s is assumed to be a whitespace-stripped string
+            # checks if a decimal place or preceding negative sign exists, strip/remove as needed
+            if s[0] == '-':
+                s = s[1:]
+            # for decimal places, we split the string on '.', then check if each side is numeric
+            s = s.split('.')
+            if len(s) == 0 or len(s) > 2:
+                return False
+            if not s[0].isnumeric():
+                return False
+            if len(s) == 2 and not s[1].isnumeric():
+                return False
+            return True
+
+        metrics = {}
+        if not os.path.isfile('metrics.txt'):
+            print(f"File metrics.txt not found")
+            return metrics
+        with open('metrics.txt', 'r') as metric_f:
+            # Each line is in format "metric = value" (space around '=' optional)
+            # All whitespace in metric name will be replaced with underscores
+            for line in metric_f:
+                # Allows comment lines
+                if not line[0] == '#':
+                    line = line.split('=')
+                    if len(line) == 2:
+                        # Replace spaces with underscores, and strip whitespace before/after
+                        line[0] = line[0].strip().replace(' ', '_')
+                        metric_name = f"{app_name}-{test_name}-{line[0]}"
+                        # if it's not numeric, replace spaces with underscores and wrap in quotes
+                        line[1] = line[1].strip()
+                        if is_numeric(line[1]):
+                            metrics[metric_name] = line[1]
+                        else:
+                            line[1] = line[1].replace(' ', '_')
+                            # Wrap strings in double quotes to send to Influx
+                            metrics[metric_name] = f'"{line[1]}"'
+                    else:
+                        print(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
+        return metrics
 
     def __name_of_current_function(self):
         classname = self.__class__.__name__
@@ -586,7 +764,7 @@ def do_application_tasks(launch_id,
                          stdout_stderr,
                          separate_build_stdio=False):
     for app_test in app_test_list:
-        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
+        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
         app_test.doTasks(launchid=launch_id,
                          tasks=tasks,
                          stdout_stderr=stdout_stderr,
