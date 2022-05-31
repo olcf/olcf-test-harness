@@ -641,6 +641,8 @@ class subtest(base_apptest, apptest_layout):
             influx_machine_name = os.environ['LMOD_SYSTEM_NAME']
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+        metrics['build_time'] = self._get_build_time(influx_test_id)
+        metrics['execution_time'] = self._get_execution_time(influx_test_id)
 
         if len(metrics) == 0:
             print(f"No metrics found to log to influxDB")
@@ -672,6 +674,41 @@ class subtest(base_apptest, apptest_layout):
         os.chdir(currentdir)
         # if we make it to the end, return True
         return True
+
+    def _get_build_time(self, test_id):
+        """ Parses the build time from the status file """
+        return self._get_time_diff_of_status_files('Event_120_build_start.txt', 'Event_130_build_end.txt', test_id)
+
+    def _get_execution_time(self, test_id):
+        """ Parses the binary execution time from the status file """
+        return self._get_time_diff_of_status_files('Event_170_binary_execute_start.txt', 'Event_180_binary_execute_end.txt', test_id)
+
+    def _get_time_diff_of_status_files(self, start_event_file, end_event_file, test_id):
+        # Check for start event file and end event file
+        from datetime import datetime
+
+        status_dir = f"{self.get_path_to_test()}/Status/{test_id}"
+
+        for targ in [ f"{status_dir}/{start_event_file}", \
+                        f"{status_dir}/{end_event_file}" ]:
+            if not os.path.exists(f"{targ}"):
+                print(f"Couldn't find required file: {targ}")
+                return -1
+        start_timestamp = ''
+        end_timestamp = ''
+        with open(f"{status_dir}/{start_event_file}", 'r') as start_fstr:
+            line = next(start_fstr)
+            start_timestamp = line.split()[0]
+        with open(f"{status_dir}/{end_event_file}", 'r') as end_fstr:
+            line = next(end_fstr)
+            end_timestamp = line.split()[0]
+        if len(start_timestamp) <= 1 or len(end_timestamp) <= 1:
+            print(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
+            return -1
+        start_ts_dt = datetime.fromisoformat(start_timestamp)
+        end_ts_dt = datetime.fromisoformat(end_timestamp)
+        diff = end_ts_dt - start_ts_dt
+        return diff.total_seconds()   # diff in seconds
 
     def _get_metrics(self, machine_name, app_name, test_name):
         """ Parse the metrics.txt file for InfluxDB reporting """
