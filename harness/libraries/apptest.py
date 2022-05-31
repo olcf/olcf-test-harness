@@ -704,8 +704,10 @@ class subtest(base_apptest, apptest_layout):
         if len(start_timestamp) <= 1 or len(end_timestamp) <= 1:
             print(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
             return -1
-        start_ts_dt = datetime.fromisoformat(start_timestamp)
-        end_ts_dt = datetime.fromisoformat(end_timestamp)
+        #start_ts_dt = datetime.fromisoformat(start_timestamp)
+        #end_ts_dt = datetime.fromisoformat(end_timestamp)
+        start_ts_dt = datetime.strptime(start_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        end_ts_dt = datetime.strptime(end_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
         diff = end_ts_dt - start_ts_dt
         return diff.total_seconds()   # diff in seconds
 
