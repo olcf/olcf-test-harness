@@ -534,7 +534,7 @@ class subtest(base_apptest, apptest_layout):
         if exit_status > 0:
             message = ( "In function {function_name} we have a critical error.\n"
                         "The command '{cmd}' has exited with a failure.\n"
-                        "The exit return value is {value}\n.").format(function_name=self._name_of_current_function(), cmd=starttestcomand,value=exit_status)
+                        "The exit return value is {value}\n.").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
             self.doCriticalLogging(message)
 
             string1 = "Command failed: " + starttestcomand
