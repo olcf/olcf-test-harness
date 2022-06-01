@@ -597,8 +597,6 @@ class subtest(base_apptest, apptest_layout):
             os.mknod('.influx_disabled')
             os.chdir(currentdir)
             return False
-        else:
-            print("Unrecognized value of RGT_DISABLE_INFLUX: ", os.environ['RGT_DISABLE_INFLUX'])
         if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
             print("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
             os.chdir(currentdir)
