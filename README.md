@@ -18,7 +18,6 @@ Outline:
     2. How to turn it on and off in a standard run           (--mode checkout start stop)
     3. How to log to influx after a run has already finished (--mode influx_log)
     4. Automatically calculated metrics
-    5. Creating a new plot in Grafana
 
 
 1 ===== Quick start
@@ -27,20 +26,10 @@ Influx+Grafana has 2 key functionalities:
         - You can see a live stream of the harness events for your jobs online in an easy-to-navigate table
     2. Metric reporting
         - You can see the resulting metrics from a harness app/test run in a dynamic graph
-- The dev dashboard can be seen at https://harness-grafana-dev-stf016.apps.marble.ccs.ornl.gov
-    - Use this dashboard for test development, dashboard plot development
-    - Username: admin
-    - Password: Qx9XLsxE2uHm78ar
-- The prod dashboard can be seen at https://harness-grafana-prod-stf016.apps.marble.ccs.ornl.gov
-    - Username: accept  # This is read-only
-    - Password: accpt!zz14
-NOTE - source /sw/acceptance/olcf-test-harness-influx/{prod,dev}.sh to set the environment variables
 - To enable harness event reporting:
-    - Prior to launch, set RGT_INFLUX_URI and RGT_INFLUX_TOKEN to the required values for the prod or dev
-      deployments of InfluxDB
+    - Prior to launch, set RGT_INFLUX_URI and RGT_INFLUX_TOKEN to the required values for your deployment
 - To enable metric reporting:
-    - Prior to launch, set RGT_INFLUX_URI and RGT_INFLUX_TOKEN to the required values for the prod or dev
-      deployments of InfluxDB
+    - Prior to launch, set RGT_INFLUX_URI and RGT_INFLUX_TOKEN to the required values for your deployment
     - In your application check/report scripts:
         - Write out a `metrics.txt` file that contains lines with the format outlined in section 2
         - That's it! Check the end of your job's output file to view logs pertaining to influxDB packets
@@ -90,19 +79,4 @@ NOTE - source /sw/acceptance/olcf-test-harness-influx/{prod,dev}.sh to set the e
   time and execution time are automatically calculated and sent alongside your provided metrics
     - build_time = build_end - build_start (in seconds)
     - execution_time = executable_end - executable_start (in seconds)
-
-
-5 ===== Creating a new plot in Grafana
-- Develop the new dashboard in the dev version of Grafana: https://harness-grafana-dev-stf016.apps.marble.ccs.ornl.gov
-    - Click the `+` sign on the left menu, this should create a new dashboard
-    - Click `Add new panel`
-        - This brings you to the `Edit Panel` dialogue box.
-        - To plot raw points, instead of time-averaged values, remove the `mean()` selector and the Group By clause
-- When you are finished, go to Dashboard Setings -> JSON Model, and copy the JSON text
-- Add your JSON to `dashboards/<your-dash-name>.json` either the `prod` (for prod dashboard) or `main` (for dev
-  dashboard) of https://gitlab.ccs.ornl.gov/olcf-system-test/olcf-test-harness-monitor/harness-grafana
-- Add, commit, and push - Gitlab CI/CD takes care of the rest! The target pod will restart, and your new dashboard
-  should be in the image of the new pod
-
-
 
