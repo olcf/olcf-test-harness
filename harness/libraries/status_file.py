@@ -345,7 +345,7 @@ class StatusFile:
             event_type = StatusFile.EVENT_DICT[event_id][1]
             event_subtype = StatusFile.EVENT_DICT[event_id][2]
         else:
-            print('Warning: event not recognized. ' + event_id)
+            self.__logger.doWarningLogging('Warning: event not recognized. ' + event_id)
             event_filename = 'Event__UNKNOWN_EVENT_ENCOUNTERED_'
             event_type = ''
             event_subtype = ''
@@ -543,7 +543,7 @@ class StatusFile:
 
         if status_info_dict['event_name'] == "build_end":
             file_name = status_info_dict['run_archive'] + "/build_directory/" + "output_build.txt"
-            print(file_name)
+            self.__logger.doInfoLogging(file_name)
             if os.path.exists(file_name):
                 with open(file_name, "r") as f:
                     output = f.read()
@@ -553,7 +553,7 @@ class StatusFile:
 
         if status_info_dict['event_name'] == "submit_end":
             file_name = status_info_dict['run_archive'] + "/" + "submit.err"
-            print(file_name)
+            self.__logger.doInfoLogging(file_name)
             if os.path.exists(file_name):
                 with open(file_name, "r") as f:
                     output = f.read()
@@ -563,7 +563,7 @@ class StatusFile:
 
         if status_info_dict['event_name'] == "binary_execute_end":
             for file_name in glob.glob(status_info_dict['run_archive'] + "/*.o" + status_info_dict['job_id']):
-                print(file_name)
+                self.__logger.doInfoLogging(file_name)
                 if os.path.exists(file_name):
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -573,7 +573,7 @@ class StatusFile:
 
         if status_info_dict['event_name'] == "check_end":
             file_name = status_info_dict['run_archive'] + "/" + "output_check.txt"
-            print(file_name)
+            self.__logger.doInfoLogging(file_name)
             if os.path.exists(file_name):
                 with open(file_name, "r") as f:
                     output = f.read()
@@ -592,7 +592,7 @@ class StatusFile:
         file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
                                  event_filename)
         if os.path.exists(file_path):
-            print('Warning: event log file already exists. ' + file_path)
+            self.__logger.doWarningLogging('Warning: event log file already exists. ' + file_path)
 
         file_path_partial = os.path.join(dir_head, apptest_layout.test_status_dirname,
                                          str(self.__test_id),
@@ -613,19 +613,20 @@ class StatusFile:
         # Write event to InfluxDB
         if 'RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ:
             if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-                print("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+                self.__logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
             else:
                 influx_url = os.environ['RGT_INFLUX_URI']
                 influx_token = os.environ['RGT_INFLUX_TOKEN']
         
-                print("Logging event to influx")
-                print(influx_event_record_string)
+                self.__logger.doInfoLogging("Logging event to influx")
+                self.__logger.doInfoLogging(influx_event_record_string)
                 headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
 
                 try:
                     r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
                 except:
-                    print(r.text)
+                    # TODO: add more graceful handling of unreachable influx servers
+                    self.doErrorLogging(r.text)
 
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
