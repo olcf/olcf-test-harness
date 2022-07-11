@@ -21,6 +21,7 @@ from libraries.layout_of_apps_directory import apptest_layout
 from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
 from libraries.status_file import summarize_status_file
+from libraries.status_file import StatusFile
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
 
@@ -458,7 +459,7 @@ class subtest(base_apptest, apptest_layout):
         message  = 'Waiting for all {} : {} tests to complete the testing cycle.\n'.format(self.getNameOfApplication(),self.getNameOfSubtest())
         message += 'The maximum wait time is {}.\n'.format(str(timeout_secs))
         message += 'The time between checks is {}.\n'.format(str(time_between_checks))
-        print(message)
+        self.logger.doInfoLogging(message)
 
         # Instantiate the machine for this computer.
         mymachine = MachineFactory.create_machine(harness_config, self)
@@ -469,7 +470,7 @@ class subtest(base_apptest, apptest_layout):
             time.sleep(time_between_checks)
             elapsed_time = datetime.datetime.now() - start_time
             message = 'Checking for subtest cycle completion at {} seconds.\n'.format(str(elapsed_time))
-            print(message)
+            self.logger.doInfoLogging(message)
 
             if mymachine.isTestCycleComplete(self):
                continue_checking = False
@@ -479,7 +480,7 @@ class subtest(base_apptest, apptest_layout):
             if elapsed_time.total_seconds() > timeout_secs:
                 continue_checking = False
                 message_elapsed_time = 'After {} seconds the testing cycle has exceeded the maximum wait time.\n'.format(str(elapsed_time))
-                print(message_elapsed_time)
+                self.logger.doWarningLogging(message_elapsed_time)
 
         return
 
@@ -557,13 +558,13 @@ class subtest(base_apptest, apptest_layout):
     def _influx_log_mode(self):
         """ Logs available tests to InfluxDB, via --mode influx_log """
         currentdir = os.getcwd()
-        self.logger.info(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
+        self.logger.doInfoLogging(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
         testdir = self.get_path_to_test()
         os.chdir(testdir)
         # If Run_Archive exists, continue, else terminate because no tests have been run
         if not os.path.exists(self.test_run_archive_dirname):
             os.chdir(currentdir)
-            self.logger.warning("No harness runs found in ", testdir)
+            self.logger.doWarningLogging("No harness runs found in ", testdir)
             return
         os.chdir(self.test_run_archive_dirname)
 
@@ -571,11 +572,11 @@ class subtest(base_apptest, apptest_layout):
         for test_id in os.listdir('.'):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
                     not os.path.exists(f"./{test_id}/.influx_disabled"):
-                print(f"Attempting to log {test_id}")
+                self.logger.doInfoLogging(f"Attempting to log {test_id}")
                 if self._log_to_influx(test_id):
-                    print(f"Successfully logged {test_id}")
+                    self.logger.doInfoLogging(f"Successfully logged {test_id}")
                 else:
-                    print(f"Unable to log {test_id}")
+                    self.logger.doWarningLogging(f"Unable to log {test_id}")
 
         os.chdir(currentdir)
 
@@ -583,30 +584,31 @@ class subtest(base_apptest, apptest_layout):
     def _log_to_influx(self, influx_test_id):
         """ Check if metrics.txt exists, is proper format, and log to influxDB. """
         currentdir = os.getcwd()
-        self.logger.info(f"current directory in apptest: {currentdir}")
-        runarchive_dir = get_path_to_runarchive()
+        self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
+        # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
+        runarchive_dir = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, f"{influx_test_id}")
         os.chdir(runarchive_dir)
-        self.logger.info(f"Starting influxDB logging in apptest: {os.getcwd()}")
+        self.logger.doInfoLogging(f"Starting influxDB logging in apptest: {os.getcwd()}")
 
         if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-            self.logger.warning("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
-            self.logger.info("Creating .influx_disabled file in Run_Archive")
-            self.logger.info("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
+            self.logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            self.logger.doInfoLogging("Creating .influx_disabled file in Run_Archive")
+            self.logger.doInfoLogging("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
             os.mknod('.influx_disabled')
             os.chdir(currentdir)
             return False
         if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
-            self.logger.warning("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
+            self.logger.doWarningLogging("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
             os.chdir(currentdir)
             return False
 
         # Check if influx was disabled for this run
         if os.path.exists('.influx_disabled'):
-            self.logger.warning("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
+            self.logger.doWarningLogging("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
             return False
         # Check if the .influx_logged file already exists - it shouldn't, but just in case
         if os.path.exists('.influx_logged'):
-            self.logger.warning("The .influx_logged file already exists.")
+            self.logger.doWarningLogging("The .influx_logged file already exists.")
             return False
 
         import requests
@@ -631,7 +633,7 @@ class subtest(base_apptest, apptest_layout):
         # Machine name
         if not 'RGT_MACHINE_NAME' in os.environ:
             influx_machine_name = subprocess.check_output(['hostname', '--long'])
-            self.logger.warning(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
+            self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
         else:
             influx_machine_name = os.environ['RGT_MACHINE_NAME']
 
@@ -640,7 +642,7 @@ class subtest(base_apptest, apptest_layout):
         metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
 
         if len(metrics) == 0:
-            self.logger.warning(f"No metrics found to log to influxDB")
+            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
             os.chdir(currentdir)
             return False
 
@@ -655,10 +657,10 @@ class subtest(base_apptest, apptest_layout):
             num_metrics_printed += 1
         try:
             r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-            self.logger.info(f"Successfully sent {influx_event_record_string} to {influx_url}")
+            self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
         except:
-            self.logger.error(f"Failed to send {influx_event_record_string} to {influx_url}:")
-            self.logger.error(r.text)
+            self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
+            self.logger.doErrorLogging(r.text)
             os.chdir(currentdir)
             return False
 
@@ -672,22 +674,24 @@ class subtest(base_apptest, apptest_layout):
 
     def _get_build_time(self, test_id):
         """ Parses the build time from the status file """
-        return self._get_time_diff_of_status_files('Event_120_build_start.txt', 'Event_130_build_end.txt', test_id)
+        return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][0], \
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0], test_id)
 
     def _get_execution_time(self, test_id):
         """ Parses the binary execution time from the status file """
-        return self._get_time_diff_of_status_files('Event_170_binary_execute_start.txt', 'Event_180_binary_execute_end.txt', test_id)
+        return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_START][0], \
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0], test_id)
 
     def _get_time_diff_of_status_files(self, start_event_file, end_event_file, test_id):
         # Check for start event file and end event file
         from datetime import datetime
 
-        status_dir = f"{self.get_path_to_test()}/Status/{test_id}"
+        status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}"
 
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:
             if not os.path.exists(f"{targ}"):
-                print(f"Couldn't find required file: {targ}")
+                self.logger.doWarningLogging(f"Couldn't find required file for time logging: {targ}")
                 return -1
         start_timestamp = ''
         end_timestamp = ''
