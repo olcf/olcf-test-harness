@@ -585,30 +585,30 @@ class subtest(base_apptest, apptest_layout):
     def _log_to_influx(self, influx_test_id):
         """ Check if metrics.txt exists, is proper format, and log to influxDB. """
         currentdir = os.getcwd()
-        print("current directory in apptest:", currentdir)
-        runarchive_dir = f"{self.get_path_to_test()}/Run_Archive/{influx_test_id}"
+        self.logger.info(f"current directory in apptest: {currentdir}")
+        runarchive_dir = get_path_to_runarchive()
         os.chdir(runarchive_dir)
-        print("Starting influxDB logging in apptest:", os.getcwd())
+        self.logger.info(f"Starting influxDB logging in apptest: {os.getcwd()}")
 
         if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-            print("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
-            print("Creating .influx_disabled file in Run_Archive")
-            print("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
+            self.logger.warning("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            self.logger.info("Creating .influx_disabled file in Run_Archive")
+            self.logger.info("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
             os.mknod('.influx_disabled')
             os.chdir(currentdir)
             return False
         if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
-            print("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
+            self.logger.warning("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
             os.chdir(currentdir)
             return False
 
         # Check if influx was disabled for this run
         if os.path.exists('.influx_disabled'):
-            print("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
+            self.logger.warning("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
             return False
         # Check if the .influx_logged file already exists - it shouldn't, but just in case
         if os.path.exists('.influx_logged'):
-            print("The .influx_logged file already exists.")
+            self.logger.warning("The .influx_logged file already exists.")
             return False
 
         import requests
@@ -631,18 +631,18 @@ class subtest(base_apptest, apptest_layout):
         influx_app = self.getNameOfApplication()
         influx_test = self.getNameOfSubtest()
         # Machine name
-        if not 'LMOD_SYSTEM_NAME' in os.environ:
+        if not 'RGT_MACHINE_NAME' in os.environ:
             influx_machine_name = subprocess.check_output(['hostname', '--long'])
-            print(f"WARNING: LMOD_SYSTEM_NAME not found in os.environ, setting to {self.influx_machine_name}")
+            self.logger.warning(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
         else:
-            influx_machine_name = os.environ['LMOD_SYSTEM_NAME']
+            influx_machine_name = os.environ['RGT_MACHINE_NAME']
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
         metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
         metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
 
         if len(metrics) == 0:
-            print(f"No metrics found to log to influxDB")
+            self.logger.warning(f"No metrics found to log to influxDB")
             os.chdir(currentdir)
             return False
 
@@ -657,10 +657,10 @@ class subtest(base_apptest, apptest_layout):
             num_metrics_printed += 1
         try:
             r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-            print(f"Successfully sent {influx_event_record_string} to {influx_url}")
+            self.logger.info(f"Successfully sent {influx_event_record_string} to {influx_url}")
         except:
-            print(f"Failed to send {influx_event_record_string} to {influx_url}:")
-            print(r.text)
+            self.logger.error(f"Failed to send {influx_event_record_string} to {influx_url}:")
+            self.logger.error(r.text)
             os.chdir(currentdir)
             return False
 
