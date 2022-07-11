@@ -625,9 +625,11 @@ class StatusFile:
 
                 try:
                     r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+                except requests.ConnectionError as e:
+                    self.__logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
                 except:
                     # TODO: add more graceful handling of unreachable influx servers
-                    self.doErrorLogging(r.text)
+                    self.__logger.doErrorLogging(r.text)
 
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
