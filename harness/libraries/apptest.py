@@ -8,7 +8,7 @@
 import subprocess
 import shlex
 import time
-import datetime
+from datetime import datetime
 import os
 import sys
 import copy
@@ -254,7 +254,7 @@ class subtest(base_apptest, apptest_layout):
         starttimestring = taskwords[0]
         starttimestring = starttimestring.strip()
         starttimewords = starttimestring.split("_")
-        startdate = datetime.datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
+        startdate = datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
                                       int(starttimewords[3]),int(starttimewords[4]))
         log_message =  "The startdate is " + startdate.ctime()
         print (log_message)
@@ -262,7 +262,7 @@ class subtest(base_apptest, apptest_layout):
         endtimestring = taskwords[1]
         endtimestring = endtimestring.strip()
         endtimewords = endtimestring.split("_")
-        enddate = datetime.datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
+        enddate = datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
                                       int(endtimewords[3]),int(endtimewords[4]))
         log_message = "The enddate is " + enddate.ctime()
         print(log_message)
@@ -312,7 +312,7 @@ class subtest(base_apptest, apptest_layout):
         starttimestring = taskwords[0]
         starttimestring = starttimestring.strip()
         starttimewords = starttimestring.split("_")
-        startdate = datetime.datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
+        startdate = datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
                                       int(starttimewords[3]),int(starttimewords[4]))
         log_message = "The startdate is " + startdate.ctime()
         print(log_message)
@@ -320,7 +320,7 @@ class subtest(base_apptest, apptest_layout):
         endtimestring = taskwords[1]
         endtimestring = endtimestring.strip()
         endtimewords = endtimestring.split("_")
-        enddate = datetime.datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
+        enddate = datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
                                       int(endtimewords[3]),int(endtimewords[4]))
         log_message = "The enddate is " + enddate.ctime()
         print(log_message)
@@ -447,7 +447,6 @@ class subtest(base_apptest, apptest_layout):
         """
 
         from machine_types.machine_factory import MachineFactory
-        import datetime
 
         # Set the time counters and other flags for ensuring a maximum
         # wait time while checking completion of the test cycle.
@@ -465,10 +464,10 @@ class subtest(base_apptest, apptest_layout):
         mymachine = MachineFactory.create_machine(harness_config, self)
 
         continue_checking = True
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         while continue_checking:
             time.sleep(time_between_checks)
-            elapsed_time = datetime.datetime.now() - start_time
+            elapsed_time = datetime.now() - start_time
             message = 'Checking for subtest cycle completion at {} seconds.\n'.format(str(elapsed_time))
             self.logger.doInfoLogging(message)
 
@@ -476,7 +475,7 @@ class subtest(base_apptest, apptest_layout):
                continue_checking = False
                break
 
-            elapsed_time = datetime.datetime.now() - start_time
+            elapsed_time = datetime.now() - start_time
             if elapsed_time.total_seconds() > timeout_secs:
                 continue_checking = False
                 message_elapsed_time = 'After {} seconds the testing cycle has exceeded the maximum wait time.\n'.format(str(elapsed_time))
@@ -573,7 +572,7 @@ class subtest(base_apptest, apptest_layout):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
                     not os.path.exists(f"./{test_id}/.influx_disabled"):
                 self.logger.doInfoLogging(f"Attempting to log {test_id}")
-                if self._log_to_influx(test_id):
+                if self._log_to_influx(test_id, post_run=True):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
                 else:
                     self.logger.doWarningLogging(f"Unable to log {test_id}")
@@ -581,7 +580,7 @@ class subtest(base_apptest, apptest_layout):
         os.chdir(currentdir)
 
     # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
-    def _log_to_influx(self, influx_test_id):
+    def _log_to_influx(self, influx_test_id, post_run=False):
         """ Check if metrics.txt exists, is proper format, and log to influxDB. """
         currentdir = os.getcwd()
         self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
@@ -655,6 +654,12 @@ class subtest(base_apptest, apptest_layout):
             else:
                 influx_event_record_string += f",{k}={v}"
             num_metrics_printed += 1
+
+        # if mode is post-run harness logging, get Unix timestamp so that the time in InfluxDB is accurate
+        if post_run:
+            run_timestamp = self._get_run_timestamp(influx_test_id)
+            influx_event_record_string += f" {run_timestamp}"
+
         try:
             r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
             self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
@@ -685,10 +690,25 @@ class subtest(base_apptest, apptest_layout):
         return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_START][0], \
                                                     StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0], test_id)
 
+    def _get_run_timestamp(self, test_id):
+        # Check for start event file and end event file
+        check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
+        check_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]}"
+
+        if not os.path.exists(f"{check_status_file}"):
+            self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
+            return -1
+        with open(f"{check_status_file}", 'r') as check_fstr:
+            line = next(check_fstr)
+            check_timestamp = line.split()[0]
+            # Convert to UTC
+            dt_utc = datetime.strptime(check_timestamp, "%Y-%m-%dT%H:%M:%S.%f") \
+                + (datetime.utcnow() - datetime.now())
+            ns_utc = int(datetime.timestamp(dt_utc)) * 1000 * 1000 * 1000
+        return ns_utc
+
     def _get_time_diff_of_status_files(self, start_event_file, end_event_file, test_id):
         # Check for start event file and end event file
-        from datetime import datetime
-
         status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}"
 
         for targ in [ f"{status_dir}/{start_event_file}", \
