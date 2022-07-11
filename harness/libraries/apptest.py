@@ -658,9 +658,12 @@ class subtest(base_apptest, apptest_layout):
         try:
             r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
             self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
-        except:
+        except requests.exceptions.ConnectionError as e:
+            self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
+        except Exception as e:
+            # TODO: add more graceful handling of unreachable influx servers
             self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
-            self.logger.doErrorLogging(r.text)
+            self.logger.doErrorLogging(e)
             os.chdir(currentdir)
             return False
 

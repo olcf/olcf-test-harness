@@ -97,7 +97,7 @@ def main():
 
     logger_threshold = "INFO"
     fh_threshold_log_level = "INFO"
-    ch_threshold_log_level = "CRITICAL"
+    ch_threshold_log_level = "WARNING"
     fh_filepath = get_path_to_logfile_from_runarchivedir(path_to_results)
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=get_logger_name(),
