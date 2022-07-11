@@ -557,17 +557,15 @@ class subtest(base_apptest, apptest_layout):
     def _influx_log_mode(self):
         """ Logs available tests to InfluxDB, via --mode influx_log """
         currentdir = os.getcwd()
-        print(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
-        # Run_Archive adds an odd ID on to the end, so this is a portable solution
+        self.logger.info(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
         testdir = self.get_path_to_test()
         os.chdir(testdir)
         # If Run_Archive exists, continue, else terminate because no tests have been run
-        if not os.path.exists('./Run_Archive'):
+        if not os.path.exists(self.test_run_archive_dirname):
             os.chdir(currentdir)
-            print("Could not find Run_Archive directory in ", testdir)
-            print("This is likely caused by no tests being run")
+            self.logger.warning("No harness runs found in ", testdir)
             return
-        os.chdir('./Run_Archive')
+        os.chdir(self.test_run_archive_dirname)
 
         # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
         for test_id in os.listdir('.'):
