@@ -528,10 +528,11 @@ class StatusFile:
         event_record_string += '\n'
 
         machine_name=""
-        if 'LMOD_SYSTEM_NAME' in os.environ:
-            machine_name = os.environ['LMOD_SYSTEM_NAME']
+        if 'RGT_MACHINE_NAME' in os.environ:
+            machine_name = os.environ['RGT_MACHINE_NAME']
         else:
-            machine_name = str(subprocess.run("hostname --fqdn", shell=True, stdout=subprocess.PIPE).stdout.strip())
+            self.__logger.doWarningLogging("Bad environment: could not find RGT_MACHINE_NAME in the environment.")
+            machine_name = str(subprocess.run("hostname --long", shell=True, stdout=subprocess.PIPE).stdout.strip())
 
         influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + ",machine="  + machine_name + " "
         for key_value in status_info:
