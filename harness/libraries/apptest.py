@@ -641,9 +641,11 @@ class subtest(base_apptest, apptest_layout):
         metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
         if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
             self.logger.doWarningLogging(f"Invalid build time for jobID {influx_testid}.")
+            os.chdir(currentdir)
             return False
         elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
             self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_testid}.")
+            os.chdir(currentdir)
             return False
 
         if len(metrics) == 0:
@@ -666,6 +668,7 @@ class subtest(base_apptest, apptest_layout):
             run_timestamp = self._get_run_timestamp(influx_test_id)
             if run_timestamp < 0:
                 self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_testid}: {run_timestamp}")
+                os.chdir(currentdir)
                 return False
             influx_event_record_string += f" {run_timestamp}"
 
@@ -674,6 +677,7 @@ class subtest(base_apptest, apptest_layout):
             self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
         except requests.exceptions.ConnectionError as e:
             self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
+            os.chdir(currentdir)
             return False
         except Exception as e:
             # TODO: add more graceful handling of unreachable influx servers
