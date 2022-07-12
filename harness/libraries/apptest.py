@@ -702,8 +702,9 @@ class subtest(base_apptest, apptest_layout):
             line = next(check_fstr)
             check_timestamp = line.split()[0]
             # Convert to UTC
-            dt_utc = datetime.strptime(check_timestamp, "%Y-%m-%dT%H:%M:%S.%f") \
-                + (datetime.utcnow() - datetime.now())
+            #dt_utc = datetime.strptime(check_timestamp, "%Y-%m-%dT%H:%M:%S.%f") \
+                #+ (datetime.utcnow() - datetime.now())
+            dt_utc = datetime.strptime(check_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
             ns_utc = int(datetime.timestamp(dt_utc)) * 1000 * 1000 * 1000
         return ns_utc
 
