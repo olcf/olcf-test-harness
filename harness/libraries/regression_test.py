@@ -29,6 +29,7 @@ class Harness:
     starttest = "start_tests"
     stoptest = "stop_tests"
     displaystatus = "display_status"
+    influx_log = "influx_log"
     summarize_results = "summarize_results"
 
     # Defines the harness log file name.

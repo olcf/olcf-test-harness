@@ -8,7 +8,7 @@
 import subprocess
 import shlex
 import time
-import datetime
+from datetime import datetime
 import os
 import sys
 import copy
@@ -21,6 +21,7 @@ from libraries.layout_of_apps_directory import apptest_layout
 from libraries.status_file import parse_status_file
 from libraries.status_file import parse_status_file2
 from libraries.status_file import summarize_status_file
+from libraries.status_file import StatusFile
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
 
@@ -111,7 +112,6 @@ class subtest(base_apptest, apptest_layout):
 
         from libraries.regression_test import Harness
 
-
         if tasks != None:
             tasks = copy.deepcopy(tasks)
             tasks = subtest.reorderTaskList(tasks)
@@ -123,7 +123,6 @@ class subtest(base_apptest, apptest_layout):
 
         for harness_task in tasks:
             if harness_task == Harness.checkout:
-
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
@@ -162,6 +161,9 @@ class subtest(base_apptest, apptest_layout):
             elif harness_task == Harness.stoptest:
                 self._stop_test()
 
+            elif harness_task == Harness.influx_log:
+                self._influx_log_mode()
+
             elif harness_task == Harness.displaystatus:
                 if test_display_lock:
                     test_display_lock.acquire()
@@ -175,7 +177,6 @@ class subtest(base_apptest, apptest_layout):
                 self.generateReport()
 
     def cloneRepository(self,my_repository,destination):
-
         #Get the current working directory.
         cwd = os.getcwd()
 
@@ -196,11 +197,6 @@ class subtest(base_apptest, apptest_layout):
             self.doInfoLogging(message)
 
         return
-
-
-    #
-    # Stops the test.
-    #
 
     #
     # Displays the status of the tests.
@@ -258,7 +254,7 @@ class subtest(base_apptest, apptest_layout):
         starttimestring = taskwords[0]
         starttimestring = starttimestring.strip()
         starttimewords = starttimestring.split("_")
-        startdate = datetime.datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
+        startdate = datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
                                       int(starttimewords[3]),int(starttimewords[4]))
         log_message =  "The startdate is " + startdate.ctime()
         print (log_message)
@@ -266,7 +262,7 @@ class subtest(base_apptest, apptest_layout):
         endtimestring = taskwords[1]
         endtimestring = endtimestring.strip()
         endtimewords = endtimestring.split("_")
-        enddate = datetime.datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
+        enddate = datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
                                       int(endtimewords[3]),int(endtimewords[4]))
         log_message = "The enddate is " + enddate.ctime()
         print(log_message)
@@ -316,7 +312,7 @@ class subtest(base_apptest, apptest_layout):
         starttimestring = taskwords[0]
         starttimestring = starttimestring.strip()
         starttimewords = starttimestring.split("_")
-        startdate = datetime.datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
+        startdate = datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
                                       int(starttimewords[3]),int(starttimewords[4]))
         log_message = "The startdate is " + startdate.ctime()
         print(log_message)
@@ -324,7 +320,7 @@ class subtest(base_apptest, apptest_layout):
         endtimestring = taskwords[1]
         endtimestring = endtimestring.strip()
         endtimewords = endtimestring.split("_")
-        enddate = datetime.datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
+        enddate = datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
                                       int(endtimewords[3]),int(endtimewords[4]))
         log_message = "The enddate is " + enddate.ctime()
         print(log_message)
@@ -419,6 +415,10 @@ class subtest(base_apptest, apptest_layout):
             app_tasks1.append(Harness.summarize_results)
             taskwords1.remove(Harness.summarize_results)
 
+        if (Harness.influx_log in taskwords1):
+            app_tasks1.append(Harness.influx_log)
+            taskwords1.remove(Harness.influx_log)
+
         return app_tasks1
 
     def doInfoLogging(self,message):
@@ -447,7 +447,6 @@ class subtest(base_apptest, apptest_layout):
         """
 
         from machine_types.machine_factory import MachineFactory
-        import datetime
 
         # Set the time counters and other flags for ensuring a maximum
         # wait time while checking completion of the test cycle.
@@ -459,28 +458,28 @@ class subtest(base_apptest, apptest_layout):
         message  = 'Waiting for all {} : {} tests to complete the testing cycle.\n'.format(self.getNameOfApplication(),self.getNameOfSubtest())
         message += 'The maximum wait time is {}.\n'.format(str(timeout_secs))
         message += 'The time between checks is {}.\n'.format(str(time_between_checks))
-        print(message)
+        self.logger.doInfoLogging(message)
 
         # Instantiate the machine for this computer.
         mymachine = MachineFactory.create_machine(harness_config, self)
 
         continue_checking = True
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         while continue_checking:
             time.sleep(time_between_checks)
-            elapsed_time = datetime.datetime.now() - start_time
+            elapsed_time = datetime.now() - start_time
             message = 'Checking for subtest cycle completion at {} seconds.\n'.format(str(elapsed_time))
-            print(message)
+            self.logger.doInfoLogging(message)
 
             if mymachine.isTestCycleComplete(self):
                continue_checking = False
                break
 
-            elapsed_time = datetime.datetime.now() - start_time
+            elapsed_time = datetime.now() - start_time
             if elapsed_time.total_seconds() > timeout_secs:
                 continue_checking = False
                 message_elapsed_time = 'After {} seconds the testing cycle has exceeded the maximum wait time.\n'.format(str(elapsed_time))
-                print(message_elapsed_time)
+                self.logger.doWarningLogging(message_elapsed_time)
 
         return
 
@@ -547,13 +546,253 @@ class subtest(base_apptest, apptest_layout):
             self.doInfoLogging(message)
 
     def _stop_test(self):
-
         pathtokillfile = self.get_path_to_kill_file()
         with open(pathtokillfile,"w") as kill_file:
             kill_file.write("")
 
         message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
         self.doInfoLogging(message)
+
+    # Used when --mode influx_log is run after a harness run
+    def _influx_log_mode(self):
+        """ Logs available tests to InfluxDB, via --mode influx_log """
+        currentdir = os.getcwd()
+        self.logger.doInfoLogging(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
+        testdir = self.get_path_to_test()
+        os.chdir(testdir)
+        # If Run_Archive exists, continue, else terminate because no tests have been run
+        if not os.path.exists(self.test_run_archive_dirname):
+            os.chdir(currentdir)
+            self.logger.doWarningLogging("No harness runs found in ", testdir)
+            return
+        os.chdir(self.test_run_archive_dirname)
+
+        # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
+        for test_id in os.listdir('.'):
+            if not os.path.exists(f"./{test_id}/.influx_logged") and \
+                    not os.path.exists(f"./{test_id}/.influx_disabled"):
+                self.logger.doInfoLogging(f"Attempting to log {test_id}")
+                if self._log_to_influx(test_id, post_run=True):
+                    self.logger.doInfoLogging(f"Successfully logged {test_id}")
+                else:
+                    self.logger.doWarningLogging(f"Unable to log {test_id}")
+
+        os.chdir(currentdir)
+
+    # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
+    def _log_to_influx(self, influx_test_id, post_run=False):
+        """ Check if metrics.txt exists, is proper format, and log to influxDB. """
+        currentdir = os.getcwd()
+        self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
+        # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
+        runarchive_dir = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, f"{influx_test_id}")
+        os.chdir(runarchive_dir)
+        self.logger.doInfoLogging(f"Starting influxDB logging in apptest: {os.getcwd()}")
+
+        if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
+            self.logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            self.logger.doInfoLogging("Creating .influx_disabled file in Run_Archive")
+            self.logger.doInfoLogging("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
+            os.mknod('.influx_disabled')
+            os.chdir(currentdir)
+            return False
+        if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
+            self.logger.doWarningLogging("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
+            os.chdir(currentdir)
+            return False
+
+        # Check if influx was disabled for this run
+        if os.path.exists('.influx_disabled'):
+            self.logger.doWarningLogging("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
+            return False
+        # Check if the .influx_logged file already exists - it shouldn't, but just in case
+        if os.path.exists('.influx_logged'):
+            self.logger.doWarningLogging("The .influx_logged file already exists.")
+            return False
+
+        import requests
+
+        influx_url = os.environ['RGT_INFLUX_URI']
+        influx_token = os.environ['RGT_INFLUX_TOKEN']
+
+        headers = {
+            'Authorization': "Token " + influx_token,
+            'Content-Type': "text/plain; charset=utf-8",
+            'Accept': "application/json"
+        }
+
+        # Inherited from environment or 'unknown'
+        # This may be set as `unknown` if run outside of harness job
+        influx_runtag = (
+            os.environ['RGT_SYSTEM_LOG_TAG']
+            if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown')
+        # Fields defined by subtest class
+        influx_app = self.getNameOfApplication()
+        influx_test = self.getNameOfSubtest()
+        # Machine name
+        if not 'RGT_MACHINE_NAME' in os.environ:
+            influx_machine_name = subprocess.check_output(['hostname', '--long'])
+            self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
+        else:
+            influx_machine_name = os.environ['RGT_MACHINE_NAME']
+
+        metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+        metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
+        metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
+        if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
+            self.logger.doWarningLogging(f"Invalid build time for jobID {influx_testid}.")
+            os.chdir(currentdir)
+            return False
+        elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
+            self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_testid}.")
+            os.chdir(currentdir)
+            return False
+
+        if len(metrics) == 0:
+            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
+            os.chdir(currentdir)
+            return False
+
+        influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
+        influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
+        num_metrics_printed = 0
+        for k, v in metrics.items():
+            if num_metrics_printed == 0:
+                influx_event_record_string += f" {k}={v}"
+            else:
+                influx_event_record_string += f",{k}={v}"
+            num_metrics_printed += 1
+
+        # if mode is post-run harness logging, get Unix timestamp so that the time in InfluxDB is accurate
+        if post_run:
+            run_timestamp = self._get_run_timestamp(influx_test_id)
+            if run_timestamp < 0:
+                self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_testid}: {run_timestamp}")
+                os.chdir(currentdir)
+                return False
+            influx_event_record_string += f" {run_timestamp}"
+
+        try:
+            r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+            self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
+        except requests.exceptions.ConnectionError as e:
+            self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
+            os.chdir(currentdir)
+            return False
+        except Exception as e:
+            # TODO: add more graceful handling of unreachable influx servers
+            self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
+            self.logger.doErrorLogging(e)
+            os.chdir(currentdir)
+            return False
+
+        # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
+        # so let's create a .influx_logged file
+        os.mknod('.influx_logged')
+
+        os.chdir(currentdir)
+        # if we make it to the end, return True
+        return True
+
+    def _get_build_time(self, test_id):
+        """ Parses the build time from the status file """
+        return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][0], \
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0], test_id)
+
+    def _get_execution_time(self, test_id):
+        """ Parses the binary execution time from the status file """
+        return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_START][0], \
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0], test_id)
+
+    def _get_run_timestamp(self, test_id):
+        # Check for start event file and end event file
+        check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
+        check_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]}"
+
+        if not os.path.exists(f"{check_status_file}"):
+            self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
+            return -1
+        with open(f"{check_status_file}", 'r') as check_fstr:
+            line = next(check_fstr)
+            check_timestamp = line.split()[0]
+            # Convert to UTC
+            #dt_utc = datetime.strptime(check_timestamp, "%Y-%m-%dT%H:%M:%S.%f") \
+                #+ (datetime.utcnow() - datetime.now())
+            dt_utc = datetime.strptime(check_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+            ns_utc = int(datetime.timestamp(dt_utc)) * 1000 * 1000 * 1000
+        return ns_utc
+
+    def _get_time_diff_of_status_files(self, start_event_file, end_event_file, test_id):
+        # Check for start event file and end event file
+        status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}"
+
+        for targ in [ f"{status_dir}/{start_event_file}", \
+                        f"{status_dir}/{end_event_file}" ]:
+            if not os.path.exists(f"{targ}"):
+                self.logger.doWarningLogging(f"Couldn't find required file for time logging: {targ}")
+                return -1
+        start_timestamp = ''
+        end_timestamp = ''
+        with open(f"{status_dir}/{start_event_file}", 'r') as start_fstr:
+            line = next(start_fstr)
+            start_timestamp = line.split()[0]
+        with open(f"{status_dir}/{end_event_file}", 'r') as end_fstr:
+            line = next(end_fstr)
+            end_timestamp = line.split()[0]
+        if len(start_timestamp) <= 1 or len(end_timestamp) <= 1:
+            print(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
+            return -1
+        #start_ts_dt = datetime.fromisoformat(start_timestamp)
+        #end_ts_dt = datetime.fromisoformat(end_timestamp)
+        start_ts_dt = datetime.strptime(start_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        end_ts_dt = datetime.strptime(end_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        diff = end_ts_dt - start_ts_dt
+        return diff.total_seconds()   # diff in seconds
+
+    def _get_metrics(self, machine_name, app_name, test_name):
+        """ Parse the metrics.txt file for InfluxDB reporting """
+        def is_numeric(s):
+            """ Checks if an entry (RHS) is numeric """
+            # Local function. s is assumed to be a whitespace-stripped string
+            # checks if a decimal place or preceding negative sign exists, strip/remove as needed
+            if s[0] == '-':
+                s = s[1:]
+            # for decimal places, we split the string on '.', then check if each side is numeric
+            s = s.split('.')
+            if len(s) == 0 or len(s) > 2:
+                return False
+            if not s[0].isnumeric():
+                return False
+            if len(s) == 2 and not s[1].isnumeric():
+                return False
+            return True
+
+        metrics = {}
+        if not os.path.isfile('metrics.txt'):
+            print(f"File metrics.txt not found")
+            return metrics
+        with open('metrics.txt', 'r') as metric_f:
+            # Each line is in format "metric = value" (space around '=' optional)
+            # All whitespace in metric name will be replaced with underscores
+            for line in metric_f:
+                # Allows comment lines
+                if not line[0] == '#':
+                    line = line.split('=')
+                    if len(line) == 2:
+                        # Replace spaces with underscores, and strip whitespace before/after
+                        line[0] = line[0].strip().replace(' ', '_')
+                        metric_name = f"{app_name}-{test_name}-{line[0]}"
+                        # if it's not numeric, replace spaces with underscores and wrap in quotes
+                        line[1] = line[1].strip()
+                        if is_numeric(line[1]):
+                            metrics[metric_name] = line[1]
+                        else:
+                            line[1] = line[1].replace(' ', '_')
+                            # Wrap strings in double quotes to send to Influx
+                            metrics[metric_name] = f'"{line[1]}"'
+                    else:
+                        print(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
+        return metrics
 
     def __name_of_current_function(self):
         classname = self.__class__.__name__
@@ -586,7 +825,7 @@ def do_application_tasks(launch_id,
                          stdout_stderr,
                          separate_build_stdio=False):
     for app_test in app_test_list:
-        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
+        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
         app_test.doTasks(launchid=launch_id,
                          tasks=tasks,
                          stdout_stderr=stdout_stderr,

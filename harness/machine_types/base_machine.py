@@ -408,6 +408,22 @@ class BaseMachine(metaclass=ABCMeta):
         exit_status = self._start_report_script(self.test_config.get_report_command())
         return exit_status
 
+    def log_to_influx(self):
+        """Logs the results to influx if able
+        
+        Return
+        ------
+        bool: Success (True), otherwise, not logged to influxDB
+        """
+        messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function()) 
+        message = f"{messloc} attempting to log to influxDB."
+
+        print(message)
+        self.logger.doInfoLogging(message)
+        
+        exit_status = self._log_to_influx()
+        return exit_status
+
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of public methods.                                          @
@@ -486,6 +502,9 @@ class BaseMachine(metaclass=ABCMeta):
         report_exit_status = p.returncode
         os.chdir(currentdir)
         return report_exit_status
+
+    def _log_to_influx(self):
+        return self.apptest._log_to_influx(self.apptest.get_harness_id())
 
     def _build_jobLauncher_command(self,template_dict):
         """ Return the jobLauncher command."""

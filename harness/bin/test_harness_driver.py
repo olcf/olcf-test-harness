@@ -291,6 +291,9 @@ def auto_generated_scripts(harness_config,
             jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
             check_exit_value = mymachine.check_executable()
             mymachine.start_report_executable()
+            influx_reported = mymachine.log_to_influx()
+            if not influx_reported:
+                print("Results not logged to influxDB")
         else:
             print("CHECK ERROR: failed to retrieve job id!")
             check_exit_value = 1

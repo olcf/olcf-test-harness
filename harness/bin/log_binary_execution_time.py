@@ -7,7 +7,27 @@ import os
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file_factory import StatusFileFactory
 from libraries.status_file import StatusFile
-from libraries.layout_of_apps_directory import get_layout_from_scriptdir
+from libraries.layout_of_apps_directory import get_layout_from_scriptdir, get_path_to_logfile_from_scriptdir
+from libraries.rgt_loggers import rgt_logger_factory
+
+MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
+"""str : The logging level for this module. """
+
+MODULE_LOGGER_NAME = "log_binary_execution"
+"""The logger name for this module."""
+
+def get_log_level():
+    """Returns the test harness driver threshold log level.
+
+    Returns
+    -------
+    int
+    """
+    return MODULE_THRESHOLD_LOG_LEVEL
+
+def get_logger_name():
+    """Returns the logger name for this module."""
+    return MODULE_LOGGER_NAME
 
 def create_a_parser():
     """Parses the arguments.
@@ -52,6 +72,17 @@ def main():
     if cwd != scriptsdir:
         os.chdir(scriptsdir)
 
+    # Create a logger
+    logger_threshold = "INFO"
+    fh_threshold_log_level = "INFO"
+    ch_threshold_log_level = "WARNING"
+    fh_filepath = get_path_to_logfile_from_scriptdir(scriptsdir, unique_id)
+    a_logger = rgt_logger_factory.create_rgt_logger(
+                                         logger_name=get_logger_name(),
+                                         fh_filepath=fh_filepath,
+                                         logger_threshold_log_level=logger_threshold,
+                                         fh_threshold_log_level=fh_threshold_log_level,
+                                         ch_threshold_log_level=ch_threshold_log_level)
     # Get status file
     (apps_root, app, test) = get_layout_from_scriptdir(scriptsdir)
     apptest = SubtestFactory.make_subtest(name_of_application=app,
@@ -59,7 +90,7 @@ def main():
                                           local_path_to_tests=apps_root,
                                           tag=unique_id)
     path_to_status_file = apptest.get_path_to_status_file()
-    jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file)
+    jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file, logger=a_logger)
     jstatus.initialize_subtest(None, unique_id)
 
     # Log the appropriate event to the status file

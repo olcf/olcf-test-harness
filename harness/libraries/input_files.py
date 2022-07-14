@@ -49,6 +49,8 @@ class rgt_input_file:
                     runmodetask = ["stop_tests",None,None]
                 elif modetask == "status":
                     runmodetask = ["display_tests",None,None]
+                elif modetask == "influx_log":
+                    runmodetask = ["influx_log",None,None]
                 else:
                     runmodetask = None
                     print("Found invalid task in the command line: ", modetask)
