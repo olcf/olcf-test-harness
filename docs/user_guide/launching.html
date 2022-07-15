@@ -110,10 +110,12 @@
 <li class="toctree-l2"><a class="reference internal" href="#oth-setup">OTH Setup</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#on-lyra">On Lyra</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#on-spock">On Spock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#on-spock-and-crusher">On Spock and Crusher</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging-harness-events-to-influxdb">Logging harness events to InfluxDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging-test-metrics-to-influxdb">Logging test metrics to InfluxDB</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#launching-the-oth">Launching the OTH</a></li>
@@ -134,6 +136,7 @@
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#notes-on-where-things-are">Notes on Where Things Are</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#modifying-a-test-to-log-metrics-to-influxdb">Modifying a Test to Log Metrics to InfluxDB</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a></li>
@@ -281,14 +284,17 @@ module load olcf_harness
 </pre></div>
 </div>
 </section>
-<section id="on-spock">
-<h4>On Spock<a class="headerlink" href="#on-spock" title="Permalink to this headline">¶</a></h4>
-<p>The code is already installed in: <em>/ccs/proj/stf016/spock_acpt/olcf-test-harness</em></p>
+<section id="on-spock-and-crusher">
+<h4>On Spock and Crusher<a class="headerlink" href="#on-spock-and-crusher" title="Permalink to this headline">¶</a></h4>
+<p>The code is already installed in: <em>/sw/acceptance/olcf-test-harness</em></p>
 <p>Setup the environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span>/ccs/proj/stf016/spock_acpt/olcf-test-harness/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span>/sw/acceptance/olcf-test-harness
 module use <span class="nv">$OLCF_HARNESS_DIR</span>/modulefiles
 module load olcf_harness
+<span class="c1"># For Spock:</span>
 <span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>spock
+<span class="c1"># For Crusher:</span>
+<span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>crusher
 </pre></div>
 </div>
 </section>
@@ -301,7 +307,7 @@ module load olcf_harness
 </div>
 <p>Setup the environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> olcf-test-harness
-<span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span><span class="sb">``</span><span class="nb">pwd</span><span class="sb">``</span>
+<span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
 module use <span class="nv">$OLCF_HARNESS_DIR</span>/modulefiles
 module load olcf_harness
 <span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>&lt;machine&gt;
@@ -309,11 +315,72 @@ module load olcf_harness
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>You must have the &lt;machine&gt;.ini file in a directory searched by your PATH
-environment variable for your specified machine. On Spock and Lyra, this
-is provided for you in the centralized harness. An example_machine.ini
-file is provided in the configs directory.</p>
+<p>You must have the &lt;machine&gt;.ini file in the <em>configs</em> directory of your
+harness repository for your specified machine. On Spock, Crusher,  and
+Lyra, this is provided for you in the centralized harness. An
+example_machine.ini file is provided in the <em>configs</em> directory.</p>
 </div>
+</section>
+<section id="logging-harness-events-to-influxdb">
+<h3>Logging harness events to InfluxDB<a class="headerlink" href="#logging-harness-events-to-influxdb" title="Permalink to this headline">¶</a></h3>
+<p>The OTH can log the status of tests to an InfluxDB server by setting the
+appropriate values of <em>RGT_INFLUX_URI</em> and <em>RGT_INFLUX_TOKEN</em>. The harness
+events (listed below) are logged to the InfluxDB server, where they can
+be watched in real time by a data visualization tool, such as Grafana.</p>
+<table class="colwidths-given docutils align-default" id="id1">
+<caption><span class="caption-text">OTH Test Status Events</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 85%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Status</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>logging_start</p></td>
+<td><p>Harness is starting up and creating log files.</p></td>
+</tr>
+<tr class="row-odd"><td><p>build_start</p></td>
+<td><p>The build process has started.</p></td>
+</tr>
+<tr class="row-even"><td><p>build_end</p></td>
+<td><p>The build process finished.</p></td>
+</tr>
+<tr class="row-odd"><td><p>submit_start</p></td>
+<td><p>The job submission process has started.</p></td>
+</tr>
+<tr class="row-even"><td><p>submit_end</p></td>
+<td><p>The job submission process has finished.</p></td>
+</tr>
+<tr class="row-odd"><td><p>job_queued</p></td>
+<td><p>The job is queued in the scheduler.</p></td>
+</tr>
+<tr class="row-even"><td><p>binary_execute_start</p></td>
+<td><p>The application has started. Triggered by call to log_binary_execution_time.py –mode start inside the job script.</p></td>
+</tr>
+<tr class="row-odd"><td><p>binary_execute_end</p></td>
+<td><p>The application has ended. Triggered by call to log_binary_execution_time.py –mode final inside the job script.</p></td>
+</tr>
+<tr class="row-even"><td><p>check_start</p></td>
+<td><p>The check process has started. Triggered by call to check_executable_driver.py inside the job script.</p></td>
+</tr>
+<tr class="row-odd"><td><p>check_end</p></td>
+<td><p>The check process has ended.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="logging-test-metrics-to-influxdb">
+<h3>Logging test metrics to InfluxDB<a class="headerlink" href="#logging-test-metrics-to-influxdb" title="Permalink to this headline">¶</a></h3>
+<p>In a similar manner to logging harness events to InfluxDB, you can send
+performance metrics from your test to InfluxDB, where they can be visualized
+by a data visualization tool, such as Grafana. For details on how to make a
+test capable of logging metrics to InfluxDB, see
+<a class="reference internal" href="adding_new_test.html#modifying-a-test-to-log-metrics-to-influxdb"><span class="std std-ref">Modifying a Test to Log Metrics to InfluxDB</span></a>. Given a compatible test that reports
+application metrics, adding <em>RGT_INFLUX_TOKEN</em> and <em>RGT_INFLUX_URI</em> to the
+environment enables InfluxDB test metric logging..</p>
 </section>
 </section>
 <section id="launching-the-oth">
@@ -324,11 +391,11 @@ retrieve a copy of OTH log files. No computation will be done here:</p>
 <span class="nb">cd</span> lyra_testshot
 </pre></div>
 </div>
-<p>Prepare an input file of tests (e.g., <em>rgt.input.lyra</em>). In the file, set
-<code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> to the location where you would like application source and
-run files to be kept (note that the directory provided must be an existing
-directory on a file system visible to the current machine). Next, provide one
-or more tests to run in the format <code class="docutils literal notranslate"><span class="pre">Test</span> <span class="pre">=</span> <span class="pre">&lt;app-name&gt;</span> <span class="pre">&lt;test-name&gt;</span></code>. In this
+<p>In this run directory, prepare an input file of tests (e.g., <em>rgt.input.lyra</em>).
+In the file, set <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> to the location where you would like application
+source and run files to be kept (note that the directory provided must be an
+existing directory on a file system visible to the current machine). Next, provide
+one or more tests to run in the format <code class="docutils literal notranslate"><span class="pre">Test</span> <span class="pre">=</span> <span class="pre">&lt;app-name&gt;</span> <span class="pre">&lt;test-name&gt;</span></code>. In this
 example for Lyra, the application <strong>hello_mpi</strong> is used and we specify two
 tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">################################################################################</span>
@@ -342,7 +409,7 @@ tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
 </pre></div>
 </div>
 <p>Set a different scratch area for this specific instance of the harness (a
-default is set but this lets you change the default):</p>
+default is set by &lt;machine&gt;.ini but this lets you change the default):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>&lt;some path <span class="k">in</span> the file system&gt;/Scratch
 </pre></div>
 </div>
@@ -359,6 +426,9 @@ to the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;</em> directory for all the tes
 will be run.</p>
 <p>After using the start mode, results of the most recent test run can be found in
 <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/latest</em>.</p>
+<p>The build and run directories can be found in
+<em>&lt;RGT_PATH_TO_SSPACE&gt;/&lt;app-name&gt;/&lt;test-name&gt;/&lt;test-id&gt;/Run_Archive</em>,
+and are sym-linked inside the <em>Run_Archive/&lt;test-id&gt;</em> directory in <em>Path_to_tests</em>.</p>
 </section>
 </section>
 

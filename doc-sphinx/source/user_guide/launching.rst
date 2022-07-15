@@ -80,8 +80,9 @@ be watched in real time by a data visualization tool, such as Grafana.
 
 
 .. list-table:: OTH Test Status Events
-   :widths: 25 150
+   :widths: 25 140
    :header-rows: 1
+
    * - Status
      - Description
    * - logging_start
@@ -112,8 +113,8 @@ Logging test metrics to InfluxDB
 In a similar manner to logging harness events to InfluxDB, you can send
 performance metrics from your test to InfluxDB, where they can be visualized
 by a data visualization tool, such as Grafana. For details on how to make a
-test compatible with logging metrics to InfluxDB, see
-:ref:`Adding a New Test to the OTH`. Given a compatible test that reports
+test capable of logging metrics to InfluxDB, see
+:ref:`Modifying a Test to Log Metrics to InfluxDB`. Given a compatible test that reports
 application metrics, adding *RGT_INFLUX_TOKEN* and *RGT_INFLUX_URI* to the
 environment enables InfluxDB test metric logging..
 

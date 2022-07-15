@@ -290,3 +290,39 @@ The following elaborates on this topic a bit more with some concrete examples.
 In reading these notes, please keep in mind the application repository structure
 describe above. 
 
+
+Modifying a Test to Log Metrics to InfluxDB
+-------------------------------------------
+
+.. note::
+
+    Logging to InfluxDB requires the *RGT_INFLUX_TOKEN* and *RGT_INFLUX_URI*
+    to be set in the environment prior to harness launch.
+
+
+The OTH is capable of logging event status and test performance metrics to
+InfluxDB, where they can be viewed through a visualization tool such as
+Grafana. Event status logging is done automatically, and doesn't require
+any information from the test, aside from exit codes. However, to log test
+performance metrics, the OTH needs to know how the application performed,
+and what metrics to log.
+
+Test performance logging is entirely controlled by a file named
+*metrics.txt*. Each line in the file can have any of the following formats:
+
+.. code-block:: bash
+
+    # This is a comment line
+    metric_name_1=value_1
+    # Spaces in metric names are valid, but will be replaced by underscores when sending to influx
+    metric name 2=value_2
+    # Whitespace before and after the equals signs (and metric names) is okay. Python str.strip() is used
+    metric_name_3 = value_3
+    metric_name_4\t=\tvalue_4
+
+
+If this file is present in the *<Path_to_tests>/Run_Archive/<test-id>*
+directory when the check step completes, then the harness parses the
+*metrics.txt* file and attempts to send the resulting metrics to
+InfluxDB, along with 2 automatically calculated metrics,
+build time and execution time.
