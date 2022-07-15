@@ -637,6 +637,12 @@ class subtest(base_apptest, apptest_layout):
             influx_machine_name = os.environ['RGT_MACHINE_NAME']
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+
+        if len(metrics) == 0:
+            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
+            os.chdir(currentdir)
+            return False
+
         metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
         metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
         if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
@@ -645,11 +651,6 @@ class subtest(base_apptest, apptest_layout):
             return False
         elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
             self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_testid}.")
-            os.chdir(currentdir)
-            return False
-
-        if len(metrics) == 0:
-            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
             os.chdir(currentdir)
             return False
 
