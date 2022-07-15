@@ -27,19 +27,22 @@ Setup the environment:
     module load olcf_harness
     export OLCF_HARNESS_MACHINE=lyra
 
-On Spock
-""""""""
+On Spock and Crusher
+""""""""""""""""""""
 
-The code is already installed in: */ccs/proj/stf016/spock_acpt/olcf-test-harness*
+The code is already installed in: */sw/acceptance/olcf-test-harness*
 
 Setup the environment:
 
 .. code-block:: bash
 
-    export OLCF_HARNESS_DIR=/ccs/proj/stf016/spock_acpt/olcf-test-harness/
+    export OLCF_HARNESS_DIR=/sw/acceptance/olcf-test-harness
     module use $OLCF_HARNESS_DIR/modulefiles
     module load olcf_harness
+    # For Spock:
     export OLCF_HARNESS_MACHINE=spock
+    # For Crusher:
+    export OLCF_HARNESS_MACHINE=crusher
 
 Option 2: Using your own copy of the harness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -55,16 +58,53 @@ Setup the environment:
 .. code-block:: bash
 
     cd olcf-test-harness
-    export OLCF_HARNESS_DIR=``pwd``
+    export OLCF_HARNESS_DIR=`pwd`
     module use $OLCF_HARNESS_DIR/modulefiles
     module load olcf_harness
     export OLCF_HARNESS_MACHINE=<machine>
 
 .. note::
-    You must have the <machine>.ini file in a directory searched by your PATH
-    environment variable for your specified machine. On Spock and Lyra, this
-    is provided for you in the centralized harness. An example_machine.ini
-    file is provided in the configs directory.
+    You must have the <machine>.ini file in the *configs* directory of your
+    harness repository for your specified machine. On Spock, Crusher,  and
+    Lyra, this is provided for you in the centralized harness. An
+    example_machine.ini file is provided in the *configs* directory.
+
+
+Logging harness events to InfluxDB
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The OTH can log the status of tests to an InfluxDB server by setting the
+appropriate values of *RGT_INFLUX_URI* and *RGT_INFLUX_TOKEN*. The harness
+events (listed below) are logged to the InfluxDB server, where they can
+be watched in real time by a data visualization tool, such as Grafana.
+
+
+.. list-table:: OTH Test Status Events
+   :widths: 25 150
+   :header-rows: 1
+   * - Status
+     - Description
+   * - logging_start
+     - Harness is starting up and creating log files.
+   * - build_start
+     - The build process has started.
+   * - build_end
+     - The build process finished.
+   * - submit_start
+     - The job submission process has started.
+   * - submit_end
+     - The job submission process has finished.
+   * - job_queued
+     - The job is queued in the scheduler.
+   * - binary_execute_start
+     - The application has started. Triggered by call to log_binary_execution_time.py --mode start inside the job script.
+   * - binary_execute_end
+     - The application has ended. Triggered by call to log_binary_execution_time.py --mode final inside the job script.
+   * - check_start
+     - The check process has started. Triggered by call to check_executable_driver.py inside the job script.
+   * - check_end
+     - The check process has ended.
+
 
 Launching the OTH
 -----------------
@@ -77,11 +117,11 @@ retrieve a copy of OTH log files. No computation will be done here:
     mkdir lyra_testshot
     cd lyra_testshot
 
-Prepare an input file of tests (e.g., *rgt.input.lyra*). In the file, set
-``Path_to_tests`` to the location where you would like application source and
-run files to be kept (note that the directory provided must be an existing
-directory on a file system visible to the current machine). Next, provide one
-or more tests to run in the format ``Test = <app-name> <test-name>``. In this
+In this run directory, prepare an input file of tests (e.g., *rgt.input.lyra*).
+In the file, set ``Path_to_tests`` to the location where you would like application
+source and run files to be kept (note that the directory provided must be an
+existing directory on a file system visible to the current machine). Next, provide
+one or more tests to run in the format ``Test = <app-name> <test-name>``. In this
 example for Lyra, the application **hello_mpi** is used and we specify two
 tests: **c_n001** and **c_n002**.
 
@@ -98,7 +138,7 @@ tests: **c_n001** and **c_n002**.
 
 
 Set a different scratch area for this specific instance of the harness (a
-default is set but this lets you change the default):
+default is set by <machine>.ini but this lets you change the default):
 
 .. code-block:: bash
 
@@ -123,3 +163,7 @@ will be run.
 
 After using the start mode, results of the most recent test run can be found in
 *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/latest*.
+
+The build and run directories can be found in
+*<RGT_PATH_TO_SSPACE>/<app-name>/<test-name>/<test-id>/Run_Archive*,
+and are sym-linked inside the *Run_Archive/<test-id>* directory in *Path_to_tests*.
