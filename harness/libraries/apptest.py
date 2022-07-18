@@ -646,11 +646,11 @@ class subtest(base_apptest, apptest_layout):
         metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
         metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
         if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
-            self.logger.doWarningLogging(f"Invalid build time for jobID {influx_testid}.")
+            self.logger.doWarningLogging(f"Invalid build time for jobID {influx_test_id}.")
             os.chdir(currentdir)
             return False
         elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
-            self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_testid}.")
+            self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_test_id}.")
             os.chdir(currentdir)
             return False
 
@@ -668,7 +668,7 @@ class subtest(base_apptest, apptest_layout):
         if post_run:
             run_timestamp = self._get_run_timestamp(influx_test_id)
             if run_timestamp < 0:
-                self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_testid}: {run_timestamp}")
+                self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_test_id}: {run_timestamp}")
                 os.chdir(currentdir)
                 return False
             influx_event_record_string += f" {run_timestamp}"
