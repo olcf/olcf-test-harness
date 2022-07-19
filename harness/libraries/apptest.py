@@ -567,15 +567,18 @@ class subtest(base_apptest, apptest_layout):
             return
         os.chdir(self.test_run_archive_dirname)
 
-        # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
+        # We need to filter out links like `latest` so they're not logged as the test id
         for test_id in os.listdir('.'):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
-                    not os.path.exists(f"./{test_id}/.influx_disabled"):
+                    not os.path.exists(f"./{test_id}/.influx_disabled") and \
+                    not os.path.islink(f"./{test_id}"):
                 self.logger.doInfoLogging(f"Attempting to log {test_id}")
                 if self._log_to_influx(test_id, post_run=True):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
                 else:
                     self.logger.doWarningLogging(f"Unable to log {test_id}")
+            elif os.path.islink(f"./{test_id}"):
+                self.logger.doInfoLogging(f"Ignoring link in influx_log_mode: {test_id}")
 
         os.chdir(currentdir)
 
