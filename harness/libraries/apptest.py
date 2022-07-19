@@ -576,8 +576,36 @@ class subtest(base_apptest, apptest_layout):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
                 else:
                     self.logger.doWarningLogging(f"Unable to log {test_id}")
+                if self._log_events_to_influx_post_run(test_id):
+                    self.logger.doInfoLogging(f"Successfully logged all events found for {test_id}")
+                else:
+                    self.logger.doWarningLogging(f"Unable to log all events for {test_id}")
 
         os.chdir(currentdir)
+
+    def _log_events_to_influx_post_run(self, test_id):
+        """ Logs events to Influx when running in mode influx_log """
+        from status_file_factory import StatusFileFactory
+
+        # StatusFile object to use to write the logs for each run
+        logging_status_file = StatusFileFactory.create(self.get_path_to_status_file(), self.logger)
+        logging_status_file.__test_id = test_id
+
+        currentdir = os.getcwd()
+        self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
+        # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
+        scripts_dir = os.path.join(self.get_path_to_test(), self.test_scripts_dirname)
+        os.chdir(scripts_dir)
+        self.logger.doInfoLogging(f"Starting post-run influxDB event logging in apptest: {os.getcwd()}")
+        files_found = 0
+        files_not_found = 0
+
+        for e in StatusFile.EVENT_LIST:
+            logging_status_file.post_event_to_influx(e)
+
+        os.chdir(currentdir)
+        # if we make it to the end, return True
+        return True
 
     # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
     def _log_to_influx(self, influx_test_id, post_run=False):
