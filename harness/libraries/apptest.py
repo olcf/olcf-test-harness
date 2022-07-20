@@ -594,7 +594,7 @@ class subtest(base_apptest, apptest_layout):
         currentdir = os.getcwd()
         self.logger.doInfoLogging(f"Current directory in apptest: {currentdir}")
         # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
-        scripts_dir = os.path.join(self.get_path_to_test(), self.test_scripts_dirname)
+        scripts_dir = self.get_path_to_scriptsdir()
         os.chdir(scripts_dir)
         self.logger.doInfoLogging(f"Starting post-run influxDB event logging in apptest: {os.getcwd()}")
         files_found = 0
