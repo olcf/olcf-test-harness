@@ -570,7 +570,8 @@ class subtest(base_apptest, apptest_layout):
         # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
         for test_id in os.listdir('.'):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
-                    not os.path.exists(f"./{test_id}/.influx_disabled"):
+                    not os.path.exists(f"./{test_id}/.influx_disabled") and \
+                    not os.path.islink(f"./{test_id}"):
                 self.logger.doInfoLogging(f"Attempting to log {test_id}")
                 if self._log_to_influx(test_id, post_run=True):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
@@ -588,11 +589,10 @@ class subtest(base_apptest, apptest_layout):
         from status_file_factory import StatusFileFactory
 
         # StatusFile object to use to write the logs for each run
-        logging_status_file = StatusFileFactory.create(self.get_path_to_status_file(), self.logger)
-        logging_status_file.__test_id = test_id
+        logging_status_file = StatusFileFactory.create(self.get_path_to_status_file(), self.logger, test_id=test_id)
 
         currentdir = os.getcwd()
-        self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
+        self.logger.doInfoLogging(f"Current directory in apptest: {currentdir}")
         # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
         scripts_dir = os.path.join(self.get_path_to_test(), self.test_scripts_dirname)
         os.chdir(scripts_dir)
