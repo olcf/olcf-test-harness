@@ -581,6 +581,8 @@ class subtest(base_apptest, apptest_layout):
                     self.logger.doInfoLogging(f"Successfully logged all events found for {test_id}")
                 else:
                     self.logger.doWarningLogging(f"Unable to log all events for {test_id}")
+            elif os.path.islink(f"./{test_id}"):
+                self.logger.doInfoLogging(f"Ignoring link in influx_log_mode: {test_id}")
 
         os.chdir(currentdir)
 
