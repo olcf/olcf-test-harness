@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Overview of the Test Harness &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  <title>OTH-provided Influx Utilities &mdash; NCCS_Test_Harness 1.0 documentation</title>
   
 
   
@@ -44,8 +44,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Launching the OLCF Test Harness (OTH)" href="launching.html" />
-    <link rel="prev" title="OLCF Test Harness Documentation" href="../index.html" /> 
+    <link rel="next" title="Notational Conventions" href="../developer_guide/notational_conventions.html" />
+    <link rel="prev" title="Adding a New Machine to the OTH" href="adding_new_machine.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -99,11 +99,11 @@
             
               <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview of the Test Harness</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#purpose">Purpose</a><ul class="simple">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#execution-overview">Execution Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#execution-overview">Execution Overview</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="launching.html">Launching the OLCF Test Harness (OTH)</a><ul>
@@ -140,16 +140,16 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a></li>
-<li class="toctree-l1"><a class="reference internal" href="influx_utilities.html">OTH-provided Influx Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="influx_utilities.html#update-runs-from-slurm-py">update_runs_from_slurm.py</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="influx_utilities.html#goal">Goal</a></li>
-<li class="toctree-l3"><a class="reference internal" href="influx_utilities.html#requirements">Requirements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="influx_utilities.html#details">Details</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OTH-provided Influx Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#update-runs-from-slurm-py">update_runs_from_slurm.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#goal">Goal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#details">Details</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="influx_utilities.html#report-to-influx-py">report_to_influx.py</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="influx_utilities.html#id1">Goal</a></li>
-<li class="toctree-l3"><a class="reference internal" href="influx_utilities.html#id2">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#report-to-influx-py">report_to_influx.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Goal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Requirements</a></li>
 </ul>
 </li>
 </ul>
@@ -258,13 +258,13 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Overview of the Test Harness</li>
+      <li>OTH-provided Influx Utilities</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="../_sources/user_guide/overview.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/user_guide/influx_utilities.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -277,59 +277,88 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="overview-of-the-test-harness">
-<h1>Overview of the Test Harness<a class="headerlink" href="#overview-of-the-test-harness" title="Permalink to this headline">¶</a></h1>
-<section id="purpose">
-<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-</div>
-<p>The OLCF Test Harness (OTH) helps automate the testing of applications, tools,
-and other system software. Users of the OTH have the flexibility to run
-individual standalone tests or to simulate production workloads by running a
-large collection of tests continuously. Each test provides its own scripts that
-support the core operations of building executables, running jobs, and checking
-test results.</p>
+  <section id="oth-provided-influx-utilities">
+<h1>OTH-provided Influx Utilities<a class="headerlink" href="#oth-provided-influx-utilities" title="Permalink to this headline">¶</a></h1>
+<p>This page describes the use cases for the utility scripts
+provided in <code class="docutils literal notranslate"><span class="pre">olcf-test-harness/harness/utilities</span></code>.</p>
+<section id="update-runs-from-slurm-py">
+<h2>update_runs_from_slurm.py<a class="headerlink" href="#update-runs-from-slurm-py" title="Permalink to this headline">¶</a></h2>
+<section id="goal">
+<h3>Goal<a class="headerlink" href="#goal" title="Permalink to this headline">¶</a></h3>
+<p>The goal of this script is to update InfluxDB using
+data from the SLURM workload manager to update tests
+that have failed or aborted, causing events to not
+be logged to InfluxDB.</p>
 </section>
-<section id="execution-overview">
-<h2>Execution Overview<a class="headerlink" href="#execution-overview" title="Permalink to this headline">¶</a></h2>
-<p><em>runtests.py</em> is the program used to execute the OTH. Users provide a test
-input file that lists the set of application tests to run, and a command-line
-run mode option controls whether to run a single iteration (<strong>--mode start stop</strong>)
-or continuously (<strong>--mode start</strong>). In continuous mode, the test job script has the
-option to resubmit another iteration of the test.</p>
-<p>A brief logical flow of harness execution follows:</p>
-<hr class="docutils" />
-<ul class="simple">
-<li><p>Read ‘RGT_PATH_TO_SSPACE’ from environment (OTH_SCRATCH)</p></li>
-<li><p>Read ‘Path_to_tests’ from inputfile (OTH_APPS)</p></li>
-<li><p>Read Machine configurations from &lt;machine&gt;.ini</p></li>
-<li><dl class="simple">
-<dt>foreach (app,test) in inputfile:</dt><dd><ol class="arabic simple">
-<li><p>generate unique id (UID)</p></li>
-<li><p>create <em>Run_Archive</em> and <em>Status</em> directories &#64; <em>OTH_APPS/app/test/{Run_Archive,Status}/UID</em></p></li>
-<li><p>create scratch directory (APPTEST_SCRATCH) &#64; <em>OTH_SCRATCH/app/test/UID</em></p></li>
-<li><p>recursively copy <em>OTH_APPS/app/Source/ to APPTEST_SCRATCH/build_directory/</em></p></li>
-<li><p>change working directory to <em>APPTEST_SCRATCH/build_directory/</em>, and execute test’s build command</p></li>
-<li><p>if build script succeeds, generate test’s job script from template in <em>OTH_APPS/app/test/Scripts</em></p></li>
-<li><dl class="simple">
-<dt>submit job script to scheduler - when job runs, it:</dt><dd><ul>
-<li><p>changes working directory to <em>APPTEST_SCRATCH/workdir</em> (after creating it
-if necessary)</p></li>
-<li><p>copies any needed input files from <em>OTH_APPS/app/test</em></p></li>
-<li><p>runs the test executable</p></li>
-<li><p>copies any needed output files back to the <em>Run_Archive</em> directory</p></li>
-<li><p>runs the test’s check command, passing it the <em>Run_Archive</em> directory
-location</p></li>
-<li><p>if in continuous mode, start another iteration of the harness test end</p></li>
-</ul>
-</dd>
-</dl>
+<section id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h3>
+<p>This script requires a file named <code class="docutils literal notranslate"><span class="pre">harness_keys.py</span></code>, which contains
+the following variables declared at the global level:</p>
+<ol class="arabic simple">
+<li><p>post_influx_uri: the URL for POST requests for the InfluxDB server.
+Example: <code class="docutils literal notranslate"><span class="pre">https://my.influx.server/api/v2/write?org=accept&amp;bucket=accept&amp;precision=ns</span></code>.</p></li>
+<li><p>get_influx_uri: the URL for GET requests for the InfluxDB server.
+Example: <code class="docutils literal notranslate"><span class="pre">https://my.influx.server/api/v2/query?pretty=true</span></code>.</p></li>
+<li><p>influx_token: token for the InfluxDB server.</p></li>
+</ol>
+</section>
+<section id="details">
+<h3>Details<a class="headerlink" href="#details" title="Permalink to this headline">¶</a></h3>
+<p>This file fetches all instances that meet the following
+criteria from InfluxDB:</p>
+<ol class="arabic simple">
+<li><p>The last recorded harness event is not <em>check_end</em></p></li>
+<li><p>The last event value is <em>0</em> or <em>[NO_VALUE]</em>, or is <em>job_queued</em></p></li>
+</ol>
+<p>A test instance that meets this criteria is classified as
+<em>Running</em>.
+This script then checks each instance for a series of criteria such as:</p>
+<ol class="arabic simple">
+<li><p>Does the current user match the user that submitted this instance?</p></li>
+<li><p>Is the current machine the same as the instance?</p></li>
+</ol>
+<p>The script also provides flags to filter further for specifying
+the app, test, and runtag of instances to check. Run
+<code class="docutils literal notranslate"><span class="pre">./update_runs_from_slurm.py</span> <span class="pre">help</span></code> for a full list of parameters.</p>
+<p>Once a run has passed these criteria, the script
+fetches information about the SLURM job ID of this run via <code class="docutils literal notranslate"><span class="pre">sacct</span></code>.
+Based on the state reported by <code class="docutils literal notranslate"><span class="pre">sacct</span></code>, the script will send a
+<em>check_end</em> event with event value <em>2</em> to Influx, if the run failed.
+This script also compiles information about this failure from <code class="docutils literal notranslate"><span class="pre">sacct</span></code>
+fields such as <em>Reason</em> or <em>Comment</em>, and sends them in a field
+named <em>Reason</em> to Influx.</p>
+</section>
+</section>
+<section id="report-to-influx-py">
+<h2>report_to_influx.py<a class="headerlink" href="#report-to-influx-py" title="Permalink to this headline">¶</a></h2>
+<section id="id1">
+<h3>Goal<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>This script is designed to extract the functionality for sending
+data to InfluxDB into a simple-to-use command-line app.
+Given a number of tags and key-value pairs, and valid Influx URI
+and token, this script logs the key-value pairs to an InfluxDB
+measurement named <em>non_harness_values</em>. This simply extends the
+usage of InfluxDB beyond the OTH harness.</p>
+</section>
+<section id="id2">
+<h3>Requirements<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>This script requires a file named <code class="docutils literal notranslate"><span class="pre">harness_keys.py</span></code>, which contains
+the following variables declared at the global level:</p>
+<ol class="arabic">
+<li><p>influx_keys: a Python Dict object containing 1 or more entries. Each key should be the name
+of an InfluxDB instance. For example, if you have production and development version of
+InfluxDB, you might have:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">influx_keys</span> <span class="o">=</span> <span class="p">{</span>
+   <span class="s1">&#39;dev&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;https://my.influx.server.development/api/v2/write?org=accept&amp;bucket=accept&amp;precision=ns&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;mydevservertoken&quot;</span><span class="p">],</span>
+   <span class="s1">&#39;prod&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;https://my.influx.server/api/v2/write?org=accept&amp;bucket=accept&amp;precision=ns&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;myprodservertoken&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </li>
 </ol>
-</dd>
-</dl>
-</li>
-</ul>
+</section>
 </section>
 </section>
 
@@ -339,8 +368,8 @@ location</p></li>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="launching.html" class="btn btn-neutral float-right" title="Launching the OLCF Test Harness (OTH)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="../index.html" class="btn btn-neutral float-left" title="OLCF Test Harness Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../developer_guide/notational_conventions.html" class="btn btn-neutral float-right" title="Notational Conventions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="adding_new_machine.html" class="btn btn-neutral float-left" title="Adding a New Machine to the OTH" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
