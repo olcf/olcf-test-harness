@@ -324,7 +324,8 @@ example_machine.ini file is provided in the <em>configs</em> directory.</p>
 <section id="logging-harness-events-to-influxdb">
 <h3>Logging harness events to InfluxDB<a class="headerlink" href="#logging-harness-events-to-influxdb" title="Permalink to this headline">¶</a></h3>
 <p>The OTH can log the status of tests to an InfluxDB server by setting the
-appropriate values of <em>RGT_INFLUX_URI</em> and <em>RGT_INFLUX_TOKEN</em>. The harness
+appropriate values of <em>RGT_INFLUX_URI</em> and <em>RGT_INFLUX_TOKEN</em>, to match
+the target InfluxDB server. The harness
 events (listed below) are logged to the InfluxDB server, where they can
 be watched in real time by a data visualization tool, such as Grafana.</p>
 <table class="colwidths-given docutils align-default" id="id1">
@@ -380,7 +381,7 @@ by a data visualization tool, such as Grafana. For details on how to make a
 test capable of logging metrics to InfluxDB, see
 <a class="reference internal" href="adding_new_test.html#modifying-a-test-to-log-metrics-to-influxdb"><span class="std std-ref">Modifying a Test to Log Metrics to InfluxDB</span></a>. Given a compatible test that reports
 application metrics, adding <em>RGT_INFLUX_TOKEN</em> and <em>RGT_INFLUX_URI</em> to the
-environment enables InfluxDB test metric logging..</p>
+environment enables InfluxDB test metric logging.</p>
 </section>
 </section>
 <section id="launching-the-oth">

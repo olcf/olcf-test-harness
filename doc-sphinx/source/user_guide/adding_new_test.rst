@@ -83,9 +83,7 @@ application mentioned above:
     #-- This is a comment
     #-- The following variables are required
     job_name = hello_mpi_c
-    batch_queue = batch
     walltime = 10
-    project_id = my_project
     executable_path = hello
     batch_filename = run_hello_mpi_c.sh
     build_cmd = ./build_hello_mpi_c.sh

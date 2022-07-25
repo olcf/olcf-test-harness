@@ -74,7 +74,8 @@ Logging harness events to InfluxDB
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The OTH can log the status of tests to an InfluxDB server by setting the
-appropriate values of *RGT_INFLUX_URI* and *RGT_INFLUX_TOKEN*. The harness
+appropriate values of *RGT_INFLUX_URI* and *RGT_INFLUX_TOKEN*, to match
+the target InfluxDB server. The harness
 events (listed below) are logged to the InfluxDB server, where they can
 be watched in real time by a data visualization tool, such as Grafana.
 
@@ -116,7 +117,7 @@ by a data visualization tool, such as Grafana. For details on how to make a
 test capable of logging metrics to InfluxDB, see
 :ref:`Modifying a Test to Log Metrics to InfluxDB`. Given a compatible test that reports
 application metrics, adding *RGT_INFLUX_TOKEN* and *RGT_INFLUX_URI* to the
-environment enables InfluxDB test metric logging..
+environment enables InfluxDB test metric logging.
 
 
 Launching the OTH
