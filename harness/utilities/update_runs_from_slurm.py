@@ -202,33 +202,41 @@ def check_job_status(slurm_jobid_lst):
         Returns [False] (list length=1) or
             [JobID, Elapsed, Start, End, State, ExitCode, Reason, Comment]
     """
-    sacct_format = 'JobID,Elapsed,Start,End,State%40,ExitCode,Reason%100,Comment%100'
-    cmd=f"sacct -j {','.join(slurm_jobid_lst)} --format {sacct_format}"
-    os.system(f'{cmd} 2>&1 > slurm.jobs.tmp.txt')
     result = {}  # a dictionary of dictionaries
-    with open(f'slurm.jobs.tmp.txt', 'r') as f:
-        line = f.readline()
-        labels = line.split()
-        comment_line = f.readline()   # line of dashes
-        # use the spaces in the comment line to split the next line properly
-        for line in f:
-            fields = {}
-            search_pos = -1
-            for i in range(0, len(labels)):
-                next_space = comment_line.find(' ', search_pos + 1)
-                # No more spaces found, and it's the last label
-                if next_space < 0 and i == len(labels) - 1:
-                    next_space = len(line)
-                elif next_space < 0:
-                    print(f"Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
-                cur_field = line[search_pos+1:next_space].strip()
-                search_pos = next_space
-                fields[labels[i].lower()] = cur_field
-            if not 'jobid' in fields:
-                print(f"Couldn't find JobID in sacct record. Skipping")
-                continue
-            result[fields['jobid']] = fields
-    os.remove(f"slurm.jobs.tmp.txt")
+    low_limit = 0
+    high_limit = 0
+    batch_size = 100
+    print(f"Querying sacct with {len(slurm_jobid_lst)} jobs in batches of up to {batch_size}")
+    # Batched into batches of 100
+    while low_limit < len(slurm_jobid_lst):
+        high_limit = min(low_limit + batch_size, len(slurm_jobid_lst))
+        sacct_format = 'JobID,Elapsed,Start,End,State%40,ExitCode,Reason%100,Comment%100'
+        cmd=f"sacct -j {','.join(slurm_jobid_lst[low_limit:high_limit])} --format {sacct_format}"
+        os.system(f'{cmd} 2>&1 > slurm.jobs.tmp.txt')
+        with open(f'slurm.jobs.tmp.txt', 'r') as f:
+            line = f.readline()
+            labels = line.split()
+            comment_line = f.readline()   # line of dashes
+            # use the spaces in the comment line to split the next line properly
+            for line in f:
+                fields = {}
+                search_pos = -1
+                for i in range(0, len(labels)):
+                    next_space = comment_line.find(' ', search_pos + 1)
+                    # No more spaces found, and it's the last label
+                    if next_space < 0 and i == len(labels) - 1:
+                        next_space = len(line)
+                    elif next_space < 0:
+                        print(f"Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
+                    cur_field = line[search_pos+1:next_space].strip()
+                    search_pos = next_space
+                    fields[labels[i].lower()] = cur_field
+                if not 'jobid' in fields:
+                    print(f"Couldn't find JobID in sacct record. Skipping")
+                    continue
+                result[fields['jobid']] = fields
+        os.remove(f"slurm.jobs.tmp.txt")
+        low_limit = high_limit  # prepare for next iteration
     return result
 
 def get_user_from_id(user_id):
@@ -242,7 +250,6 @@ def get_user_from_id(user_id):
         user_name = 'unknown'
     os.remove(f"tmp.user.txt")
     return user_name
-
 
 
 data = query_influx_running()
