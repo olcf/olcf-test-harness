@@ -785,6 +785,9 @@ class subtest(base_apptest, apptest_layout):
         def is_numeric(s):
             """ Checks if an entry (RHS) is numeric """
             # Local function. s is assumed to be a whitespace-stripped string
+            # Return false for empty string
+            if len(s) == 0:
+                return False
             # checks if a decimal place or preceding negative sign exists, strip/remove as needed
             if s[0] == '-':
                 s = s[1:]
@@ -800,7 +803,7 @@ class subtest(base_apptest, apptest_layout):
 
         metrics = {}
         if not os.path.isfile('metrics.txt'):
-            print(f"File metrics.txt not found")
+            self.logger.doWarningLogging(f"File metrics.txt not found")
             return metrics
         with open('metrics.txt', 'r') as metric_f:
             # Each line is in format "metric = value" (space around '=' optional)
@@ -815,14 +818,16 @@ class subtest(base_apptest, apptest_layout):
                         metric_name = f"{app_name}-{test_name}-{line[0]}"
                         # if it's not numeric, replace spaces with underscores and wrap in quotes
                         line[1] = line[1].strip()
-                        if is_numeric(line[1]):
+                        if len(line[1]) == 0:
+                            self.logger.doWarningLogging(f"Skipping metric with no value: {line[0]}")
+                        elif is_numeric(line[1]):
                             metrics[metric_name] = line[1]
                         else:
                             line[1] = line[1].replace(' ', '_')
                             # Wrap strings in double quotes to send to Influx
                             metrics[metric_name] = f'"{line[1]}"'
                     else:
-                        print(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
+                        self.logger.doWarningLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
         return metrics
 
     def __name_of_current_function(self):
