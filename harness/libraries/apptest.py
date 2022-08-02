@@ -811,23 +811,28 @@ class subtest(base_apptest, apptest_layout):
             for line in metric_f:
                 # Allows comment lines
                 if not line[0] == '#':
-                    line = line.split('=')
-                    if len(line) == 2:
+                    line_splt = line.split('=')
+                    if len(line_splt) == 2:
                         # Replace spaces with underscores, and strip whitespace before/after
-                        line[0] = line[0].strip().replace(' ', '_')
-                        metric_name = f"{app_name}-{test_name}-{line[0]}"
+                        line_splt[0] = line_splt[0].strip().replace(' ', '_')
+                        if len(line_splt[0]) == 0:
+                            self.logger.doWarningLogging(f"Skipping line with no metric name: {line.strip()}")
+                            continue
+                        metric_name = f"{app_name}-{test_name}-{line_splt[0]}"
                         # if it's not numeric, replace spaces with underscores and wrap in quotes
-                        line[1] = line[1].strip()
-                        if len(line[1]) == 0:
-                            self.logger.doWarningLogging(f"Skipping metric with no value: {line[0]}")
-                        elif is_numeric(line[1]):
-                            metrics[metric_name] = line[1]
+                        line_splt[1] = line_splt[1].strip()
+                        if len(line_splt[1]) == 0:
+                            self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
+                            continue
+                        # Handle string/integer metrics
+                        if is_numeric(line_splt[1]):
+                            metrics[metric_name] = line_splt[1]
                         else:
-                            line[1] = line[1].replace(' ', '_')
+                            line_splt[1] = line_splt[1].replace(' ', '_')
                             # Wrap strings in double quotes to send to Influx
-                            metrics[metric_name] = f'"{line[1]}"'
+                            metrics[metric_name] = f'"{line_splt[1]}"'
                     else:
-                        self.logger.doWarningLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
+                        self.logger.doWarningLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
 
     def __name_of_current_function(self):
