@@ -704,7 +704,10 @@ class subtest(base_apptest, apptest_layout):
             influx_event_record_string += f" {run_timestamp}"
 
         try:
-            r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+            if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+            else:
+                r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
             self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
         except requests.exceptions.ConnectionError as e:
             self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")

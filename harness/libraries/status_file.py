@@ -523,11 +523,14 @@ class StatusFile:
                 headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
 
                 try:
-                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-                    if r.status_code == 200 or r.status_code == 204:
-                        self.__logger.doInfoLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {influx_event_record_string}")
+                    if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                        print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
                     else:
-                        self.__logger.doInfoLogging(f"Failed to post request. Response: {r.status_code} - {r.reason}")
+                        r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+                        if r.status_code == 200 or r.status_code == 204:
+                            self.__logger.doInfoLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {influx_event_record_string}")
+                        else:
+                            self.__logger.doInfoLogging(f"Failed to post request. Response: {r.status_code} - {r.reason}")
                 except requests.exceptions.ConnectionError as e:
                     self.__logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
                 except Exception as e:
