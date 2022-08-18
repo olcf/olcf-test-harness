@@ -686,12 +686,22 @@ class subtest(base_apptest, apptest_layout):
         # Fields defined by subtest class
         influx_app = self.getNameOfApplication()
         influx_test = self.getNameOfSubtest()
+
         # Machine name
         if not 'RGT_MACHINE_NAME' in os.environ:
             influx_machine_name = subprocess.check_output(['hostname', '--long'])
             self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
         else:
             influx_machine_name = os.environ['RGT_MACHINE_NAME']
+
+        # added as dictionary to support using StatusFile.INFLUX_TAGS
+        tag_values = {
+            'app': influx_app,
+            'test': influx_test,
+            'runtag': influx_runtag,
+            'machine': influx_machine_name,
+            'test_id': influx_test_id
+        }
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
 
@@ -711,8 +721,14 @@ class subtest(base_apptest, apptest_layout):
             os.chdir(currentdir)
             return False
 
-        influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
-        influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
+        influx_event_record_string = 'metrics'
+        for tag_name in StatusFile.INFLUX_TAGS:
+            if not tag_name in tag_values:
+                self.logger.doErrorLogging(f"Influx key not found in tag_values: {tag_name}. Aborting metrics logging for {influx_test_id}")
+                os.chdir(currentdir)
+                return False
+            influx_event_record_string += f",{tag_name}={tag_values[tag_name]}"
+
         num_metrics_printed = 0
         for k, v in metrics.items():
             if num_metrics_printed == 0:
