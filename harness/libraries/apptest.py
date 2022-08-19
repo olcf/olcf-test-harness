@@ -775,6 +775,7 @@ class subtest(base_apptest, apptest_layout):
 
         # add node-based checking functionality
         node_healths = self._get_node_health(influx_machine_name, influx_app, influx_test)
+        self.logger.doInfoLogging(f"Found {len(node_healths)} nodes reported for node health")
         if len(node_healths) > 0:
             # find and read node location file -- json file
             use_node_location_file = False
@@ -798,7 +799,7 @@ class subtest(base_apptest, apptest_layout):
                             # then it's a node location identifier
                             influx_event_record_string += f',{k}={node_locations[node_name][k]}'
                         influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
-                        if post_run and len(run_timestamp) > 0:
+                        if post_run and not run_timestamp == '' and run_timestamp > 0:
                             influx_event_record_string += f' {run_timestamp}'
                     if not local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
                             self.logger.doWarningLogging(f"Logging node health to Influx failed.")
@@ -933,6 +934,7 @@ class subtest(base_apptest, apptest_layout):
         if not os.path.isfile('nodecheck.txt'):
             self.logger.doInfoLogging(f"File nodecheck.txt not found.")
             return node_healths
+        self.logger.doInfoLogging("Processing file nodecheck.txt.")
         failed_names = ['FAILED', 'FAIL', 'BAD']
         success_names = ['OK', 'SUCCESS', 'GOOD']
         with open('nodecheck.txt', 'r') as nodes_f:
