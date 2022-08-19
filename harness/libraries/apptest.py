@@ -780,24 +780,31 @@ class subtest(base_apptest, apptest_layout):
             # find and read node location file -- json file
             use_node_location_file = False
             node_locations = {}
-            if 'RGT_NODE_LOCATION_FILE' in os.environ and os.path.exists(os.environ['RGT_NODE_LOCATION_FILE']):
+            # By default, we don't want to log node healths without extra node location (like cabinet, chassis, etc)
+            # But by setting RGT_IGNORE_NODE_LOCATION, that will be by-passed
+            if ('RGT_NODE_LOCATION_FILE' in os.environ and os.path.exists(os.environ['RGT_NODE_LOCATION_FILE'])) \
+                    or 'RGT_IGNORE_NODE_LOCATION' in os.environ:
                 # check if it's a file in valid JSON format
                 # each entry is node_name: { 'status': 'FAILED'|'SUCCESS', 'message': '' }
-                import json
                 json_read_success = True
-                with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
-                    try:
-                        node_locations = json.loads(f.read())
-                    except json.JSONDecodeError as e:
-                        self.logger.doErrorLogging(f"JSONDecodeError detected: {e}. Skipping node health logging.")
-                        json_read_success = False
-                        pass
+                if not 'RGT_IGNORE_NODE_LOCATION' in os.environ:
+                    import json
+                    with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
+                        try:
+                            node_locations = json.loads(f.read())
+                        except json.JSONDecodeError as e:
+                            self.logger.doErrorLogging(f"JSONDecodeError detected: {e}. Skipping node health logging.")
+                            json_read_success = False
+                            pass
+                # if the JSON file fails to parse, we don't want to continue trying to log
                 if json_read_success:
+                    # for each node found in the nodecheck.txt
                     for node_name in node_healths.keys():
                         influx_event_record_string = f'node_health,machine={tag_values["machine"]},node={node_name},test={tag_values["test"]}'
-                        for k in node_locations[node_name].keys():
+                        if node_name in node_locations.keys():
                             # then it's a node location identifier
-                            influx_event_record_string += f',{k}={node_locations[node_name][k]}'
+                            for k in node_locations[node_name].keys():
+                                influx_event_record_string += f',{k}={node_locations[node_name][k]}'
                         influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
                         if post_run and not run_timestamp == '' and run_timestamp > 0:
                             influx_event_record_string += f' {run_timestamp}'
@@ -808,6 +815,8 @@ class subtest(base_apptest, apptest_layout):
             elif 'RGT_NODE_LOCATION_FILE' in os.environ:
                 self.logger.doWarningLogging(f"Node location file path does not exist: {os.environ['RGT_NODE_LOCATION_FILE']}.")
                 self.logger.doWarningLogging(f"Skipping node health logging. To re-log, remove the .influx_logged file in Run_Archive and run in mode influx_log.")
+            else:
+                self.logger.doWarningLogging(f"RGT_NODE_LOCATION_FILE not in os.environ, skipping node health logging.")
 
 
         # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
