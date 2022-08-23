@@ -268,7 +268,7 @@ class StatusFile:
     # Special methods #
     ###################
 
-    def __init__(self,logger,path_to_status_file):
+    def __init__(self,logger,path_to_status_file,test_id=None):
         """Constructor.
 
         Parameters
@@ -278,8 +278,7 @@ class StatusFile:
 
         """
         self.__logger = logger
-        self.__job_id = None
-        self.__test_id = None
+        self.__test_id = test_id
 
         # The first task is set the path to status file.
         self.__status_file_path = path_to_status_file
@@ -336,8 +335,9 @@ class StatusFile:
         return subtest_harness_id
 
     def log_event(self, event_id, event_value=NO_VALUE):
-        """Log the occurrence of a harness event.
-           This version logs a predefined event specified in the EVENT_DICT dictionary.
+        """
+            Log the occurrence of a harness event.
+            This version logs a predefined event specified in the EVENT_DICT dictionary.
         """
 
         if event_id in StatusFile.EVENT_DICT:
@@ -352,7 +352,6 @@ class StatusFile:
 
         return self.__log_event(event_id, event_filename,
                                 event_type, event_subtype, str(event_value))
-
 
     def log_custom_event(self, event_type, event_subtype, event_value=NO_VALUE):
         """Log the occurrence of a harness event.
@@ -412,6 +411,132 @@ class StatusFile:
                     test_finished = False
 
         return test_finished
+
+    def post_event_to_influx(self, event_id, status_info_dict=None):
+        """
+            Posts the event to InfluxDB. Assumes the event file already exists.
+            Inherits the event status, time, and all other fields from the event status file
+            Supplying status_info_dict will bypass the step of loading in entries to a dict
+        """
+        self.__logger.doInfoLogging(f"Posting event: {event_id} with test id: {self.__test_id} to Influx")
+        if status_info_dict == None:
+            self.__logger.doInfoLogging(f"Reading fields from status file")
+            # then load the contents of the status file into a dict
+            event_filename = StatusFile.EVENT_DICT[event_id][0]
+            dir_head = os.path.split(os.getcwd())[0]
+            file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
+                                 event_filename)
+            if not os.path.exists(file_path):
+                self.__logger.doWarningLogging(f"Couldn't find status file to log to Influx: {file_path}. Returning.")
+                return False
+            status_info_dict = {}
+            with open(file_path, 'r') as cur_status_file:
+                line = cur_status_file.readline()
+                line = line.split('\t')
+                self.__logger.doInfoLogging(f"Got line: {line} from status file: {cur_status_file}")
+                # Exclude entry 0 (timestamp) - iso-formatted
+                status_info_dict['event_time'] = line[0]
+                status_info_dict['event_value'] = line[1]
+                status_info_dict['test_id'] = self.__test_id
+                for index in range(2, len(line)):
+                    key, value = line[index].split('=')
+                    # In the case of test_instance, there is a comma-separated list which conflicts with Influx
+                    if ',' in value:
+                        value = f'"{value}"'
+                    status_info_dict[key] = value
+
+        self.__logger.doInfoLogging(f"Finished initializing event information")
+        machine_name = ""
+        if 'RGT_MACHINE_NAME' in os.environ:
+            machine_name = os.environ['RGT_MACHINE_NAME']
+        else:
+            self.__logger.doWarningLogging("Bad environment: could not find RGT_MACHINE_NAME in the environment.")
+            machine_name = str(subprocess.run("hostname --long", shell=True, stdout=subprocess.PIPE).stdout.strip())
+        # Initialize the tags for record string
+        influx_event_record_string = f'events,job_id={str(self.__test_id)},app={status_info_dict["app"]},test={status_info_dict["test"]},runtag={status_info_dict["runtag"]},'
+        influx_event_record_string += f'machine={machine_name} '
+        # Remove the 'test_instance' key, since it contains comma-separated values
+        if 'test_instance' in status_info_dict.keys():
+            status_info_dict['test_instance'] = status_info_dict['test_instance'].replace(',', '-')
+        # Add fields to influx record string
+        #influx_event_record_string += ','.join([ f"{key}={value}" for key,value in status_info_dict.items()])
+        nkeys = 0
+        for key, value in status_info_dict.items():
+            if nkeys > 0:
+                influx_event_record_string += ','
+            nkeys += 1
+            influx_event_record_string += f'{key}="{value}"'
+        event_time_unix = dateutil.parser.parse(status_info_dict['event_time']).strftime('%s%f') + "000"
+
+        # Add handling for pasting outputs to influxdb
+        if status_info_dict['event_name'] == "build_end":
+            file_name = status_info_dict['run_archive'] + "/build_directory/" + "output_build.txt"
+            self.__logger.doInfoLogging(f"Using {file_name} for build output for Influx")
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    output = f.read()
+                    # Truncate to 64 kb
+                    output = output[-65534:].replace('"', '\\"')
+                    influx_event_record_string += ",output_txt=\"" + output + "\""
+
+        if status_info_dict['event_name'] == "submit_end":
+            file_name = status_info_dict['run_archive'] + "/" + "submit.err"
+            self.__logger.doInfoLogging(f"Using {file_name} for submit errors for Influx")
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    output = f.read()
+                    # Truncate to 64 kb
+                    output = output[-65534:].replace('"', '\\"')
+                    influx_event_record_string += ",output_txt=\"" + output + "\""
+
+        if status_info_dict['event_name'] == "binary_execute_end":
+            for file_name in glob.glob(status_info_dict['run_archive'] + "/*.o" + status_info_dict['job_id']):
+                self.__logger.doInfoLogging(f"Using {file_name} for job output for Influx")
+                if os.path.exists(file_name):
+                    with open(file_name, "r") as f:
+                        output = f.read()
+                        # Truncate to 64 kb
+                        output = output[-65534:].replace('"', '\\"')
+                        influx_event_record_string += ",output_txt=\"" + output + "\""
+
+        if status_info_dict['event_name'] == "check_end":
+            file_name = status_info_dict['run_archive'] + "/" + "output_check.txt"
+            self.__logger.doInfoLogging(f"Using {file_name} for check output for Influx")
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    output = f.read()
+                    # Truncate to 64 kb
+                    output = output[-65534:].replace('"', '\\"')
+                    influx_event_record_string += ",output_txt=\"" + output + "\""
+
+        influx_event_record_string += f" {str(event_time_unix)}"
+
+        # Write event to InfluxDB
+        if 'RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ:
+            if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
+                self.__logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            else:
+                influx_url = os.environ['RGT_INFLUX_URI']
+                influx_token = os.environ['RGT_INFLUX_TOKEN']
+        
+                self.__logger.doInfoLogging(f"Logging event to influx: {influx_event_record_string}")
+                headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
+
+                try:
+                    if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                        print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+                    else:
+                        r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+                        if r.status_code == 200 or r.status_code == 204:
+                            self.__logger.doInfoLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {influx_event_record_string}")
+                        else:
+                            self.__logger.doInfoLogging(f"Failed to post request. Response: {r.status_code} - {r.reason}")
+                except requests.exceptions.ConnectionError as e:
+                    self.__logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
+                except Exception as e:
+                    # TODO: add more graceful handling of unreachable influx servers
+                    self.__logger.doErrorLogging(f"An error occurred {e}")
+
 
     def didAllTestsPass(self):
         """ Checks if all tests have passed.
@@ -505,12 +630,15 @@ class StatusFile:
         return harness_ids
 
     def __log_event(self, event_id, event_filename, event_type, event_subtype,
-                    event_value):
+                    event_value, event_time = None):
         """Official function to log the occurrence of a harness event.
         """
+        if event_time == None:
+            event_time = datetime.datetime.now()
+        self.__logger.doInfoLogging(f"Starting __log_event with event {event_id} at {event_time.isoformat()}")
 
         # THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
-        event_time = datetime.datetime.now()
+        # The timestamp can be overridden by event_time=<datetime>
         event_time_unix = event_time.timestamp()
         event_time = event_time.isoformat()
 
@@ -526,64 +654,6 @@ class StatusFile:
             # Remap into an easier to use format
             status_info_dict[key_value[0]] = key_value[1]
         event_record_string += '\n'
-
-        machine_name=""
-        if 'RGT_MACHINE_NAME' in os.environ:
-            machine_name = os.environ['RGT_MACHINE_NAME']
-        else:
-            self.__logger.doWarningLogging("Bad environment: could not find RGT_MACHINE_NAME in the environment.")
-            machine_name = str(subprocess.run("hostname --long", shell=True, stdout=subprocess.PIPE).stdout.strip())
-
-        influx_event_record_string = "events,job_id=" + str(self.__test_id) + ",app=" + status_info_dict["app"] + ",test=" + status_info_dict["test"] + ",runtag=" + status_info_dict["runtag"] + ",machine="  + machine_name + " "
-        for key_value in status_info:
-            influx_event_record_string += key_value[0] + '="' + key_value[1] + '",'
-
-        event_time_unix = dateutil.parser.parse(status_info_dict['event_time']).strftime('%s%f') + "000"
-
-        # Add handling for pasting outputs to influxdb
-
-        if status_info_dict['event_name'] == "build_end":
-            file_name = status_info_dict['run_archive'] + "/build_directory/" + "output_build.txt"
-            self.__logger.doInfoLogging(file_name)
-            if os.path.exists(file_name):
-                with open(file_name, "r") as f:
-                    output = f.read()
-                    # Truncate to 64 kb
-                    output = output[-65534:].replace('"', '\\"')
-                    influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
-
-        if status_info_dict['event_name'] == "submit_end":
-            file_name = status_info_dict['run_archive'] + "/" + "submit.err"
-            self.__logger.doInfoLogging(file_name)
-            if os.path.exists(file_name):
-                with open(file_name, "r") as f:
-                    output = f.read()
-                    # Truncate to 64 kb
-                    output = output[-65534:].replace('"', '\\"')
-                    influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
-
-        if status_info_dict['event_name'] == "binary_execute_end":
-            for file_name in glob.glob(status_info_dict['run_archive'] + "/*.o" + status_info_dict['job_id']):
-                self.__logger.doInfoLogging(file_name)
-                if os.path.exists(file_name):
-                    with open(file_name, "r") as f:
-                        output = f.read()
-                        # Truncate to 64 kb
-                        output = output[-65534:].replace('"', '\\"')
-                        influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
-
-        if status_info_dict['event_name'] == "check_end":
-            file_name = status_info_dict['run_archive'] + "/" + "output_check.txt"
-            self.__logger.doInfoLogging(file_name)
-            if os.path.exists(file_name):
-                with open(file_name, "r") as f:
-                    output = f.read()
-                    # Truncate to 64 kb
-                    output = output[-65534:].replace('"', '\\"')
-                    influx_event_record_string = influx_event_record_string + "output_txt=\"" + output + "\","
-
-        influx_event_record_string = influx_event_record_string.strip(',') + " " + str(event_time_unix)
-
 
         # Write a temporary file with the event info, then
         # (atomically) rename it to the permanent file,
@@ -611,26 +681,6 @@ class StatusFile:
 
         write_system_log(self.__test_id, status_info)
 
-        # Write event to InfluxDB
-        if 'RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ:
-            if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-                self.__logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
-            else:
-                influx_url = os.environ['RGT_INFLUX_URI']
-                influx_token = os.environ['RGT_INFLUX_TOKEN']
-        
-                self.__logger.doInfoLogging("Logging event to influx")
-                self.__logger.doInfoLogging(influx_event_record_string)
-                headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
-
-                try:
-                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-                except requests.exceptions.ConnectionError as e:
-                    self.__logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-                except Exception as e:
-                    # TODO: add more graceful handling of unreachable influx servers
-                    self.__logger.doErrorLogging(f"An error occurred {e}")
-
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
             self.__status_file_add_result(event_value, mode="Add_Build_Result")
@@ -646,6 +696,8 @@ class StatusFile:
                                           mode="Add_Binary_Running")
         elif event_id == StatusFile.EVENT_CHECK_END:
             self.__status_file_add_result(event_value, mode="Add_Run_Result")
+
+        self.post_event_to_influx(event_id, status_info_dict=status_info_dict)
 
         return event_time
 
