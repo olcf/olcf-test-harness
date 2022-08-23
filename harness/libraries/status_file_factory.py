@@ -16,7 +16,7 @@ class StatusFileFactory:
     #                                                    -
     #-----------------------------------------------------
     @classmethod
-    def create(cls,path_to_status_file=None,logger=None):
+    def create(cls,path_to_status_file=None,logger=None, test_id=None):
         """ Returns a StatusFile object.
 
         Notes
@@ -33,7 +33,8 @@ class StatusFileFactory:
         StatusFile
         """
         a_status_file = StatusFile(logger=logger,
-                                   path_to_status_file=path_to_status_file)
+                                   path_to_status_file=path_to_status_file,
+                                   test_id=test_id)
 
         return a_status_file
 

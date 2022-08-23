@@ -570,14 +570,44 @@ class subtest(base_apptest, apptest_layout):
         # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
         for test_id in os.listdir('.'):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
-                    not os.path.exists(f"./{test_id}/.influx_disabled"):
+                    not os.path.exists(f"./{test_id}/.influx_disabled") and \
+                    not os.path.islink(f"./{test_id}"):
                 self.logger.doInfoLogging(f"Attempting to log {test_id}")
                 if self._log_to_influx(test_id, post_run=True):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
                 else:
                     self.logger.doWarningLogging(f"Unable to log {test_id}")
+                if self._log_events_to_influx_post_run(test_id):
+                    self.logger.doInfoLogging(f"Successfully logged all events found for {test_id}")
+                else:
+                    self.logger.doWarningLogging(f"Unable to log all events for {test_id}")
+            elif os.path.islink(f"./{test_id}"):
+                self.logger.doInfoLogging(f"Ignoring link in influx_log_mode: {test_id}")
 
         os.chdir(currentdir)
+
+    def _log_events_to_influx_post_run(self, test_id):
+        """ Logs events to Influx when running in mode influx_log """
+        from status_file_factory import StatusFileFactory
+
+        # StatusFile object to use to write the logs for each run
+        logging_status_file = StatusFileFactory.create(self.get_path_to_status_file(), self.logger, test_id=test_id)
+
+        currentdir = os.getcwd()
+        self.logger.doInfoLogging(f"Current directory in apptest: {currentdir}")
+        # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
+        scripts_dir = self.get_path_to_scripts()
+        os.chdir(scripts_dir)
+        self.logger.doInfoLogging(f"Starting post-run influxDB event logging in apptest: {os.getcwd()}")
+        files_found = 0
+        files_not_found = 0
+
+        for e in StatusFile.EVENT_LIST:
+            logging_status_file.post_event_to_influx(e)
+
+        os.chdir(currentdir)
+        # if we make it to the end, return True
+        return True
 
     # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
     def _log_to_influx(self, influx_test_id, post_run=False):
@@ -646,11 +676,11 @@ class subtest(base_apptest, apptest_layout):
         metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
         metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
         if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
-            self.logger.doWarningLogging(f"Invalid build time for jobID {influx_testid}.")
+            self.logger.doWarningLogging(f"Invalid build time for jobID {influx_test_id}.")
             os.chdir(currentdir)
             return False
         elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
-            self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_testid}.")
+            self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_test_id}.")
             os.chdir(currentdir)
             return False
 
@@ -668,13 +698,16 @@ class subtest(base_apptest, apptest_layout):
         if post_run:
             run_timestamp = self._get_run_timestamp(influx_test_id)
             if run_timestamp < 0:
-                self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_testid}: {run_timestamp}")
+                self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_test_id}: {run_timestamp}")
                 os.chdir(currentdir)
                 return False
             influx_event_record_string += f" {run_timestamp}"
 
         try:
-            r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+            if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+            else:
+                r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
             self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
         except requests.exceptions.ConnectionError as e:
             self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
@@ -755,6 +788,9 @@ class subtest(base_apptest, apptest_layout):
         def is_numeric(s):
             """ Checks if an entry (RHS) is numeric """
             # Local function. s is assumed to be a whitespace-stripped string
+            # Return false for empty string
+            if len(s) == 0:
+                return False
             # checks if a decimal place or preceding negative sign exists, strip/remove as needed
             if s[0] == '-':
                 s = s[1:]
@@ -770,7 +806,7 @@ class subtest(base_apptest, apptest_layout):
 
         metrics = {}
         if not os.path.isfile('metrics.txt'):
-            print(f"File metrics.txt not found")
+            self.logger.doWarningLogging(f"File metrics.txt not found")
             return metrics
         with open('metrics.txt', 'r') as metric_f:
             # Each line is in format "metric = value" (space around '=' optional)
@@ -778,21 +814,28 @@ class subtest(base_apptest, apptest_layout):
             for line in metric_f:
                 # Allows comment lines
                 if not line[0] == '#':
-                    line = line.split('=')
-                    if len(line) == 2:
+                    line_splt = line.split('=')
+                    if len(line_splt) == 2:
                         # Replace spaces with underscores, and strip whitespace before/after
-                        line[0] = line[0].strip().replace(' ', '_')
-                        metric_name = f"{app_name}-{test_name}-{line[0]}"
+                        line_splt[0] = line_splt[0].strip().replace(' ', '_')
+                        if len(line_splt[0]) == 0:
+                            self.logger.doWarningLogging(f"Skipping line with no metric name: {line.strip()}")
+                            continue
+                        metric_name = f"{app_name}-{test_name}-{line_splt[0]}"
                         # if it's not numeric, replace spaces with underscores and wrap in quotes
-                        line[1] = line[1].strip()
-                        if is_numeric(line[1]):
-                            metrics[metric_name] = line[1]
+                        line_splt[1] = line_splt[1].strip()
+                        if len(line_splt[1]) == 0:
+                            self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
+                            continue
+                        # Handle string/integer metrics
+                        if is_numeric(line_splt[1]):
+                            metrics[metric_name] = line_splt[1]
                         else:
-                            line[1] = line[1].replace(' ', '_')
+                            line_splt[1] = line_splt[1].replace(' ', '_')
                             # Wrap strings in double quotes to send to Influx
-                            metrics[metric_name] = f'"{line[1]}"'
+                            metrics[metric_name] = f'"{line_splt[1]}"'
                     else:
-                        print(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line}")
+                        self.logger.doWarningLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
 
     def __name_of_current_function(self):
