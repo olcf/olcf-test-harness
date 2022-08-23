@@ -571,7 +571,8 @@ class subtest(base_apptest, apptest_layout):
         for test_id in os.listdir('.'):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
                     not os.path.exists(f"./{test_id}/.influx_disabled") and \
-                    not os.path.islink(f"./{test_id}"):
+                    not os.path.islink(f"./{test_id}") \
+                    and self._machine_matches(test_id):
                 self.logger.doInfoLogging(f"Attempting to log {test_id}")
                 if self._log_to_influx(test_id, post_run=True):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
@@ -583,8 +584,34 @@ class subtest(base_apptest, apptest_layout):
                     self.logger.doWarningLogging(f"Unable to log all events for {test_id}")
             elif os.path.islink(f"./{test_id}"):
                 self.logger.doInfoLogging(f"Ignoring link in influx_log_mode: {test_id}")
+            elif not self._machine_matches(test_id):
+                self.logger.doInfoLogging(f"Skipping test from another machine: {test_id}")
 
         os.chdir(currentdir)
+
+    def _machine_matches(self, test_id):
+        """ Checks if RGT_MACHINE_NAME is the same as the test machine name """
+        if not 'RGT_MACHINE_NAME' in os.environ:
+            self.logger.doWarningLogging("RGT_MACHINE_NAME not found in environment. Skipping machine name check.")
+            return False
+        log_start_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
+        log_start_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_LOGGING_START][0]}"
+
+        if not os.path.exists(f"{log_start_status_file}"):
+            self.logger.doErrorLogging(f"Couldn't find required file for checking machine name: {log_start_status_file}")
+            return False
+        with open(f"{log_start_status_file}", 'r') as log_fstr:
+            line = next(log_fstr)
+            line_splt = line.split()
+            for i in range(1, len(line_splt)):
+                # range of 1 skips timestamp
+                entry = line_splt[i]
+                if '=' in line:
+                    entry_splt = entry.split('=')
+                    if entry_splt[0] == 'machine' and \
+                            entry_splt[1] == os.environ['RGT_MACHINE_NAME']:
+                        return True
+        return False
 
     def _log_events_to_influx_post_run(self, test_id):
         """ Logs events to Influx when running in mode influx_log """
@@ -640,6 +667,28 @@ class subtest(base_apptest, apptest_layout):
             self.logger.doWarningLogging("The .influx_logged file already exists.")
             return False
 
+        def local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+            try:
+                if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                    print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+                else:
+                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+                    if not int(r.status_code) < 400:
+                        self.logger.doWarningLogging(f"Influx returned status code: {r.status_code}")
+                        return False
+                self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
+            except requests.exceptions.ConnectionError as e:
+                self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
+                os.chdir(currentdir)
+                return False
+            except Exception as e:
+                # TODO: add more graceful handling of unreachable influx servers
+                self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
+                self.logger.doErrorLogging(e)
+                os.chdir(currentdir)
+                return False
+            return True
+
         import requests
 
         influx_url = os.environ['RGT_INFLUX_URI']
@@ -659,12 +708,22 @@ class subtest(base_apptest, apptest_layout):
         # Fields defined by subtest class
         influx_app = self.getNameOfApplication()
         influx_test = self.getNameOfSubtest()
+
         # Machine name
         if not 'RGT_MACHINE_NAME' in os.environ:
             influx_machine_name = subprocess.check_output(['hostname', '--long'])
             self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
         else:
             influx_machine_name = os.environ['RGT_MACHINE_NAME']
+
+        # added as dictionary to support using StatusFile.INFLUX_TAGS
+        tag_values = {
+            'app': influx_app,
+            'test': influx_test,
+            'runtag': influx_runtag,
+            'machine': influx_machine_name,
+            'test_id': influx_test_id
+        }
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
 
@@ -684,8 +743,14 @@ class subtest(base_apptest, apptest_layout):
             os.chdir(currentdir)
             return False
 
-        influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
-        influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
+        influx_event_record_string = 'metrics'
+        for tag_name in StatusFile.INFLUX_TAGS:
+            if not tag_name in tag_values:
+                self.logger.doErrorLogging(f"Influx key not found in tag_values: {tag_name}. Aborting metrics logging for {influx_test_id}")
+                os.chdir(currentdir)
+                return False
+            influx_event_record_string += f",{tag_name}={tag_values[tag_name]}"
+
         num_metrics_printed = 0
         for k, v in metrics.items():
             if num_metrics_printed == 0:
@@ -695,6 +760,7 @@ class subtest(base_apptest, apptest_layout):
             num_metrics_printed += 1
 
         # if mode is post-run harness logging, get Unix timestamp so that the time in InfluxDB is accurate
+        run_timestamp = ''
         if post_run:
             run_timestamp = self._get_run_timestamp(influx_test_id)
             if run_timestamp < 0:
@@ -703,22 +769,55 @@ class subtest(base_apptest, apptest_layout):
                 return False
             influx_event_record_string += f" {run_timestamp}"
 
-        try:
-            if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
-                print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+        if not local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+            self.logger.doWarningLogging(f"Logging metrics to Influx failed.")
+            return False
+
+        # add node-based checking functionality
+        node_healths = self._get_node_health(influx_machine_name, influx_app, influx_test)
+        self.logger.doInfoLogging(f"Found {len(node_healths)} nodes reported for node health")
+        if len(node_healths) > 0:
+            # find and read node location file -- json file
+            use_node_location_file = False
+            node_locations = {}
+            # By default, we don't want to log node healths without extra node location (like cabinet, chassis, etc)
+            # But by setting RGT_IGNORE_NODE_LOCATION, that will be by-passed
+            if ('RGT_NODE_LOCATION_FILE' in os.environ and os.path.exists(os.environ['RGT_NODE_LOCATION_FILE'])) \
+                    or 'RGT_IGNORE_NODE_LOCATION' in os.environ:
+                # check if it's a file in valid JSON format
+                # each entry is node_name: { 'status': 'FAILED'|'SUCCESS', 'message': '' }
+                json_read_success = True
+                if not 'RGT_IGNORE_NODE_LOCATION' in os.environ:
+                    import json
+                    with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
+                        try:
+                            node_locations = json.loads(f.read())
+                        except json.JSONDecodeError as e:
+                            self.logger.doErrorLogging(f"JSONDecodeError detected: {e}. Skipping node health logging.")
+                            json_read_success = False
+                            pass
+                # if the JSON file fails to parse, we don't want to continue trying to log
+                if json_read_success:
+                    # for each node found in the nodecheck.txt
+                    for node_name in node_healths.keys():
+                        influx_event_record_string = f'node_health,machine={tag_values["machine"]},node={node_name},test={tag_values["test"]}'
+                        if node_name in node_locations.keys():
+                            # then it's a node location identifier
+                            for k in node_locations[node_name].keys():
+                                influx_event_record_string += f',{k}={node_locations[node_name][k]}'
+                        influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
+                        if post_run and not run_timestamp == '' and run_timestamp > 0:
+                            influx_event_record_string += f' {run_timestamp}'
+                    if not local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+                            self.logger.doWarningLogging(f"Logging node health to Influx failed.")
+                            os.chdir(currentdir)
+                            return False
+            elif 'RGT_NODE_LOCATION_FILE' in os.environ:
+                self.logger.doWarningLogging(f"Node location file path does not exist: {os.environ['RGT_NODE_LOCATION_FILE']}.")
+                self.logger.doWarningLogging(f"Skipping node health logging. To re-log, remove the .influx_logged file in Run_Archive and run in mode influx_log.")
             else:
-                r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-            self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
-        except requests.exceptions.ConnectionError as e:
-            self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-            os.chdir(currentdir)
-            return False
-        except Exception as e:
-            # TODO: add more graceful handling of unreachable influx servers
-            self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
-            self.logger.doErrorLogging(e)
-            os.chdir(currentdir)
-            return False
+                self.logger.doWarningLogging(f"RGT_NODE_LOCATION_FILE not in os.environ, skipping node health logging.")
+
 
         # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
         # so let's create a .influx_logged file
@@ -837,6 +936,36 @@ class subtest(base_apptest, apptest_layout):
                     else:
                         self.logger.doWarningLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
+
+    def _get_node_health(self, machine_name, app_name, test_name):
+        """ Parse the nodecheck.txt file for InfluxDB reporting """
+        node_healths = {}
+        if not os.path.isfile('nodecheck.txt'):
+            self.logger.doInfoLogging(f"File nodecheck.txt not found.")
+            return node_healths
+        self.logger.doInfoLogging("Processing file nodecheck.txt.")
+        failed_names = ['FAILED', 'FAIL', 'BAD']
+        success_names = ['OK', 'SUCCESS', 'GOOD']
+        with open('nodecheck.txt', 'r') as nodes_f:
+            # Each line is in format crusher012 FAILED <msg>
+            # All whitespace in metric name will be replaced with underscores
+            for line in nodes_f:
+                # Allows comment lines
+                if not line[0] == '#':
+                    line_splt = line.strip().split()
+                    if not len(line_splt) >= 2:
+                        self.logger.doWarningLogging(f"Invalid line in nodecheck.txt: {line}")
+                        continue
+                    node_name = line_splt[0]
+                    node_healths[node_name] = {}
+                    if line_splt[1].upper() in success_names:
+                        node_healths[node_name]['status'] = 'SUCCESS'
+                    elif line_splt[1].upper() in failed_names:
+                        node_healths[node_name]['status'] = 'FAILED'
+                    node_healths[node_name]['message'] = ''
+                    if len(line_splt) >= 3:
+                        node_healths[node_name]['message'] = ' '.join(line_splt[2:])
+        return node_healths
 
     def __name_of_current_function(self):
         classname = self.__class__.__name__
