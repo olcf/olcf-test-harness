@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 07-28-2022
+# Date modified: 08-25-2022
 ################################################################################
 # Purpose:
 #   Only intended for SLURM systems.
@@ -21,13 +21,17 @@ import urllib.parse
 from datetime import datetime
 import argparse
 
+try:
+    from status_file import StatusFile
+except:
+    raise ImportError('Could not import status_file.py. Please make sure the olcf_harness module is loaded.')
 
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness runs in InfluxDB with SLURM data")
-parser.add_argument('--time', '-t', default=['7d'], nargs=1, action='store', help="How far back to look for jobs in Influx (ex: 1h, 2d). 'none' disables this filter.")
+parser.add_argument('--time', '-t', default=['14d'], nargs=1, action='store', help="How far back to look for jobs in Influx (ex: 1h, 2d). 'none' disables this filter.")
 parser.add_argument('--user', '-u', default=[f"{os.environ['USER']}"], nargs=1, action='store', help="Specifies the UNIX user to update jobs for.")
-parser.add_argument('--machine', '-m', default=['unknown'], nargs=1, action='store', help="Specifies the machine to look for jobs for. Setting a wrong machine may lead to SLURM job IDs not being found.")
+parser.add_argument('--machine', '-m', required=True, nargs=1, action='store', help="Specifies the machine to look for jobs for. Setting a wrong machine may lead to SLURM job IDs not being found.")
 parser.add_argument('--app', nargs=1, action='store', help="Specifies the app to update jobs for.")
 parser.add_argument('--test', nargs=1, action='store', help="Specifies the test to update jobs for.")
 parser.add_argument('--runtag', nargs=1, action='store', help="Specifies the runtag to update jobs for.")
@@ -50,18 +54,13 @@ else:
     print(f"This program allows hours or days to be specified as '1h' or '1d' for one hour or day, respectively.")
     sys.exit(1)
 
-if args.machine[0] == 'unknown' and 'RGT_MACHINE_NAME' in os.environ:
-    print(f"Machine name not specified on command line, found {os.environ['RGT_MACHINE_NAME']} in environment")
-    args.machine[0] = os.environ['RGT_MACHINE_NAME']
-elif args.machine[0] == 'unknown':
-    print(f"Cannot detect machine name, and machine name not provided on command-line. Exiting.")
-    sys.exit(1)
-
 ################################################################################
 
 # SELECT query #################################################################
-running_query = f"SELECT test_id, slurm_jobid, username, app, test, machine, runtag, current_status, e_value FROM (SELECT test_id::field, job_id::field AS slurm_jobid, \"user\" AS username, app::tag, test::tag, machine::tag, runtag::tag, last(event_name::field) AS current_status, event_value::field AS e_value FROM events {time_filter} GROUP BY job_id) WHERE (current_status != 'check_end' AND (e_value = '0' OR e_value = '[NO_VALUE]')) OR current_status = 'job_queued'"
-required_entries = ['slurm_jobid', 'test', 'app', 'test_id', 'runtag', 'machine', 'username']
+sub_running_query = f"SELECT {', '.join([f'{t}::tag' for t in StatusFile.INFLUX_TAGS])}, job_id::field AS slurm_jobid, \"user\" AS username, last(event_name::field) AS current_status, event_value::field AS e_value FROM events {time_filter} GROUP BY test_id"
+running_query = f"SELECT {', '.join([t for t in StatusFile.INFLUX_TAGS])}, slurm_jobid, username, current_status, e_value FROM ({sub_running_query}) WHERE (current_status != 'check_end' AND (e_value = '0' OR e_value = '[NO_VALUE]')) OR current_status = 'job_queued'"
+required_entries = [t for t in StatusFile.INFLUX_TAGS]
+required_entries.extend(['slurm_jobid', 'username'])
 ################################################################################
 
 # Global parameters extracted for ease of use ##################################
@@ -167,15 +166,11 @@ def post_update_to_influx(d, failed=True):
     log_time = datetime.strptime(d['timestamp'], "%Y-%m-%dT%H:%M:%S")
     log_ns = int(datetime.timestamp(log_time) * 1000 * 1000 * 1000)
 
-    influx_event_record_string = f'events,job_id={d["test_id"]},app={d["app"]},test={d["test"]},runtag={d["runtag"]},machine={d["machine"]} '
-    nkeys = 0
-    for key, value in d.items():
-        if not key == 'timestamp':
-            if nkeys > 0:
-                influx_event_record_string += ','
-            nkeys += 1
-            influx_event_record_string += f"{key}=\"{value}\""
+    influx_event_record_string = f"events,{', '.join([f'{t}={d[t]}' for t in StatusFile.INFLUX_TAGS])} "
+    influx_event_record_string += f"{', '.join([f'{t}={d[t]}' for t in d if (not key == 'timestamp') and (not t in StatusFile.INFLUX_TAGS)])}"
     influx_event_record_string += f' {str(log_ns)}'
+    print(influx_event_record_string)
+    return False
     try:
         r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
         if int(r.status_code) < 400:
@@ -262,13 +257,10 @@ for entry in data:
     # check to see if this entry should be parsed
     print(f"Processing {entry['test_id']}, SLURM id {entry['slurm_jobid']} ========================")
     d = {
-        'test_id': entry['test_id'],
-        'job_id': entry['slurm_jobid'],
-        'test': entry['test'],
-        'app': entry['app'],
-        'runtag': entry['runtag'],
-        'machine': entry['machine']
+        'job_id': entry['slurm_jobid']
     }
+    for t in StatusFile.INFLUX_TAGS:
+        d[t] = entry[t]
     if not entry['slurm_jobid'] in slurm_data:
         print(f"Can't find data for {entry['slurm_jobid']} in sacct data.")
         continue
