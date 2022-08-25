@@ -2,10 +2,11 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 07-28-2022
+# Date modified: 08-23-2022
 ################################################################################
 # Purpose:
-#   Allows users to add comments to jobs in InfluxDB.
+#   Allows users to add comments to a specific event (ie, build_start) of
+#   harness jobs in InfluxDB. Logs event back to influx with same timestamp.
 ################################################################################
 # Requirements:
 #   Requires a file named harness_keys.py which contains the post_influx_uri,
@@ -19,6 +20,11 @@ import subprocess
 import urllib.parse
 from datetime import datetime
 import argparse
+
+try:
+    from status_file import StatusFile
+except:
+    raise ImportError('Could not import status_file.py. Please make sure the olcf_harness module is loaded.')
 
 
 
@@ -39,15 +45,12 @@ from harness_keys import post_influx_uri, get_influx_uri, influx_token
 args = parser.parse_args()  # event field already validated by 'choices'
 
 # SELECT query - gets other tag information to re-post #########################
-tags = ['machine', 'app', 'test', 'runtag', 'job_id']
+tags = StatusFile.INFLUX_TAGS
 # These are some commonly needed fields, so we're going to gather these to re-post them in the new record
-fields = ['build_directory', 'event_filename', 'event_subtype', 'event_time', 'event_type', \
-        'hostname', 'job_account_id', 'job_id', 'path_to_rgt_package', 'rgt_path_to_sspace', \
-        'rgt_system_log_tag', 'run_archive', 'test_id', 'test_instance', 'workdir', 'comment', \
-        'output_txt']
+fields = StatusFile.INFLUX_FIELDS
 
 tagline = ','.join([f"{fld}::tag" for fld in tags])
-fieldline = ','.join([f"{fld}::field" for fld in fields])
+fieldline = ','.join([f"{fld}::field" for fld in fields if not (fld == 'event_name' or fld == 'event_value')])
 
 event_selector = "last(event_name::field) AS event_name, event_value::field"
 where_cond = f"test_id::field = '{args.jobid[0]}'"
@@ -55,7 +58,7 @@ if args.event:
     event_selector = "event_name::field AS event_name, event_value::field"
     where_cond += f" AND event_name::field = '{args.event[0]}'"
 
-query = f"SELECT test_id::field, app::tag, test::tag, machine::tag, runtag::tag, {event_selector} FROM events WHERE {where_cond} GROUP BY job_id"
+query = f"SELECT {tagline}, {fieldline}, {event_selector} FROM events WHERE {where_cond} GROUP BY job_id"
 required_entries = ['test', 'app', 'test_id', 'runtag', 'machine', 'event_name', 'event_value']
 ################################################################################
 
@@ -104,8 +107,8 @@ def query_influx():
         ret_data[col_names[c_index]] = values[0][c_index]
     should_add, reason = check_data(ret_data)
     if not should_add:
-        jobid = data_tmp['test_id'] if 'test_id' in data_tmp else 'unknown'
-        print(f"Invalid record associated with test_id {jobid}. Reason: {reason}. Exiting.")
+        test_id = data_tmp['test_id'] if 'test_id' in data_tmp else 'unknown'
+        print(f"Invalid record associated with test_id {test_id}. Reason: {reason}. Exiting.")
         sys.exit(1)
     return ret_data
 
@@ -117,20 +120,12 @@ def post_update_to_influx(d):
         'Accept': "application/json"
     }
         #'Content-Type': "text/plain; charset=utf-8",
-    if not 'timestamp' in d.keys():
-        d['timestamp'] = datetime.datetime.now().isoformat()
-    log_time = datetime.strptime(d['timestamp'], "%Y-%m-%dT%H:%M:%S")
+    log_time = datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
     log_ns = int(datetime.timestamp(log_time) * 1000 * 1000 * 1000)
 
-    influx_event_record_string = f'events,job_id={d["test_id"]},app={d["app"]},test={d["test"]},runtag={d["runtag"]},machine={d["machine"]} '
-    nkeys = 0
-    for key, value in d.items():
-        if not key == 'timestamp':
-            if nkeys > 0:
-                influx_event_record_string += ','
-            nkeys += 1
-            influx_event_record_string += f"{key}=\"{value}\""
-    influx_event_record_string += f' {str(log_ns)}'
+    tagline = ','.join([f"{fld}={d[fld]}" for fld in tags])
+    fieldline = ','.join([f"{fld}=\"{d[fld]}\"" for fld in fields])
+    influx_event_record_string = f'events,{tagline} {fieldline} {str(log_ns)}'
     try:
         r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
         if int(r.status_code) < 400:
@@ -154,11 +149,11 @@ def post_update_to_influx(d):
 data = query_influx()
 
 # set d['timestamp'] to set a timestamp
-data['timestamp'] = datetime.datetime.now().iso_format()
+timestamp = datetime.now().isoformat()
 # reason or comment field
 
 if data['comment']:
-    print(f"Warning: found an existing comment on this record: {data['comment']}. Appending to this comment.")
+    print(f"Warning: found an existing comment on this record: {data['comment']}.\nAppending to this comment.")
     data['comment'] += f"\n{timestamp} - {os.environ['USER']}: {args.message[0]}"
 else:
     data['comment'] = f"{timestamp} - {os.environ['USER']}: {args.message[0]}."
