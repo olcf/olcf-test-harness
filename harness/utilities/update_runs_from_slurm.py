@@ -166,11 +166,10 @@ def post_update_to_influx(d, failed=True):
     log_time = datetime.strptime(d['timestamp'], "%Y-%m-%dT%H:%M:%S")
     log_ns = int(datetime.timestamp(log_time) * 1000 * 1000 * 1000)
 
-    influx_event_record_string = f"events,{', '.join([f'{t}={d[t]}' for t in StatusFile.INFLUX_TAGS])} "
-    influx_event_record_string += f"{', '.join([f'{t}={d[t]}' for t in d if (not key == 'timestamp') and (not t in StatusFile.INFLUX_TAGS)])}"
+    influx_event_record_string = f"events,{','.join([f'{t}={d[t]}' for t in StatusFile.INFLUX_TAGS])} "
+    quote = '"'
+    influx_event_record_string += f"{','.join([f'{t}={quote}{d[t]}{quote}' for t in d if (not t == 'timestamp') and (not t in StatusFile.INFLUX_TAGS)])}"
     influx_event_record_string += f' {str(log_ns)}'
-    print(influx_event_record_string)
-    return False
     try:
         r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
         if int(r.status_code) < 400:
