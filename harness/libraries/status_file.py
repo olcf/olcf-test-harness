@@ -180,6 +180,7 @@ class StatusFile:
                 'rgt_system_log_tag',
                 'run_archive',
                 'test_instance',
+                'user',
                 'workdir',
                 'comment',
                 'reason',
