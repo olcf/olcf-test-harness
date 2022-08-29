@@ -138,7 +138,14 @@ def post_update_to_influx(d):
     }
         #'Content-Type': "text/plain; charset=utf-8",
     # This is provided in UTC -- convert to EST
-    log_time = datetime.datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%S.%fZ") - datetime.timedelta(hours=4)
+    try:
+        log_time = datetime.datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%S.%fZ") - datetime.timedelta(hours=4)
+    except ValueError as e:
+        try:
+            log_time = datetime.datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%SZ") - datetime.timedelta(hours=4)
+            print(f"Time parsing with 'Y-m-dTH:M:S.msZ' failed. Attempting without microseconds.")
+        except ValueError as e:
+            raise ValueError(e)
     # microsecond timing max precision
     log_ns = int(datetime.datetime.timestamp(log_time) * 1000 * 1000) * 1000
 

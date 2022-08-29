@@ -18,7 +18,7 @@ import sys
 import requests
 import subprocess
 import urllib.parse
-from datetime import datetime
+import datetime
 import argparse
 
 try:
@@ -70,15 +70,16 @@ tags = StatusFile.INFLUX_TAGS
 fields = StatusFile.INFLUX_FIELDS
 
 tagline = ','.join([f"{fld}::tag" for fld in tags])
-fieldline = ','.join([f"{fld}::field" for fld in fields if not (fld == 'event_name' or fld == 'event_value')])
+fieldline = ','.join([f"{fld}::field" for fld in fields if not (fld == 'event_name' or fld == 'event_value' or fld == 'user')])
+fieldline += ',"user"'
 
 event_selector = "last(event_name::field) AS event_name, event_value::field"
-where_cond = f"test_id::field = '{args.jobid[0]}'"
+where_cond = f"test_id::tag = '{args.jobid[0]}'"
 if args.event:
     event_selector = "event_name::field AS event_name, event_value::field"
     where_cond += f" AND event_name::field = '{args.event[0]}'"
 
-query = f"SELECT {tagline}, {fieldline}, {event_selector} FROM events WHERE {where_cond} GROUP BY job_id"
+query = f"SELECT {tagline},{fieldline},{event_selector} FROM events WHERE {where_cond} GROUP BY test_id"
 required_entries = ['test', 'app', 'test_id', 'runtag', 'machine', 'event_name', 'event_value']
 ################################################################################
 
@@ -100,6 +101,7 @@ def query_influx():
         'Authorization': "Token " + influx_token,
         'Accept': "application/json"
     }
+    print(query)
     url = f"{get_influx_uri}&db=accept&q={urllib.parse.quote(query)}"
     try:
         r = requests.get(url, headers=headers, params={'q': 'requests+language:python'})
@@ -111,7 +113,9 @@ def query_influx():
         print(f"Failed to send to {url}:")
         print(str(e))
         sys.exit(2)
+    print(r)
     resp = r.json()
+    print(resp)
     if not 'series' in resp['results'][0]:
         print(f"No Running tests found.\nFull query: {query}.\nFull response: {resp}")
         return []
@@ -140,8 +144,17 @@ def post_update_to_influx(d):
         'Accept': "application/json"
     }
         #'Content-Type': "text/plain; charset=utf-8",
-    log_time = datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-    log_ns = int(datetime.timestamp(log_time) * 1000 * 1000 * 1000)
+    try:
+        log_time = datetime.datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%S.%fZ") - datetime.timedelta(hours=4)
+    except ValueError as e:
+        try:
+            log_time = datetime.datetime.strptime(d['time'], "%Y-%m-%dT%H:%M:%SZ") - datetime.timedelta(hours=4)
+            print(f"Time parsing with 'Y-m-dTH:M:S.msZ' failed. Attempting without microseconds.")
+        except ValueError as e:
+            raise ValueError(e)
+    # Assume it's in UTC right now, convert to EST
+
+    log_ns = int(datetime.datetime.timestamp(log_time) * 1000 * 1000) * 1000
 
     tagline = ','.join([f"{fld}={d[fld]}" for fld in tags])
     fieldline = ','.join([f"{fld}=\"{d[fld]}\"" for fld in fields])
@@ -168,11 +181,9 @@ def post_update_to_influx(d):
 
 data = query_influx()
 
-# set d['timestamp'] to set a timestamp
-timestamp = datetime.now().isoformat()
-# reason or comment field
+timestamp = datetime.datetime.now().isoformat()
 
-if data['comment']:
+if data['comment'] and not data['comment'] == '[NO_VALUE]':
     print(f"Warning: found an existing comment on this record: {data['comment']}.\nAppending to this comment.")
     data['comment'] += f"\n{timestamp} - {os.environ['USER']}: {args.message[0]}"
 else:
