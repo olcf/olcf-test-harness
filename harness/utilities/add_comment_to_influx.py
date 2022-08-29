@@ -40,7 +40,6 @@ parser.add_argument('--event', nargs=1, action='store', choices=['logging_start'
 
 # Global URIs and Tokens #######################################################
 from harness_keys import influx_keys
-from harness_keys import post_influx_uri, get_influx_uri, influx_token
 ################################################################################
 
 # Parse command-line arguments #################################################
@@ -59,6 +58,8 @@ elif not 'GET' in influx_keys[args.db[0]]:
 elif not 'token' in influx_keys[args.db[0]]:
     print(f"Influx token not found in influx_keys[{args.db[0]}]. Aborting.")
     sys.exit(1)
+
+# Checking succeeded - global setup of URIs and tokens
 post_influx_uri = influx_keys[args.db[0]]['POST']
 get_influx_uri = influx_keys[args.db[0]]['GET'] 
 influx_token = influx_keys[args.db[0]]['token']

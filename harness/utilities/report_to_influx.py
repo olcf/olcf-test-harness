@@ -59,17 +59,18 @@ class InfluxReport:
 def print_usage():
     print("Usage: ./report_to_influx.py [args]")
     print("\t--keys <keys>       (ex: machine=crusher,purpose=testing,...)")
-    print("\t\tKeys allow you to select your entry in Grafana - ie, by machine name and test name")
+    print("\t\tKeys allow you to select your entry in InfluxDB - ie, by machine name and test name. These are like primary keys in SQL.")
+    print("\t\tPreferred keys are machine and purpose. For example, --keys machine=crusher,purpose=job_monitor")
     print("\t--values <values>   (ex: jobs_in_queue=1,nodes_running=1,...)")
-    print("\t--version <name>    Sends data to <name> version of Grafana. This should match the key name in the uri and token dicts. Default name is dev")
+    print("\t--db <name>    Sends data to a named instance of InfluxDB. This should match the key name in the uri and token dicts. Default: dev")
 
 if len(sys.argv) < 2:
     print_usage()
     sys.exit(0)
 
 d = {}
-d['uri'] = influx_keys['dev'][0]
-d['token'] = influx_keys['dev'][1]
+d['uri'] = influx_keys['dev']['POST']
+d['token'] = influx_keys['dev']['token']
 
 index = 1
 nargs = len(sys.argv)
@@ -82,13 +83,16 @@ while index < nargs:
         index += 1
         v = sys.argv[index].split(',')
         d['values'] = v
-    elif sys.argv[index] == "--version":
+    elif sys.argv[index] == "--db":
         index += 1
         if not sys.argv[index] in influx_keys.keys():
             print(f"Could not find key: {sys.argv[index]} in influx_keys")
             sys.exit(1)
-        d['uri'] = influx_keys[sys.argv[index]][0]
-        d['token'] = influx_keys[sys.argv[index]][1]
+        elif not ('POST' in influx_keys[sys.argv[index]] and 'token' in influx_keys[sys.argv[index]]):
+            print(f"Could not find POST and token in influx_keys for {sys.argv[index]}")
+            sys.exit(1)
+        d['uri'] = influx_keys[sys.argv[index]]['POST']
+        d['token'] = influx_keys[sys.argv[index]]['token']
     else:
         print(f"Unrecognized kwarg: {sys.argv[index]}")
         print_usage()

@@ -35,14 +35,34 @@ except:
 parser = argparse.ArgumentParser(description="Updates harness run in InfluxDB with a new machine name")
 parser.add_argument('--testid', '-t', nargs=1, action='store', required=True, help="Specifies the harness test ID to update machine for.")
 parser.add_argument('--newmachine', '-m', nargs=1, action='store', required=True, help="New machine to assign to the harness test.")
+parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
 ################################################################################
 
 # Global URIs and Tokens #######################################################
-from harness_keys import post_influx_uri, get_influx_uri, influx_token
+from harness_keys import influx_keys
 ################################################################################
 
 # Parse command-line arguments #################################################
 args = parser.parse_args()  # event field already validated by 'choices'
+
+# Set up URIs and Tokens #######################################################
+if not args.db[0] in influx_keys.keys():
+    print(f"Unknown database version: {args.db[0]} not found in influx_keys. Aborting.")
+    sys.exit(1)
+elif not 'POST' in influx_keys[args.db[0]]:
+    print(f"POST URL not found in influx_keys[{args.db[0]}]. Aborting.")
+    sys.exit(1)
+elif not 'GET' in influx_keys[args.db[0]]:
+    print(f"GET URL not found in influx_keys[{args.db[0]}]. Aborting.")
+    sys.exit(1)
+elif not 'token' in influx_keys[args.db[0]]:
+    print(f"Influx token not found in influx_keys[{args.db[0]}]. Aborting.")
+    sys.exit(1)
+
+# Checking succeeded - global setup of URIs and tokens
+post_influx_uri = influx_keys[args.db[0]]['POST']
+get_influx_uri = influx_keys[args.db[0]]['GET']
+influx_token = influx_keys[args.db[0]]['token']
 
 # SELECT query - gets other tag information to re-post #########################
 tags = StatusFile.INFLUX_TAGS
