@@ -30,7 +30,7 @@ except:
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness run in InfluxDB with a comment")
-parser.add_argument('--jobid', '-j', nargs=1, action='store', required=True, help="Specifies the harness jobID to update jobs for.")
+parser.add_argument('--testid', '-t', nargs=1, action='store', required=True, help="Specifies the harness test id to update jobs for.")
 parser.add_argument('--message', '-m', nargs=1, action='store', required=True, help="Comment to add to the record.")
 parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
 parser.add_argument('--event', nargs=1, action='store', choices=['logging_start', 'build_start', 'build_end', 'submit_start', \
@@ -74,7 +74,7 @@ fieldline = ','.join([f"{fld}::field" for fld in fields if not (fld == 'event_na
 fieldline += ',"user"'
 
 event_selector = "last(event_name::field) AS event_name, event_value::field"
-where_cond = f"test_id::tag = '{args.jobid[0]}'"
+where_cond = f"test_id::tag = '{args.testid[0]}'"
 if args.event:
     event_selector = "event_name::field AS event_name, event_value::field"
     where_cond += f" AND event_name::field = '{args.event[0]}'"
