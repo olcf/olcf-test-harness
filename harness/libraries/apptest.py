@@ -571,7 +571,8 @@ class subtest(base_apptest, apptest_layout):
         for test_id in os.listdir('.'):
             if not os.path.exists(f"./{test_id}/.influx_logged") and \
                     not os.path.exists(f"./{test_id}/.influx_disabled") and \
-                    not os.path.islink(f"./{test_id}"):
+                    not os.path.islink(f"./{test_id}") \
+                    and self._machine_matches(test_id):
                 self.logger.doInfoLogging(f"Attempting to log {test_id}")
                 if self._log_to_influx(test_id, post_run=True):
                     self.logger.doInfoLogging(f"Successfully logged {test_id}")
@@ -583,8 +584,34 @@ class subtest(base_apptest, apptest_layout):
                     self.logger.doWarningLogging(f"Unable to log all events for {test_id}")
             elif os.path.islink(f"./{test_id}"):
                 self.logger.doInfoLogging(f"Ignoring link in influx_log_mode: {test_id}")
+            elif not self._machine_matches(test_id):
+                self.logger.doInfoLogging(f"Skipping test from another machine: {test_id}")
 
         os.chdir(currentdir)
+
+    def _machine_matches(self, test_id):
+        """ Checks if RGT_MACHINE_NAME is the same as the test machine name """
+        if not 'RGT_MACHINE_NAME' in os.environ:
+            self.logger.doWarningLogging("RGT_MACHINE_NAME not found in environment. Skipping machine name check.")
+            return False
+        log_start_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
+        log_start_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_LOGGING_START][0]}"
+
+        if not os.path.exists(f"{log_start_status_file}"):
+            self.logger.doErrorLogging(f"Couldn't find required file for checking machine name: {log_start_status_file}")
+            return False
+        with open(f"{log_start_status_file}", 'r') as log_fstr:
+            line = next(log_fstr)
+            line_splt = line.split()
+            for i in range(1, len(line_splt)):
+                # range of 1 skips timestamp
+                entry = line_splt[i]
+                if '=' in line:
+                    entry_splt = entry.split('=')
+                    if entry_splt[0] == 'machine' and \
+                            entry_splt[1] == os.environ['RGT_MACHINE_NAME']:
+                        return True
+        return False
 
     def _log_events_to_influx_post_run(self, test_id):
         """ Logs events to Influx when running in mode influx_log """
@@ -659,12 +686,22 @@ class subtest(base_apptest, apptest_layout):
         # Fields defined by subtest class
         influx_app = self.getNameOfApplication()
         influx_test = self.getNameOfSubtest()
+
         # Machine name
         if not 'RGT_MACHINE_NAME' in os.environ:
             influx_machine_name = subprocess.check_output(['hostname', '--long'])
             self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
         else:
             influx_machine_name = os.environ['RGT_MACHINE_NAME']
+
+        # added as dictionary to support using StatusFile.INFLUX_TAGS
+        tag_values = {
+            'app': influx_app,
+            'test': influx_test,
+            'runtag': influx_runtag,
+            'machine': influx_machine_name,
+            'test_id': influx_test_id
+        }
 
         metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
 
@@ -684,8 +721,14 @@ class subtest(base_apptest, apptest_layout):
             os.chdir(currentdir)
             return False
 
-        influx_event_record_string = f"metrics,job_id={influx_test_id},app={influx_app},test={influx_test}"
-        influx_event_record_string += f",runtag={influx_runtag},machine={influx_machine_name}"
+        influx_event_record_string = 'metrics'
+        for tag_name in StatusFile.INFLUX_TAGS:
+            if not tag_name in tag_values:
+                self.logger.doErrorLogging(f"Influx key not found in tag_values: {tag_name}. Aborting metrics logging for {influx_test_id}")
+                os.chdir(currentdir)
+                return False
+            influx_event_record_string += f",{tag_name}={tag_values[tag_name]}"
+
         num_metrics_printed = 0
         for k, v in metrics.items():
             if num_metrics_printed == 0:
