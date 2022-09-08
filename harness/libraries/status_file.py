@@ -129,6 +129,7 @@ class StatusFile:
         'hostname',
         'job_account_id',
         'rgt_path_to_sspace',
+        'machine',
         'path_to_rgt_package',
         'build_directory',
         'workdir',
@@ -153,6 +154,38 @@ class StatusFile:
     FIELDS_SPLUNK_SPECIAL = ['job_status', 'event_value']
 
     NO_VALUE = '[NO_VALUE]'
+
+    #---Influx key identifiers.
+    INFLUX_TAGS = [
+                'test_id',
+                'app',
+                'test',
+                'runtag',
+                'machine'
+    ]
+
+    INFLUX_FIELDS = [
+                'build_directory',
+                'event_filename',
+                'event_name',
+                'event_subtype',
+                'event_time',
+                'event_type',
+                'event_value',
+                'hostname',
+                'job_account_id',
+                'job_id',
+                'path_to_rgt_package',
+                'rgt_path_to_sspace',
+                'rgt_system_log_tag',
+                'run_archive',
+                'test_instance',
+                'user',
+                'workdir',
+                'comment',
+                'reason',
+                'output_txt'
+    ]
 
     #-----------------------------------------------------
     #                                                    -
@@ -446,26 +479,38 @@ class StatusFile:
                     status_info_dict[key] = value
 
         self.__logger.doInfoLogging(f"Finished initializing event information")
-        machine_name = ""
-        if 'RGT_MACHINE_NAME' in os.environ:
-            machine_name = os.environ['RGT_MACHINE_NAME']
-        else:
-            self.__logger.doWarningLogging("Bad environment: could not find RGT_MACHINE_NAME in the environment.")
-            machine_name = str(subprocess.run("hostname --long", shell=True, stdout=subprocess.PIPE).stdout.strip())
+        if not 'machine' in status_info_dict:
+            self.__logger.doErrorLogging("Bad status file: could not find machine in status_file_info.")
+            # REMOVE THIS when moving to production
+            self.__logger.doInfoLogging("For compatibility, falling back to os.environ[RGT_MACHINE_NAME]")
+            if not 'RGT_MACHINE_NAME' in os.environ:
+                self.__logger.doErrorLogging("RGT_MACHINE_NAME not found in os.environ")
+                return False
+            status_info_dict['machine'] = os.environ['RGT_MACHINE_NAME']
         # Initialize the tags for record string
-        influx_event_record_string = f'events,job_id={str(self.__test_id)},app={status_info_dict["app"]},test={status_info_dict["test"]},runtag={status_info_dict["runtag"]},'
-        influx_event_record_string += f'machine={machine_name} '
+        influx_event_record_string = 'events'
+        for tag_name in StatusFile.INFLUX_TAGS:
+            if not tag_name in status_info_dict:
+                self.__logger.doErrorLogging(f"Influx key not found in status_info_dict: {tag_name}. Aborting.")
+                return False
+            influx_event_record_string += f',{tag_name}={status_info_dict[tag_name]}'
         # Remove the 'test_instance' key, since it contains comma-separated values
         if 'test_instance' in status_info_dict.keys():
             status_info_dict['test_instance'] = status_info_dict['test_instance'].replace(',', '-')
         # Add fields to influx record string
-        #influx_event_record_string += ','.join([ f"{key}={value}" for key,value in status_info_dict.items()])
         nkeys = 0
-        for key, value in status_info_dict.items():
+        for field_name in StatusFile.INFLUX_FIELDS:
+            if field_name == 'output_txt':
+                continue
+            elif not field_name in status_info_dict:
+                self.__logger.doWarningLogging(f"Couldn't find field to append in influx event string: {field_name}. Setting to NOVALUE")
+                status_info_dict[field_name] = StatusFile.NO_VALUE
             if nkeys > 0:
                 influx_event_record_string += ','
+            else:
+                influx_event_record_string += ' '
+            influx_event_record_string += f'{field_name}="{status_info_dict[field_name]}"'
             nkeys += 1
-            influx_event_record_string += f'{key}="{value}"'
         event_time_unix = dateutil.parser.parse(status_info_dict['event_time']).strftime('%s%f') + "000"
 
         # Add handling for pasting outputs to influxdb
@@ -850,6 +895,8 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['app'],
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_build_dirname)
+
+    test_instance_info['machine'] = os.environ['RGT_MACHINE_NAME'] if 'RGT_MACHINE_NAME' in os.environ else no_value
 
     test_instance_info['workdir'] = os.path.join(
         test_instance_info['rgt_path_to_sspace'],
