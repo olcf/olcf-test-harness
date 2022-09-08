@@ -944,12 +944,18 @@ class subtest(base_apptest, apptest_layout):
     def _get_node_health(self, machine_name, app_name, test_name):
         """ Parse the nodecheck.txt file for InfluxDB reporting """
         node_healths = {}
+        return_empty = False
         if not os.path.isfile('nodecheck.txt'):
             self.logger.doInfoLogging(f"File nodecheck.txt not found.")
             return node_healths
         self.logger.doInfoLogging("Processing file nodecheck.txt.")
-        failed_names = ['FAILED', 'FAIL', 'BAD']
-        success_names = ['OK', 'SUCCESS', 'GOOD']
+        # Add additional desired statuses here and in the below for-loop
+        status_decoder = {
+            'FAILED': ['FAILED', 'FAIL', 'BAD'],
+            'SUCCESS': ['OK', 'SUCCESS', 'GOOD', 'PASS'],
+            'HW-FAIL': ['INCORRECT', 'HW-FAIL'],
+            'PERF-FAIL': ['PERF', 'PERF-FAIL']
+        }
         with open('nodecheck.txt', 'r') as nodes_f:
             # Each line is in format crusher012 FAILED <msg>
             # All whitespace in metric name will be replaced with underscores
@@ -962,13 +968,21 @@ class subtest(base_apptest, apptest_layout):
                         continue
                     node_name = line_splt[0]
                     node_healths[node_name] = {}
-                    if line_splt[1].upper() in success_names:
-                        node_healths[node_name]['status'] = 'SUCCESS'
-                    elif line_splt[1].upper() in failed_names:
-                        node_healths[node_name]['status'] = 'FAILED'
+                    # Add additional statuses here
+                    for status_string in status_decoder.keys():
+                        if line_splt[1].upper() in status_decoder[status_string]:
+                            node_healths[node_name]['status'] = status_string
+                            break
+                    if not 'status' in node_healths[node_name]:
+                        self.logger.doWarningLogging(f"Could not find status for the string {line_splt[1]}. Skipping node health logging.")
+                        return_empty = True
                     node_healths[node_name]['message'] = ''
                     if len(line_splt) >= 3:
                         node_healths[node_name]['message'] = ' '.join(line_splt[2:])
+        # If there were errors parsing the node health file, we don't want to try to log anything
+        if return_empty:
+            self.logger.doWarningLogging(f"There were errors parsing nodecheck.txt. Not logging node healths.")
+            return {}
         return node_healths
 
     def __name_of_current_function(self):
