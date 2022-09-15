@@ -667,6 +667,28 @@ class subtest(base_apptest, apptest_layout):
             self.logger.doWarningLogging("The .influx_logged file already exists.")
             return False
 
+        def local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+            try:
+                if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                    print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+                else:
+                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
+                    if not int(r.status_code) < 400:
+                        self.logger.doWarningLogging(f"Influx returned status code: {r.status_code}")
+                        return False
+                self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
+            except requests.exceptions.ConnectionError as e:
+                self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
+                os.chdir(currentdir)
+                return False
+            except Exception as e:
+                # TODO: add more graceful handling of unreachable influx servers
+                self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
+                self.logger.doErrorLogging(e)
+                os.chdir(currentdir)
+                return False
+            return True
+
         import requests
 
         influx_url = os.environ['RGT_INFLUX_URI']
@@ -703,73 +725,111 @@ class subtest(base_apptest, apptest_layout):
             'test_id': influx_test_id
         }
 
-        metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
-
-        if len(metrics) == 0:
-            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
-            os.chdir(currentdir)
-            return False
-
-        metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
-        metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
-        if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
-            self.logger.doWarningLogging(f"Invalid build time for jobID {influx_test_id}.")
-            os.chdir(currentdir)
-            return False
-        elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
-            self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_test_id}.")
-            os.chdir(currentdir)
-            return False
-
-        influx_event_record_string = 'metrics'
         for tag_name in StatusFile.INFLUX_TAGS:
             if not tag_name in tag_values:
-                self.logger.doErrorLogging(f"Influx key not found in tag_values: {tag_name}. Aborting metrics logging for {influx_test_id}")
+                self.logger.doErrorLogging(f"Influx key not found in tag_values: {tag_name}. Aborting metrics and node health logging for {influx_test_id}")
                 os.chdir(currentdir)
                 return False
-            influx_event_record_string += f",{tag_name}={tag_values[tag_name]}"
-
-        num_metrics_printed = 0
-        for k, v in metrics.items():
-            if num_metrics_printed == 0:
-                influx_event_record_string += f" {k}={v}"
-            else:
-                influx_event_record_string += f",{k}={v}"
-            num_metrics_printed += 1
 
         # if mode is post-run harness logging, get Unix timestamp so that the time in InfluxDB is accurate
+        run_timestamp = ''
         if post_run:
             run_timestamp = self._get_run_timestamp(influx_test_id)
             if run_timestamp < 0:
                 self.logger.doWarningLogging(f"Run Timestamp invalid for jobID {influx_test_id}: {run_timestamp}")
                 os.chdir(currentdir)
                 return False
-            influx_event_record_string += f" {run_timestamp}"
 
-        try:
-            if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
-                print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+        # This serves as the exit status
+        failed_log_attempts = 0
+        success_log_attempts = 0
+
+        metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+
+        if len(metrics) == 0:
+            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
+        else:
+            do_log_metric = True
+            metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
+            metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
+            if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
+                self.logger.doWarningLogging(f"Invalid build time for jobID {influx_test_id}.")
+                do_log_metric = False
+            elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
+                self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_test_id}.")
+                do_log_metric = False
+    
+            tag_record_string = ','.join([f"{tag_name}={tag_values[tag_name]}" for tag_name in StatusFile.INFLUX_TAGS])
+            field_record_string = ','.join([f"{k}={v}" for k, v in metrics.items()])
+            influx_event_record_string += 'metrics,{tag_record_string} {field_record_string}'
+            # Add timestamp
+            if post_run:
+                influx_event_record_string += f" {run_timestamp}"
+            # If we've made it this far without do_log_metric set to False, then all our checking has completed 
+            if do_log_metric and local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+                self.logger.doWarningLogging(f"Successfully logged metrics to Influx.")
+                success_log_attempts += 1
+            elif do_log_metric:
+                # Then logging failed
+                self.logger.doWarningLogging(f"Logging metrics to Influx failed.")
+                failed_log_attempts += 1
+    
+        # add node-based checking functionality
+        node_healths = self._get_node_health(influx_machine_name, influx_app, influx_test)
+        self.logger.doInfoLogging(f"Found {len(node_healths)} nodes reported for node health")
+        if len(node_healths) > 0:
+            # find and read node location file -- json file
+            use_node_location_file = False
+            node_locations = {}
+            # By default, we don't want to log node healths without extra node location (like cabinet, chassis, etc)
+            # But by setting RGT_IGNORE_NODE_LOCATION, that will be by-passed
+            if ('RGT_NODE_LOCATION_FILE' in os.environ and os.path.exists(os.environ['RGT_NODE_LOCATION_FILE'])) \
+                    or 'RGT_IGNORE_NODE_LOCATION' in os.environ:
+                # check if it's a file in valid JSON format
+                # each entry is node_name: { 'status': 'FAILED'|'SUCCESS', 'message': '' }
+                json_read_success = True
+                if not 'RGT_IGNORE_NODE_LOCATION' in os.environ:
+                    import json
+                    with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
+                        try:
+                            node_locations = json.loads(f.read())
+                        except json.JSONDecodeError as e:
+                            self.logger.doErrorLogging(f"JSONDecodeError detected: {e}. Skipping node health logging.")
+                            json_read_success = False
+                            pass
+                # if the JSON file fails to parse, we don't want to continue trying to log
+                if json_read_success:
+                    # for each node found in the nodecheck.txt
+                    for node_name in node_healths.keys():
+                        influx_event_record_string = f'node_health,machine={tag_values["machine"]},node={node_name},test={tag_values["test"]}'
+                        # If RGT_IGNORE_NODE_LOCATION is set, then all nodes will be logged with tags machine, node, test only
+                        if node_name in node_locations.keys():
+                            # then it's a node location identifier
+                            for k in node_locations[node_name].keys():
+                                influx_event_record_string += f',{k}={node_locations[node_name][k]}'
+                        influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
+                        if post_run and not str(run_timestamp) == '':
+                            influx_event_record_string += f' {run_timestamp}'
+                        if local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+                            success_log_attempts += 1
+                            self.logger.doWarningLogging(f"Successfully logged node health for {node_name} to Influx.")
+                        else:
+                            failed_log_attempts += 1
+                            self.logger.doWarningLogging(f"Logging node health to Influx failed.")
+            elif 'RGT_NODE_LOCATION_FILE' in os.environ:
+                self.logger.doWarningLogging(f"Node location file path does not exist: {os.environ['RGT_NODE_LOCATION_FILE']}.")
+                self.logger.doWarningLogging(f"Skipping node health logging. To re-log, remove the .influx_logged file in Run_Archive and run in mode influx_log.")
             else:
-                r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-            self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
-        except requests.exceptions.ConnectionError as e:
-            self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-            os.chdir(currentdir)
-            return False
-        except Exception as e:
-            # TODO: add more graceful handling of unreachable influx servers
-            self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
-            self.logger.doErrorLogging(e)
-            os.chdir(currentdir)
-            return False
+                self.logger.doWarningLogging(f"RGT_NODE_LOCATION_FILE not in os.environ, skipping node health logging.")
+
 
         # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
         # so let's create a .influx_logged file
         os.mknod('.influx_logged')
 
         os.chdir(currentdir)
-        # if we make it to the end, return True
-        return True
+        # If >0 records have been sent, and no failed attempts, return True
+        return (failed_log_attempts == 0 and success_log_attempts > 0)
 
     def _get_build_time(self, test_id):
         """ Parses the build time from the status file """
@@ -880,6 +940,50 @@ class subtest(base_apptest, apptest_layout):
                     else:
                         self.logger.doWarningLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
+
+    def _get_node_health(self, machine_name, app_name, test_name):
+        """ Parse the nodecheck.txt file for InfluxDB reporting """
+        node_healths = {}
+        return_empty = False
+        if not os.path.isfile('nodecheck.txt'):
+            self.logger.doInfoLogging(f"File nodecheck.txt not found.")
+            return node_healths
+        self.logger.doInfoLogging("Processing file nodecheck.txt.")
+        # Add additional desired statuses here and in the below for-loop
+        status_decoder = {
+            'FAILED': ['FAILED', 'FAIL', 'BAD'],
+            'SUCCESS': ['OK', 'SUCCESS', 'GOOD', 'PASS'],
+            'HW-FAIL': ['INCORRECT', 'HW-FAIL'],
+            'PERF-FAIL': ['PERF', 'PERF-FAIL']
+        }
+        with open('nodecheck.txt', 'r') as nodes_f:
+            # Each line is in format crusher012 FAILED <msg>
+            # All whitespace in metric name will be replaced with underscores
+            for line in nodes_f:
+                # Allows comment lines
+                if not line[0] == '#':
+                    line_splt = line.strip().split()
+                    if not len(line_splt) >= 2:
+                        self.logger.doWarningLogging(f"Invalid line in nodecheck.txt: {line}")
+                        continue
+                    node_name = line_splt[0]
+                    node_healths[node_name] = {}
+                    # Add additional statuses here
+                    for status_string in status_decoder.keys():
+                        if line_splt[1].upper() in status_decoder[status_string]:
+                            node_healths[node_name]['status'] = status_string
+                            break
+                    if not 'status' in node_healths[node_name]:
+                        self.logger.doWarningLogging(f"Could not find status for the string {line_splt[1]}. Skipping node health logging.")
+                        return_empty = True
+                    node_healths[node_name]['message'] = ''
+                    if len(line_splt) >= 3:
+                        node_healths[node_name]['message'] = ' '.join(line_splt[2:])
+        # If there were errors parsing the node health file, we don't want to try to log anything
+        if return_empty:
+            self.logger.doWarningLogging(f"There were errors parsing nodecheck.txt. Not logging node healths.")
+            return {}
+        return node_healths
 
     def __name_of_current_function(self):
         classname = self.__class__.__name__
