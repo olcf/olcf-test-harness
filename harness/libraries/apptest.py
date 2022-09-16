@@ -563,7 +563,7 @@ class subtest(base_apptest, apptest_layout):
         # If Run_Archive exists, continue, else terminate because no tests have been run
         if not os.path.exists(self.test_run_archive_dirname):
             os.chdir(currentdir)
-            self.logger.doWarningLogging("No harness runs found in ", testdir)
+            self.logger.doWarningLogging(f"No harness runs found in {testdir}")
             return
         os.chdir(self.test_run_archive_dirname)
 
