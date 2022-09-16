@@ -667,7 +667,7 @@ class subtest(base_apptest, apptest_layout):
             self.logger.doWarningLogging("The .influx_logged file already exists.")
             return False
 
-        def local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+        def local_send_to_influx(influx_url, influx_event_record_string, headers):
             try:
                 if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
                     print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
@@ -679,13 +679,11 @@ class subtest(base_apptest, apptest_layout):
                 self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
             except requests.exceptions.ConnectionError as e:
                 self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-                os.chdir(currentdir)
                 return False
             except Exception as e:
                 # TODO: add more graceful handling of unreachable influx servers
                 self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
                 self.logger.doErrorLogging(e)
-                os.chdir(currentdir)
                 return False
             return True
 
@@ -766,7 +764,7 @@ class subtest(base_apptest, apptest_layout):
             if post_run:
                 influx_event_record_string += f" {run_timestamp}"
             # If we've made it this far without do_log_metric set to False, then all our checking has completed 
-            if do_log_metric and local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+            if do_log_metric and local_send_to_influx(influx_url, influx_event_record_string, headers):
                 self.logger.doWarningLogging(f"Successfully logged metrics to Influx.")
                 success_log_attempts += 1
             elif do_log_metric:
@@ -810,7 +808,7 @@ class subtest(base_apptest, apptest_layout):
                         influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
                         if post_run and not str(run_timestamp) == '':
                             influx_event_record_string += f' {run_timestamp}'
-                        if local_send_to_influx(influx_url, influx_event_record_string, headers, currentdir):
+                        if local_send_to_influx(influx_url, influx_event_record_string, headers):
                             success_log_attempts += 1
                             self.logger.doWarningLogging(f"Successfully logged node health for {node_name} to Influx.")
                         else:
