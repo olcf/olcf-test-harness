@@ -823,7 +823,8 @@ class subtest(base_apptest, apptest_layout):
 
         # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
         # so let's create a .influx_logged file
-        os.mknod('.influx_logged')
+        if failed_log_attempts == 0 and success_log_attempts > 0:
+            os.mknod('.influx_logged')
 
         os.chdir(currentdir)
         # If >0 records have been sent, and no failed attempts, return True
