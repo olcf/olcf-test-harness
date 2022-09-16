@@ -563,7 +563,7 @@ class subtest(base_apptest, apptest_layout):
         # If Run_Archive exists, continue, else terminate because no tests have been run
         if not os.path.exists(self.test_run_archive_dirname):
             os.chdir(currentdir)
-            self.logger.doWarningLogging("No harness runs found in ", testdir)
+            self.logger.doWarningLogging(f"No harness runs found in {testdir}")
             return
         os.chdir(self.test_run_archive_dirname)
 
@@ -759,7 +759,7 @@ class subtest(base_apptest, apptest_layout):
     
             tag_record_string = ','.join([f"{tag_name}={tag_values[tag_name]}" for tag_name in StatusFile.INFLUX_TAGS])
             field_record_string = ','.join([f"{k}={v}" for k, v in metrics.items()])
-            influx_event_record_string = 'metrics,{tag_record_string} {field_record_string}'
+            influx_event_record_string = f'metrics,{tag_record_string} {field_record_string}'
             # Add timestamp
             if post_run:
                 influx_event_record_string += f" {run_timestamp}"
