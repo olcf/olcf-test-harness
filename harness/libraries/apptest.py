@@ -761,7 +761,7 @@ class subtest(base_apptest, apptest_layout):
     
             tag_record_string = ','.join([f"{tag_name}={tag_values[tag_name]}" for tag_name in StatusFile.INFLUX_TAGS])
             field_record_string = ','.join([f"{k}={v}" for k, v in metrics.items()])
-            influx_event_record_string += 'metrics,{tag_record_string} {field_record_string}'
+            influx_event_record_string = 'metrics,{tag_record_string} {field_record_string}'
             # Add timestamp
             if post_run:
                 influx_event_record_string += f" {run_timestamp}"
