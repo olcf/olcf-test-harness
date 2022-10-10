@@ -209,11 +209,11 @@ class apptest_layout:
         #
         # Create convenience link to latest status dir
         #
-        apptest_dir = self.get_path_to_test()
-        latest_lnk = os.path.join(apptest_dir, apptest_layout.test_status_dirname, 'latest')
-        if os.path.exists(latest_lnk):
-            os.unlink(latest_lnk)
-        try_symlink(spath, latest_lnk)
+        #apptest_dir = self.get_path_to_test()
+        #latest_lnk = os.path.join(apptest_dir, apptest_layout.test_status_dirname, 'latest')
+        #if os.path.exists(latest_lnk):
+            #os.unlink(latest_lnk)
+        #try_symlink(spath, latest_lnk)
 
         return spath
 
@@ -233,11 +233,11 @@ class apptest_layout:
         #
         # Create convenience link to latest Run_Archive dir
         #
-        apptest_dir = self.get_path_to_test()
-        latest_lnk = os.path.join(apptest_dir, apptest_layout.test_run_archive_dirname, 'latest')
-        if os.path.exists(latest_lnk):
-            os.unlink(latest_lnk)
-        try_symlink(rpath, latest_lnk)
+        #apptest_dir = self.get_path_to_test()
+        #latest_lnk = os.path.join(apptest_dir, apptest_layout.test_run_archive_dirname, 'latest')
+        #if os.path.exists(latest_lnk):
+            #os.unlink(latest_lnk)
+        #try_symlink(rpath, latest_lnk)
 
         return rpath
 
