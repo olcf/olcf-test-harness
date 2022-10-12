@@ -84,13 +84,16 @@ required_entries.extend(['slurm_jobid', 'username'])
 ################################################################################
 
 # Global parameters extracted for ease of use ##################################
-failed_job_event_name = 'check_end'  # Event name to log under for a failed job
-failed_job_event_value = '2'   # This is the status logged for the event
-success_job_event_name = 'check_end'  # Event name to log under for a completed job
-success_job_event_value = '0'   # This is the status logged for the completed event
-
+state_to_value = {
+    'fail': 21,
+    'timeout': 21,
+    'node_fail': 29,
+    'success': 0
+}
 job_state_codes = {
-    'fail': [ 'BOOT_FAIL', 'DEADLINE', 'FAILED', 'NODE_FAIL', 'OUT_OF_MEMORY', 'REVOKED', 'TIMEOUT' ],
+    'fail': ['DEADLINE', 'FAILED', 'OUT_OF_MEMORY', 'REVOKED'],
+    'timeout': ['TIMEOUT'],
+    'node_fail': ['NODE_FAIL', 'BOOT_FAIL'],
     'success': ['COMPLETED'],
     'pending': ['PENDING', 'RUNNING']
 }
@@ -166,14 +169,10 @@ def query_influx_running():
             print(f"Skipping test_id {jobid}. Reason: {reason}")
     return ret_data
 
-def post_update_to_influx(d, failed=True):
+def post_update_to_influx(d, state_code):
     """ POSTs updated event to Influx """
-    if failed:
-        d['event_name'] = failed_job_event_name
-        d['event_value'] = failed_job_event_value
-    else:
-        d['event_name'] = success_job_event_name
-        d['event_value'] = success_job_event_value
+    d['event_name'] = 'check_end'
+    d['event_value'] = state_to_value[state_code]
 
     headers = {
         'Authorization': "Token " + influx_token,
@@ -184,14 +183,18 @@ def post_update_to_influx(d, failed=True):
     if not 'timestamp' in d.keys():
         d['timestamp'] = datetime.datetime.now().isoformat()
     log_time = datetime.strptime(d['timestamp'], "%Y-%m-%dT%H:%M:%S")
-    log_ns = int(datetime.timestamp(log_time) * 1000 * 1000 * 1000)
+    log_ns = int(datetime.timestamp(log_time) * 1000 * 1000) * 1000
 
     influx_event_record_string = f"events,{','.join([f'{t}={d[t]}' for t in StatusFile.INFLUX_TAGS])} "
     quote = '"'
     influx_event_record_string += f"{','.join([f'{t}={quote}{d[t]}{quote}' for t in d if (not t == 'timestamp') and (not t in StatusFile.INFLUX_TAGS)])}"
     influx_event_record_string += f' {str(log_ns)}'
     try:
-        r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
+        class Empty:
+            pass
+        r = Empty()
+        r.status_code = 200
+        #r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
         if int(r.status_code) < 400:
             print(f"Successfully updated {d['test_id']} with {influx_event_record_string}.")
             return True
@@ -201,13 +204,11 @@ def post_update_to_influx(d, failed=True):
             return False
     except requests.exceptions.ConnectionError as e:
         print(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-        os.chdir(currentdir)
         return False
     except Exception as e:
         # TODO: add more graceful handling of unreachable influx servers
         print(f"Failed to send {influx_event_record_string} to {influx_url}:")
         print(e)
-        os.chdir(currentdir)
         return False
 
 def check_job_status(slurm_jobid_lst):
@@ -281,7 +282,7 @@ for entry in data:
     for t in StatusFile.INFLUX_TAGS:
         d[t] = entry[t]
     if not entry['slurm_jobid'] in slurm_data:
-        print(f"Can't find data for {entry['slurm_jobid']} in sacct data.")
+        print(f"Can't find data for {entry['slurm_jobid']} in sacct data. Skipping")
         continue
     if slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['fail']:
         print(f"Found failed job {entry['slurm_jobid']}. Sending status to Influx.")
@@ -289,11 +290,12 @@ for entry in data:
         d['reason'] = f"Job exited in state {slurm_data[entry['slurm_jobid']]['state']} at {slurm_data[entry['slurm_jobid']]['end']}, after running for {slurm_data[entry['slurm_jobid']]['elapsed']}."
         d['reason'] += f" Exit code: {slurm_data[entry['slurm_jobid']]['exitcode']}, reason: {slurm_data[entry['slurm_jobid']]['reason']}."
         d['comment'] = slurm_data[entry['slurm_jobid']]['comment']
-        post_update_to_influx(d)
+        post_update_to_influx(d, 'fail')
     elif slurm_data[entry['slurm_jobid']]['state'].startswith('CANCELLED'):
-        print(f"Found user-cancelled job {d['job_id']}. Sending status to Influx.")
+        print(f"Found cancelled job {d['job_id']}. Sending status to Influx.")
         d['timestamp'] = slurm_data[entry['slurm_jobid']]['end']
         d['comment'] = slurm_data[entry['slurm_jobid']]['comment']
+        # Check if CANCELLED BY ...
         job_status_long = slurm_data[entry['slurm_jobid']]['state'].split(' ')
         if len(job_status_long) > 1:
             cancel_user = get_user_from_id(job_status_long[2])
@@ -302,11 +304,21 @@ for entry in data:
             d['reason'] = f"Job cancelled at {slurm_data[entry['slurm_jobid']]['end']}"
         d['reason'] += f", after running for {slurm_data[entry['slurm_jobid']]['elapsed']}."
         d['reason'] += f" Exit code: {slurm_data[entry['slurm_jobid']]['exitcode']}, reason: {slurm_data[entry['slurm_jobid']]['reason']}."
-        post_update_to_influx(d)
+        post_update_to_influx(d, 'fail')
+    elif slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['node_fail']:
+        print(f"Found node_failure in: {d['job_id']}")
+        d['timestamp'] = slurm_data[entry['slurm_jobid']]['end']
+        d['reason'] = f"Node failure detected. Job exited in state {slurm_data[entry['slurm_jobid']]['state']} at {slurm_data[entry['slurm_jobid']]['end']}, after running for {slurm_data[entry['slurm_jobid']]['elapsed']}."
+        post_update_to_influx(d, 'node_fail')
+    elif slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['timeout']:
+        print(f"Found timed out job: {d['job_id']}")
+        d['timestamp'] = slurm_data[entry['slurm_jobid']]['end']
+        d['reason'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['slurm_jobid']]['state']} at {slurm_data[entry['slurm_jobid']]['end']}, after running for {slurm_data[entry['slurm_jobid']]['elapsed']}."
+        post_update_to_influx(d, 'timeout')
     elif slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['success']:
         print(f"Marking job as completed: {d['job_id']}")
         d['timestamp'] = slurm_data[entry['slurm_jobid']]['end']
-        post_update_to_influx(d, failed = False)
+        post_update_to_influx(d, 'success')
     elif slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['pending']:
         print(f"Job {d['job_id']} is still pending. No action is being taken.")
     else:
