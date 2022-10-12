@@ -190,11 +190,7 @@ def post_update_to_influx(d, state_code):
     influx_event_record_string += f"{','.join([f'{t}={quote}{d[t]}{quote}' for t in d if (not t == 'timestamp') and (not t in StatusFile.INFLUX_TAGS)])}"
     influx_event_record_string += f' {str(log_ns)}'
     try:
-        class Empty:
-            pass
-        r = Empty()
-        r.status_code = 200
-        #r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
+        r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
         if int(r.status_code) < 400:
             print(f"Successfully updated {d['test_id']} with {influx_event_record_string}.")
             return True
