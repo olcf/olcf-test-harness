@@ -87,7 +87,7 @@ required_entries.extend(['slurm_jobid', 'username'])
 state_to_value = {
     'fail': 21,
     'timeout': 21,
-    'node_fail': 29,
+    'node_fail': 9,
     'success': 0
 }
 job_state_codes = {
