@@ -951,7 +951,7 @@ class subtest(base_apptest, apptest_layout):
         # Add additional desired statuses here and in the below for-loop
         status_decoder = {
             'FAILED': ['FAILED', 'FAIL', 'BAD'],
-            'SUCCESS': ['OK', 'SUCCESS', 'GOOD', 'PASS'],
+            'SUCCESS': ['OK', 'SUCCESS', 'GOOD', 'PASS', 'PASSED'],
             'HW-FAIL': ['INCORRECT', 'HW-FAIL'],
             'PERF-FAIL': ['PERF', 'PERF-FAIL']
         }
