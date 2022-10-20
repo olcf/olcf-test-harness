@@ -447,7 +447,7 @@ def test_harness_driver(argv=None):
         'TEST_STATUS_DIR'     : status_dir,
         'TEST_RUNARCHIVE_DIR' : ra_dir
     }
-    rgt_utilities.set_harness_environment(apptest_env_vars)
+    rgt_utilities.set_harness_environment(apptest_env_vars, override=True)
 
     # Make backup of master status file
     backup_status_file(status_dir)
