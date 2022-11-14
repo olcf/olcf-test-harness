@@ -36,6 +36,7 @@ parser.add_argument('--app', nargs=1, action='store', help="Specifies the app to
 parser.add_argument('--test', nargs=1, action='store', help="Specifies the test to update jobs for.")
 parser.add_argument('--runtag', nargs=1, action='store', help="Specifies the runtag to update jobs for.")
 parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
+parser.add_argument('--dry-run', action='store_true', help="When set, prints messages to send to Influx, but does not send them.")
 ################################################################################
 
 # Global URIs and Tokens #######################################################
@@ -190,14 +191,17 @@ def post_update_to_influx(d, state_code):
     influx_event_record_string += f"{','.join([f'{t}={quote}{d[t]}{quote}' for t in d if (not t == 'timestamp') and (not t in StatusFile.INFLUX_TAGS)])}"
     influx_event_record_string += f' {str(log_ns)}'
     try:
-        r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
-        if int(r.status_code) < 400:
-            print(f"Successfully updated {d['test_id']} with {influx_event_record_string}.")
-            return True
+        if not args.dry_run:
+            r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
+            if int(r.status_code) < 400:
+                print(f"Successfully updated {d['test_id']} with {influx_event_record_string}.")
+                return True
+            else:
+                print(f"Influx returned status code: {r.status_code} in response to data: {influx_event_record_string}")
+                print(r.text)
+                return False
         else:
-            print(f"Influx returned status code: {r.status_code} in response to data: {influx_event_record_string}")
-            print(r.text)
-            return False
+            print(f"Dry run set. Message: {influx_event_record_string}")
     except requests.exceptions.ConnectionError as e:
         print(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
         return False
