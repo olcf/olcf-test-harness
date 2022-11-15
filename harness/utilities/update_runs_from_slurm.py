@@ -36,6 +36,7 @@ parser.add_argument('--runtag', nargs=1, action='store', help="Specifies the run
 parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
 parser.add_argument('--verbosity', '-v', default=0, type=int, action='store', help="InfluxDB instance name to log to.")
 parser.add_argument('--dry-run', action='store_true', help="When set, prints messages to send to Influx, but does not send them.")
+parser.add_argument('--force', '-f', action='store_true', help="When set, prints messages to send to Influx, but does not send them.")
 ################################################################################
 
 # Global URIs and Tokens #######################################################
@@ -336,11 +337,15 @@ for entry in data:
         d['reason'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['slurm_jobid']]['state']} at {slurm_data[entry['slurm_jobid']]['end']}, after running for {slurm_data[entry['slurm_jobid']]['elapsed']}."
         post_update_to_influx(d, 'timeout')
     elif slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['success']:
-        print_debug(1, f"Marking job as completed: {d['job_id']}")
-        d['timestamp'] = slurm_data[entry['slurm_jobid']]['end']
-        post_update_to_influx(d, 'success')
+        if args.force:
+            print_debug(1, f"Marking job as completed: {d['job_id']}")
+            d['timestamp'] = slurm_data[entry['slurm_jobid']]['end']
+            post_update_to_influx(d, 'success')
+        else:
+            csv_str = '{' + f"app={d['app']},test={d['test']},test_id={d['test_id']},job_id={d['job_id']}" + '}'
+            print_debug(0, f"Found a job marked as completed: {csv_str}. Harness mode influx_log preferred. Please use --force to override this.")
     elif slurm_data[entry['slurm_jobid']]['state'] in job_state_codes['pending']:
-        printi_debug(1, f"Job {d['job_id']} is still pending. No action is being taken.")
+        print_debug(1, f"Job {d['job_id']} is still pending. No action is being taken.")
         skipped += 1
     else:
         print_debug(0, f"Unrecognized job state: {slurm_data[entry['slurm_jobid']]['state']}. No action is being taken.")
