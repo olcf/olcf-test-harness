@@ -40,7 +40,10 @@ parser.add_argument('--force', '-f', action='store_true', help="When set, prints
 ################################################################################
 
 # Global URIs and Tokens #######################################################
-from harness_keys import influx_keys
+try:
+    from harness_keys import influx_keys
+except:
+    raise ImportError('Could not import harness_keys.py. Please make sure that you have a file named harness_keys.py in the harness/utilities sub-directory. This is how this script reads information to query InfluxDB.')
 ################################################################################
 
 # Parse command-line arguments #################################################
