@@ -34,7 +34,7 @@ parser.add_argument('--app', nargs=1, action='store', help="Specifies the app to
 parser.add_argument('--test', nargs=1, action='store', help="Specifies the test to update jobs for.")
 parser.add_argument('--runtag', nargs=1, action='store', help="Specifies the runtag to update jobs for.")
 parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
-parser.add_argument('--verbosity', '-v', nargs=1, default=0, type=int, action='store', help="InfluxDB instance name to log to.")
+parser.add_argument('--verbosity', '-v', default=0, type=int, action='store', help="InfluxDB instance name to log to.")
 parser.add_argument('--dry-run', action='store_true', help="When set, prints messages to send to Influx, but does not send them.")
 ################################################################################
 
@@ -173,7 +173,7 @@ def query_influx_running():
             ret_data.append(data_tmp)
         else:
             jobid = data_tmp['test_id'] if 'test_id' in data_tmp else 'unknown'
-            print_debug(1, f"Skipping test_id {jobid}. Reason: {reason}")
+            print_debug(2, f"Skipping test_id {jobid}. Reason: {reason}")
     return ret_data
 
 def post_update_to_influx(d, state_code):
@@ -227,8 +227,8 @@ def check_job_status(slurm_jobid_lst):
     low_limit = 0
     high_limit = 0
     batch_size = 100
-    node_fail_jobids = []
-    print_debug(1, f"Querying sacct with {len(slurm_jobid_lst)} jobs in batches of up to {batch_size}")
+    node_failed_jobids = []
+    print_debug(2, f"Querying sacct with {len(slurm_jobid_lst)} jobs in batches of up to {batch_size}")
     # Batched into batches of 100
     while low_limit < len(slurm_jobid_lst):
         high_limit = min(low_limit + batch_size, len(slurm_jobid_lst))
@@ -263,7 +263,7 @@ def check_job_status(slurm_jobid_lst):
                     continue
                 elif fields['jobid'] in node_failed_jobids:
                     # Check if a previous step had come in with RESIZING
-                    print_debug(2, f"Found jobid in node failure list: {fields['jobid']}")
+                    print_debug(1, f"Found jobid in node failure list: {fields['jobid']}")
                     fields['node-failed'] = True
                 result[fields['jobid']] = fields
         os.remove(f"slurm.jobs.tmp.txt")
@@ -347,5 +347,5 @@ for entry in data:
         skipped += 1
 
 
-print(f"{len(data) - skipped} entries sent to InfluxDB. {skipped} skipped.")
+print_debug(0, f"{len(data) - skipped} entries sent to InfluxDB. {skipped} skipped.")
 exit(0)
