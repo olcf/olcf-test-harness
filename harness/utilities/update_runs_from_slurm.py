@@ -136,7 +136,7 @@ required_entries.extend(['job_id', 'user'])
 # Global parameters extracted for ease of use ##################################
 state_to_value = {
     'fail': 21,
-    'timeout': 21,
+    'timeout': 23,
     'node_fail': 9,
     'success': 0
 }
@@ -385,11 +385,12 @@ for entry in data:
             print_debug(1, f"Found timed out job: {d['job_id']}")
             d['reason'] = f"NODE_FAIL followed by TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
             d['timestamp'] = slurm_data[entry['job_id']]['end']
+            post_update_to_influx(d, 'node_fail')
         else:
             print_debug(1, f"Found timed out job: {d['job_id']}")
             d['reason'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
             d['timestamp'] = slurm_data[entry['job_id']]['end']
-        post_update_to_influx(d, 'timeout')
+            post_update_to_influx(d, 'timeout')
     elif slurm_data[entry['job_id']]['state'] in job_state_codes['success']:
         if args.force:
             print_debug(1, f"Marking job as completed: {d['job_id']}")
