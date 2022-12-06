@@ -14,6 +14,11 @@ import sys
 import copy
 from types import *
 
+try:
+    import requests
+except ImportError as e:
+    print("WARNING: Could not import requests in current Python environment. Influx logging will be disabled.")
+
 # NCCS Test Harness Package Imports
 from libraries.base_apptest import base_apptest
 from libraries.base_apptest import BaseApptestError
@@ -671,6 +676,8 @@ class subtest(base_apptest, apptest_layout):
             try:
                 if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
                     print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+                elif not 'requests' in sys.modules:
+                    self.__logger.doWarningLogging(f"'requests' is not in sys.modules. Skipping message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server")
                 else:
                     r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
                     if not int(r.status_code) < 400:
@@ -686,8 +693,6 @@ class subtest(base_apptest, apptest_layout):
                 self.logger.doErrorLogging(e)
                 return False
             return True
-
-        import requests
 
         influx_url = os.environ['RGT_INFLUX_URI']
         influx_token = os.environ['RGT_INFLUX_TOKEN']
