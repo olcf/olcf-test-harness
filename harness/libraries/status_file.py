@@ -24,7 +24,7 @@ import subprocess
 try:
     import requests
 except ImportError as e:
-    print("WARNING: Could not import requests in current Python environment. Disabling Influx logging.")
+    print("Import Warning: Could not import requests in current Python environment. Influx logging will be disabled.")
 
 
 from libraries.layout_of_apps_directory import apptest_layout
