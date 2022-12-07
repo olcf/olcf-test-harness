@@ -678,6 +678,7 @@ class subtest(base_apptest, apptest_layout):
                     print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
                 elif not 'requests' in sys.modules:
                     self.logger.doWarningLogging(f"'requests' is not in sys.modules. Skipping message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server")
+                    return False
                 else:
                     r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
                     if not int(r.status_code) < 400:
