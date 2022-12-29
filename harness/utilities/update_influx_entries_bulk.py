@@ -101,6 +101,7 @@ flux_time_str += ')'
 
 # SELECT query #################################################################
 filters = []
+field_filters = []
 if args.test_id:
     filters.append(f'r.test_id == "{args.test_id}"')
 if args.machine:
@@ -112,18 +113,21 @@ if args.test:
 if args.runtag:
     filters.append(f'r.runtag == "{args.runtag}"')
 if args.user:
-    filters.append(f'r.user == "{args.user}"')
+    field_filters.append(f'r["user"] == "{args.user}"')
 
 if len(filters) == 0:
     print("At least one of app, test, runtag, machine, or test_id is required")
     exit(1)
 
+field_filter = ''
+if len(field_filters) > 0:
+    field_filter = f' and {" and ".join(field_filters)}'
 # Excludes the output_txt field, since that's not important here
 event_query = f'from(bucket: "accept") {flux_time_str} \
 |> filter(fn: (r) => r._measurement == "events" and {" and ".join(filters)} and r._field != "output_txt") \
 |> last() \
 |> pivot(rowKey: ["test_id", "machine", "_time"], columnKey: ["_field"], valueColumn: "_value") \
-|> filter(fn: (r) => r.event_name == "check_end") \
+|> filter(fn: (r) => r.event_name == "check_end"{field_filter}) \
 |> group()'
 
 required_entries = [t for t in StatusFile.INFLUX_TAGS]
