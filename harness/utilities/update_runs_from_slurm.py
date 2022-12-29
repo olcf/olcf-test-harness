@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 11-28-2022
+# Date modified: 12-29-2022
 ################################################################################
 # Purpose:
 #   Only intended for SLURM systems.
@@ -115,19 +115,19 @@ if args.app:
     machine_app_test_filter += f' and r.app == "{args.app}"'
 if args.test:
     machine_app_test_filter += f' and r["test"] == "{args.test}"'
+if args.runtag:
+    machine_app_test_filter += f' and r.runtag == "{args.runtag}"'
 
 def wrap_in_quotes(s):
     return f'"{s}"'
 
-#sub_running_query = f"SELECT {', '.join([f'{t}::tag' for t in StatusFile.INFLUX_TAGS])}, job_id::field AS slurm_jobid, \"user\" AS username, last(event_name::field) AS current_status, event_value::field AS e_value FROM events {time_filter} GROUP BY test_id"
-#running_query = f"SELECT {', '.join([t for t in StatusFile.INFLUX_TAGS])}, slurm_jobid, username, current_status, e_value FROM ({sub_running_query}) WHERE (current_status != 'check_end' AND (e_value = '0' OR e_value = '[NO_VALUE]')) OR current_status = 'job_queued'"
+# Excludes the output_txt field, since that's not important here
 running_query = f'from(bucket: "accept") {flux_time_str} \
-|> filter(fn: (r) => r._measurement == "events" and {machine_app_test_filter} and (r._field == "job_id" or r._field == "user" or r._field == "event_value" or r._field == "event_name")) \
+|> filter(fn: (r) => r._measurement == "events" and {machine_app_test_filter} and r._field != "output_txt") \
 |> last() \
 |> pivot(rowKey: ["test_id", "machine", "_time"], columnKey: ["_field"], valueColumn: "_value") \
 |> filter(fn: (r) => r.event_name == "job_queued" or (r.event_name != "check_end" and (r.event_value == "0" or r.event_value == "[NO_VALUE]"))) \
-|> group() \
-|> keep(columns: ["_time", {", ".join([wrap_in_quotes(t) for t in StatusFile.INFLUX_TAGS])}, "job_id", "user", "event_name", "event_value"])'
+|> group()'
 
 required_entries = [t for t in StatusFile.INFLUX_TAGS]
 required_entries.extend(['job_id', 'user'])
@@ -341,11 +341,15 @@ skipped = 0
 for entry in data:
     # check to see if this entry should be parsed
     print_debug(1, f"Processing {entry['test_id']}, SLURM id {entry['job_id']} ========================")
+    # Add slurm job_id
     d = {
         'job_id': entry['job_id']
     }
     for t in StatusFile.INFLUX_TAGS:
         d[t] = entry[t]
+    # Add in the fields, since we have them
+    for t in StatusFile.INFLUX_FIELDS:
+        d[t] = entry[t] if t in entry else '[NO_VALUE]'
     if not entry['job_id'] in slurm_data:
         print_debug(1, f"Can't find data for {entry['job_id']} in sacct data. Skipping")
         skipped += 1
@@ -369,9 +373,9 @@ for entry in data:
         job_status_long = slurm_data[entry['job_id']]['state'].split(' ')
         if len(job_status_long) > 1:
             cancel_user = get_user_from_id(job_status_long[2])
-            d['reason'] = f" at {slurm_data[entry['job_id']]['end']} by {cancel_user}"
+            d['reason'] += f" at {slurm_data[entry['job_id']]['end']} by {cancel_user}"
         else:
-            d['reason'] = f" at {slurm_data[entry['job_id']]['end']}"
+            d['reason'] += f" at {slurm_data[entry['job_id']]['end']}"
         d['reason'] += f", after running for {slurm_data[entry['job_id']]['elapsed']}."
         d['reason'] += f" Exit code: {slurm_data[entry['job_id']]['exitcode']}, reason: {slurm_data[entry['job_id']]['reason']}."
         post_update_to_influx(d, 'fail')
