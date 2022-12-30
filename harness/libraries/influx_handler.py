@@ -7,6 +7,8 @@
 
 # Python package imports
 import sys
+import os
+
 # Requests should be a non-fatal error
 try:
     import requests
