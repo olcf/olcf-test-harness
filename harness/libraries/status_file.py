@@ -149,7 +149,8 @@ class StatusFile:
         'event_name',
         'event_type',
         'event_subtype',
-        'event_value']
+        'event_value',
+        'check_alias']
 
     FIELDS_SPLUNK_SPECIAL = ['job_status', 'event_value']
 
@@ -172,6 +173,7 @@ class StatusFile:
                 'event_time',
                 'event_type',
                 'event_value',
+                'check_alias',
                 'hostname',
                 'job_account_id',
                 'job_id',
@@ -930,6 +932,15 @@ def get_status_info(test_id, event_type, event_subtype,
         str(event_value) if event_value is not None else no_value)
 
     event_info['runtag'] = test_instance_info['rgt_system_log_tag']
+
+    file_check_alias = os.path.join(run_archive_all, test_id, 'check_alias.txt')
+    if os.path.exists(file_check_alias):
+        file_ = open(file_check_alias, 'r')
+        check_alias_ = file_.read()
+        file_.close()
+        event_info['check_alias'] = check_alias_.split('\n')[0]
+    else:
+        event_info['check_alias'] = no_value
 
     file_job_id = os.path.join(dir_status_this_test, apptest_layout.job_id_filename)
     if os.path.exists(file_job_id):
