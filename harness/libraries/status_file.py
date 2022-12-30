@@ -21,13 +21,9 @@ import glob
 import dateutil.parser
 import subprocess
 
-try:
-    import requests
-except ImportError as e:
-    print("Import Warning: Could not import requests in current Python environment. Influx logging will be disabled.")
-
 
 from libraries.layout_of_apps_directory import apptest_layout
+from libraries.influx_handler import influx_handler
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""
@@ -324,6 +320,9 @@ class StatusFile:
         # The second task is to create the status file.
         self.__create_status_file(path_to_status_file)
 
+        # Handler for InfluxDB POST events
+        self.influx_logger = influx_handler(logger=logger)
+
     ###################
     # Public methods  #
     ###################
@@ -560,34 +559,10 @@ class StatusFile:
                     influx_event_record_string += ",output_txt=\"" + output + "\""
 
         influx_event_record_string += f" {str(event_time_unix)}"
-
-        # Write event to InfluxDB
-        if 'RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ:
-            if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-                self.__logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
-            else:
-                influx_url = os.environ['RGT_INFLUX_URI']
-                influx_token = os.environ['RGT_INFLUX_TOKEN']
-        
-                self.__logger.doInfoLogging(f"Logging event to influx: {influx_event_record_string}")
-                headers = {'Authorization': "Token " + influx_token, 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
-
-                try:
-                    if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
-                        print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
-                    elif not 'requests' in sys.modules:
-                        self.__logger.doWarningLogging(f"'requests' is not in sys.modules. Skipping message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server")
-                    else:
-                        r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-                        if r.status_code == 200 or r.status_code == 204:
-                            self.__logger.doInfoLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {influx_event_record_string}")
-                        else:
-                            self.__logger.doInfoLogging(f"Failed to post request. Response: {r.status_code} - {r.reason}")
-                except requests.exceptions.ConnectionError as e:
-                    self.__logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-                except Exception as e:
-                    # TODO: add more graceful handling of unreachable influx servers
-                    self.__logger.doErrorLogging(f"An error occurred {e}")
+        # Post to InfluxDB
+        if not self.influx_logger.post(influx_event_record_string):
+            # The Influx logger class does plenty of warning logging, so just post the message that failed to log here
+            self.__logger.doInfoLogging(f"Failed to post event to InfluxDB: {influx_event_record_string}")
 
 
     def didAllTestsPass(self):

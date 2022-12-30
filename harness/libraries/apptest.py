@@ -14,11 +14,6 @@ import sys
 import copy
 from types import *
 
-try:
-    import requests
-except ImportError as e:
-    print("Import Warning: Could not import requests in current Python environment. Influx logging will be disabled.")
-
 # NCCS Test Harness Package Imports
 from libraries.base_apptest import base_apptest
 from libraries.base_apptest import BaseApptestError
@@ -29,6 +24,7 @@ from libraries.status_file import summarize_status_file
 from libraries.status_file import StatusFile
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
+from libraries.influx_handler import influx_handler
 
 #
 # Inherits "apptest_layout".
@@ -83,6 +79,9 @@ class subtest(base_apptest, apptest_layout):
                                              name_of_subtest])
         self.__number_of_iterations = -1
         self.__myLogger = logger
+
+        # This class handles POSTing to InfluxDB, given a message
+        self.influx_logger = influx_handler(logger=logger)
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -643,7 +642,7 @@ class subtest(base_apptest, apptest_layout):
 
     # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
     def _log_to_influx(self, influx_test_id, post_run=False):
-        """ Check if metrics.txt exists, is proper format, and log to influxDB. """
+        """ Check if metrics.txt or nodehealth.txt exists and is proper format, log to influxDB. """
         currentdir = os.getcwd()
         self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
         # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
@@ -671,38 +670,6 @@ class subtest(base_apptest, apptest_layout):
         if os.path.exists('.influx_logged'):
             self.logger.doWarningLogging("The .influx_logged file already exists.")
             return False
-
-        def local_send_to_influx(influx_url, influx_event_record_string, headers):
-            try:
-                if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
-                    print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
-                elif not 'requests' in sys.modules:
-                    self.logger.doWarningLogging(f"'requests' is not in sys.modules. Skipping message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server")
-                    return False
-                else:
-                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-                    if not int(r.status_code) < 400:
-                        self.logger.doWarningLogging(f"Influx returned status code: {r.status_code}")
-                        return False
-                self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
-            except requests.exceptions.ConnectionError as e:
-                self.logger.doWarningLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-                return False
-            except Exception as e:
-                # TODO: add more graceful handling of unreachable influx servers
-                self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
-                self.logger.doErrorLogging(e)
-                return False
-            return True
-
-        influx_url = os.environ['RGT_INFLUX_URI']
-        influx_token = os.environ['RGT_INFLUX_TOKEN']
-
-        headers = {
-            'Authorization': "Token " + influx_token,
-            'Content-Type': "text/plain; charset=utf-8",
-            'Accept': "application/json"
-        }
 
         # Inherited from environment or 'unknown'
         # This may be set as `unknown` if run outside of harness job
@@ -735,7 +702,7 @@ class subtest(base_apptest, apptest_layout):
                 os.chdir(currentdir)
                 return False
 
-        # if mode is post-run harness logging, get Unix timestamp so that the time in InfluxDB is accurate
+        # if mode is post-run harness logging (--mode influx_log), get Unix timestamp so that the time in InfluxDB is accurate
         run_timestamp = ''
         if post_run:
             run_timestamp = self._get_run_timestamp(influx_test_id)
@@ -770,8 +737,8 @@ class subtest(base_apptest, apptest_layout):
             if post_run:
                 influx_event_record_string += f" {run_timestamp}"
             # If we've made it this far without do_log_metric set to False, then all our checking has completed 
-            if do_log_metric and local_send_to_influx(influx_url, influx_event_record_string, headers):
-                self.logger.doWarningLogging(f"Successfully logged metrics to Influx.")
+            if do_log_metric and self.influx_logger.post(influx_event_record_string):
+                self.logger.doInfoLogging(f"Successfully logged metrics to Influx.")
                 success_log_attempts += 1
             elif do_log_metric:
                 # Then logging failed
@@ -786,11 +753,10 @@ class subtest(base_apptest, apptest_layout):
             use_node_location_file = False
             node_locations = {}
             # By default, we don't want to log node healths without extra node location (like cabinet, chassis, etc)
-            # But by setting RGT_IGNORE_NODE_LOCATION, that will be by-passed
+            # But by setting RGT_IGNORE_NODE_LOCATION, that will be by-passed (useful for small machines)
             if ('RGT_NODE_LOCATION_FILE' in os.environ and os.path.exists(os.environ['RGT_NODE_LOCATION_FILE'])) \
                     or 'RGT_IGNORE_NODE_LOCATION' in os.environ:
                 # check if it's a file in valid JSON format
-                # each entry is node_name: { 'status': 'FAILED'|'SUCCESS', 'message': '' }
                 json_read_success = True
                 if not 'RGT_IGNORE_NODE_LOCATION' in os.environ:
                     import json
@@ -811,21 +777,26 @@ class subtest(base_apptest, apptest_layout):
                             # then it's a node location identifier
                             for k in node_locations[node_name].keys():
                                 influx_event_record_string += f',{k}={node_locations[node_name][k]}'
-                        influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
-                        if post_run and not str(run_timestamp) == '':
-                            influx_event_record_string += f' {run_timestamp}'
-                        if local_send_to_influx(influx_url, influx_event_record_string, headers):
-                            success_log_attempts += 1
-                            self.logger.doWarningLogging(f"Successfully logged node health for {node_name} to Influx.")
+                        # Either the node_name should be in node_locations.keys(), or RGT_IGNORE_NODE_LOCATION should be set:
+                        if node_name in node_locations.keys() or 'RGT_IGNORE_NODE_LOCATION' in os.environ:
+                            influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
+                            # Add timestamp if it's being run under --mode influx_log
+                            if post_run and not str(run_timestamp) == '':
+                                influx_event_record_string += f' {run_timestamp}'
+                            # POST via the helper class
+                            if self.influx_logger.post(influx_event_record_string):
+                                success_log_attempts += 1
+                                self.logger.doWarningLogging(f"Successfully logged node health for {node_name} to Influx.")
+                            else:
+                                failed_log_attempts += 1
+                                self.logger.doWarningLogging(f"Logging node health to Influx failed.")
                         else:
-                            failed_log_attempts += 1
-                            self.logger.doWarningLogging(f"Logging node health to Influx failed.")
+                            self.logger.doWarningLogging(f"Couldn't find node {node_name} in node location file. Skipping.")
             elif 'RGT_NODE_LOCATION_FILE' in os.environ:
                 self.logger.doWarningLogging(f"Node location file path does not exist: {os.environ['RGT_NODE_LOCATION_FILE']}.")
                 self.logger.doWarningLogging(f"Skipping node health logging. To re-log, remove the .influx_logged file in Run_Archive and run in mode influx_log.")
             else:
                 self.logger.doWarningLogging(f"RGT_NODE_LOCATION_FILE not in os.environ, skipping node health logging.")
-
 
         # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
         # so let's create a .influx_logged file
