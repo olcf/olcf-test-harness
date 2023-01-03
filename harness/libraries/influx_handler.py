@@ -225,6 +225,10 @@ class influx_handler:
     def _check_url_endpoint(self, url, read=True, v2_api=True):
         """
             Checks the endpoint of the URL
+            Parameters:
+                url: URL to check
+                read: if True, it is a read-request (ie, query). else, it is a write-request
+                v2_api: if True, checks that endpoint is consistent with InfluxDB v2 HTTP API. Else, checks for v1 compatibility
         """
         url_parsed = urlparse(url)
         endpoint = url_parsed.path
