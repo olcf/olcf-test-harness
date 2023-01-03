@@ -87,14 +87,71 @@ class influx_handler:
             return False
         return True
 
-    def query_flux(self, query, url=None):
+    def query_flux(self, query, url=None, token=None):
         """
             Sends Flux query to InfluxDB URL
             url is an optional parameter to specify the URL for InfluxDB.
             If url is not provided, this script will attempt to replace the url path
             of os.environ['RGT_INFLUX_URI']
+            If token is not provided, this script will use os.environ['RGT_INFLUX_TOKEN']
         """
-        return []
+        if not (('RGT_INFLUX_URI' in os.environ or url) and 'RGT_INFLUX_TOKEN' in os.environ):
+            # Then we don't know where/how to post
+            self.logger.doWarningLogging('RGT_INFLUX_URI and RGT_INFLUX_TOKEN are required environment variables to enable InfluxDB logging')
+            return False
+        # Failed import of requests is non-fatal, since InfluxDB is an extension. Check to make sure it imported
+        if not 'requests' in sys.modules:
+            self.logger.doWarningLogging(f"'requests' is not in sys.modules. InfluxDB logging is disabled. Events can be logged after the run using --mode influx_log.")
+            self.logger.doInfoLogging(f"Skipping message: {msg}.")
+            return False
+        # These headers are common for all post requests
+        headers = {
+            'Authorization': f"Token {os.environ['RGT_INFLUX_TOKEN']}",
+            'Content-type': 'application/vnd.flux',
+            'Accept': "application/json"
+        }
+        if not url:
+            url = os.environ['RGT_INFLUX_URI']
+            # Check to see if it is a `/api/v2/write?...` match. If it is, replace /api/v2/write with /api/v2/query
+        print_debug(2, f"Running: {running_query} on {url}")
+        try:
+            r = requests.post(url, headers=headers, data=running_query)
+            if int(r.status_code) >= 400:
+                print_debug(0, f"Influx request failed, status_code = {r.status_code}, text = {r.text}, reason = {r.reason}.")
+                exit(1)
+        except requests.exceptions.ConnectionError as e:
+            print_debug(0, "InfluxDB is not reachable. Request not sent.")
+            print_debug(0, str(e))
+            exit(1)
+        except Exception as e:
+            print_debug(0, f"Failed to send to {url}:")
+            print_debug(0, str(e))
+            exit(2)
+        rdc = r.content.decode('utf-8')
+        resp = list(csv.reader(rdc.splitlines(), delimiter=','))
+        # each entry in series is a record
+        col_names = resp[0]
+        # Let's do the work of transforming this into a list of dicts
+        ret_data = []
+        for entry_index in range(1, len(resp)):
+            data_tmp = {}
+            if len(resp[entry_index]) < len(col_names):
+                print_debug(2, f"Length too short. Skipping row: {resp[entry_index]}.")
+                continue
+            # First column is useless
+            for c_index in range(1, len(col_names)):
+                # Ignore result, table & rename time
+                if col_names[c_index] == "_time":
+                    data_tmp["time"] = resp[entry_index][c_index]
+                elif not (col_names[c_index] == "result" or col_names[c_index] == "table"):
+                    data_tmp[col_names[c_index]] = resp[entry_index][c_index]
+            should_add, reason = check_data(data_tmp)
+            if should_add:
+                ret_data.append(data_tmp)
+            else:
+                jobid = data_tmp['test_id'] if 'test_id' in data_tmp else 'unknown'
+                print_debug(2, f"Skipping test_id {jobid}. Reason: {reason}")
+        return ret_data
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
