@@ -65,33 +65,37 @@ class influx_handler:
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def post(self, msg):
+    def post(self, msg, url=None, token=None):
         """
             Posts an event to InfluxDB
         """
-        # Check if InfluxDB is explicitly disabled:
-        if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-            self.logger.doInfoLogging("InfluxDB is explicitly disabled with RGT_DISABLE_INFLUX=1")
-            return False
-        # Required environment variables:
-        if not ('RGT_INFLUX_URI' in os.environ and 'RGT_INFLUX_TOKEN' in os.environ):
-            # Then we don't know where/how to post
-            self.logger.doWarningLogging('RGT_INFLUX_URI and RGT_INFLUX_TOKEN are required environment variables to enable InfluxDB logging')
-            return False
         # Failed import of requests is non-fatal, since InfluxDB is an extension. Check to make sure it imported
         if not 'requests' in sys.modules:
             self.logger.doWarningLogging(f"'requests' is not in sys.modules. InfluxDB logging is disabled. Events can be logged after the run using --mode influx_log.")
             self.logger.doInfoLogging(f"Skipping message: {msg}.")
             return False
+        # Check if InfluxDB is explicitly disabled:
+        if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
+            self.logger.doInfoLogging("InfluxDB is explicitly disabled with RGT_DISABLE_INFLUX=1")
+            return False
+        # Required variables:
+        if not (('RGT_INFLUX_URI' in os.environ or url) and ('RGT_INFLUX_TOKEN' in os.environ or token)):
+            # Then we don't know where/how to post
+            self.logger.doWarningLogging('RGT_INFLUX_URI and RGT_INFLUX_TOKEN are required environment variables to enable InfluxDB logging, \
+                                            or the url and token parameters must be specified')
+            return False
+        influx_url = url if url else os.environ['RGT_INFLUX_URI']
+        # Checks to make sure the URL is properly formatted
+        influx_url = self._check_url_endpoint(influx_url, read=False)
+        influx_token = token if token else os.environ['RGT_INFLUX_TOKEN']
         # These headers are common for all post requests
         headers = {
-            'Authorization': f"Token {os.environ['RGT_INFLUX_TOKEN']}",
+            'Authorization': f"Token {influx_token}",
             'Content-Type': "text/plain; charset=utf-8",
             'Accept': "application/json"
         }
         # Try to POST
         try:
-            influx_url = os.environ['RGT_INFLUX_URI']
             if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
                 print(f"RGT_INFLUX_NO_SEND is set, echoing: {msg}")
             else:
