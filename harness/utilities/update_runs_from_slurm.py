@@ -205,7 +205,7 @@ def query_influx_running():
     for entry_index in range(1, len(resp)):
         data_tmp = {}
         if len(resp[entry_index]) < len(col_names):
-            print_debug(2, f"Length too short. Skipping row: {resp[entry_index]}.")
+            print_debug(3, f"Length too short. Skipping row: {resp[entry_index]}.")
             continue
         # First column is useless
         for c_index in range(1, len(col_names)):
@@ -246,7 +246,7 @@ def post_update_to_influx(d, state_code):
         if not args.dry_run:
             r = requests.post(post_influx_uri, data=influx_event_record_string, headers=headers)
             if int(r.status_code) < 400:
-                print_debug(1, f"Successfully updated {d['test_id']} with {influx_event_record_string}.")
+                print_debug(2, f"Successfully updated {d['test_id']} with {influx_event_record_string}.")
                 return True
             else:
                 print_debug(0, f"Influx returned status code: {r.status_code} in response to data: {influx_event_record_string}")
@@ -295,7 +295,7 @@ def check_job_status(slurm_jobid_lst):
                     if next_space < 0 and i == len(labels) - 1:
                         next_space = len(line)
                     elif next_space < 0:
-                        print_debug(1, f"Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
+                        print_debug(0, f"Sacct parse error: Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
                     cur_field = line[search_pos+1:next_space].strip()
                     search_pos = next_space
                     fields[labels[i].lower()] = cur_field
@@ -303,13 +303,13 @@ def check_job_status(slurm_jobid_lst):
                     print_debug(0, f"Couldn't find JobID in sacct record. Skipping")
                     continue
                 elif fields['state'] == 'RESIZING':
-                    print_debug(1, f"Detected RESIZING for job {fields['jobid']}. RESIZING is from node failure + SLURM '--no-kill'. There should be another record in sacct for this job. Skipping")
+                    print_debug(2, f"Detected RESIZING for job {fields['jobid']}. RESIZING is from node failure + SLURM '--no-kill'. There should be another record in sacct for this job. Skipping")
                     # Add a field to this job that shows it had/survived a node failure
                     node_failed_jobids.append(fields['jobid'])
                     continue
                 elif fields['jobid'] in node_failed_jobids:
                     # Check if a previous step had come in with RESIZING
-                    print_debug(1, f"Found jobid in node failure list: {fields['jobid']}")
+                    print_debug(2, f"Found jobid in node failure list: {fields['jobid']}")
                     fields['node-failed'] = True
                 result[fields['jobid']] = fields
         os.remove(f"slurm.jobs.tmp.txt")
@@ -386,7 +386,7 @@ for entry in data:
         post_update_to_influx(d, 'node_fail')
     elif slurm_data[entry['job_id']]['state'] in job_state_codes['timeout']:
         if 'node-failed' in slurm_data[entry['job_id']] and slurm_data[entry['job_id']]['node-failed']:
-            print_debug(1, f"Found timed out job: {d['job_id']}")
+            print_debug(1, f"Found node_fail + timed out job: {d['job_id']}")
             d['reason'] = f"NODE_FAIL followed by TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
             d['timestamp'] = slurm_data[entry['job_id']]['end']
             post_update_to_influx(d, 'node_fail')
