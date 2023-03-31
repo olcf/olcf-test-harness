@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 08-23-2022
+# Date modified: 11-29-2022
 ################################################################################
 # Purpose:
 #   Allows users to add comments to a specific event (ie, build_start) of
@@ -30,10 +30,10 @@ except:
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness run in InfluxDB with a comment")
-parser.add_argument('--testid', '-t', nargs=1, action='store', required=True, help="Specifies the harness test id to update jobs for.")
-parser.add_argument('--message', '-m', nargs=1, action='store', required=True, help="Comment to add to the record.")
-parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
-parser.add_argument('--event', nargs=1, action='store', choices=['logging_start', 'build_start', 'build_end', 'submit_start', \
+parser.add_argument('--testid', '-t', type=str, action='store', required=True, help="Specifies the harness test id to update jobs for.")
+parser.add_argument('--message', '-m', type=str, action='store', required=True, help="Comment to add to the record.")
+parser.add_argument('--db', type=str, required=True, action='store', help="InfluxDB instance name to log to.")
+parser.add_argument('--event', type=str, action='store', choices=['logging_start', 'build_start', 'build_end', 'submit_start', \
                         'submit_end', 'job_queued', 'binary_execute_start', 'binary_execute_end', 'check_start', 'check_end'], \
                         help="Specifies the harness event to add the comment to.")
 ################################################################################
@@ -46,23 +46,25 @@ from harness_keys import influx_keys
 args = parser.parse_args()  # event field already validated by 'choices'
 
 # Set up URIs and Tokens #######################################################
-if not args.db[0] in influx_keys.keys():
-    print(f"Unknown database version: {args.db[0]} not found in influx_keys. Aborting.")
+if not args.db in influx_keys.keys():
+    print(f"Unknown database version: {args.db} not found in influx_keys. Aborting.")
     sys.exit(1)
-elif not 'POST' in influx_keys[args.db[0]]:
-    print(f"POST URL not found in influx_keys[{args.db[0]}]. Aborting.")
+elif not 'POST' in influx_keys[args.db]:
+    print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
     sys.exit(1)
-elif not 'GET' in influx_keys[args.db[0]]:
-    print(f"GET URL not found in influx_keys[{args.db[0]}]. Aborting.")
+elif not 'GET-v1' in influx_keys[args.db]:
+    print(f"GET-v1 URL not found in influx_keys[{args.db}]. Aborting.")
+    print(f"GET-v1 is required to make InfluxQL-language queries to InfluxDB.")
     sys.exit(1)
-elif not 'token' in influx_keys[args.db[0]]:
-    print(f"Influx token not found in influx_keys[{args.db[0]}]. Aborting.")
+elif not 'token' in influx_keys[args.db]:
+    print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
     sys.exit(1)
 
 # Checking succeeded - global setup of URIs and tokens
-post_influx_uri = influx_keys[args.db[0]]['POST']
-get_influx_uri = influx_keys[args.db[0]]['GET'] 
-influx_token = influx_keys[args.db[0]]['token']
+post_influx_uri = influx_keys[args.db]['POST']
+# GET-v1 required to make InfluxQL-style queries
+get_influx_uri = influx_keys[args.db]['GET-v1'] 
+influx_token = influx_keys[args.db]['token']
 
 # SELECT query - gets other tag information to re-post #########################
 tags = StatusFile.INFLUX_TAGS
@@ -74,10 +76,10 @@ fieldline = ','.join([f"{fld}::field" for fld in fields if not (fld == 'event_na
 fieldline += ',"user"'
 
 event_selector = "last(event_name::field) AS event_name, event_value::field"
-where_cond = f"test_id::tag = '{args.testid[0]}'"
+where_cond = f"test_id::tag = '{args.testid}'"
 if args.event:
     event_selector = "event_name::field AS event_name, event_value::field"
-    where_cond += f" AND event_name::field = '{args.event[0]}'"
+    where_cond += f" AND event_name::field = '{args.event}'"
 
 query = f"SELECT {tagline},{fieldline},{event_selector} FROM events WHERE {where_cond} GROUP BY test_id"
 required_entries = ['test', 'app', 'test_id', 'runtag', 'machine', 'event_name', 'event_value']
@@ -185,9 +187,9 @@ timestamp = datetime.datetime.now().isoformat()
 
 if data['comment'] and not data['comment'] == '[NO_VALUE]':
     print(f"Warning: found an existing comment on this record: {data['comment']}.\nAppending to this comment.")
-    data['comment'] += f"\n{timestamp} - {os.environ['USER']}: {args.message[0]}"
+    data['comment'] += f"\n{timestamp} - {os.environ['USER']}: {args.message}"
 else:
-    data['comment'] = f"{timestamp} - {os.environ['USER']}: {args.message[0]}."
+    data['comment'] = f"{timestamp} - {os.environ['USER']}: {args.message}."
 
 post_update_to_influx(data)
 

@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 08-25-2022
+# Date modified: 11-29-2022
 ################################################################################
 # Purpose:
 #   Allows users to change the machine a harness job is logged to in InfluxDB.
@@ -33,9 +33,9 @@ except:
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness run in InfluxDB with a new machine name")
-parser.add_argument('--testid', '-t', nargs=1, action='store', required=True, help="Specifies the harness test ID to update machine for.")
-parser.add_argument('--newmachine', '-m', nargs=1, action='store', required=True, help="New machine to assign to the harness test.")
-parser.add_argument('--db', nargs=1, default=['dev'], action='store', help="InfluxDB instance name to log to.")
+parser.add_argument('--testid', '-t', type=str, action='store', required=True, help="Specifies the harness test ID to update machine for.")
+parser.add_argument('--newmachine', '-m', type=str, action='store', required=True, help="New machine to assign to the harness test.")
+parser.add_argument('--db', type=str, required=True, action='store', help="InfluxDB instance name to log to.")
 ################################################################################
 
 # Global URIs and Tokens #######################################################
@@ -46,23 +46,25 @@ from harness_keys import influx_keys
 args = parser.parse_args()  # event field already validated by 'choices'
 
 # Set up URIs and Tokens #######################################################
-if not args.db[0] in influx_keys.keys():
-    print(f"Unknown database version: {args.db[0]} not found in influx_keys. Aborting.")
+if not args.db in influx_keys.keys():
+    print(f"Unknown database version: {args.db} not found in influx_keys. Aborting.")
     sys.exit(1)
-elif not 'POST' in influx_keys[args.db[0]]:
-    print(f"POST URL not found in influx_keys[{args.db[0]}]. Aborting.")
+elif not 'POST' in influx_keys[args.db]:
+    print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
     sys.exit(1)
-elif not 'GET' in influx_keys[args.db[0]]:
-    print(f"GET URL not found in influx_keys[{args.db[0]}]. Aborting.")
+elif not 'GET-v1' in influx_keys[args.db]:
+    print(f"GET-v1 URL not found in influx_keys[{args.db}]. Aborting.")
+    print(f"GET-v1 is required to make InfluxQL-language queries to InfluxDB.")
     sys.exit(1)
-elif not 'token' in influx_keys[args.db[0]]:
-    print(f"Influx token not found in influx_keys[{args.db[0]}]. Aborting.")
+elif not 'token' in influx_keys[args.db]:
+    print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
     sys.exit(1)
 
 # Checking succeeded - global setup of URIs and tokens
-post_influx_uri = influx_keys[args.db[0]]['POST']
-get_influx_uri = influx_keys[args.db[0]]['GET']
-influx_token = influx_keys[args.db[0]]['token']
+post_influx_uri = influx_keys[args.db]['POST']
+# GET-v1 required to make InfluxQL-style queries
+get_influx_uri = influx_keys[args.db]['GET-v1']
+influx_token = influx_keys[args.db]['token']
 
 # SELECT query - gets other tag information to re-post #########################
 tags = StatusFile.INFLUX_TAGS
@@ -73,7 +75,7 @@ tagline = ','.join([f"{fld}::tag" for fld in tags])
 fieldline = ','.join([f"{fld}::field" for fld in fields if not fld == 'user'])
 fieldline += ',"user"'
 
-where_cond = f"test_id::tag = '{args.testid[0]}'"
+where_cond = f"test_id::tag = '{args.testid}'"
 
 query = f"SELECT {tagline},{fieldline} FROM events WHERE {where_cond}"
 required_entries = ['test', 'app', 'test_id', 'runtag', 'machine', 'event_name', 'event_value']
@@ -181,11 +183,11 @@ timestamp = datetime.datetime.now().isoformat()
 for d in data:
     old_machine = d['machine']
     if d['comment'] and not d['comment'] == '[NO_VALUE]':
-        d['comment'] += f"\n{timestamp} - {os.environ['USER']}: machine name changed from {d['machine']} to {args.newmachine[0]}."
-        d['machine'] = args.newmachine[0]
+        d['comment'] += f"\n{timestamp} - {os.environ['USER']}: machine name changed from {d['machine']} to {args.newmachine}."
+        d['machine'] = args.newmachine
     else:
-        d['comment'] = f"{timestamp} - {os.environ['USER']}: machine name changed from {d['machine']} to {args.newmachine[0]}."
-        d['machine'] = args.newmachine[0]
+        d['comment'] = f"{timestamp} - {os.environ['USER']}: machine name changed from {d['machine']} to {args.newmachine}."
+        d['machine'] = args.newmachine
     post_update_to_influx(d)
 
 sys.exit(0)
