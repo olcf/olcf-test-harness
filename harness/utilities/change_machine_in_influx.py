@@ -53,7 +53,8 @@ elif not 'POST' in influx_keys[args.db]:
     print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
     sys.exit(1)
 elif not 'GET-v1' in influx_keys[args.db]:
-    print(f"GET URL not found in influx_keys[{args.db}]. Aborting.")
+    print(f"GET-v1 URL not found in influx_keys[{args.db}]. Aborting.")
+    print(f"GET-v1 is required to make InfluxQL-language queries to InfluxDB.")
     sys.exit(1)
 elif not 'token' in influx_keys[args.db]:
     print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
@@ -61,6 +62,7 @@ elif not 'token' in influx_keys[args.db]:
 
 # Checking succeeded - global setup of URIs and tokens
 post_influx_uri = influx_keys[args.db]['POST']
+# GET-v1 required to make InfluxQL-style queries
 get_influx_uri = influx_keys[args.db]['GET-v1']
 influx_token = influx_keys[args.db]['token']
 

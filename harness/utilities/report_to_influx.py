@@ -2,103 +2,163 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 07-15-2022
+# Date modified: 02-03-2023
 ################################################################################
 # Purpose:
 #   Provides a utility to log any data to InfluxDB for viewing in Grafana.
 #   This submits data to a separate source from the harness metrics and events,
 #   So the data will not become mixed.
 ################################################################################
-# Pre-requirements:
+# Requirements:
 #   Must add a file named harness_keys.py that contains a dictionary named
-#   influx_keys, containing entries in the format:
-#       'instance_name': ['instance_uri', 'instance_token']
-#   where instance_name matches the argument of --version (default 'dev')
+#   influx_keys, containing key/value pairs (also dictionaries) in the format:
+#       'instance_name': {
+#           'POST': 'instance_token',
+#           'token': 'instance_token'
+#       }
+#   where instance_name matches the argument of --db
 ################################################################################
 
-import os
+import argparse
+from datetime import datetime
 import requests
-import subprocess
-import sys
+import re
 from harness_keys import influx_keys
 
-class InfluxReport:
-    def __init__(self, d):
-        if not 'keys' in d.keys():
-            print(f"No keys provided. Please provide at least one key")
-        if not 'values' in d.keys():
-            print(f"No values provided. Please provide at least one value")
+# Initialize argparse ##########################################################
+parser = argparse.ArgumentParser(description="Post a custom metric to InfluxDB")
+parser.add_argument('--time', '-t', type=str, action='store', help="Timestamp to post record as. Format: YYYY-MM-DDTHH:MM:SS[.MS][Z]")
+parser.add_argument('--keys', '-k', required=True, type=str, action='store', help="A set of comma-separated keys to identify your metric by. Ex: value_a=1,value_b=2")
+parser.add_argument('--values', '-v', required=True, type=str, action='store', help="A set of comma-separated values to post. Ex: value_a=1,value_b=2. These may or may not be quoted")
+parser.add_argument('--verbose', type=str, action='store', help="Increase verbosity.")
+parser.add_argument('--table_name', default='non_harness_metrics', type=str, action='store', help="Specifies the name of the table (measurement) to post to.")
+parser.add_argument('--db', required=True, type=str, action='store', help="Specifies the database to post metrics to.")
+parser.add_argument('--nosend', action='store_true', help="When set, print the message to InfluxDB, but do not send.")
 
-        self.headers = {
-            'Authorization': "Token " + d['token'],
-            'Content-Type': "text/plain; charset=utf-8",
-            'Accept': "application/json"
-        }
-        self.influx_uri = d['uri']
-        # d['keys'] = ['key1=value1', 'key2=value2',...]
-        self.keys = d['keys']
-        # d['values'] = ['value1=v1', 'value2=v2',...]
-        self.values = d['values']
+# Global URIs and Tokens #######################################################
+try:
+    from harness_keys import influx_keys
+except:
+    raise ImportError('Could not import harness_keys.py. Please make sure that you have a file named harness_keys.py in the search path. This is how this script reads information to query InfluxDB.')
+################################################################################
 
-    def send(self):
-        influx_event_record_string = f"non_harness_values,{','.join(self.keys)}"
-        num_metrics = len(self.values)
-        influx_event_record_string += f" {','.join(self.values)}"
+# Parse command-line arguments #################################################
+args = parser.parse_args()
+
+# Set up URIs and Tokens #######################################################
+if not args.db in influx_keys.keys():
+    print(f"Unknown database version: {args.db} not found in influx_keys. Aborting.")
+    exit(1)
+elif not 'POST' in influx_keys[args.db]:
+    print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
+    exit(1)
+elif not 'GET' in influx_keys[args.db]:
+    print(f"GET URL not found in influx_keys[{args.db}]. Aborting.")
+    exit(1)
+elif not 'token' in influx_keys[args.db]:
+    print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
+    exit(1)
+
+# Checking succeeded - global setup of URIs and tokens
+post_influx_uri = influx_keys[args.db]['POST']
+influx_token = influx_keys[args.db]['token']
+
+headers = {
+    'Authorization': f"Token {influx_token}",
+    'Content-Type': "text/plain; charset=utf-8",
+    'Accept': "application/json"
+}
+
+# Format check for keys & values ###############################################
+def format_check(line):
+    """ Format check for keys & values """
+    # Expecting value_1=x,value_2=y
+    splt_by_comma = line.split(',')
+    for entry in splt_by_comma:
+        splt_by_equal = entry.split('=')
+        if not len(splt_by_equal) == 2:
+            return [False, f'Invalid entry has more or less than 1 equal sign: {entry}']
+        # Single quotes are not permitted in general
+        if "'" in entry:
+            return [False, f'Single quotes are not permitted in any keys/values: {entry}']
+        # Check for unbalanced/ill-placed quotes
+        if splt_by_equal[1].startswith('"') and not splt_by_equal[1].endswith('"'):
+            return [False, f'Unbalanced quotes found in: {entry}']
+        elif not splt_by_equal[1].startswith('"') and splt_by_equal[1].endswith('"'):
+            return [False, f'Unbalanced quotes found in: {entry}']
+        elif '"' in splt_by_equal[1][1:-1]:
+            # If there's a quote in the middle of the string
+            return [False, f'Quote found in the middle of a value: {entry}']
+        # Check to make sure there's no quotes in the label
+        if '"' in splt_by_equal[0]:
+            return [False, f'Quotes not allowed in labels: {entry}']
+    return [True, '']
+
+ret = format_check(args.values)
+if not ret[0]:
+    print(f"Format check of values failed: {ret[1]}")
+    exit(1)
+ret = format_check(args.keys)
+if not ret[0]:
+    print(f"Format check of values failed: {ret[1]}")
+    exit(1)
+
+################################################################################
+
+# Format check for time ########################################################
+timestamp_ns = -1
+if args.time:
+    detected_time_fmt = False
+    for fmt in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S.%fZ"]:
         try:
-            r = requests.post(self.influx_uri, data=influx_event_record_string, headers=self.headers)
-            print(f"Successfully sent {influx_event_record_string} to {self.influx_uri}")
-            return 0
-        except requests.exceptions.ConnectionError as e:
-            print("InfluxDB is not reachable. Request not sent.")
-            return 1
+            log_time = datetime.strptime(args.time, fmt)
+            timestamp_ns = int(datetime.timestamp(log_time) * 1000 * 1000) * 1000
+            detected_time_fmt = True
+            print(f"Found time in format of {fmt}")
+            break
         except Exception as e:
-            print(f"Failed to send {influx_event_record_string} to {self.influx_url}:")
-        return 2
+            pass
+################################################################################
 
+# Format check for time ########################################################
+number_regex = re.compile('^([0-9]*\.)?[0-9]+(e[+-]?[0-9]+)?$')
+values_formatted = []
+for val in args.values.split(','):
+    # We know it's properly formatted already
+    val_splt = val.split('=')
+    # We know quotes are balanced - if the starting quote is there, so is end
+    if not val_splt[1].startswith('"'):
+        if not number_regex.match(val_splt[1]):
+            val_splt[1] = '"' + val_splt[1] + '"'
+        # else, it's a valid decimal number
+    elif val_splt[1].startswith('"') and number_regex.match(val_splt[1][1:-1]):
+        # If it's a number, un-quote it (otherwise InfluxDB thinks it's a str)
+        val_splt[1] = val_splt[1][1:-1]
+    values_formatted.append(f'{val_splt[0]}={val_splt[1]}')
 
-def print_usage():
-    print("Usage: ./report_to_influx.py [args]")
-    print("\t--keys <keys>       (ex: machine=crusher,purpose=testing,...)")
-    print("\t\tKeys allow you to select your entry in InfluxDB - ie, by machine name and test name. These are like primary keys in SQL.")
-    print("\t\tPreferred keys are machine and purpose. For example, --keys machine=crusher,purpose=job_monitor")
-    print("\t--values <values>   (ex: jobs_in_queue=1,nodes_running=1,...)")
-    print("\t--db <name>    Sends data to a named instance of InfluxDB. This should match the key name in the uri and token dicts. Default: dev")
+################################################################################
 
-if len(sys.argv) < 2:
-    print_usage()
-    sys.exit(0)
-
-d = {}
-d['uri'] = influx_keys['dev']['POST']
-d['token'] = influx_keys['dev']['token']
-
-index = 1
-nargs = len(sys.argv)
-while index < nargs:
-    if sys.argv[index] == "--keys":
-        index += 1
-        k = sys.argv[index].split(',')
-        d['keys'] = k
-    elif sys.argv[index] == "--values":
-        index += 1
-        v = sys.argv[index].split(',')
-        d['values'] = v
-    elif sys.argv[index] == "--db":
-        index += 1
-        if not sys.argv[index] in influx_keys.keys():
-            print(f"Could not find key: {sys.argv[index]} in influx_keys")
-            sys.exit(1)
-        elif not ('POST' in influx_keys[sys.argv[index]] and 'token' in influx_keys[sys.argv[index]]):
-            print(f"Could not find POST and token in influx_keys for {sys.argv[index]}")
-            sys.exit(1)
-        d['uri'] = influx_keys[sys.argv[index]]['POST']
-        d['token'] = influx_keys[sys.argv[index]]['token']
+# Package & send ###############################################################
+influx_post_str = f"{args.table_name},{args.keys}"
+influx_post_str += f" {','.join(values_formatted)}"
+if args.time:
+    influx_post_str += f" {timestamp_ns}"
+try:
+    if args.nosend:
+        print(f"NOSEND set: {influx_post_str}")
+        exit(0)
+    r = requests.post(post_influx_uri, data=influx_post_str, headers=headers)
+    if int(r.status_code) < 400:
+        print(f"Successfully sent {influx_post_str} to {post_influx_uri}")
     else:
-        print(f"Unrecognized kwarg: {sys.argv[index]}")
-        print_usage()
-        sys.exit(1)
-    index += 1
-
-ir = InfluxReport(d)
-ex_code = ir.send()
-sys.exit(ex_code)
+        print(f"Influx returned status code: {r.status_code} in response to data: {influx_post_str}")
+        print(r.text)
+        exit(1)
+    exit(0)
+except requests.exceptions.ConnectionError as e:
+    print("InfluxDB is not reachable. Request not sent.")
+    exit(1)
+except Exception as e:
+    print(f"Failed to send {influx_event_record_string} to {self.influx_url}:")
+exit(2)
+################################################################################

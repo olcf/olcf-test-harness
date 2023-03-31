@@ -30,8 +30,8 @@ except:
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness run in InfluxDB with a comment")
-parser.add_argument('--testid', '-t', type=True, action='store', required=True, help="Specifies the harness test id to update jobs for.")
-parser.add_argument('--message', '-m', type=True, action='store', required=True, help="Comment to add to the record.")
+parser.add_argument('--testid', '-t', type=str, action='store', required=True, help="Specifies the harness test id to update jobs for.")
+parser.add_argument('--message', '-m', type=str, action='store', required=True, help="Comment to add to the record.")
 parser.add_argument('--db', type=str, required=True, action='store', help="InfluxDB instance name to log to.")
 parser.add_argument('--event', type=str, action='store', choices=['logging_start', 'build_start', 'build_end', 'submit_start', \
                         'submit_end', 'job_queued', 'binary_execute_start', 'binary_execute_end', 'check_start', 'check_end'], \
@@ -53,7 +53,8 @@ elif not 'POST' in influx_keys[args.db]:
     print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
     sys.exit(1)
 elif not 'GET-v1' in influx_keys[args.db]:
-    print(f"GET URL not found in influx_keys[{args.db}]. Aborting.")
+    print(f"GET-v1 URL not found in influx_keys[{args.db}]. Aborting.")
+    print(f"GET-v1 is required to make InfluxQL-language queries to InfluxDB.")
     sys.exit(1)
 elif not 'token' in influx_keys[args.db]:
     print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
@@ -61,6 +62,7 @@ elif not 'token' in influx_keys[args.db]:
 
 # Checking succeeded - global setup of URIs and tokens
 post_influx_uri = influx_keys[args.db]['POST']
+# GET-v1 required to make InfluxQL-style queries
 get_influx_uri = influx_keys[args.db]['GET-v1'] 
 influx_token = influx_keys[args.db]['token']
 
