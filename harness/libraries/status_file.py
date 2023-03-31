@@ -576,7 +576,7 @@ class StatusFile:
                     if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
                         print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
                     elif not 'requests' in sys.modules:
-                        self.__logger.doWarningLogging(f"'requests' is not in sys.modules. Skipping message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server")
+                        self.logger.doWarningLogging(f"InfluxDB is currently disabled. Reason: 'requests' module was unable to load. Skipping InfluxDB message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server.")
                     else:
                         r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
                         if r.status_code == 200 or r.status_code == 204:
