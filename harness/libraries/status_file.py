@@ -10,16 +10,21 @@ Copyright (C) 2015 Oak Ridge National Laboratory, UT-Battelle, LLC.
 """
 
 import os
+import sys
 import datetime
 import re
 import socket
 import pprint
 import abc
-import requests
 import urllib
 import glob
 import dateutil.parser
 import subprocess
+
+try:
+    import requests
+except ImportError as e:
+    print("Import Warning: Could not import requests in current Python environment. Influx logging will be disabled.")
 
 
 from libraries.layout_of_apps_directory import apptest_layout
@@ -572,6 +577,8 @@ class StatusFile:
                 try:
                     if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
                         print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
+                    elif not 'requests' in sys.modules:
+                        self.logger.doWarningLogging(f"InfluxDB is currently disabled. Reason: 'requests' module was unable to load. Skipping InfluxDB message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server.")
                     else:
                         r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
                         if r.status_code == 200 or r.status_code == 204:
