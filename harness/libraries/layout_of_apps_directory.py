@@ -130,13 +130,13 @@ class apptest_layout:
     # Debug function.
     #
     def debug_layout(self):
-        print ("\n\n")
-        print ("================================================================")
-        print ("Debugging local layout " + self.__appname + self.__testname)
-        print ("================================================================")
+        self.__logger.doDebugLogging ("\n\n")
+        self.__logger.doDebugLogging ("================================================================")
+        self.__logger.doDebugLogging ("Debugging local layout " + self.__appname + self.__testname)
+        self.__logger.doDebugLogging ("================================================================")
         for key in self.__apptest_layout.keys():
-            print ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
-        print ("================================================================\n\n")
+            self.__logger.doDebugLogging ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
+        self.__logger.doDebugLogging ("================================================================\n\n")
 
     #
     # Returns the path to the application directory.
