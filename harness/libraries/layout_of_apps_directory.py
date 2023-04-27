@@ -90,10 +90,12 @@ class apptest_layout:
                  applications_rootdir,
                  name_of_application,
                  name_of_subtest,
+                 logger=None,
                  harness_id=None):
         self.__applications_root = applications_rootdir
         self.__appname = name_of_application
         self.__testname = name_of_subtest
+        self.__logger = logger
         self.__workspace = None
 
         if harness_id == None:
@@ -211,11 +213,11 @@ class apptest_layout:
         #
         apptest_dir = self.get_path_to_test()
         latest_lnk = os.path.join(apptest_dir, apptest_layout.test_status_dirname, 'latest')
-        if os.path.exists(latest_lnk):
-            try:
-                os.unlink(latest_lnk)
-            except FileNotFoundError as e:
-                print("Found potential race condition while trying to change latest link. Skipping")
+        try:
+            # Not guarded by a conditional, so that it removes broken links
+            os.unlink(latest_lnk)
+        except FileNotFoundError as e:
+            self.__logger.doInfoLogging("Could not remove 'latest' link in Status.")
         try_symlink(spath, latest_lnk)
 
         return spath
@@ -238,11 +240,11 @@ class apptest_layout:
         #
         apptest_dir = self.get_path_to_test()
         latest_lnk = os.path.join(apptest_dir, apptest_layout.test_run_archive_dirname, 'latest')
-        if os.path.exists(latest_lnk):
-            try:
-                os.unlink(latest_lnk)
-            except FileNotFoundError as e:
-                print("Found potential race condition while trying to change latest link. Skipping")
+        try:
+            # Not guarded by a conditional, so that it removes broken links
+            os.unlink(latest_lnk)
+        except FileNotFoundError as e:
+            self.__logger.doInfoLogging("Could not remove 'latest' link in Run_Archive.")
         try_symlink(rpath, latest_lnk)
 
         return rpath
