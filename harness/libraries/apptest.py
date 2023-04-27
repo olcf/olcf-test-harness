@@ -70,7 +70,6 @@ class subtest(base_apptest, apptest_layout):
                               local_path_to_tests,
                               tag)
 
-        print(f"Initializing with logger={logger}")
         apptest_layout.__init__(self,
                                 local_path_to_tests,
                                 name_of_application,
