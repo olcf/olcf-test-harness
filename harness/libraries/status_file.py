@@ -530,8 +530,9 @@ class StatusFile:
                     # Truncate to 64 kb
                     output = output[-65534:].replace('"', '\\"')
                     influx_event_record_string += ",output_txt=\"" + output + "\""
-
-        if status_info_dict['event_name'] == "submit_end":
+            else:
+                influx_event_record_string += ",output_txt=\"" + StatusFile.NO_VALUE  + "\""
+        elif status_info_dict['event_name'] == "submit_end":
             file_name = status_info_dict['run_archive'] + "/" + "submit.err"
             self.__logger.doInfoLogging(f"Using {file_name} for submit errors for Influx")
             if os.path.exists(file_name):
@@ -540,18 +541,22 @@ class StatusFile:
                     # Truncate to 64 kb
                     output = output[-65534:].replace('"', '\\"')
                     influx_event_record_string += ",output_txt=\"" + output + "\""
-
-        if status_info_dict['event_name'] == "binary_execute_end":
+            else:
+                influx_event_record_string += ",output_txt=\"" + StatusFile.NO_VALUE  + "\""
+        elif status_info_dict['event_name'] == "binary_execute_end":
+            found_job_file = False
             for file_name in glob.glob(status_info_dict['run_archive'] + "/*.o" + status_info_dict['job_id']):
                 self.__logger.doInfoLogging(f"Using {file_name} for job output for Influx")
                 if os.path.exists(file_name):
+                    found_job_file = True
                     with open(file_name, "r") as f:
                         output = f.read()
                         # Truncate to 64 kb
                         output = output[-65534:].replace('"', '\\"')
                         influx_event_record_string += ",output_txt=\"" + output + "\""
-
-        if status_info_dict['event_name'] == "check_end":
+            if not found_job_file:
+                influx_event_record_string += ",output_txt=\"" + StatusFile.NO_VALUE  + "\""
+        elif status_info_dict['event_name'] == "check_end":
             file_name = status_info_dict['run_archive'] + "/" + "output_check.txt"
             self.__logger.doInfoLogging(f"Using {file_name} for check output for Influx")
             if os.path.exists(file_name):
@@ -560,6 +565,10 @@ class StatusFile:
                     # Truncate to 64 kb
                     output = output[-65534:].replace('"', '\\"')
                     influx_event_record_string += ",output_txt=\"" + output + "\""
+            else:
+                influx_event_record_string += ",output_txt=\"" + StatusFile.NO_VALUE  + "\""
+        else:
+            influx_event_record_string += ",output_txt=\"" + StatusFile.NO_VALUE  + "\""
 
         influx_event_record_string += f" {str(event_time_unix)}"
 
