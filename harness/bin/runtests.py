@@ -402,6 +402,11 @@ def runtests(my_arg_string=None):
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
                                        runmodecmd=harness_arguments.runmode)
     main_logger.info("Completed reading the harness input file.")
+
+    # Check if there were any tests found:
+    if len(ifile.get_tests()) == 0:
+        main_logger.error("No tests found in input file. Aborting.")
+        return
     
     main_logger.info("Reading the harness config file.")
     config = rgt_config_file(configfilename=harness_arguments.configfile)
