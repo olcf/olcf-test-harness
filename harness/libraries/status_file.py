@@ -510,7 +510,9 @@ class StatusFile:
             if field_name == 'output_txt':
                 continue
             elif not field_name in status_info_dict:
-                self.__logger.doWarningLogging(f"Couldn't find field to append in influx event string: {field_name}. Setting to NOVALUE")
+                # We don't expect the comment or reason to be populated yet.
+                if not (field_name == 'comment' or field_name == 'reason'):
+                    self.__logger.doWarningLogging(f"Couldn't find field to append in influx event string: {field_name}. Setting to NOVALUE")
                 status_info_dict[field_name] = StatusFile.NO_VALUE
             if nkeys > 0:
                 influx_event_record_string += ','
