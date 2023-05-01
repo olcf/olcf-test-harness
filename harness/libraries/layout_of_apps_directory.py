@@ -109,9 +109,17 @@ class apptest_layout:
     # Check that the required paths to source and scripts exist
     def check_paths(self):
         """ Returns False if the Source dir, Scripts dir, or test input ini files don't exist """
+        # Check that the Application dir exists
+        if not os.path.exists(self.__apptest_layout['app']):
+            self.__logger.doErrorLogging(f"Could not find the Application root directory for App={self.__appname}, Test={self.__testname}.")
+            return False
         # Check that the Application's Source dir exists
         if not os.path.exists(self.get_path_to_source()):
             self.__logger.doErrorLogging(f"Could not find the Source directory for App={self.__appname}, Test={self.__testname}.")
+            return False
+        # Check that the Test dir exists
+        if not os.path.exists(self.__apptest_layout['test']):
+            self.__logger.doErrorLogging(f"Could not find the test directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Scripts directory exists
         if not os.path.exists(self.get_path_to_scripts()):
