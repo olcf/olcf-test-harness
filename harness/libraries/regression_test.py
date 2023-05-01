@@ -79,6 +79,8 @@ class Harness:
         if testshot_key in testshot_cfg.keys():
             testshot_str = testshot_cfg[testshot_key]
         self.__launch_id = f'{testshot_str}/{user_str}@{time_str}'
+        self.__launched_tests = 0
+        self.__skipped_tests = 0
 
         # Define a logger that streams to file.
         logger_name=Harness.LOGGER_NAME
@@ -250,7 +252,16 @@ class Harness:
                                                       logger = a_logger,
                                                       tag=self.__timestamp)
 
-                app_subtests[appname].append(subtest)
+                if subtest.check_paths():
+                    app_subtests[appname].append(subtest)
+                    self.__launched_tests += 1
+                else:
+                    # Then at least 1 required path (ie: source, scripts directories) does not exist
+                    # Exact error messages are printed by check_paths
+                    a_logger.doWarningLogging(f"Skipping App={appname}, Test={testname}.")
+                    # Log to both loggers
+                    self.__myLogger.doWarningLogging(f"Skipping App={appname}, Test={testname}.")
+                    self.__skipped_tests += 1
 
         return app_subtests
 
@@ -283,6 +294,8 @@ class Harness:
 
             message = "All applications completed futures. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
+            # For the moment, hard-code this as a print statement.
+            print(f"Skipped {self.__skipped_tests}, launched {self.__launched_tests}.")
 
         return
 
