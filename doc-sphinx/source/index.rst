@@ -14,6 +14,7 @@ OLCF Test Harness Documentation
    user_guide/launching
    user_guide/adding_new_test
    user_guide/adding_new_machine
+   user_guide/extensions
 
 .. toctree::
    :maxdepth: 2
