@@ -12,6 +12,7 @@ from datetime import datetime
 import os
 import sys
 import copy
+import re
 from types import *
 
 try:
