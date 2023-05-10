@@ -69,17 +69,11 @@ class LSF(BaseScheduler):
         records = submit_stdout.readlines()
         submit_stdout.close()
 
-        #print("records = ")
-        #print(records)
-
-        #print("Extracting LSF jobID from LSF class")
-        jobid_pattern = re.compile('\d+')
-        #print("jobid_pattern = ")
-        #print(jobid_pattern)
-        #print("jobid_pattern.findall = ")
-        jobid = jobid_pattern.findall(records[0])[0]
-        self.set_job_id(jobid)
-        print("LSF jobID = ",self.get_job_id())
+        if p.returncode is 0:
+            jobid_pattern = re.compile('\d+')
+            jobid = jobid_pattern.findall(records[0])[0]
+            self.set_job_id(jobid)
+            print("LSF jobID = ",self.get_job_id())
 
         return p.returncode
 
