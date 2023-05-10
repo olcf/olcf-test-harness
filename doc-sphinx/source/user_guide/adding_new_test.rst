@@ -95,6 +95,11 @@ The following is a sample input for the single node test of the *hello_mpi* appl
     [EnvVars]
     FOO = bar
 
+.. note::
+
+    Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
+    For example, if you set ``nodes = <obtain_from_environemnt>`` and set *RGT_NODES=4* in your environment, then *__nodes__* will be replaced with 4.
+
 .. _required-application-test-scripts:
 
 Required Application Test Scripts
