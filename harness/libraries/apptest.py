@@ -74,7 +74,8 @@ class subtest(base_apptest, apptest_layout):
                                 local_path_to_tests,
                                 name_of_application,
                                 name_of_subtest,
-                                tag)
+                                logger=logger,
+                                harness_id=tag)
 
         # Format of data is [<local_path_to_tests>, <application>, <test>]
         self.__apps_test_checked_out = []
