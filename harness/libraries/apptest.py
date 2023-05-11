@@ -12,6 +12,7 @@ from datetime import datetime
 import os
 import sys
 import copy
+import re
 from types import *
 
 try:
@@ -900,18 +901,11 @@ class subtest(base_apptest, apptest_layout):
             # Return false for empty string
             if len(s) == 0:
                 return False
-            # checks if a decimal place or preceding negative sign exists, strip/remove as needed
-            if s[0] == '-':
-                s = s[1:]
-            # for decimal places, we split the string on '.', then check if each side is numeric
-            s = s.split('.')
-            if len(s) == 0 or len(s) > 2:
+            number_regex = re.compile('^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
+            if number_regex.match(s):
+                return True
+            else:
                 return False
-            if not s[0].isnumeric():
-                return False
-            if len(s) == 2 and not s[1].isnumeric():
-                return False
-            return True
 
         metrics = {}
         if not os.path.isfile('metrics.txt'):
