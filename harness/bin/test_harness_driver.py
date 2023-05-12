@@ -94,6 +94,10 @@ def create_parser():
                            required=False,
                            type=str,
                            help='Annotate test status with given harness launch id')
+    my_parser.add_argument('--loglevel',
+                           default='CRITICAL',
+                           choices=['DEBUG', 'debug', 'INFO', 'info', 'WARNING', 'warning', 'ERROR', 'error', 'CRITICAL', 'critical'],
+                           help='Control the level of information printed to stdout.')
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
                            action='store', nargs='?', type=int, const=-1, default=False)
@@ -394,9 +398,13 @@ def test_harness_driver(argv=None):
     # Instantiate application subtest
     logger_name = get_logger_name()
     fh_filepath = get_path_to_logfile_from_scriptdir(testscripts,unique_id)
-    logger_threshold = "INFO"
+    # Logger threshold screens ALL traffic before it gets to file/console handlers. Set to lowest level
+    logger_threshold = "DEBUG"
+    # Always set file handler level to INFO
     fh_threshold_log_level = "INFO"
-    ch_threshold_log_level = "CRITICAL"
+    # loglevel arg controls the console level
+    ch_threshold_log_level = Vargs.loglevel
+    print(f"In test_harness_driver, creating logger with logger_name={logger_name}, fh_filepath={fh_filepath}")
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -455,9 +463,12 @@ def test_harness_driver(argv=None):
     # We now create the status file if it doesn't already exist.
     logger_name = "status_file."+ app + "__" + test
     fh_filepath = apptest.path_to_status_logfile
-    logger_threshold = "INFO"
+    # Logger threshold screens ALL traffic before it gets to file/console handlers. Set to lowest level
+    logger_threshold = "DEBUG"
+    # Always set file handler level to INFO
     fh_threshold_log_level = "INFO"
-    ch_threshold_log_level = "CRITICAL"
+    # loglevel arg controls the console level
+    ch_threshold_log_level = Vargs.loglevel
     sfile_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,

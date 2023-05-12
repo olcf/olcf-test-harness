@@ -85,6 +85,7 @@ class subtest(base_apptest, apptest_layout):
                                              name_of_subtest])
         self.__number_of_iterations = -1
         self.__myLogger = logger
+        self.__loglevel = self.__myLogger.get_ch_threshold_level
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -524,7 +525,7 @@ class subtest(base_apptest, apptest_layout):
             os.remove(pathtokillfile)
 
         # This will automatically build & submit
-        starttestcomand = f"test_harness_driver.py -r -l {launchid}"
+        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.__loglevel}"
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
 
