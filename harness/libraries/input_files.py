@@ -91,6 +91,7 @@ class rgt_input_file:
             #Convert the first word to lower case.
             firstword = str.lower(words[0])
 
+
             # Parse the line,depending upon what type of entry it is.
             if firstword == rgt_input_file.test_entry:
                 # Check that there are at either 4 or 5 items in the line
@@ -114,7 +115,15 @@ class rgt_input_file:
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
                     # Validate Path_to_tests here:
-                    self.__path_to_tests = words[2]
+                    test_path = os.path.expanduser(words[2]) 
+                    test_path = os.path.expandvars(test_path)
+                    print(test_path)
+                    if os.path.exists(test_path):
+                        self.__path_to_tests = test_path
+                    else:
+                        print("Invalid path_to_test")
+                        self.__tests = []
+                        return False
                 else:
                     log_message = "Invalid number of words in path line: " + tmpline
                     print(log_message)
