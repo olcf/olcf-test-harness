@@ -85,7 +85,7 @@ class Harness:
         # Define a logger that streams to file.
         logger_name=Harness.LOGGER_NAME
         fh_filepath="./harness_log_files" + "." + self.__timestamp + "/" + Harness.LOGGER_NAME + "." + self.__timestamp + ".txt"
-        logger_threshold = self.__log_level
+        logger_threshold = "NOTSET"
         # Log file always has a consistent log level. Console log level changes
         fh_threshold_log_level = "INFO"
         ch_threshold_log_level = self.__log_level
@@ -238,7 +238,7 @@ class Harness:
 
                 logger_name = appname + "." + testname + "." + self.__timestamp
                 fh_filepath = "harness_log_files" + "." + self.__timestamp + "/" + appname + "/" + appname + "__" + testname +  ".logfile.txt"
-                logger_threshold = self.__log_level
+                logger_threshold = "NOTSET"
                 # Log file always has a consistent log level. Console log level changes
                 fh_threshold_log_level = "INFO"
                 ch_threshold_log_level = self.__log_level

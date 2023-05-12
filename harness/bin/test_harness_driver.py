@@ -399,9 +399,9 @@ def test_harness_driver(argv=None):
     logger_name = get_logger_name()
     fh_filepath = get_path_to_logfile_from_scriptdir(testscripts,unique_id)
     # Logger threshold screens ALL traffic before it gets to file/console handlers. Set to lowest level
-    logger_threshold = "DEBUG"
-    # Always set file handler level to INFO
-    fh_threshold_log_level = "INFO"
+    logger_threshold = MODULE_THRESHOLD_LOG_LEVEL
+    # Always set file handler level to MODULE_THRESHOLD_LOG_LEVEL
+    fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
     print(f"In test_harness_driver, creating logger with logger_name={logger_name}, fh_filepath={fh_filepath}")
@@ -464,9 +464,9 @@ def test_harness_driver(argv=None):
     logger_name = "status_file."+ app + "__" + test
     fh_filepath = apptest.path_to_status_logfile
     # Logger threshold screens ALL traffic before it gets to file/console handlers. Set to lowest level
-    logger_threshold = "DEBUG"
-    # Always set file handler level to INFO
-    fh_threshold_log_level = "INFO"
+    logger_threshold = MODULE_THRESHOLD_LOG_LEVEL
+    # Always set file handler level to MODULE_THRESHOLD_LOG_LEVEL
+    fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
     sfile_logger = rgt_logger_factory.create_rgt_logger(
