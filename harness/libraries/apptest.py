@@ -85,7 +85,7 @@ class subtest(base_apptest, apptest_layout):
                                              name_of_subtest])
         self.__number_of_iterations = -1
         self.__myLogger = logger
-        self.__loglevel = self.__myLogger.get_ch_threshold_level
+        self.__loglevel = self.__myLogger.get_ch_threshold_level()
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

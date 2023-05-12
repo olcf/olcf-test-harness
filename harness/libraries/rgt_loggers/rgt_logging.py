@@ -38,9 +38,9 @@ class rgt_logger:
         """
 
         # Save the string threshhold levels for querying after logger is created
-        self.__logger_threshold_level = logger_threshold_log_level.upper
-        self.__fh_threshold_level = fh_threshold_log_level.upper
-        self.__ch_threshold_level = ch_threshold_log_level.upper
+        self.__logger_threshold_level = logger_threshold_log_level.upper()
+        self.__fh_threshold_level = fh_threshold_log_level.upper()
+        self.__ch_threshold_level = ch_threshold_log_level.upper()
         # Get the numeric threshhold level for logging
         # messages.
         self.__logger_numeric_threshold_level = getattr(logging, logger_threshold_log_level.upper(), None)

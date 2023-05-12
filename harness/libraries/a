@@ -1,0 +1,10 @@
+A quick note on the logging module and the log levels:
+The logger_threshold_level filters *all* log messages before they ever reach the file or console handlers.
+So if you set logger_threshold_level to WARNING, then the file handler will only receive messages >= WARNING.
+Then the fh_threshold_level and ch_threshold_level decide what level of messages to send to the file and console, respectively.
+
+Major changes:
+- Added a `--loglevel` flag to `test_harness_driver.py`
+- Changed the `--loglevel` functionality so that instead of `--loglevel` changing the `logger_threshold_level`, it only changes the console log level.
+    - the filehandler (log file) is hard-coded to INFO, and the `logger_threshold_level` is either set to `NOTSET` or `DEBUG`.
+- 
