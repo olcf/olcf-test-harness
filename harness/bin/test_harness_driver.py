@@ -338,7 +338,7 @@ def test_harness_driver(argv=None):
 
     resubmit_count = -1 # -1 means resubmit forever until stopped
     if do_submit:
-        if Vargs.resubmit is not False:
+        if not Vargs.resubmit == False:
             resubmit_count = int(Vargs.resubmit)
             if resubmit_count == 0:
                 # end of max_submissions
