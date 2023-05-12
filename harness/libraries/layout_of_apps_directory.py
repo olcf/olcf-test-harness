@@ -209,7 +209,7 @@ class apptest_layout:
     # Returns the path to the test workspace build directory.
     #
     def get_path_to_workspace_build(self):
-        if self.__workspace is None:
+        if not self.__workspace:
             return None
         return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
 
@@ -217,7 +217,7 @@ class apptest_layout:
     # Returns the path to the test workspace run directory.
     #
     def get_path_to_workspace_run(self):
-        if self.__workspace is None:
+        if not self.__workspace:
             return None
         return os.path.join(self.__workspace, apptest_layout.test_run_dirname)
 

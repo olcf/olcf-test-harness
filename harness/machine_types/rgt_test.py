@@ -406,14 +406,14 @@ class RgtTest():
 
     def get_total_processes(self):
         val = self._get_builtin_param("total_processes")
-        if val is None:
+        if not val:
             return str(0)
         else:
             return val
 
     def get_processes_per_node(self):
         val = self._get_builtin_param("processes_per_node")
-        if val is None:
+        if not val:
             return str(0)
         else:
             return val
@@ -498,10 +498,10 @@ class RgtTest():
         # Update environment if either batch_queue or project_id is set
         env_dict = {}
         bq = self.get_batch_queue()
-        if bq is not None:
+        if bq:
             env_dict = {'submit_queue' : bq}
         proj = self.get_project()
-        if proj is not None:
+        if proj:
             env_dict = {'project_id' : proj}
         rgt_utilities.set_harness_environment(env_dict, override=True)
 
@@ -579,7 +579,7 @@ class RgtTest():
                     error_message += "ERROR: test input parameter {} is not type {}!\n".format(k, str(params['type']))
 
                 # Check file
-                if params['type'] is 'file':
+                if params['type'] == 'file':
                     # Check whether it exists
                     if not os.path.exists(self.builtin_parameters[k]):
                         error_message += "ERROR: test input parameter {} does not exist {}!\n".format(k, self.builtin_parameters[k])

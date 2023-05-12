@@ -396,7 +396,7 @@ def build_executable(a_machine, new_env):
         #print("Setting env var", eu, "=", v)
         os.putenv(eu, v)
         message += f"Set build environment variable {eu}={v}\n"
-    if new_env is not None:
+    if new_env:
         for e in new_env:
             v = new_env[e]
             eu = e.upper()
@@ -441,7 +441,7 @@ def submit_batch_script(a_machine, new_env):
         #print("Setting env var", eu, "=", v)
         os.putenv(eu, v)
         message += f"Set batch environment variable {eu}={v}\n"
-    if new_env is not None:
+    if new_env:
         for e in new_env:
             v = new_env[e]
             eu = e.upper()
