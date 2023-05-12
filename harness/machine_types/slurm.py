@@ -69,6 +69,9 @@ class SLURM(BaseScheduler):
             jobid = jobid_pattern.findall(records[0])[0]
             self.set_job_id(jobid)
             print("SLURM jobID = ",self.get_job_id())
+        else:
+            with open(temp_stderr,"r") as submit_stderr:
+                print(submit_stderr.read())
 
         return p.returncode
 
