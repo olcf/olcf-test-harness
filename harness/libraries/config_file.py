@@ -55,8 +55,10 @@ class rgt_config_file:
             self.__repo_vars = master_cfg[rgt_config_file.repository_section]
             set_harness_environment(self.__repo_vars)
 
-            self.__influx_vars = master_cfg[rgt_config_file.influx_section]
-            set_harness_environment(self.__influx_vars)
+            # Make Influx section optional, since some users don't use Influx
+            if master_cfg.has_section(rgt_config_file.influx_section):
+                self.__influx_vars = master_cfg[rgt_config_file.influx_section]
+                set_harness_environment(self.__influx_vars)
 
             self.__testshot_vars = master_cfg[rgt_config_file.testshot_section]
             set_harness_environment(self.__testshot_vars)
