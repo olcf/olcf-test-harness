@@ -107,10 +107,13 @@ class rgt_input_file:
                 # by the last word.
                 app = words[2]
                 subtest = words[3]
-                nm_iters = -1
                 if len(words) == 5:
                     nm_iters = int(words[4])
-                self.__tests.append([app,subtest,nm_iters])
+                    # Add nm_iters parallel copies of the same test
+                    for i in range(0, nm_iters):
+                        self.__tests.append([app,subtest])
+                else:
+                    self.__tests.append([app,subtest])
 
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
