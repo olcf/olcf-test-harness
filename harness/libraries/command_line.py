@@ -29,7 +29,7 @@ class HarnessParsedArguments:
 
     def __verify_attributes(self):
          for attr, value in self.__dict__.items():
-             if value is None:
+             if value == None:
                  message="The class HarnessParsedArguments instantiated incorrectly!\n"
                  message+="The class HarnessParsedArguments must be instantiated with\n"
                  message+="all keyword arguments having non-None values."

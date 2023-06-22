@@ -947,7 +947,7 @@ def get_status_info(test_id, event_type, event_subtype,
     event_info['event_time'] = event_time
     event_info['event_filename'] = event_filename
     event_info['event_value'] = (
-        str(event_value) if event_value is not None else no_value)
+        str(event_value) if event_value else no_value)
 
     event_info['runtag'] = test_instance_info['rgt_system_log_tag']
 

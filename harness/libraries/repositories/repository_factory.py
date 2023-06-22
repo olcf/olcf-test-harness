@@ -110,7 +110,7 @@ class RepositoryFactory:
     @classmethod
     def get_repository_git_branch(cls):
         my_git_branch = os.getenv("RGT_GIT_REPS_BRANCH")
-        if my_git_branch is None:
+        if not my_git_branch:
             my_git_branch = "default"
         return my_git_branch
 

@@ -200,7 +200,7 @@ def auto_generated_scripts(harness_config,
         run_count = 1
         max_count = 1
         max_subs_cfg = mymachine.test_config.get_max_submissions()
-        if max_subs_cfg is None:
+        if not max_subs_cfg:
             # Ensure we have a valid string so the template variable can resolve
             mymachine.test_config.set_max_submissions("-1")
         else:
@@ -338,7 +338,7 @@ def test_harness_driver(argv=None):
 
     resubmit_count = -1 # -1 means resubmit forever until stopped
     if do_submit:
-        if Vargs.resubmit is not False:
+        if Vargs.resubmit:
             resubmit_count = int(Vargs.resubmit)
             if resubmit_count == 0:
                 # end of max_submissions
