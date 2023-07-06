@@ -145,7 +145,7 @@ default harness task will we default to the tasks in the runtests.py input file.
 
 """
 
-PERMITTED_HARNESS_TASKS=(USE_HARNESS_TASKS_IN_RGT_INPUT_FILE,'checkout','start','stop','status','influx_log')
+PERMITTED_HARNESS_TASKS=('checkout','start','stop','status','influx_log')
 """
 A tuple of the permitted harness tasks.
 
@@ -313,8 +313,7 @@ def create_parser():
     parser.add_argument('-m', '--mode',
                         required=False,
                         help=mode_help,
-                        default=[DEFAULT_HARNESS_TASK],
-                        nargs='*',
+                        nargs='+',
                         choices=PERMITTED_HARNESS_TASKS)
 
     parser.add_argument("--fireworks",
