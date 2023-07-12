@@ -121,6 +121,7 @@ def main():
 
     check_command = "test_harness_driver.py --check -i " + testid
     check_exit_value = os.system(check_command)
+    check_exit_value = os.WEXITSTATUS(check_exit_value)
 
     message = f"The check command return status is {check_exit_value}."
     apptest.doInfoLogging(message)
