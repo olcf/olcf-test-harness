@@ -520,8 +520,9 @@ def test_harness_driver(argv=None):
         jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END,
                           job_correctness)
 
-    sys.exit(build_exit_value + submit_exit_value + run_exit_value + check_exit_value)
+    return (build_exit_value + submit_exit_value + run_exit_value + check_exit_value)
 
 
 if __name__ == "__main__":
-    test_harness_driver()
+    exit_code = test_harness_driver()
+    exit(exit_code)
