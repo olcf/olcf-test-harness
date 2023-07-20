@@ -120,7 +120,8 @@ def main():
         os.chdir(scriptsdir)
 
     check_command = "test_harness_driver.py --check -i " + testid
-    check_exit_value = os.system(check_command)
+    check_exit_raw = os.system(check_command)
+    check_exit_value = os.WEXITSTATUS(check_exit_raw)
 
     message = f"The check command return status is {check_exit_value}."
     apptest.doInfoLogging(message)
