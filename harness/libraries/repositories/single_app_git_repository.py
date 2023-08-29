@@ -133,11 +133,11 @@ class SingleApplicationGitRepository(BaseRepository):
         elif clone_flag == GitCloneFlag.FOUND_EXISTING_REPOSITORY_WITH_CORRECT_ORIGIN:
             message = "The directory {} exists and is already cloned. Therefore we will will skip cloning repository {}.\n".format(pathspec,
                                                                                                                                    self.remote_repository_URL)
-            logger.doInfoLogging(message)
+            logger.doWarningLogging(message)
         elif clone_flag == GitCloneFlag.FOUND_EXISTING_REPOSITORY_WITH_INCORRECT_ORIGIN:
             message = "The directory {} is an existing git repository whose origin is not {}.\n".format(pathspec,
                                                                                                         self.remote_repository_URL)
-            logger.doInfoLogging(message)
+            logger.doWarningLogging(message)
             raise CloningToDirectoryWithIncorrectOriginError(message)
                 
         return 
