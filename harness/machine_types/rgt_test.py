@@ -499,10 +499,10 @@ class RgtTest():
         env_dict = {}
         bq = self.get_batch_queue()
         if bq:
-            env_dict = {'submit_queue' : bq}
+            env_dict['submit_queue'] = bq
         proj = self.get_project()
         if proj:
-            env_dict = {'project_id' : proj}
+            env_dict['project_id'] = proj
         rgt_utilities.set_harness_environment(env_dict, override=True)
 
         if 'EnvVars' in rgt_test_config:

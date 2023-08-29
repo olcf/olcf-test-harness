@@ -33,7 +33,7 @@ class LSF(BaseScheduler):
         print("Submitting job from LSF class using batchfilename " + batchfilename)
 
         qargs = ""
-        if 'RGT_BATCT_QUEUE' in os.environ:
+        if 'RGT_BATCH_QUEUE' in os.environ:
             qargs += " -q " + os.environ.get('RGT_BATCH_QUEUE')
         elif 'RGT_SUBMIT_QUEUE' in os.environ:
             qargs += " -q " + os.environ.get('RGT_SUBMIT_QUEUE')
