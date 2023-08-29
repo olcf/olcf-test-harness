@@ -247,8 +247,7 @@ def auto_generated_scripts(harness_config,
                 if job_id != "0":
                     jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
                 else:
-                    print("SUBMIT ERROR: failed to retrieve job id!")
-                    message = f"{messloc} Failed to retrieve the job id."
+                    message = f"{messloc} Submit error, failed to retrieve the job id."
                     a_logger.doCriticalLogging(message)
                     submit_exit_value = 1
 
@@ -278,8 +277,7 @@ def auto_generated_scripts(harness_config,
             run_exit_value = p.returncode
             run_stdout.close()
         else:
-            print("RUN ERROR: failed to retrieve job id!")
-            message = f"{messloc} Failed to retrieve the job id."
+            message = f"{messloc} Run error, failed to retrieve the job id."
             a_logger.doCriticalLogging(message)
             run_exit_value = 1
 
@@ -297,9 +295,11 @@ def auto_generated_scripts(harness_config,
             mymachine.start_report_executable()
             influx_reported = mymachine.log_to_influx()
             if not influx_reported:
-                print("Results not logged to influxDB")
+                message = f"{messloc} results not logged to InfluxDB."
+                a_logger.doCriticalLogging(message)
         else:
-            print("CHECK ERROR: failed to retrieve job id!")
+            message = f"{messloc} check error, failed to retrieve the job id."
+            a_logger.doCriticalLogging(message)
             check_exit_value = 1
 
     exit_values = {
@@ -404,7 +404,7 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    print(f"In test_harness_driver, creating logger with logger_name={logger_name}, fh_filepath={fh_filepath}")
+    print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -431,7 +431,7 @@ def test_harness_driver(argv=None):
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
-            print(message)
+            apptest.doCriticalLogging(message)
             runarchive_dir = apptest.get_path_to_runarchive()
             logging.shutdown()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
@@ -469,6 +469,7 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
+    print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     sfile_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -504,22 +505,22 @@ def test_harness_driver(argv=None):
     build_exit_value = 0
     if actions['build']:
         build_exit_value = exit_values['build']
-        print(f'build exit value = {build_exit_value}')
+        apptest.doInfoLogging(f'build exit value = {build_exit_value}')
 
     submit_exit_value = 0
     if actions['submit']:
         submit_exit_value = exit_values['submit']
-        print(f'submit exit value = {submit_exit_value}')
+        apptest.doInfoLogging(f'submit exit value = {submit_exit_value}')
 
     run_exit_value = 0
     if actions['run']:
         run_exit_value = exit_values['run']
-        print(f'run exit value = {run_exit_value}')
+        apptest.doInfoLogging(f'run exit value = {run_exit_value}')
 
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
-        print(f'check exit value = {check_exit_value}')
+        apptest.doInfoLogging(f'check exit value = {check_exit_value}')
 
         # Now read the result from the job_status.txt file.
         jspath = os.path.join(status_dir, layout.job_status_filename)
