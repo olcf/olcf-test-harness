@@ -467,13 +467,13 @@ class StatusFile:
             file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
                                  event_filename)
             if not os.path.exists(file_path):
-                self.__logger.doWarningLogging(f"Couldn't find status file to log to Influx: {file_path}. Returning.")
+                self.__logger.doErrorLogging(f"Couldn't find status file to log to Influx: {file_path}. Returning.")
                 return False
             status_info_dict = {}
             with open(file_path, 'r') as cur_status_file:
                 line = cur_status_file.readline()
                 line = line.split('\t')
-                self.__logger.doInfoLogging(f"Got line: {line} from status file: {cur_status_file}")
+                self.__logger.doDebugLogging(f"Got line: {line} from status file: {cur_status_file}")
                 # Exclude entry 0 (timestamp) - iso-formatted
                 status_info_dict['event_time'] = line[0]
                 status_info_dict['event_value'] = line[1]

@@ -404,7 +404,7 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
+    #print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -469,7 +469,7 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
+    #print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     sfile_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,

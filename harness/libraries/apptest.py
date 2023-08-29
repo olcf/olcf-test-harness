@@ -678,6 +678,7 @@ class subtest(base_apptest, apptest_layout):
         def local_send_to_influx(influx_url, influx_event_record_string, headers):
             try:
                 if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
+                    # RGT_INFLUX_NO_SEND explicitly tells the harness to print the Influx Event string, so use print()
                     print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
                 elif not 'requests' in sys.modules:
                     self.logger.doWarningLogging(f"InfluxDB is currently disabled. Reason: 'requests' module was unable to load. Skipping InfluxDB message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server.")
@@ -886,7 +887,7 @@ class subtest(base_apptest, apptest_layout):
             line = next(end_fstr)
             end_timestamp = line.split()[0]
         if len(start_timestamp) <= 1 or len(end_timestamp) <= 1:
-            print(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
+            self.logger.doErrorLogging(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
             return -1
         #start_ts_dt = datetime.fromisoformat(start_timestamp)
         #end_ts_dt = datetime.fromisoformat(end_timestamp)

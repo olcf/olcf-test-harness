@@ -297,7 +297,7 @@ class Harness:
             message = "All applications completed futures. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
             # For the moment, hard-code this as a print statement.
-            print(f"Skipped {self.__skipped_tests}, launched {self.__launched_tests}.")
+            print(f"Launched {self.__launched_tests} tests, skipped {self.__skipped_tests} tests.")
 
         return
 
