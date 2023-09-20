@@ -1,12 +1,20 @@
+.. _section_launching_oth:
+
 =====================================
 Launching the OLCF Test Harness (OTH)
 =====================================
 
-To launch the OLCF Test Harness (OTH) you must first access the harness code.
-This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that will be available on each system under test.
+This section serves as a quick-start guide for launching an existing test using the OTH.
+For creating a new test, see :ref:`section_new_test`.
+For adding support for a new machine, see :ref:`section_new_machine`.
+
+.. _oth_setup:
 
 OTH Setup
 ---------
+
+To launch the OLCF Test Harness (OTH) you must first access the harness code.
+This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that will be available on each system under test.
 
 Option 1: Using the centralized (pre-built) OTH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -47,10 +55,13 @@ Setup the environment:
     export OLCF_HARNESS_MACHINE=<machine_name>
 
 .. note::
-    You must have the *$OLCF_HARNESS_MACHINE.ini* file in a directory searched by your PATH environment variable for your specified machine.
-    In the centralized harness, this is provided for you in the *$OLCF_HARNESS_DIR/configs* directory.
-    An *example_machine.ini* file is provided in the *configs* directory,
+    You must have the *$OLCF_HARNESS_MACHINE.ini* file in your current directory or in *$OLCF_HARNESS_DIR/configs*.
+    An *example_machine.ini* file is provided in the *$OLCF_HARNESS_DIR/configs* directory,
     and OLCF machine examples are provided in the *configs/olcf_examples* directory.
+    For creating a new machine, see :ref:`section_new_machine`.
+
+
+.. launching_oth:
 
 Launching the OTH
 -----------------
@@ -75,7 +86,7 @@ In this example for Summit, the application **hello_mpi** is used and we specify
 
     Tests may be hosted in GitHub/GitLab, or may be placed on the file system in the directory specified by ``Path_to_tests``.
     The OTH can automatically clone Git repositories from remote servers.
-    Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file.
+    Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine`).
     Applications not hosted in GitHub/GitLab must be manually placed in ``Path_to_tests``.
 
 .. code-block:: bash
@@ -103,11 +114,11 @@ To launch via the CLI, use a command like the following:
 
 .. code-block:: bash
 
-    runtests.py --inputfile rgt.input.lyra --mode checkout
-    runtests.py --inputfile rgt.input.lyra --mode start
-    runtests.py --inputfile rgt.input.lyra --mode checkout start stop
+    # Preferred to checkout separately, to verify that the checkout was successful
+    runtests.py --inputfile rgt.input.summit --mode checkout
+    runtests.py --inputfile rgt.input.summit --mode start stop
 
-To launch tasks in the input file, add lines like the following to ``rgt.input.summit``:
+To launch tasks in the input file instead of the command-line, add lines like the following to ``rgt.input.summit``:
 
 .. code-block:: text
 
@@ -119,14 +130,22 @@ To launch tasks in the input file, add lines like the following to ``rgt.input.s
 When using the checkout mode, the application source repository will be cloned to the *<Path_to_tests>/<app-name>* directory for all the tests,
 but no tests will be run.
 
-After using the start mode, results of the most recent test run can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/latest*.
+After using the start mode, results of the most recent test run can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/<testid>*.
+Results of the most recent test run can be found in the *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/latest* symbolic link.
 
+.. note::
+
+    The *latest* link may not update cleanly if multiple instances of the same test are running simultaneously.
+    The OTH will print a warning, but will continue running.
+
+
+.. _runtime_configurable_parameters:
 
 Run-time configurable parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The OTH is designed to automatically ingest many parameters from user-set environment variables at launch time.
-All parameters in the *$OLCF_HARNESS_MACHINE.ini* file can be overridden by a corresponding environment variable.
+Nearly all parameters in the *$OLCF_HARNESS_MACHINE.ini* file can be directly overridden by a corresponding environment variable.
 For example, *git_reps_branch* is a parameter in *$OLCF_HARNESS_MACHINE.ini* that specifies the branch of the remote repository to clone.
 The *RGT_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
 The precedence of configuration options from lowest to highest is:
@@ -135,5 +154,16 @@ The precedence of configuration options from lowest to highest is:
 2. User-set environment variables (ie, *RGT_GIT_REPS_BRANCH*, *RGT_PROJ_ID*)
 3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.[ini,txt]*
 
-The specific parameters are discussed in the sections for adding new tests and new machines to the OTH.
+The specific parameters are defined in :ref:`section_new_test` and :ref:`section_new_machine`.
+
+The exception to this is setting the batch queue and project ID used for submission.
+The precedence of configuration options for the batch queue and project ID from lowest to highest is:
+
+1. **batch_queue** and **project_id** from *$OLCF_HARNESS_MACHINE.ini* (**RGT_BATCH_QUEUE** and **RGT_PROJECT_ID**)
+2. **batch_queue** and **project_id** from *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
+3. User-set environment variables: **RGT_SUBMIT_QUEUE** and **RGT_ACCT_ID**
+
+Since the test configuration overrides the machine configuration for these two variables, the user cannot use the same environment variable names to override the settings.
+The test configuration will just override whatever the user sets, because the OTH does not know who sets **RGT_BATCH_QUEUE** -- the user or the *machine.ini*.
+So, two separate variables are used to override the machine and test configuration: **RGT_SUBMIT_QUEUE** for setting a batch queue and **RGT_ACCT_ID** for setting the account ID for submission.
 

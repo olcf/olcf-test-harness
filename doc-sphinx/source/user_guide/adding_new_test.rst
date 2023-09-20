@@ -1,3 +1,5 @@
+.. _section_new_test:
+
 ============================
 Adding a New Test to the OTH
 ============================

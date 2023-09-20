@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Launching the OLCF Test Harness (OTH) &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -109,21 +108,24 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Launching the OLCF Test Harness (OTH)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#oth-setup">OTH Setup</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#on-lyra">On Lyra</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#on-spock">On Spock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#launching-the-oth">Launching the OTH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#launching-the-oth">Launching the OTH</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-time-configurable-parameters">Run-time configurable parameters</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test to the OTH</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-url">Repository URL</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-structure">Repository structure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#example-repository">Example Repository</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#example-repository-structure">Example Repository Structure</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-test-input">Application Test Input</a></li>
@@ -131,68 +133,23 @@
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#build-script">Build Script</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#job-script-template">Job Script Template</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-script">Check Script</a></li>
-<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#notes-on-where-things-are">Notes on Where Things Are</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#report-script">Report Script</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a></li>
-</ul>
-<p class="caption"><span class="caption-text">Developer Guide</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/notational_conventions.html">Notational Conventions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/notational_conventions.html#indices-and-tables">Indices and tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_machine.html#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/intro.html">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#raison-d-etre">Raison d’etre</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#organizational-structure">Organizational Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#prequisites">Prequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#indices-and-tables">Indices and tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions to the OLCF Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#influxdb-event-logging">InfluxDB Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/unit_test_framework.html">Git Unit Test Framework</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#organizational-structure">Organizational Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#setting-up-the-harness-unit-testing-runtime-environment">Setting Up the Harness Unit Testing Runtime Environment</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#generic-tests">Generic Tests</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#machine-specific-tests">Machine Specific Tests</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#running-the-harness-unit-tests">Running the Harness Unit Tests</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#id1">Generic Tests</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#id2">Machine Specific Tests</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#harness-unit-testing-api">Harness Unit Testing API</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework/git_ci_test_framework.html">Usage and Developer Documentation for GitLab CI/CD</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework/pytest_test_framework.html">Usage and Developer Documentation for Harness’ pytest Unit Tests</a><ul class="simple">
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/packages.html">NCCS Harness Python Packages</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/packages/repositories.html">NCCS Harness repositories package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#intoduction">Intoduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#prerequisite-environmental-variables">Prerequisite Environmental Variables</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#examples">Examples</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#modules">Modules</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/packages/bin.html">NCCS Harness bin package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/bin.html#intoduction">Intoduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/bin.html#modules">Modules</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/modules.html">harness</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/references.html">References</a></li>
 </ul>
 
             
@@ -260,40 +217,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="launching-the-olcf-test-harness-oth">
-<h1>Launching the OLCF Test Harness (OTH)<a class="headerlink" href="#launching-the-olcf-test-harness-oth" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="launching-the-olcf-test-harness-oth">
+<span id="section-launching-oth"></span><h1>Launching the OLCF Test Harness (OTH)<a class="headerlink" href="#launching-the-olcf-test-harness-oth" title="Permalink to this headline">¶</a></h1>
+<p>This section serves as a quick-start guide for launching an existing test using the OTH.
+For creating a new test, see <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test to the OTH</span></a>.
+For adding support for a new machine, see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>.</p>
+<div class="section" id="oth-setup">
+<span id="id1"></span><h2>OTH Setup<a class="headerlink" href="#oth-setup" title="Permalink to this headline">¶</a></h2>
 <p>To launch the OLCF Test Harness (OTH) you must first access the harness code.
-This can be done in two ways, one by obtaining your own copy of the code or
-using the centralized harness code that will be available on the system under
-test.</p>
-<section id="oth-setup">
-<h2>OTH Setup<a class="headerlink" href="#oth-setup" title="Permalink to this headline">¶</a></h2>
-<section id="option-1-using-the-centralized-pre-built-oth">
+This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that will be available on each system under test.</p>
+<div class="section" id="option-1-using-the-centralized-pre-built-oth">
 <h3>Option 1: Using the centralized (pre-built) OTH<a class="headerlink" href="#option-1-using-the-centralized-pre-built-oth" title="Permalink to this headline">¶</a></h3>
-<section id="on-lyra">
-<h4>On Lyra<a class="headerlink" href="#on-lyra" title="Permalink to this headline">¶</a></h4>
-<p>The code is already installed in: <em>/sw/lyra/acceptance/olcf-test-harness</em></p>
+<div class="section" id="on-andes-crusher-frontier-and-summit">
+<h4>On Andes, Crusher, Frontier, and Summit<a class="headerlink" href="#on-andes-crusher-frontier-and-summit" title="Permalink to this headline">¶</a></h4>
+<p>On most OLCF machines, the code is already installed in: <em>/sw/acceptance/olcf-test-harness</em></p>
 <p>Setup the environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span>/sw/lyra/acceptance/olcf-test-harness
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span>/sw/acceptance/olcf-test-harness
 module use <span class="nv">$OLCF_HARNESS_DIR</span>/modulefiles
 module load olcf_harness
-<span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>lyra
+<span class="c1"># Machine name examples: andes, crusher, frontier, summit</span>
+<span class="c1"># Check ${OLCF_HARNESS_DIR}/configs/*.ini to see all available machines</span>
+<span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>&lt;machine_name&gt;
 </pre></div>
 </div>
-</section>
-<section id="on-spock">
-<h4>On Spock<a class="headerlink" href="#on-spock" title="Permalink to this headline">¶</a></h4>
-<p>The code is already installed in: <em>/ccs/proj/stf016/spock_acpt/olcf-test-harness</em></p>
-<p>Setup the environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span>/ccs/proj/stf016/spock_acpt/olcf-test-harness/
-module use <span class="nv">$OLCF_HARNESS_DIR</span>/modulefiles
-module load olcf_harness
-<span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>spock
-</pre></div>
 </div>
-</section>
-</section>
-<section id="option-2-using-your-own-copy-of-the-harness">
+</div>
+<div class="section" id="option-2-using-your-own-copy-of-the-harness">
 <h3>Option 2: Using your own copy of the harness<a class="headerlink" href="#option-2-using-your-own-copy-of-the-harness" title="Permalink to this headline">¶</a></h3>
 <p>Clone the repo on the target system:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/olcf/olcf-test-harness.git
@@ -301,36 +250,42 @@ module load olcf_harness
 </div>
 <p>Setup the environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> olcf-test-harness
-<span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span><span class="sb">``</span><span class="nb">pwd</span><span class="sb">``</span>
+<span class="nb">export</span> <span class="nv">OLCF_HARNESS_DIR</span><span class="o">=</span><span class="si">${</span><span class="nv">PWD</span><span class="si">}</span>
 module use <span class="nv">$OLCF_HARNESS_DIR</span>/modulefiles
 module load olcf_harness
-<span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>&lt;machine&gt;
+<span class="nb">export</span> <span class="nv">OLCF_HARNESS_MACHINE</span><span class="o">=</span>&lt;machine_name&gt;
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>You must have the &lt;machine&gt;.ini file in a directory searched by your PATH
-environment variable for your specified machine. On Spock and Lyra, this
-is provided for you in the centralized harness. An example_machine.ini
-file is provided in the configs directory.</p>
+<p>You must have the <em>$OLCF_HARNESS_MACHINE.ini</em> file in your current directory or in <em>$OLCF_HARNESS_DIR/configs</em>.
+An <em>example_machine.ini</em> file is provided in the <em>$OLCF_HARNESS_DIR/configs</em> directory,
+and OLCF machine examples are provided in the <em>configs/olcf_examples</em> directory.
+For creating a new machine, see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>.</p>
 </div>
-</section>
-</section>
-<section id="launching-the-oth">
+</div>
+</div>
+<div class="section" id="launching-the-oth">
 <h2>Launching the OTH<a class="headerlink" href="#launching-the-oth" title="Permalink to this headline">¶</a></h2>
-<p>Create a directory for your run - this is where you will place input files and
-retrieve a copy of OTH log files. No computation will be done here:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir lyra_testshot
-<span class="nb">cd</span> lyra_testshot
+<div class="section" id="getting-started">
+<h3>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h3>
+<p>Create a directory for your run - this is where you will place input files and retrieve a copy of OTH log files. No computation will be done here:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir summit_testshot
+<span class="nb">cd</span> summit_testshot
 </pre></div>
 </div>
-<p>Prepare an input file of tests (e.g., <em>rgt.input.lyra</em>). In the file, set
-<code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> to the location where you would like application source and
-run files to be kept (note that the directory provided must be an existing
-directory on a file system visible to the current machine). Next, provide one
-or more tests to run in the format <code class="docutils literal notranslate"><span class="pre">Test</span> <span class="pre">=</span> <span class="pre">&lt;app-name&gt;</span> <span class="pre">&lt;test-name&gt;</span></code>. In this
-example for Lyra, the application <strong>hello_mpi</strong> is used and we specify two
-tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
+<p>Prepare an input file of tests (e.g., <em>rgt.input.summit</em>).
+In the file, set <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> to the location where you would like application source and run files to be kept
+(note that the directory provided must be an existing directory on a file system visible to the current machine).
+Next, provide one or more tests to run in the format <code class="docutils literal notranslate"><span class="pre">Test</span> <span class="pre">=</span> <span class="pre">&lt;app-name&gt;</span> <span class="pre">&lt;test-name&gt;</span></code>.
+In this example for Summit, the application <strong>hello_mpi</strong> is used and we specify two tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Tests may be hosted in GitHub/GitLab, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.
+The OTH can automatically clone Git repositories from remote servers.
+Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>).
+Applications not hosted in GitHub/GitLab must be manually placed in <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.</p>
+</div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">################################################################################</span>
 <span class="c1">#  Set the path to the top level of the application directory.                 #</span>
 <span class="c1">################################################################################</span>
@@ -341,26 +296,60 @@ tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
 <span class="nv">Test</span> <span class="o">=</span> hello_mpi c_n002
 </pre></div>
 </div>
-<p>Set a different scratch area for this specific instance of the harness (a
-default is set but this lets you change the default):</p>
+<p>Set a different scratch area for this specific instance of the harness (a default is set from <em>$OLCF_HARNESS_MACHINE.ini</em>, but this lets you change the default):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>&lt;some path <span class="k">in</span> the file system&gt;/Scratch
 </pre></div>
 </div>
-<p>The latest version of the harness supports command line tasks as well as input
-file tasks. If no tasks are provided in the input file, it will use the command
-line mode. To launch via the CLI, use a command like the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>runtests.py --inputfile rgt.input.lyra --mode checkout
-runtests.py --inputfile rgt.input.lyra --mode start
-runtests.py --inputfile rgt.input.lyra --mode checkout start stop
+<p>The latest version of the harness supports command line tasks as well as input file tasks.
+If no tasks are provided in the input file, it will use the command line mode.
+To launch via the CLI, use a command like the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Preferred to checkout separately, to verify that the checkout was successful</span>
+runtests.py --inputfile rgt.input.summit --mode checkout
+runtests.py --inputfile rgt.input.summit --mode start stop
 </pre></div>
 </div>
-<p>When using the checkout mode, the application source repository will be cloned
-to the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;</em> directory for all the tests, but no tests
-will be run.</p>
-<p>After using the start mode, results of the most recent test run can be found in
-<em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/latest</em>.</p>
-</section>
-</section>
+<p>To launch tasks in the input file instead of the command-line, add lines like the following to <code class="docutils literal notranslate"><span class="pre">rgt.input.summit</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># 1 task per line
+harness_task start
+harness_task stop
+</pre></div>
+</div>
+<p>When using the checkout mode, the application source repository will be cloned to the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;</em> directory for all the tests,
+but no tests will be run.</p>
+<p>After using the start mode, results of the most recent test run can be found in <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/&lt;testid&gt;</em>.
+Results of the most recent test run can be found in the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/latest</em> symbolic link.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <em>latest</em> link may not update cleanly if multiple instances of the same test are running simultaneously.
+The OTH will print a warning, but will continue running.</p>
+</div>
+</div>
+<div class="section" id="run-time-configurable-parameters">
+<span id="runtime-configurable-parameters"></span><h3>Run-time configurable parameters<a class="headerlink" href="#run-time-configurable-parameters" title="Permalink to this headline">¶</a></h3>
+<p>The OTH is designed to automatically ingest many parameters from user-set environment variables at launch time.
+Nearly all parameters in the <em>$OLCF_HARNESS_MACHINE.ini</em> file can be directly overridden by a corresponding environment variable.
+For example, <em>git_reps_branch</em> is a parameter in <em>$OLCF_HARNESS_MACHINE.ini</em> that specifies the branch of the remote repository to clone.
+The <em>RGT_GIT_REPS_BRANCH</em> environment variable can be used to override this value at launch time.
+The precedence of configuration options from lowest to highest is:</p>
+<ol class="arabic simple">
+<li><p><em>$OLCF_HARNESS_MACHINE.ini</em></p></li>
+<li><p>User-set environment variables (ie, <em>RGT_GIT_REPS_BRANCH</em>, <em>RGT_PROJ_ID</em>)</p></li>
+<li><p><em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.[ini,txt]</em></p></li>
+</ol>
+<p>The specific parameters are defined in <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test to the OTH</span></a> and <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>.</p>
+<p>The exception to this is setting the batch queue and project ID used for submission.
+The precedence of configuration options for the batch queue and project ID from lowest to highest is:</p>
+<ol class="arabic simple">
+<li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>$OLCF_HARNESS_MACHINE.ini</em> (<strong>RGT_BATCH_QUEUE</strong> and <strong>RGT_PROJECT_ID</strong>)</p></li>
+<li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.ini</em></p></li>
+<li><p>User-set environment variables: <strong>RGT_SUBMIT_QUEUE</strong> and <strong>RGT_ACCT_ID</strong></p></li>
+</ol>
+<p>Since the test configuration overrides the machine configuration for these two variables, the user cannot use the same environment variable names to override the settings.
+The test configuration will just override whatever the user sets, because the OTH does not know who sets <strong>RGT_BATCH_QUEUE</strong> – the user or the <em>machine.ini</em>.
+So, two separate variables are used to override the machine and test configuration: <strong>RGT_SUBMIT_QUEUE</strong> for setting a batch queue and <strong>RGT_ACCT_ID</strong> for setting the account ID for submission.</p>
+</div>
+</div>
+</div>
 
 
            </div>

@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Overview of the Test Harness &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -109,21 +108,24 @@
 <li class="toctree-l1"><a class="reference internal" href="launching.html">Launching the OLCF Test Harness (OTH)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="launching.html#oth-setup">OTH Setup</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="launching.html#on-lyra">On Lyra</a></li>
-<li class="toctree-l4"><a class="reference internal" href="launching.html#on-spock">On Spock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="launching.html#launching-the-oth">Launching the OTH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#launching-the-oth">Launching the OTH</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#getting-started">Getting Started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#run-time-configurable-parameters">Run-time configurable parameters</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test to the OTH</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-url">Repository URL</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-structure">Repository structure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#example-repository">Example Repository</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#example-repository-structure">Example Repository Structure</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-test-input">Application Test Input</a></li>
@@ -131,68 +133,23 @@
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#build-script">Build Script</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#job-script-template">Job Script Template</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-script">Check Script</a></li>
-<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#notes-on-where-things-are">Notes on Where Things Are</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#report-script">Report Script</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a></li>
-</ul>
-<p class="caption"><span class="caption-text">Developer Guide</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/notational_conventions.html">Notational Conventions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/notational_conventions.html#indices-and-tables">Indices and tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_machine.html#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/intro.html">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#raison-d-etre">Raison d’etre</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#organizational-structure">Organizational Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#prequisites">Prequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/intro.html#indices-and-tables">Indices and tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions to the OLCF Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#influxdb-event-logging">InfluxDB Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/unit_test_framework.html">Git Unit Test Framework</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#organizational-structure">Organizational Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#setting-up-the-harness-unit-testing-runtime-environment">Setting Up the Harness Unit Testing Runtime Environment</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#generic-tests">Generic Tests</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#machine-specific-tests">Machine Specific Tests</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#running-the-harness-unit-tests">Running the Harness Unit Tests</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#id1">Generic Tests</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework.html#id2">Machine Specific Tests</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/unit_test_framework.html#harness-unit-testing-api">Harness Unit Testing API</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework/git_ci_test_framework.html">Usage and Developer Documentation for GitLab CI/CD</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/unit_test_framework/pytest_test_framework.html">Usage and Developer Documentation for Harness’ pytest Unit Tests</a><ul class="simple">
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/packages.html">NCCS Harness Python Packages</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/packages/repositories.html">NCCS Harness repositories package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#intoduction">Intoduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#prerequisite-environmental-variables">Prerequisite Environmental Variables</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#examples">Examples</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/repositories.html#modules">Modules</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../developer_guide/packages/bin.html">NCCS Harness bin package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/bin.html#intoduction">Intoduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../developer_guide/packages/bin.html#modules">Modules</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/modules.html">harness</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../developer_guide/references.html">References</a></li>
 </ul>
 
             
@@ -260,9 +217,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="overview-of-the-test-harness">
+  <div class="section" id="overview-of-the-test-harness">
 <h1>Overview of the Test Harness<a class="headerlink" href="#overview-of-the-test-harness" title="Permalink to this headline">¶</a></h1>
-<section id="purpose">
+<div class="section" id="purpose">
 <h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 </div>
@@ -272,8 +229,8 @@ individual standalone tests or to simulate production workloads by running a
 large collection of tests continuously. Each test provides its own scripts that
 support the core operations of building executables, running jobs, and checking
 test results.</p>
-</section>
-<section id="execution-overview">
+</div>
+<div class="section" id="execution-overview">
 <h2>Execution Overview<a class="headerlink" href="#execution-overview" title="Permalink to this headline">¶</a></h2>
 <p><em>runtests.py</em> is the program used to execute the OTH. Users provide a test
 input file that lists the set of application tests to run, and a command-line
@@ -282,39 +239,9 @@ or continuously (<strong>--mode start</strong>). In continuous mode, the test jo
 option to resubmit another iteration of the test.</p>
 <p>A brief logical flow of harness execution follows:</p>
 <hr class="docutils" />
-<ul class="simple">
-<li><p>Read ‘RGT_PATH_TO_SSPACE’ from environment (OTH_SCRATCH)</p></li>
-<li><p>Read ‘Path_to_tests’ from inputfile (OTH_APPS)</p></li>
-<li><p>Read Machine configurations from &lt;machine&gt;.ini</p></li>
-<li><dl class="simple">
-<dt>foreach (app,test) in inputfile:</dt><dd><ol class="arabic simple">
-<li><p>generate unique id (UID)</p></li>
-<li><p>create <em>Run_Archive</em> and <em>Status</em> directories &#64; <em>OTH_APPS/app/test/{Run_Archive,Status}/UID</em></p></li>
-<li><p>create scratch directory (APPTEST_SCRATCH) &#64; <em>OTH_SCRATCH/app/test/UID</em></p></li>
-<li><p>recursively copy <em>OTH_APPS/app/Source/ to APPTEST_SCRATCH/build_directory/</em></p></li>
-<li><p>change working directory to <em>APPTEST_SCRATCH/build_directory/</em>, and execute test’s build command</p></li>
-<li><p>if build script succeeds, generate test’s job script from template in <em>OTH_APPS/app/test/Scripts</em></p></li>
-<li><dl class="simple">
-<dt>submit job script to scheduler - when job runs, it:</dt><dd><ul>
-<li><p>changes working directory to <em>APPTEST_SCRATCH/workdir</em> (after creating it
-if necessary)</p></li>
-<li><p>copies any needed input files from <em>OTH_APPS/app/test</em></p></li>
-<li><p>runs the test executable</p></li>
-<li><p>copies any needed output files back to the <em>Run_Archive</em> directory</p></li>
-<li><p>runs the test’s check command, passing it the <em>Run_Archive</em> directory
-location</p></li>
-<li><p>if in continuous mode, start another iteration of the harness test end</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ol>
-</dd>
-</dl>
-</li>
-</ul>
-</section>
-</section>
+<a class="reference internal image-reference" href="../_images/OTH_flowchart.jpg"><img alt="OTH Flowchart" class="align-center" src="../_images/OTH_flowchart.jpg" style="width: 60%;" /></a>
+</div>
+</div>
 
 
            </div>
