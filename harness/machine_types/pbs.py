@@ -31,10 +31,10 @@ class PBS(BaseScheduler):
         print("Submitting job from PBS class using batchfilename " + batchfilename)
 
         qargs = ""
-        if 'RGT_BATCH_QUEUE' in os.environ:
-            qargs += " -q " + os.environ.get('RGT_BATCH_QUEUE')
-        elif 'RGT_SUBMIT_QUEUE' in os.environ:
+        if 'RGT_SUBMIT_QUEUE' in os.environ:
             qargs += " -q " + os.environ.get('RGT_SUBMIT_QUEUE')
+        elif 'RGT_BATCH_QUEUE' in os.environ:
+            qargs += " -q " + os.environ.get('RGT_BATCH_QUEUE')
 
         if 'RGT_SUBMIT_ARGS' in os.environ:
             qargs += " " + os.environ.get('RGT_SUBMIT_ARGS')

@@ -499,7 +499,7 @@ class RgtTest():
         env_dict = {}
         bq = self.get_batch_queue()
         if bq:
-            env_dict['submit_queue'] = bq
+            env_dict['batch_queue'] = bq
         proj = self.get_project()
         if proj:
             env_dict['project_id'] = proj
