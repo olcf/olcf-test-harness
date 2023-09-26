@@ -1,8 +1,8 @@
 .. _section_new_machine:
 
-===============================
-Adding a New Machine to the OTH
-===============================
+====================
+Adding a New Machine
+====================
 
 The following steps can be used to add support for a new system:
 

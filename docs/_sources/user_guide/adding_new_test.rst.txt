@@ -1,8 +1,8 @@
 .. _section_new_test:
 
-============================
-Adding a New Test to the OTH
-============================
+=================
+Adding a New Test
+=================
 
 The OLCF Test Harness (OTH) requires a specific source code repository structure for application tests.
 This document describes how to add an application and associated tests for a specific system to the harness.

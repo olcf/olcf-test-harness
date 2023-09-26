@@ -204,3 +204,41 @@ Since the test configuration overrides the machine configuration for these two v
 The test configuration will just override whatever the user sets, because the OTH does not know who sets **RGT_BATCH_QUEUE** -- the user or the *machine.ini*.
 So, two separate variables are used to override the machine and test configuration: **RGT_SUBMIT_QUEUE** for setting a batch queue and **RGT_ACCT_ID** for setting the account ID for submission.
 
+
+.. understanding_output:
+
+Finding Test Output
+-------------------
+
+This section details where all output files can be found once a harness run completes.
+There are 4 directories referenced in this section:
+
+- **$BUILD_DIR** - the build directory, equal to **$RGT_PATH_TO_SSPACE/<app>/<test>/<test-id>/build_directory**
+- **$WORK_DIR** - equal to **$RGT_PATH_TO_SSPACE/<app>/<test>/<test-id>/workdir**
+- **$RESULTS_DIR** - the directory used to launch the job and store relevant output, equal to **<Path_to_tests>/<app>/<test>/Run_Archive/<test-id>**
+- **$STATUS_DIR** - the directory used to store harness status files, equal to **<Path_to_tests>/<app>/<test>/Status/<test-id>**
+
+Build, Submit, and Check Output
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each OTH test run consists of 4 primary stages -- build, submit, run, and check, as can be seen in :ref:`section_overview`.
+The build, submit, and check stages have pre-defined locations for the output:
+
+- build output: **${BUILD_DIR}/output_build.txt**
+- submit output: **${RESULTS_DIR}/submit.{out,err}**
+- check output: **${RESULTS_DIR}/output_check.txt**
+
+Application Output
+^^^^^^^^^^^^^^^^^^
+
+Output from the executable run can be found in one of two places.
+
+- Uncaptured output to stdout/stderr: **${RESULTS_DIR}/<job_stdout/stderr_file>**
+- Any output files created by the application should be in **${WORK_DIR}**
+
+Harness-maintained Log Files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
+These log files can be used to check internal error messages reported by extensions of the OTH such as InfluxDB event and metric logging.
+These log files are found in **${RESULTS_DIR}/LogFiles**.

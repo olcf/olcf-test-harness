@@ -1,3 +1,5 @@
+.. _section_overview:
+
 ============================
 Overview of the Test Harness
 ============================

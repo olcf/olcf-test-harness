@@ -15,6 +15,7 @@ OLCF Test Harness Documentation
    user_guide/adding_new_test
    user_guide/adding_new_machine
    user_guide/extensions
+   user_guide/contributing
 
 ..
  toctree::

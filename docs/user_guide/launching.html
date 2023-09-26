@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Launching the OLCF Test Harness (OTH) &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  <title>Quick-Start Guide &mdash; NCCS_Test_Harness 1.0 documentation</title>
   
 
   
@@ -43,7 +43,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Adding a New Test to the OTH" href="adding_new_test.html" />
+    <link rel="next" title="Adding a New Test" href="adding_new_test.html" />
     <link rel="prev" title="Overview of the Test Harness" href="overview.html" /> 
 </head>
 
@@ -105,8 +105,8 @@
 <li class="toctree-l2"><a class="reference internal" href="overview.html#execution-overview">Execution Overview</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Launching the OLCF Test Harness (OTH)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#oth-setup">OTH Setup</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick-Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
 </ul>
@@ -115,13 +115,20 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#launching-the-oth">Launching the OTH</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#getting-started">Getting Started</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#run-time-configurable-parameters">Run-time configurable parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-line-options">Command-line Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-time-environment-parameters">Run-time environment parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#finding-test-output">Finding Test Output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build-submit-and-check-output">Build, Submit, and Check Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-output">Application Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#harness-maintained-log-files">Harness-maintained Log Files</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test to the OTH</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-url">Repository URL</a></li>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-structure">Repository structure</a></li>
@@ -139,15 +146,21 @@
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to the OTH</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_machine.html#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions to the OLCF Test Harness</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#influxdb-event-logging">InfluxDB Event Logging</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#requesting-new-features">Requesting New Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#contributing-source-code">Contributing Source Code</a></li>
 </ul>
 </li>
 </ul>
@@ -198,7 +211,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Launching the OLCF Test Harness (OTH)</li>
+      <li>Quick-Start Guide</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -217,13 +230,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="launching-the-olcf-test-harness-oth">
-<span id="section-launching-oth"></span><h1>Launching the OLCF Test Harness (OTH)<a class="headerlink" href="#launching-the-olcf-test-harness-oth" title="Permalink to this headline">¶</a></h1>
-<p>This section serves as a quick-start guide for launching an existing test using the OTH.
-For creating a new test, see <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test to the OTH</span></a>.
-For adding support for a new machine, see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>.</p>
-<div class="section" id="oth-setup">
-<span id="id1"></span><h2>OTH Setup<a class="headerlink" href="#oth-setup" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="quick-start-guide">
+<span id="section-launching-oth"></span><h1>Quick-Start Guide<a class="headerlink" href="#quick-start-guide" title="Permalink to this headline">¶</a></h1>
+<p>This section serves as a quick-start guide for installing the OTH and launching an existing test.
+For creating a new test, see <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test</span></a>.
+For adding support for a new machine, see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>.</p>
+<div class="section" id="installation">
+<span id="oth-setup"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>To launch the OLCF Test Harness (OTH) you must first access the harness code.
 This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that will be available on each system under test.</p>
 <div class="section" id="option-1-using-the-centralized-pre-built-oth">
@@ -261,14 +274,14 @@ module load olcf_harness
 <p>You must have the <em>$OLCF_HARNESS_MACHINE.ini</em> file in your current directory or in <em>$OLCF_HARNESS_DIR/configs</em>.
 An <em>example_machine.ini</em> file is provided in the <em>$OLCF_HARNESS_DIR/configs</em> directory,
 and OLCF machine examples are provided in the <em>configs/olcf_examples</em> directory.
-For creating a new machine, see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>.</p>
+For creating a new machine, see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>.</p>
 </div>
 </div>
 </div>
 <div class="section" id="launching-the-oth">
 <h2>Launching the OTH<a class="headerlink" href="#launching-the-oth" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="getting-started">
-<h3>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h3>
 <p>Create a directory for your run - this is where you will place input files and retrieve a copy of OTH log files. No computation will be done here:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir summit_testshot
 <span class="nb">cd</span> summit_testshot
@@ -281,9 +294,9 @@ Next, provide one or more tests to run in the format <code class="docutils liter
 In this example for Summit, the application <strong>hello_mpi</strong> is used and we specify two tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Tests may be hosted in GitHub/GitLab, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.
+<p>Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.
 The OTH can automatically clone Git repositories from remote servers.
-Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>).
+Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>).
 Applications not hosted in GitHub/GitLab must be manually placed in <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.</p>
 </div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">################################################################################</span>
@@ -296,13 +309,13 @@ Applications not hosted in GitHub/GitLab must be manually placed in <code class=
 <span class="nv">Test</span> <span class="o">=</span> hello_mpi c_n002
 </pre></div>
 </div>
-<p>Set a different scratch area for this specific instance of the harness (a default is set from <em>$OLCF_HARNESS_MACHINE.ini</em>, but this lets you change the default):</p>
+<p>Set a scratch area for this specific instance of the harness (a default is set from <em>$OLCF_HARNESS_MACHINE.ini</em>, but this is how to change from the default):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>&lt;some path <span class="k">in</span> the file system&gt;/Scratch
 </pre></div>
 </div>
 <p>The latest version of the harness supports command line tasks as well as input file tasks.
 If no tasks are provided in the input file, it will use the command line mode.
-To launch via the CLI, use a command like the following:</p>
+To launch via the command line, use a command like the following:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Preferred to checkout separately, to verify that the checkout was successful</span>
 runtests.py --inputfile rgt.input.summit --mode checkout
 runtests.py --inputfile rgt.input.summit --mode start stop
@@ -324,9 +337,41 @@ Results of the most recent test run can be found in the <em>&lt;Path_to_tests&gt
 The OTH will print a warning, but will continue running.</p>
 </div>
 </div>
-<div class="section" id="run-time-configurable-parameters">
-<span id="runtime-configurable-parameters"></span><h3>Run-time configurable parameters<a class="headerlink" href="#run-time-configurable-parameters" title="Permalink to this headline">¶</a></h3>
-<p>The OTH is designed to automatically ingest many parameters from user-set environment variables at launch time.
+<div class="section" id="command-line-options">
+<span id="id1"></span><h3>Command-line Options<a class="headerlink" href="#command-line-options" title="Permalink to this headline">¶</a></h3>
+<p>The OTH receives configurations from two primary methods: command-line flags and environment variables.
+This section details the command-line parameters and the next section details available environment variables.</p>
+<p>The primary OTH driver script, <code class="docutils literal notranslate"><span class="pre">runtests.py</span></code>, supports the following command-line parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-h,--help                           show help message and exit
+-i,--inputfile INPUTFILE            Input file name (default: rgt.input)
+-c,--configfile CONFIGFILE          Configuration file name (default: ${OLCF_HARNESS_MACHINE}.ini)
+-l,--loglevel LOGLEVEL              Logging level (default: NOTSET)
+                Options: [NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL]
+-o,--output {screen,logfile}        Destination for harness stdout/stderr messages (default: &#39;screen&#39;)
+                Options: [screen,logfile]
+                        &#39;screen&#39;  - print messages to console (default)
+                        &#39;logfile&#39; - print messages to log file
+-m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: &#39;use_harness_tasks_in_rgt_input_file&#39;)
+                Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status,influx_log]
+                        &#39;checkout&#39;   - checkout application tests listed in input file
+                        &#39;start&#39;      - start application tests listed in input file
+                        &#39;stop&#39;       - stop application tests listed in input file
+                        &#39;status&#39;     - check status of application tests listed in input file
+                        &#39;influx_log&#39; - log all runs for application tests listed in input file to InfluxDB
+
+--fireworks                         Use FireWorks to run harness tasks (beta)
+-sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--loglevel</span></code> flag currently does not apply to all output from the OTH.
+This issue is tracked by <a class="reference external" href="https://github.com/olcf/olcf-test-harness/issues/130">Issue 130</a>.</p>
+</div>
+</div>
+<div class="section" id="run-time-environment-parameters">
+<span id="runtime-configurable-parameters"></span><h3>Run-time environment parameters<a class="headerlink" href="#run-time-environment-parameters" title="Permalink to this headline">¶</a></h3>
+<p>The OTH is designed to automatically ingest some parameters from user-set environment variables at launch time.
 Nearly all parameters in the <em>$OLCF_HARNESS_MACHINE.ini</em> file can be directly overridden by a corresponding environment variable.
 For example, <em>git_reps_branch</em> is a parameter in <em>$OLCF_HARNESS_MACHINE.ini</em> that specifies the branch of the remote repository to clone.
 The <em>RGT_GIT_REPS_BRANCH</em> environment variable can be used to override this value at launch time.
@@ -336,7 +381,7 @@ The precedence of configuration options from lowest to highest is:</p>
 <li><p>User-set environment variables (ie, <em>RGT_GIT_REPS_BRANCH</em>, <em>RGT_PROJ_ID</em>)</p></li>
 <li><p><em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.[ini,txt]</em></p></li>
 </ol>
-<p>The specific parameters are defined in <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test to the OTH</span></a> and <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine to the OTH</span></a>.</p>
+<p>The specific parameters are defined in <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test</span></a> and <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>.</p>
 <p>The exception to this is setting the batch queue and project ID used for submission.
 The precedence of configuration options for the batch queue and project ID from lowest to highest is:</p>
 <ol class="arabic simple">
@@ -349,6 +394,41 @@ The test configuration will just override whatever the user sets, because the OT
 So, two separate variables are used to override the machine and test configuration: <strong>RGT_SUBMIT_QUEUE</strong> for setting a batch queue and <strong>RGT_ACCT_ID</strong> for setting the account ID for submission.</p>
 </div>
 </div>
+<div class="section" id="finding-test-output">
+<h2>Finding Test Output<a class="headerlink" href="#finding-test-output" title="Permalink to this headline">¶</a></h2>
+<p>This section details where all output files can be found once a harness run completes.
+There are 4 directories referenced in this section:</p>
+<ul class="simple">
+<li><p><strong>$BUILD_DIR</strong> - the build directory, equal to <strong>$RGT_PATH_TO_SSPACE/&lt;app&gt;/&lt;test&gt;/&lt;test-id&gt;/build_directory</strong></p></li>
+<li><p><strong>$WORK_DIR</strong> - equal to <strong>$RGT_PATH_TO_SSPACE/&lt;app&gt;/&lt;test&gt;/&lt;test-id&gt;/workdir</strong></p></li>
+<li><p><strong>$RESULTS_DIR</strong> - the directory used to launch the job and store relevant output, equal to <strong>&lt;Path_to_tests&gt;/&lt;app&gt;/&lt;test&gt;/Run_Archive/&lt;test-id&gt;</strong></p></li>
+<li><p><strong>$STATUS_DIR</strong> - the directory used to store harness status files, equal to <strong>&lt;Path_to_tests&gt;/&lt;app&gt;/&lt;test&gt;/Status/&lt;test-id&gt;</strong></p></li>
+</ul>
+<div class="section" id="build-submit-and-check-output">
+<h3>Build, Submit, and Check Output<a class="headerlink" href="#build-submit-and-check-output" title="Permalink to this headline">¶</a></h3>
+<p>Each OTH test run consists of 4 primary stages – build, submit, run, and check, as can be seen in <a class="reference internal" href="overview.html#section-overview"><span class="std std-ref">Overview of the Test Harness</span></a>.
+The build, submit, and check stages have pre-defined locations for the output:</p>
+<ul class="simple">
+<li><p>build output: <strong>${BUILD_DIR}/output_build.txt</strong></p></li>
+<li><p>submit output: <strong>${RESULTS_DIR}/submit.{out,err}</strong></p></li>
+<li><p>check output: <strong>${RESULTS_DIR}/output_check.txt</strong></p></li>
+</ul>
+</div>
+<div class="section" id="application-output">
+<h3>Application Output<a class="headerlink" href="#application-output" title="Permalink to this headline">¶</a></h3>
+<p>Output from the executable run can be found in one of two places.</p>
+<ul class="simple">
+<li><p>Uncaptured output to stdout/stderr: <strong>${RESULTS_DIR}/&lt;job_stdout/stderr_file&gt;</strong></p></li>
+<li><p>Any output files created by the application should be in <strong>${WORK_DIR}</strong></p></li>
+</ul>
+</div>
+<div class="section" id="harness-maintained-log-files">
+<h3>Harness-maintained Log Files<a class="headerlink" href="#harness-maintained-log-files" title="Permalink to this headline">¶</a></h3>
+<p>The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
+These log files can be used to check internal error messages reported by extensions of the OTH such as InfluxDB event and metric logging.
+These log files are found in <strong>${RESULTS_DIR}/LogFiles</strong>.</p>
+</div>
+</div>
 </div>
 
 
@@ -357,7 +437,7 @@ So, two separate variables are used to override the machine and test configurati
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="adding_new_test.html" class="btn btn-neutral float-right" title="Adding a New Test to the OTH" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="adding_new_test.html" class="btn btn-neutral float-right" title="Adding a New Test" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="overview.html" class="btn btn-neutral float-left" title="Overview of the Test Harness" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
