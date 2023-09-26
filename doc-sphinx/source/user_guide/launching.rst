@@ -1,17 +1,17 @@
 .. _section_launching_oth:
 
-=====================================
-Launching the OLCF Test Harness (OTH)
-=====================================
+=================
+Quick-Start Guide
+=================
 
-This section serves as a quick-start guide for launching an existing test using the OTH.
+This section serves as a quick-start guide for installing the OTH and launching an existing test.
 For creating a new test, see :ref:`section_new_test`.
 For adding support for a new machine, see :ref:`section_new_machine`.
 
 .. _oth_setup:
 
-OTH Setup
----------
+Installation
+------------
 
 To launch the OLCF Test Harness (OTH) you must first access the harness code.
 This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that will be available on each system under test.
@@ -66,8 +66,8 @@ Setup the environment:
 Launching the OTH
 -----------------
 
-Getting Started
-^^^^^^^^^^^^^^^
+Basic Usage
+^^^^^^^^^^^
 
 Create a directory for your run - this is where you will place input files and retrieve a copy of OTH log files. No computation will be done here:
 
@@ -84,7 +84,7 @@ In this example for Summit, the application **hello_mpi** is used and we specify
 
 .. note::
 
-    Tests may be hosted in GitHub/GitLab, or may be placed on the file system in the directory specified by ``Path_to_tests``.
+    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``.
     The OTH can automatically clone Git repositories from remote servers.
     Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine`).
     Applications not hosted in GitHub/GitLab must be manually placed in ``Path_to_tests``.
@@ -101,7 +101,7 @@ In this example for Summit, the application **hello_mpi** is used and we specify
     Test = hello_mpi c_n002
 
 
-Set a different scratch area for this specific instance of the harness (a default is set from *$OLCF_HARNESS_MACHINE.ini*, but this lets you change the default):
+Set a scratch area for this specific instance of the harness (a default is set from *$OLCF_HARNESS_MACHINE.ini*, but this is how to change from the default):
 
 .. code-block:: bash
 
@@ -110,7 +110,7 @@ Set a different scratch area for this specific instance of the harness (a defaul
 
 The latest version of the harness supports command line tasks as well as input file tasks.
 If no tasks are provided in the input file, it will use the command line mode.
-To launch via the CLI, use a command like the following:
+To launch via the command line, use a command like the following:
 
 .. code-block:: bash
 
@@ -139,12 +139,49 @@ Results of the most recent test run can be found in the *<Path_to_tests>/<app-na
     The OTH will print a warning, but will continue running.
 
 
+.. _command_line_options:
+
+Command-line Options
+^^^^^^^^^^^^^^^^^^^^
+
+The OTH receives configurations from two primary methods: command-line flags and environment variables.
+This section details the command-line parameters and the next section details available environment variables.
+
+The primary OTH driver script, ``runtests.py``, supports the following command-line parameters:
+
+.. code-block::
+
+    -h,--help                           show help message and exit
+    -i,--inputfile INPUTFILE            Input file name (default: rgt.input)
+    -c,--configfile CONFIGFILE          Configuration file name (default: ${OLCF_HARNESS_MACHINE}.ini)
+    -l,--loglevel LOGLEVEL              Logging level (default: NOTSET)
+                    Options: [NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL]
+    -o,--output {screen,logfile}        Destination for harness stdout/stderr messages (default: 'screen')
+                    Options: [screen,logfile]
+                            'screen'  - print messages to console (default)
+                            'logfile' - print messages to log file
+    -m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: 'use_harness_tasks_in_rgt_input_file')
+                    Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status,influx_log]
+                            'checkout'   - checkout application tests listed in input file
+                            'start'      - start application tests listed in input file
+                            'stop'       - stop application tests listed in input file
+                            'status'     - check status of application tests listed in input file
+                            'influx_log' - log all runs for application tests listed in input file to InfluxDB
+
+    --fireworks                         Use FireWorks to run harness tasks (beta)
+    -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
+
+.. note::
+
+    The ``--loglevel`` flag currently does not apply to all output from the OTH.
+    This issue is tracked by `Issue 130 <https://github.com/olcf/olcf-test-harness/issues/130>`_.
+
 .. _runtime_configurable_parameters:
 
-Run-time configurable parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Run-time environment parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The OTH is designed to automatically ingest many parameters from user-set environment variables at launch time.
+The OTH is designed to automatically ingest some parameters from user-set environment variables at launch time.
 Nearly all parameters in the *$OLCF_HARNESS_MACHINE.ini* file can be directly overridden by a corresponding environment variable.
 For example, *git_reps_branch* is a parameter in *$OLCF_HARNESS_MACHINE.ini* that specifies the branch of the remote repository to clone.
 The *RGT_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
