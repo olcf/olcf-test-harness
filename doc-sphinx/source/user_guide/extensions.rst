@@ -1,6 +1,6 @@
-===================================
-Extensions to the OLCF Test Harness
-===================================
+==========
+Extensions
+==========
 
 .. toctree::
    :maxdepth: 1
