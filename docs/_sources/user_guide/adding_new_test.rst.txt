@@ -263,6 +263,7 @@ The check script return value should be one of the following:
 
 These exit codes have no built-in meaning in the OTH other than ``0`` is a successful test and non-zero is a failed test.
 This set of test exit codes has been developed as a standard for test exit codes.
+The check script is launched from **$RESULTS_DIR** and stdout/stderr is captured in **$RESULTS_DIR/output_check.txt**.
 
 For *hello_mpi*, an example check script named *check_hello_mpi_c.sh* may
 contain the following:
@@ -279,8 +280,6 @@ contain the following:
     echo
     exit 0
 
-Output from check scripts will be found in **$RESULTS_DIR/output_check.txt**.
-
 
 Report Script
 ^^^^^^^^^^^^^
@@ -288,7 +287,12 @@ Report Script
 Like the check script, the report script can be a shell script, Python script, or other executable command.
 Report scripts are generally used to compute performance metrics from the run.
 The exit code of report scripts is not checked by the OTH.
-Output from report scripts will be found in **$RESULTS_DIR/output_report.txt**.
+The report script is launched from **$RESULTS_DIR** and stdout/stderr is captured in **$RESULTS_DIR/output_report.txt**.
+
+.. note::
+
+    In many cases, the check script serves the function of both the check and report script.
+    In that event, report scripts often just ``exit 0``.
 
 
 Example Test from the Ground Up

@@ -449,7 +449,8 @@ The check script return value should be one of the following:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">5</span></code>: test completed correctly but failed a performance target</p></li>
 </ul>
 <p>These exit codes have no built-in meaning in the OTH other than <code class="docutils literal notranslate"><span class="pre">0</span></code> is a successful test and non-zero is a failed test.
-This set of test exit codes has been developed as a standard for test exit codes.</p>
+This set of test exit codes has been developed as a standard for test exit codes.
+The check script is launched from <strong>$RESULTS_DIR</strong> and stdout/stderr is captured in <strong>$RESULTS_DIR/output_check.txt</strong>.</p>
 <p>For <em>hello_mpi</em>, an example check script named <em>check_hello_mpi_c.sh</em> may
 contain the following:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
@@ -463,14 +464,18 @@ ls ./*
 <span class="nb">exit</span> <span class="m">0</span>
 </pre></div>
 </div>
-<p>Output from check scripts will be found in <strong>$RESULTS_DIR/output_check.txt</strong>.</p>
 </div>
 <div class="section" id="report-script">
 <h3>Report Script<a class="headerlink" href="#report-script" title="Permalink to this headline">¶</a></h3>
 <p>Like the check script, the report script can be a shell script, Python script, or other executable command.
 Report scripts are generally used to compute performance metrics from the run.
 The exit code of report scripts is not checked by the OTH.
-Output from report scripts will be found in <strong>$RESULTS_DIR/output_report.txt</strong>.</p>
+The report script is launched from <strong>$RESULTS_DIR</strong> and stdout/stderr is captured in <strong>$RESULTS_DIR/output_report.txt</strong>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In many cases, the check script serves the function of both the check and report script.
+In that event, report scripts often just <code class="docutils literal notranslate"><span class="pre">exit</span> <span class="pre">0</span></code>.</p>
+</div>
 </div>
 </div>
 <div class="section" id="example-test-from-the-ground-up">
