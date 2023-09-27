@@ -88,7 +88,10 @@ Skipped 0, launched 1.
 ```
 
 When you see `submit exit value = 0`, you know your job was successfully launched.
-To find the results, you may go to `<your Path_to_tests>/<app>/<test>/Run_Archive/latest` (in this case, `/home/auser/oth/applications/olcf-test-harness-examples/frontier/lammps/test_1node_4mil_reax/Run_Archive/latest`).
+
+### Checking Test Results
+
+To find the results of the test, you may go to `<your Path_to_tests>/<app>/<test>/Run_Archive/latest` (in this case, `/home/auser/oth/applications/olcf-test-harness-examples/frontier/lammps/test_1node_4mil_reax/Run_Archive/latest`).
 This is the directory your job launched from, and it is the directory your job stdout/stderr will go to and any output files will be copied back to.
 When the job completes, you should see all output files in this directory as well as an `output_check.txt`.
 This file contains the output from your check script, which parses your output files to check the result of the test for correctness and performance.
