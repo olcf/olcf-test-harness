@@ -79,5 +79,5 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
 .. note::
 
     These variables can all be overridden by setting **RGT_<VARIABLE_NAME>** in the environment prior to launching.
-    However, that usage of **batch_queue**/**RGT_BATCH_QUEUE** and **acct_id**/**RGT_ACCT_ID** may be incorrect.
+    However, that usage of **batch_queue**/**RGT_BATCH_QUEUE** and **project_id**/**RGT_PROJECT_ID** may be incorrect.
     For handling these variables, please see :ref:`runtime_configurable_parameters`.

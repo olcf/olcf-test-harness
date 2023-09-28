@@ -387,11 +387,11 @@ The precedence of configuration options for the batch queue and project ID from 
 <ol class="arabic simple">
 <li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>$OLCF_HARNESS_MACHINE.ini</em> (<strong>RGT_BATCH_QUEUE</strong> and <strong>RGT_PROJECT_ID</strong>)</p></li>
 <li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.ini</em></p></li>
-<li><p>User-set environment variables: <strong>RGT_SUBMIT_QUEUE</strong> and <strong>RGT_ACCT_ID</strong></p></li>
+<li><p>User-set environment variables: <strong>RGT_SUBMIT_QUEUE</strong> and <strong>RGT_SUBMIT_ACCT</strong></p></li>
 </ol>
 <p>Since the test configuration overrides the machine configuration for these two variables, the user cannot use the same environment variable names to override the settings.
 The test configuration will just override whatever the user sets, because the OTH does not know who sets <strong>RGT_BATCH_QUEUE</strong> – the user or the <em>machine.ini</em>.
-So, two separate variables are used to override the machine and test configuration: <strong>RGT_SUBMIT_QUEUE</strong> for setting a batch queue and <strong>RGT_ACCT_ID</strong> for setting the account ID for submission.</p>
+So, two separate variables are used to override the machine and test configuration: <strong>RGT_SUBMIT_QUEUE</strong> for setting a batch queue and <strong>RGT_SUBMIT_ACCT</strong> for setting the account ID for submission.</p>
 </div>
 </div>
 <div class="section" id="finding-test-output">
