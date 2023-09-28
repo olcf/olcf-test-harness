@@ -41,8 +41,8 @@ class SLURM(BaseScheduler):
         if 'RGT_SUBMIT_ARGS' in os.environ:
             qargs += " " + os.environ.get('RGT_SUBMIT_ARGS')
 
-        if 'RGT_ACCT_ID' in os.environ:
-            qargs += " -A " + os.environ.get('RGT_ACCT_ID')
+        if 'RGT_SUBMIT_ACCT' in os.environ:
+            qargs += " -A " + os.environ.get('RGT_SUBMIT_ACCT')
         elif 'RGT_PROJECT_ID' in os.environ:
             qargs += " -A " + os.environ.get('RGT_PROJECT_ID')
 
