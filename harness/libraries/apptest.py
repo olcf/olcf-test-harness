@@ -813,7 +813,7 @@ class subtest(base_apptest, apptest_layout):
                             # then it's a node location identifier
                             for k in node_locations[node_name].keys():
                                 influx_event_record_string += f',{k}={node_locations[node_name][k]}'
-                        influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}"'
+                        influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}",test_id="{tag_values["test_id"]}"'
                         if post_run and not str(run_timestamp) == '':
                             influx_event_record_string += f' {run_timestamp}'
                         if local_send_to_influx(influx_url, influx_event_record_string, headers):
