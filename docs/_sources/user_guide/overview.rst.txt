@@ -1,3 +1,5 @@
+.. _section_overview:
+
 ============================
 Overview of the Test Harness
 ============================
@@ -28,22 +30,7 @@ A brief logical flow of harness execution follows:
 
 ....
 
-* Read 'RGT_PATH_TO_SSPACE' from environment (OTH_SCRATCH)
-* Read 'Path_to_tests' from inputfile (OTH_APPS)
-* Read Machine configurations from <machine>.ini
-* foreach (app,test) in inputfile:
-    #. generate unique id (UID) 
-    #. create *Run_Archive* and *Status* directories @ *OTH_APPS/app/test/{Run_Archive,Status}/UID* 
-    #. create scratch directory (APPTEST_SCRATCH) @ *OTH_SCRATCH/app/test/UID*
-    #. recursively copy *OTH_APPS/app/Source/ to APPTEST_SCRATCH/build_directory/*
-    #. change working directory to *APPTEST_SCRATCH/build_directory/*, and execute test's build command
-    #. if build script succeeds, generate test's job script from template in *OTH_APPS/app/test/Scripts*
-    #. submit job script to scheduler - when job runs, it:
-         - changes working directory to *APPTEST_SCRATCH/workdir* (after creating it
-           if necessary)
-         - copies any needed input files from *OTH_APPS/app/test*
-         - runs the test executable
-         - copies any needed output files back to the *Run_Archive* directory
-         - runs the test's check command, passing it the *Run_Archive* directory
-           location
-         - if in continuous mode, start another iteration of the harness test end
+.. image:: /images/OTH_flowchart.jpg
+    :align: center
+    :width: 60%
+    :alt: OTH Flowchart

@@ -14,8 +14,11 @@ OLCF Test Harness Documentation
    user_guide/launching
    user_guide/adding_new_test
    user_guide/adding_new_machine
+   user_guide/extensions
+   user_guide/contributing
 
-.. toctree::
+..
+ toctree::
    :maxdepth: 2
    :caption: Developer Guide
 
