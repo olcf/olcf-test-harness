@@ -587,7 +587,7 @@ resubmit = 0
 <p>Notice that the only lines specific to this test are the <em>job_name</em> and <em>nodes</em>.
 This should help us re-use as much code as possible.
 Duplicate code will make tests difficult to maintain in the long run.</p>
-<p>Next up is the SLurm template.
+<p>Next up is the Slurm template.
 Moving from 1 to 2 nodes shouldn’t change much about the job template, so let’s try to develop a generic Slurm job template for <em>Hello, World!</em> programs:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 

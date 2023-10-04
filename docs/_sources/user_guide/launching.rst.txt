@@ -14,7 +14,7 @@ Installation
 ------------
 
 To launch the OLCF Test Harness (OTH) you must first access the harness code.
-This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that will be available on each system under test.
+This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that is available on most OLCF systems.
 
 Option 1: Using the centralized (pre-built) OTH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

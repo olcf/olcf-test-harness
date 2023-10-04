@@ -419,7 +419,7 @@ Notice that the only lines specific to this test are the *job_name* and *nodes*.
 This should help us re-use as much code as possible.
 Duplicate code will make tests difficult to maintain in the long run.
 
-Next up is the SLurm template.
+Next up is the Slurm template.
 Moving from 1 to 2 nodes shouldn't change much about the job template, so let's try to develop a generic Slurm job template for *Hello, World!* programs:
 
 .. code-block:: bash
