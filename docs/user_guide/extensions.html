@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Extensions &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/js/custom.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing" href="contributing.html" />
+    <link rel="prev" title="Adding a New Machine" href="adding_new_machine.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #efefef" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/olcf_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#execution-overview">Execution Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="launching.html">Quick-Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#launching-the-oth">Launching the OTH</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#command-line-options">Command-line Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#run-time-environment-parameters">Run-time environment parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#finding-test-output">Finding Test Output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#build-submit-and-check-output">Build, Submit, and Check Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#application-output">Application Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#harness-maintained-log-files">Harness-maintained Log Files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-url">Repository URL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-structure">Repository structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#example-repository-structure">Example Repository Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-test-input">Application Test Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#required-application-test-scripts">Required Application Test Scripts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#build-script">Build Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#job-script-template">Job Script Template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-script">Check Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#report-script">Report Script</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_machine.html#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#influxdb-event-logging">InfluxDB Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#check-alias">Check Alias</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#requesting-new-features">Requesting New Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#contributing-source-code">Contributing Source Code</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NCCS_Test_Harness</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content style-external-links">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Extensions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/user_guide/extensions.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="extensions">
+<h1>Extensions<a class="headerlink" href="#extensions" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>Optional extensions have been developed for use with the OLCF Test Harness (OTH).
+Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.</p>
+<div class="section" id="influxdb-event-logging">
+<h2>InfluxDB Event Logging<a class="headerlink" href="#influxdb-event-logging" title="Permalink to this headline">¶</a></h2>
+<p>The OTH leaves behind event information in files on the file system, with data like timestamp, filesystem paths for work, scratch and archive directories, test name, etc.
+This information can additionally be logged to an InfluxDB time-series database.
+To enable this extension, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p>RGT_INFLUX_URI : the URL (with appropriate endpoint) for your InfluxDB instance (ie, <code class="docutils literal notranslate"><span class="pre">https://my-influxdb.domain.com/api/v2/write?org=my-org&amp;bucket=my-bucket&amp;precision=ns</span></code>)</p></li>
+<li><p>RGT_INFLUX_TOKEN : the token for your InfluxDB instance</p></li>
+</ul>
+</td></tr></table>
+<p>Note that the <strong>RGT_INFLUX_URI</strong> contains information such as the organization name, bucket name, and desired precision.
+Currently the OTH only supports nanosecond precision.</p>
+<p>Events are logged using the following data as tags in the InfluxDB measurement:</p>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><strong>time</strong></p></li>
+<li><p><strong>runtag</strong> : system log tag for this harness launch, equal to <strong>RGT_SYSTEM_LOG_TAG</strong></p></li>
+<li><p><strong>app</strong> : name of the application</p></li>
+<li><p><strong>test</strong> : name of the test</p></li>
+<li><p><strong>test_id</strong> : test identifier of this test instance</p></li>
+<li><p><strong>machine</strong> : machine name</p></li>
+</ul>
+</td></tr></table>
+<p>Tags are a set of unique identifiers used by InfluxDB to index records.
+If you write 2 records to InfluxDB using the same set of tags, only the most recent will be kept.
+Each set of tags is associated with a set of fields.
+Event fields logged to InfluxDB are:</p>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><strong>build_directory</strong> : path to the build directory</p></li>
+<li><p><strong>run_archive</strong> : path to the Run_Archive directory</p></li>
+<li><p><strong>workdir</strong> : path to the work directory for this test</p></li>
+<li><p><strong>rgt_path_to_sspace</strong> : path to the scratch space derived from the <strong>RGT_PATH_TO_SSPACE</strong> environment variable</p></li>
+<li><p><strong>event_filename</strong> : name of the event file that this information is mirrored in</p></li>
+<li><p><strong>event_name</strong> : name of the event (ie, ‘build_start’)</p></li>
+<li><p><strong>event_subtype</strong> : specifies whether the event is start/end</p></li>
+<li><p><strong>event_time</strong> : time of the event</p></li>
+<li><p><strong>event_type</strong> : type of the event (ie, ‘build’, ‘binary_execute’)</p></li>
+<li><p><strong>event_value</strong> : status code of the event. ‘0’ indicates successful</p></li>
+<li><p><strong>hostname</strong> : hostname of the system that the event was run on</p></li>
+<li><p><strong>job_account_id</strong> : account ID used to submit the job to the scheduler</p></li>
+<li><p><strong>job_id</strong> : JobID referenced by the scheduler</p></li>
+<li><p><strong>path_to_rgt_package</strong> : path to the harness source code used</p></li>
+<li><p><strong>rgt_system_log_tag</strong> : log tag defined for this run (mirrors <strong>runtag</strong>)</p></li>
+<li><p><strong>test_instance</strong> : a string set to “$app,$test,$test_id”</p></li>
+<li><p><strong>user</strong> : username of the user that launched the harness</p></li>
+<li><p><strong>comment</strong> : enables the user to log comments to specific events</p></li>
+<li><p><strong>reason</strong> : used by some harness utility scripts to log explanations to InfluxDB, such as node failure messages</p></li>
+<li><p><strong>output_txt</strong> : output of specific events mined from files (last 64 kB only).</p></li>
+<li><p><strong>check_alias</strong> : an optional extension - alpha-numeric supplement of <strong>event_value</strong></p></li>
+</ul>
+</td></tr></table>
+<p>These fields are largely self-explanatory, but additional details for <strong>output_txt</strong> are provided below.
+<strong>output_txt</strong> is constructed for <strong>build_end</strong>, <strong>submit_end</strong>, <strong>binary_execute_end</strong>, and <strong>check_end</strong> events.
+The harness searches for files of a specific naming convention when each of those events is encountered.
+For <strong>build_end</strong>, the OTH reads the last 64 kB from <strong>output_build.txt</strong>, which is a file automatically created by the harness to store the output of the build process.
+For <strong>submit_end</strong>, the OTH reads the <strong>submit.err</strong> file, which is also automatically created by the harness during job submission.
+For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <strong>.o${job_id}</strong>, and reads the last 64 kB from that file.
+This file is not automatically created by the harness.
+For <strong>check_end</strong>, the OTH looks for a file named <strong>output_check.txt</strong>, which is automatically created by the harness to store output from the check script.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If compute nodes do not have access to the internet or if InfluxDB was not enabled for a set of runs, <em>runtests.py</em> provides <code class="docutils literal notranslate"><span class="pre">--mode</span> <span class="pre">influx_log</span></code>,
+which finds all event files and logs them to InfluxDB after the run is completed.
+This mode also applies to metric and node health logging.</p>
+<p>Finding runs to log is not selective – any test instance that has not already been sent to InfluxDB or explicitly disabled InfluxDB will be processed.
+If you do not want a test instance to be logged, set <strong>RGT_INFLUX_DISABLED=1</strong> at run-time, or create a file named <strong>$RUNARCHIVE_DIR/.influx_disabled</strong>.</p>
+</div>
+</div>
+<div class="section" id="logging-application-metrics-to-influxdb">
+<h2>Logging application metrics to InfluxDB<a class="headerlink" href="#logging-application-metrics-to-influxdb" title="Permalink to this headline">¶</a></h2>
+<p>The OTH provides capability to log metrics from each test to InfluxDB.
+This extension is a great way to visualize performance of a certain test over time.
+This requires that InfluxDB event logging is enabled.</p>
+<p>To enable this extension, simply create a file named <em>metrics.txt</em> in the Run_Archive directory of a test launch (ie, <em>/Path/to/Tests/$app/$test/Run_Archive/$test_id/metrics.txt</em>).
+This file must exist by the end of the <em>report_cmd</em> execution.
+A common place to create <em>metrics.txt</em> is in the check script, <em>check_cmd</em>.
+Each line of this file must conform to one of the following formats:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comment lines begin with hashtags</span>
+<span class="n">metric_name_1</span><span class="o">=</span><span class="n">value_1</span>
+<span class="n">metric_name_2</span> <span class="o">=</span> <span class="n">value_2</span>
+<span class="c1"># It is not recommended to use spaces in metric names, but it is allowable</span>
+<span class="n">metric</span> <span class="n">name</span> <span class="mi">3</span> <span class="o">=</span> <span class="n">value_3</span>
+<span class="n">metric_name_3</span>\<span class="n">t</span><span class="o">=</span>\<span class="n">tvalue_3</span>
+</pre></div>
+</div>
+<p>The OTH will log metric names to the InfluxDB database using the same tags as InfluxDB event logging uses.
+When at least 1 metric is defined, the OTH also automatically calculates the time between <strong>build_start</strong> and <strong>build_end</strong> events, and <strong>binary_execute_start</strong> and <strong>binary_execute_end</strong>.
+These events are logged as <strong>build_time</strong> and <strong>execution_time</strong>, respectively.
+If you’re interested only in <strong>build_time</strong> and <strong>execution_time</strong>, have your check script create a dummy <em>metrics.txt</em> file with a line like <code class="docutils literal notranslate"><span class="pre">dummy=1</span></code>.
+Note that the correct computation of <strong>execution_time</strong>  requires proper placement of the <em>log_binary_execution_time.py</em> calls in the job script,
+since <strong>execution_time</strong> is the difference in time between the two <em>log_binary_execution_time.py</em> calls.</p>
+</div>
+<div class="section" id="monitoring-the-health-of-individual-nodes">
+<h2>Monitoring the health of individual nodes<a class="headerlink" href="#monitoring-the-health-of-individual-nodes" title="Permalink to this headline">¶</a></h2>
+<p>In many-node systems, it can be very difficult to monitor the health of specific nodes.
+To address this, the OTH supports node-centric monitoring.
+Similar to metrics logging, this extension requires that InfluxDB event logging is enabled, and this extension is triggered by the presence of a <em>nodecheck.txt</em> file in the Run_Archive directory of a test launch.
+This extension also requires geospatial information about the node, by default.
+This is discussed later in this section.
+Each line of <em>nodecheck.txt</em> must have the following format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comment lines begin with hashtags</span>
+<span class="c1"># Format: &lt;nodename&gt; &lt;status&gt; &lt;message&gt;</span>
+<span class="n">Node1</span> <span class="n">PASS</span> <span class="n">Some</span> <span class="n">optional</span> <span class="n">message</span> <span class="n">that</span> <span class="n">can</span> <span class="n">have</span> <span class="nb">any</span> <span class="n">number</span> <span class="n">of</span> <span class="n">spaces</span> <span class="ow">in</span> <span class="n">it</span> <span class="n">to</span> <span class="n">associate</span> <span class="k">with</span> <span class="n">Node1</span>
+<span class="n">Node2</span> <span class="n">FAIL</span> <span class="n">optional</span> <span class="n">message</span> <span class="n">to</span> <span class="n">associate</span> <span class="k">with</span> <span class="n">Node2</span>
+<span class="n">Node3</span> <span class="n">HW</span><span class="o">-</span><span class="n">FAIL</span> <span class="n">optional</span> <span class="n">messaging</span> <span class="n">to</span> <span class="n">associate</span> <span class="k">with</span> <span class="n">Node3</span>
+</pre></div>
+</div>
+<p>The second column has a defined set of possible values, which are reduced to 4 common strings for usability in the database and dashboards.
+Each status in <em>nodecheck.txt</em> must be a status present in the square braces for one of the 4 common statuses.
+These values are:</p>
+<ol class="arabic simple">
+<li><p>FAILED : [‘FAILED’, ‘FAIL’, ‘BAD’]</p></li>
+<li><p>SUCCESS : [‘SUCCESS’, ‘OK’, ‘GOOD’, ‘PASS’, ‘PASSED’]</p></li>
+<li><p>HW-FAIL : [‘INCORRECT’, ‘HW-FAIL’]</p></li>
+<li><p>PERF-FAIL : [‘PERF’, ‘PERF-FAIL’]</p></li>
+</ol>
+<p>So to classify a successful test on a node, the line in <em>nodecheck.txt</em> may use <em>SUCCESS</em>, <em>OK</em>, <em>GOOD</em>, <em>PASS</em>, or <em>PASSED</em> keywords, and these are not case-sensitive, so <em>success</em> also works.</p>
+<p>These 4 values are intended to present a known set of statuses to the InfluxDB database and dashboards, for ease of visualization.
+<code class="docutils literal notranslate"><span class="pre">FAILED</span></code>, <code class="docutils literal notranslate"><span class="pre">SUCCESS</span></code>, and <code class="docutils literal notranslate"><span class="pre">PERF-FAIL</span></code> are self-explanatory.
+<code class="docutils literal notranslate"><span class="pre">HW-FAIL</span></code> is intended to be a status associated with a hardware failure (ie, bus errors, power fault, network failure).</p>
+<p>This extension logs results to the <strong>node_health</strong> measurement (table) of InfluxDB using <strong>machine</strong>, <strong>node</strong>, and <strong>test</strong> as tags.
+By default, this extension also requires geospatial information about each node (ie, cabinet number, board number, row number).
+This information is used as an InfluxDB tag to correlate failures by location.
+To bypass this feature (useful for small systems, especially), set the <strong>RGT_IGNORE_NODE_LOCATION</strong> environment variable to <code class="docutils literal notranslate"><span class="pre">1</span></code>.
+To utilize this feature, provide the absolute path to a JSON file containing the desired information by using the <strong>RGT_NODE_LOCATION_FILE</strong> environment variable.
+An example portion from this file may look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;node001&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;cabinet&quot;</span><span class="p">:</span> <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;switch&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;slot&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;node002&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;cabinet&quot;</span><span class="p">:</span> <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;switch&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;slot&quot;</span><span class="p">:</span> <span class="s2">&quot;s1&quot;</span>
+    <span class="p">},</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Then, when querying InfluxDB in this example, you may use <strong>cabinet</strong>, <strong>switch</strong>, and <strong>slot</strong> to filter records.</p>
+</div>
+<div class="section" id="check-alias">
+<h2>Check Alias<a class="headerlink" href="#check-alias" title="Permalink to this headline">¶</a></h2>
+<p>Check aliasing allows codes to provide an alpha-numeric explanation to the check script exit code.
+For example, the OTH uses a <strong>check_end</strong> event value of <code class="docutils literal notranslate"><span class="pre">1</span></code> to dictate a failure.
+Failures come in many shapes and sizes, so an example of how you would use a check alias is by having distinct values such as <code class="docutils literal notranslate"><span class="pre">MPI_ERR</span></code>, <code class="docutils literal notranslate"><span class="pre">BUS_ERR</span></code>, <code class="docutils literal notranslate"><span class="pre">TIMEOUT</span></code>, <code class="docutils literal notranslate"><span class="pre">INPUT_ERR</span></code>.
+This simply supplies an alphabetic dimension to categorizing failures.</p>
+<p>To enable this extension, create a file named <em>check_alias.txt</em> in the Run_Archive directory of a test launch (ie, <em>/Path/to/Tests/$app/$test/Run_Archive/$test_id/check_alias.txt</em>).
+<strong>check_alias</strong> is set to the content of the first line of this file.
+This <strong>check_alias</strong> field is set in each event file, so InfluxDB is not required for this extension.
+<strong>check_alias</strong> is sent to InfluxDB alongside the standard event metadata, if InfluxDB is enabled.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="adding_new_machine.html" class="btn btn-neutral float-left" title="Adding a New Machine" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

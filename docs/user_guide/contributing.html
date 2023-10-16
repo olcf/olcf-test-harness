@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Adding a New Machine &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  <title>Contributing &mdash; NCCS_Test_Harness 1.0 documentation</title>
   
 
   
@@ -43,8 +43,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Extensions" href="extensions.html" />
-    <link rel="prev" title="Adding a New Test" href="adding_new_test.html" /> 
+    <link rel="prev" title="Extensions" href="extensions.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -146,8 +145,8 @@
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Machine</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_machine.html#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions</a><ul>
@@ -157,10 +156,10 @@
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#reporting-bugs">Reporting Bugs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#requesting-new-features">Requesting New Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#contributing-source-code">Contributing Source Code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requesting-new-features">Requesting New Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing-source-code">Contributing Source Code</a></li>
 </ul>
 </li>
 </ul>
@@ -211,13 +210,13 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Adding a New Machine</li>
+      <li>Contributing</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="../_sources/user_guide/adding_new_machine.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/user_guide/contributing.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -230,84 +229,90 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="adding-a-new-machine">
-<span id="section-new-machine"></span><h1>Adding a New Machine<a class="headerlink" href="#adding-a-new-machine" title="Permalink to this headline">¶</a></h1>
-<p>The following steps can be used to add support for a new system:</p>
-<ol class="arabic simple">
-<li><p>Create a machine master configuration (e.g. <em>lyra.ini</em>, placed in <em>$OLCF_HARNESS_DIR/configs/lyra.ini</em>).</p></li>
-<li><dl class="simple">
-<dt>Create the location of the repository that will hold all applications and tests for that particular machine</dt><dd><ul class="simple">
-<li><p>This can be in a remote Git repository, or a directory on the file system</p></li>
+  <div class="section" id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
+<p>Collaboration for the improvement of the OLCF Test Harness is greatly appreciated and highly encouraged.
+Contributions in the form of bug reports, feature requests, and source-code contributions are all efficient methods of contributing.</p>
+<div class="section" id="reporting-bugs">
+<h2>Reporting Bugs<a class="headerlink" href="#reporting-bugs" title="Permalink to this headline">¶</a></h2>
+<p>Please report bugs to the <a class="reference external" href="https://github.com/olcf/olcf-test-harness">OTH GitHub Repository</a> Issues page.
+Include the following information in your Issue:</p>
+<ul class="simple">
+<li><p>What are you trying to do?</p></li>
+<li><p>Command-line usage (ie, <code class="docutils literal notranslate"><span class="pre">runtests.py</span> <span class="pre">-i</span> <span class="pre">rgt.inp</span> <span class="pre">...</span></code>)</p></li>
+<li><p>Standard output &amp; error from running</p></li>
+<li><p>The contents of your harness input file (ie, <em>rgt.inp</em>)</p></li>
+<li><p>The contents of your machine configuration file (<em>&lt;machine&gt;.ini</em>)</p></li>
+<li><p>The contents of your test input file (<em>rgt_test_input.ini</em>)</p></li>
+<li><p>The contents of all logs in <strong>$RESULTS_DIR/LogFiles</strong></p></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ol>
-<p>Creating a machine configuration file is discussed below.
-The creation of tests is discussed in another section</p>
-<div class="section" id="create-a-basic-machine-configuration">
-<h2>Create a Basic Machine Configuration<a class="headerlink" href="#create-a-basic-machine-configuration" title="Permalink to this headline">¶</a></h2>
-<p>An example input file with detailed explanation is contained below.
-All settings in the <em>machine.ini</em> file are used to set environment variables that can be used throughout the test.
-For example, <strong>gpus_per_node</strong> is used to set <strong>RGT_GPUS_PER_NODE</strong>, which could be used in a job script.
-These settings do not override existing environment variables.
-If <strong>RGT_SCHEDULER_TYPE</strong> is set by the user, then the <em>machine.ini</em> file will not override it.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[MachineDetails]
-# Required:
-machine_name = crusher
-# Options: linux_x86_64 or ibm_power9
-machine_type = linux_x86_64
-# Options: slurm, pbs, lsf
-scheduler_type = slurm
-# Options: srun, aprun, jsrun, poe
-joblauncher_type = srun
-# Default queue/partition to submit jobs to
-batch_queue = batch
-# Overridden if project_id is set in the test&#39;s input file
-project_id = &lt;default account for scheduler&gt;
-# Any required flags to job scheduler (ie, ``-M clustername`` in Slurm)
-submit_args =
-nccs_test_harness_module = olcf_harness
-
-# Optional: specify some details about the machine
-# Each of these becomes an environment variable,
-# ie **RGT_CPUS_PER_NODE**, that can be used to template tests
-node_count = 1000
-cpus_per_node = 64
-sockets_per_node = 2
-gpus_per_node = 8
-
-# This section is only required when ``--mode checkout`` is used
-[RepoDetails]
-# Git is currently the only supported type of remote repository
-type_of_repository = git
-# Branch/tag to clone from remote repo
-git_reps_branch = master
-# Protocol to use when cloning
-git_data_transfer_protocol = ssh
-# Sub-project/group in the Git repository
-git_server_application_parent_dir = your-project/applications
-# Name of the machine to look for in Git.
-# OTH looks for:
-#   $git_ssh_server_url:$git_server_application_parent_dir/$git_machine_name/&lt;application&gt;
-git_machine_name = frontier
-# Git URLs:
-git_ssh_server_url = git@github.com
-git_https_server_url = https://www.github.com
-
-# This section provides defaults for testshot variables
-[TestshotDefaults]
-# The path used for building the application and scratch space used for running
-path_to_sspace = /default/path/to/scratch/space
-# A string that can be used to identify tests run for a specific purpose (ie: &#39;summit_tshot_cuda11&#39;)
-system_log_tag = some_default_log_tag
+</div>
+<div class="section" id="requesting-new-features">
+<h2>Requesting New Features<a class="headerlink" href="#requesting-new-features" title="Permalink to this headline">¶</a></h2>
+<p>To request a new feature (ie, new command-line flag, support for a new scheduler), please submit an Issue to the <a class="reference external" href="https://github.com/olcf/olcf-test-harness">OTH GitHub Repository</a> Issues page.
+Please add <strong>Feature Request:</strong> to the beginning of your issue title to help the development team quickly identify the request.
+Include the following information in your request:</p>
+<ul class="simple">
+<li><p>What do you want the OTH to do? (“I would like the OTH to …”)</p></li>
+<li><p>Is the lack of this feature blocking your usage of the OTH?</p></li>
+<li><p>How do you want to invoke the new feature? (ie, environment variable, command-line flag, configuration file parameter)</p></li>
+</ul>
+</div>
+<div class="section" id="contributing-source-code">
+<h2>Contributing Source Code<a class="headerlink" href="#contributing-source-code" title="Permalink to this headline">¶</a></h2>
+<p>Source-code contribution is welcomed through GitHub Pull Requests to the <a class="reference external" href="https://github.com/olcf/olcf-test-harness">OTH GitHub Repository</a> Pull Requests page.
+For PRs that fix bugs or implement a new feature, please cite the specific Issue in the body of the PR.
+To create a PR, please follow the following steps:</p>
+<ul class="simple">
+<li><p>Fork the OTH GitHub Repository to your personal GitHub account</p></li>
+<li><p>Clone your fork of the OTH:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/&lt;</span><span class="n">your</span><span class="o">-</span><span class="n">username</span><span class="o">&gt;/</span><span class="n">olcf</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">harness</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">olcf</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">harness</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">devel</span>
 </pre></div>
 </div>
+<ul class="simple">
+<li><p>From your fork’s <code class="docutils literal notranslate"><span class="pre">devel</span></code> branch, point the upstream to the OTH GitHub repo:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">remote</span> <span class="n">add</span> <span class="n">olcf</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">olcf</span><span class="o">/</span><span class="n">olcf</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">harness</span><span class="o">.</span><span class="n">git</span>
+<span class="n">git</span> <span class="n">fetch</span> <span class="n">olcf</span>
+<span class="n">git</span> <span class="n">branch</span> <span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">upstream</span><span class="o">-</span><span class="n">to</span><span class="o">=</span><span class="n">olcf</span><span class="o">/</span><span class="n">devel</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Update your local fork from the upstream repository:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="n">devel</span>
+<span class="n">git</span> <span class="n">pull</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Create a new branch in your fork of the OTH GitHub: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">issue64-fix</span></code></p></li>
+<li><p>Make your edits</p></li>
+<li><p>Add and commit your edits to your branch</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">add</span> <span class="n">file1</span><span class="o">.</span><span class="n">py</span> <span class="n">file</span><span class="o">.</span><span class="n">py</span> <span class="o">...</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">m</span> <span class="s2">&quot;Message summarizing your changes&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Push your edits to your fork: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">-u</span> <span class="pre">origin</span> <span class="pre">issue64-fix</span></code></p></li>
+<li><p>Open a Pull Request on <a class="reference external" href="https://github.com/olcf/olcf-test-harness/pull">OTH Pull Requests</a></p></li>
+</ul>
+<p>A Developer Guide is currently under construction that will contain more information regarding code formatting.
+In the meantime, please use the following basic formatting rules:</p>
+<ul class="simple">
+<li><p>Use 4-space indentation</p></li>
+<li><p>Use lowercase variable names with underscores (ie <code class="docutils literal notranslate"><span class="pre">example_var</span></code>)</p></li>
+<li><p>Add comments to explain any non-trivial code</p></li>
+<li><p>Avoid hard-coding paths. Use existing class variables to specify paths and file names.</p></li>
+</ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>These variables can all be overridden by setting <strong>RGT_&lt;VARIABLE_NAME&gt;</strong> in the environment prior to launching.
-However, that usage of <strong>batch_queue</strong>/<strong>RGT_BATCH_QUEUE</strong> and <strong>project_id</strong>/<strong>RGT_PROJECT_ID</strong> may be incorrect.
-For handling these variables, please see <a class="reference internal" href="launching.html#runtime-configurable-parameters"><span class="std std-ref">Run-time environment parameters</span></a>.</p>
+<p>All Pull Requests will undergo review from the OTH development team.
+PRs implementing new features will be evaluated for utility provided to the OTH.
+Approval and integration of new features into the OTH is at the discretion of the development team.</p>
 </div>
 </div>
 </div>
@@ -318,8 +323,7 @@ For handling these variables, please see <a class="reference internal" href="lau
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="extensions.html" class="btn btn-neutral float-right" title="Extensions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="adding_new_test.html" class="btn btn-neutral float-left" title="Adding a New Test" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="extensions.html" class="btn btn-neutral float-left" title="Extensions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
