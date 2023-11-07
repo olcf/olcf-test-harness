@@ -252,7 +252,7 @@ class Harness:
                                                       logger = a_logger,
                                                       tag=self.__timestamp)
 
-                if subtest.check_paths():
+                if subtest.check_paths() or 'check_out_tests' in self.__tasks[0]:
                     app_subtests[appname].append(subtest)
                     self.__launched_tests += 1
                 else:
