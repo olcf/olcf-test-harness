@@ -5,7 +5,7 @@ The full OTH documentation can be found at [](https://olcf.github.io/olcf-test-h
 or can be viewed locally by cloning this repository and launching a Python HTTP server in the `docs` directory:
 
 ```
-git clone https://gihub.com/olcf/olcf-test-harness
+git clone https://github.com/olcf/olcf-test-harness
 cd olcf-test-harness/docs
 python3 -m http.server 8080
 # Then, navigate to localhost:8080 in a browser on your computer
