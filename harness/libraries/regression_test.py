@@ -85,9 +85,10 @@ class Harness:
         # Define a logger that streams to file.
         logger_name=Harness.LOGGER_NAME
         fh_filepath="./harness_log_files" + "." + self.__timestamp + "/" + Harness.LOGGER_NAME + "." + self.__timestamp + ".txt"
-        logger_threshold = self.__log_level
+        logger_threshold = "NOTSET"
+        # Log file always has a consistent log level. Console log level changes
         fh_threshold_log_level = "INFO"
-        ch_threshold_log_level = "CRITICAL"
+        ch_threshold_log_level = self.__log_level
         self.__myLogger = rgt_logger_factory.create_rgt_logger(
                                      logger_name=logger_name,
                                      fh_filepath=fh_filepath,
@@ -237,9 +238,10 @@ class Harness:
 
                 logger_name = appname + "." + testname + "." + self.__timestamp
                 fh_filepath = "harness_log_files" + "." + self.__timestamp + "/" + appname + "/" + appname + "__" + testname +  ".logfile.txt"
-                logger_threshold = self.__log_level
+                logger_threshold = "NOTSET"
+                # Log file always has a consistent log level. Console log level changes
                 fh_threshold_log_level = "INFO"
-                ch_threshold_log_level = "CRITICAL"
+                ch_threshold_log_level = self.__log_level
                 a_logger = rgt_logger_factory.create_rgt_logger(logger_name=logger_name,
                                       fh_filepath=fh_filepath,
                                       logger_threshold_log_level=logger_threshold,
@@ -295,7 +297,7 @@ class Harness:
             message = "All applications completed futures. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
             # For the moment, hard-code this as a print statement.
-            print(f"Skipped {self.__skipped_tests}, launched {self.__launched_tests}.")
+            print(f"Launched {self.__launched_tests} tests, skipped {self.__skipped_tests} tests.")
 
         return
 
@@ -333,9 +335,9 @@ class Harness:
                 # create build FireWork
                 taskname = f'OTH-BLD.{machine_name}.{task_suffix}'
                 if self.__separate_build_stdio:
-                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --separate-build-stdio --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid}'
+                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --separate-build-stdio --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 else:
-                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid}'
+                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwbuild.log'
                 build_task = ScriptTask(script=script_cmd,
                                         store_stdout=True, store_stderr=True)
@@ -345,7 +347,7 @@ class Harness:
 
                 # create batch run FireWork
                 taskname = f'OTH-RUN.{machine_name}.{task_suffix}'
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --run --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid}'
+                driver_cmd = f'test_harness_driver.py -C {cfg_file} --run --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwrun.log'
                 run_task = ScriptTask(script=script_cmd,
                                       store_stdout=True, store_stderr=True)
@@ -367,7 +369,7 @@ class Harness:
 
                 # create check FireWork
                 taskname = f'OTH-CHK.{machine_name}.{task_suffix}'
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --check --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid}'
+                driver_cmd = f'test_harness_driver.py -C {cfg_file} --check --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwcheck.log'
                 check_task = ScriptTask(script=script_cmd,
                                         store_stdout=True, store_stderr=True)

@@ -242,7 +242,7 @@ class apptest_layout:
             # Not guarded by a conditional, so that it removes broken links
             os.unlink(latest_lnk)
         except FileNotFoundError as e:
-            self.__logger.doInfoLogging("Could not remove 'latest' link in Status.")
+            self.__logger.doWarningLogging("Could not remove 'latest' link in Status.")
         try_symlink(spath, latest_lnk)
 
         return spath
@@ -269,7 +269,7 @@ class apptest_layout:
             # Not guarded by a conditional, so that it removes broken links
             os.unlink(latest_lnk)
         except FileNotFoundError as e:
-            self.__logger.doInfoLogging("Could not remove 'latest' link in Run_Archive.")
+            self.__logger.doWarningLogging("Could not remove 'latest' link in Run_Archive.")
         try_symlink(rpath, latest_lnk)
 
         return rpath

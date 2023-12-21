@@ -418,7 +418,6 @@ class BaseMachine(metaclass=ABCMeta):
         messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function()) 
         message = f"{messloc} attempting to log to influxDB."
 
-        print(message)
         self.logger.doInfoLogging(message)
         
         exit_status = self._log_to_influx()
@@ -453,13 +452,11 @@ class BaseMachine(metaclass=ABCMeta):
 
         path_to_source = self.apptest.get_path_to_source()
         message = f"{messloc} Path to Source: {path_to_source}"
-        print("Path to Source:", path_to_source)
         self.logger.doInfoLogging(message)
 
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
         message = f"{messloc} Path to build directory: {path_to_build_directory}"
         self.logger.doInfoLogging(message)
-        print("Path to Build Dir:", path_to_build_directory)
 
         shutil.copytree(src=path_to_source,
                         dst=path_to_build_directory,
