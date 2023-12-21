@@ -254,17 +254,7 @@ class Harness:
                                                       logger = a_logger,
                                                       tag=self.__timestamp)
 
-                if subtest.check_paths():
-                    app_subtests[appname].append(subtest)
-                    self.__launched_tests += 1
-                else:
-                    # Then at least 1 required path (ie: source, scripts directories) does not exist
-                    # Exact error messages are printed by check_paths
-                    a_logger.doWarningLogging(f"Skipping App={appname}, Test={testname}.")
-                    # Log to both loggers
-                    self.__myLogger.doWarningLogging(f"Skipping App={appname}, Test={testname}.")
-                    self.__skipped_tests += 1
-
+                app_subtests[appname].append(subtest)
         return app_subtests
 
     def __run_subtests_asynchronously(self):
@@ -290,9 +280,11 @@ class Harness:
                 if my_future_exception:
                     message = "Application {} future exception:\n{}".format(appname, my_future_exception)
                     self.__myLogger.doCriticalLogging(message)
+                    self.__skipped_tests += 1
                 else:
                     message = "Application {} future is completed.".format(appname)
                     self.__myLogger.doInfoLogging(message)
+                    self.__launched_tests += 1
 
             message = "All applications completed futures. Yahoo!!"
             self.__myLogger.doInfoLogging(message)

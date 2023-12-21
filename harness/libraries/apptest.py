@@ -157,32 +157,38 @@ class subtest(base_apptest, apptest_layout):
                 if test_checkout_lock:
                     test_checkout_lock.release()
 
-            elif harness_task == Harness.starttest:
-                message = "Start of starting test."
-                self.doInfoLogging(message)
+            else:
+                if not self.check_paths():
+                    self.logger.doErrorLogging(f"Aborting task {harness_task}. Could not find all required paths.")
+                    message = "Could not find all required paths on the file system for application {app1}, test {test1}.".format(app1=self.getNameOfApplication(),
+                                                                                                                                test1=self.getNameOfSubtest())
+                    raise ApptestFilePathError(message)
+                if harness_task == Harness.starttest:
+                    message = "Start of starting test."
+                    self.doInfoLogging(message)
 
-                self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
+                    self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
 
-                message = "End of starting test"
-                self.doInfoLogging(message)
+                    message = "End of starting test"
+                    self.doInfoLogging(message)
 
-            elif harness_task == Harness.stoptest:
-                self._stop_test()
+                elif harness_task == Harness.stoptest:
+                    self._stop_test()
 
-            elif harness_task == Harness.influx_log:
-                self._influx_log_mode()
+                elif harness_task == Harness.influx_log:
+                    self._influx_log_mode()
 
-            elif harness_task == Harness.displaystatus:
-                if test_display_lock:
-                    test_display_lock.acquire()
+                elif harness_task == Harness.displaystatus:
+                    if test_display_lock:
+                        test_display_lock.acquire()
 
-                self.display_status()
+                    self.display_status()
 
-                if test_display_lock:
-                    test_display_lock.release()
+                    if test_display_lock:
+                        test_display_lock.release()
 
-            elif harness_task == Harness.summarize_results:
-                self.generateReport()
+                elif harness_task == Harness.summarize_results:
+                    self.generateReport()
 
     def cloneRepository(self,my_repository,destination):
         #Get the current working directory.
@@ -1007,6 +1013,17 @@ class ApptestImproperInstantiationError(BaseApptestError):
                  args):
         self.__message = message
         self.__args = args
+        return
+
+    @property
+    def message(self):
+        return self.__message
+
+class ApptestFilePathError(BaseApptestError):
+    """Raised when the class subtest is run and required paths on the file system are missing."""
+    def __init__(self,
+                 message):
+        self.__message = message
         return
 
     @property
