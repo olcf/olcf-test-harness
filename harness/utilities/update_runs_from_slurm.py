@@ -236,7 +236,7 @@ def post_update_to_influx(d, state_code):
     if not 'timestamp' in d.keys():
         d['timestamp'] = datetime.datetime.now().isoformat()
     log_time = datetime.strptime(d['timestamp'], "%Y-%m-%dT%H:%M:%S")
-    log_ns = int(datetime.timestamp(log_time) * 1000 * 1000) * 1000
+    log_ns = round(datetime.timestamp(log_time) * 1000 * 1000) * 1000
 
     influx_event_record_string = f"events,{','.join([f'{t}={d[t]}' for t in StatusFile.INFLUX_TAGS])} "
     quote = '"'
