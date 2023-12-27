@@ -95,8 +95,8 @@ def create_parser():
                            type=str,
                            help='Annotate test status with given harness launch id')
     my_parser.add_argument('--loglevel',
-                           default='CRITICAL',
-                           choices=['DEBUG', 'debug', 'INFO', 'info', 'WARNING', 'warning', 'ERROR', 'error', 'CRITICAL', 'critical'],
+                           default='WARNING',
+                           choices=['NOTSET', 'notset', 'DEBUG', 'debug', 'INFO', 'info', 'WARNING', 'warning', 'ERROR', 'error', 'CRITICAL', 'critical'],
                            help='Control the level of information printed to stdout.')
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',

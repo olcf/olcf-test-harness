@@ -191,12 +191,12 @@ Specifying an unsupported loglevel will result in the harness aborting with an
 error.
 """
 
-DEFAULT_LOG_LEVEL=PERMITTED_LOG_LEVELS[0]
+DEFAULT_LOG_LEVEL="WARNING"
 """
 str: The default log level.
 
 If no loglevel option is specified on the command line, then default loglevel
-will be set to NOTSET.
+will be set to WARNING.
 """
 
 # This section pertains to the concurrency option. It
