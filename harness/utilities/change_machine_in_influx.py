@@ -149,7 +149,7 @@ def post_update_to_influx(d):
         except ValueError as e:
             raise ValueError(e)
     # microsecond timing max precision
-    log_ns = int(datetime.datetime.timestamp(log_time) * 1000 * 1000) * 1000
+    log_ns = round(datetime.datetime.timestamp(log_time) * 1000 * 1000) * 1000
 
     tagline = ','.join([f"{fld}={d[fld]}" for fld in tags])
     fieldline = ','.join([f"{fld}=\"{d[fld]}\"" for fld in fields])

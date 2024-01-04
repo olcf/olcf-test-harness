@@ -156,7 +156,7 @@ def post_update_to_influx(d):
             raise ValueError(e)
     # Assume it's in UTC right now, convert to EST
 
-    log_ns = int(datetime.datetime.timestamp(log_time) * 1000 * 1000) * 1000
+    log_ns = round(datetime.datetime.timestamp(log_time) * 1000 * 1000) * 1000
 
     tagline = ','.join([f"{fld}={d[fld]}" for fld in tags])
     fieldline = ','.join([f"{fld}=\"{d[fld]}\"" for fld in fields])
