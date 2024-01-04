@@ -451,14 +451,12 @@ class BaseMachine(metaclass=ABCMeta):
         messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
 
         path_to_source = self.apptest.get_path_to_source()
-        message = f"{messloc} Path to Source: {path_to_source}"
-        # Send message at error threshold so that it's nearly always seen
-        self.logger.doErrorLogging(message)
+        # Use Error threshold to show this message all the time
+        self.logger.doErrorLogging(f"Path to Source: {path_to_source}")
 
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
-        message = f"{messloc} Path to build directory: {path_to_build_directory}"
-        # Send message at error threshold so that it's nearly always seen
-        self.logger.doErrorLogging(message)
+        # Use Error threshold to show this message all the time
+        self.logger.doErrorLogging(f"Path to Build: {path_to_build_directory}")
 
         shutil.copytree(src=path_to_source,
                         dst=path_to_build_directory,
