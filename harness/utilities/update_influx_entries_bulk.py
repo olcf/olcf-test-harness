@@ -217,6 +217,10 @@ def post_update_to_influx(d):
     # Set new check status
     d['event_value'] = args.new_check_status
 
+    # Convert any double quotes into escaped double-quotes
+    for field in d.keys():
+        d[field] = d[field].replace('"', '\\"')
+
     headers = {
         'Authorization': "Token " + influx_token,
         'Content-Type': "application/octet-stream",
