@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 12-29-2022
+# Date modified: 03-19-2024
 ################################################################################
 # Purpose:
 #   Only intended for SLURM systems.
@@ -349,7 +349,7 @@ for entry in data:
         d[t] = entry[t]
     # Add in the fields, since we have them
     for t in StatusFile.INFLUX_FIELDS:
-        d[t] = entry[t] if t in entry else '[NO_VALUE]'
+        d[t] = entry[t].replace('"', '\\"') if t in entry else '[NO_VALUE]'
     if not entry['job_id'] in slurm_data:
         print_debug(1, f"Can't find data for {entry['job_id']} in sacct data. Skipping")
         skipped += 1

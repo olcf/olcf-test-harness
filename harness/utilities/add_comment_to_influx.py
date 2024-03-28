@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 11-29-2022
+# Date modified: 03-19-2024
 ################################################################################
 # Purpose:
 #   Allows users to add comments to a specific event (ie, build_start) of
@@ -14,7 +14,6 @@
 ################################################################################
 
 import os
-import sys
 import requests
 import subprocess
 import urllib.parse
@@ -48,17 +47,17 @@ args = parser.parse_args()  # event field already validated by 'choices'
 # Set up URIs and Tokens #######################################################
 if not args.db in influx_keys.keys():
     print(f"Unknown database version: {args.db} not found in influx_keys. Aborting.")
-    sys.exit(1)
+    exit(1)
 elif not 'POST' in influx_keys[args.db]:
     print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
-    sys.exit(1)
+    exit(1)
 elif not 'GET-v1' in influx_keys[args.db]:
     print(f"GET-v1 URL not found in influx_keys[{args.db}]. Aborting.")
     print(f"GET-v1 is required to make InfluxQL-language queries to InfluxDB.")
-    sys.exit(1)
+    exit(1)
 elif not 'token' in influx_keys[args.db]:
     print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
-    sys.exit(1)
+    exit(1)
 
 # Checking succeeded - global setup of URIs and tokens
 post_influx_uri = influx_keys[args.db]['POST']
@@ -110,11 +109,11 @@ def query_influx():
     except requests.exceptions.ConnectionError as e:
         print("InfluxDB is not reachable. Request not sent.")
         print(str(e))
-        sys.exit(1)
+        exit(1)
     except Exception as e:
         print(f"Failed to send to {url}:")
         print(str(e))
-        sys.exit(2)
+        exit(2)
     print(r)
     resp = r.json()
     print(resp)
@@ -126,7 +125,7 @@ def query_influx():
     values = resp['results'][0]['series'][0]['values']
     if not len(values) == 1:
         print(f"Query returned {len(values)} results, expected 1. Exiting.")
-        sys.exit(1)
+        exit(1)
     # Let's do the work of transforming this into a list of dicts
     ret_data = {}
     for c_index in range(0, len(col_names)):
@@ -135,7 +134,7 @@ def query_influx():
     if not should_add:
         test_id = data_tmp['test_id'] if 'test_id' in data_tmp else 'unknown'
         print(f"Invalid record associated with test_id {test_id}. Reason: {reason}. Exiting.")
-        sys.exit(1)
+        exit(1)
     return ret_data
 
 def post_update_to_influx(d):
@@ -191,6 +190,10 @@ if data['comment'] and not data['comment'] == '[NO_VALUE]':
 else:
     data['comment'] = f"{timestamp} - {os.environ['USER']}: {args.message}."
 
+# Convert any double quotes into escaped double-quotes
+for field in data.keys():
+    data[field] = data[field].replace('"', '\\"')
+
 post_update_to_influx(data)
 
-sys.exit(0)
+exit(0)

@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 11-29-2022
+# Date modified: 03-19-2024
 ################################################################################
 # Purpose:
 #   Allows users to change the machine a harness job is logged to in InfluxDB.
@@ -18,7 +18,6 @@
 ################################################################################
 
 import os
-import sys
 import requests
 import subprocess
 import urllib.parse
@@ -48,17 +47,17 @@ args = parser.parse_args()  # event field already validated by 'choices'
 # Set up URIs and Tokens #######################################################
 if not args.db in influx_keys.keys():
     print(f"Unknown database version: {args.db} not found in influx_keys. Aborting.")
-    sys.exit(1)
+    exit(1)
 elif not 'POST' in influx_keys[args.db]:
     print(f"POST URL not found in influx_keys[{args.db}]. Aborting.")
-    sys.exit(1)
+    exit(1)
 elif not 'GET-v1' in influx_keys[args.db]:
     print(f"GET-v1 URL not found in influx_keys[{args.db}]. Aborting.")
     print(f"GET-v1 is required to make InfluxQL-language queries to InfluxDB.")
-    sys.exit(1)
+    exit(1)
 elif not 'token' in influx_keys[args.db]:
     print(f"Influx token not found in influx_keys[{args.db}]. Aborting.")
-    sys.exit(1)
+    exit(1)
 
 # Checking succeeded - global setup of URIs and tokens
 post_influx_uri = influx_keys[args.db]['POST']
@@ -105,11 +104,11 @@ def query_influx():
     except requests.exceptions.ConnectionError as e:
         print("InfluxDB is not reachable. Request not sent.")
         print(str(e))
-        sys.exit(1)
+        exit(1)
     except Exception as e:
         print(f"Failed to send to {url}:")
         print(str(e))
-        sys.exit(2)
+        exit(2)
     resp = r.json()
     if not 'series' in resp['results'][0]:
         print(f"No Running tests found.\nFull query: {query}.\nFull response: {resp}")
@@ -127,7 +126,7 @@ def query_influx():
         if not should_add:
             test_id = tmp_d['test_id'] if 'test_id' in tmp_d else 'unknown'
             print(f"Invalid record associated with test_id {test_id}. Reason: {reason}. Exiting.")
-            sys.exit(1)
+            exit(1)
         ret_data.append(tmp_d)
     return ret_data
 
@@ -188,6 +187,9 @@ for d in data:
     else:
         d['comment'] = f"{timestamp} - {os.environ['USER']}: machine name changed from {d['machine']} to {args.newmachine}."
         d['machine'] = args.newmachine
+    # Convert any double quotes into escaped double-quotes
+    for field in d.keys():
+        d[field] = d[field].replace('"', '\\"')
     post_update_to_influx(d)
 
-sys.exit(0)
+exit(0)

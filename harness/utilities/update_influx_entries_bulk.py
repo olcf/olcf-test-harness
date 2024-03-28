@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 12-29-2022
+# Date modified: 03-19-2024
 ################################################################################
 # Purpose:
 #   Given a set of parameters to identify tests by, performs an edit action on
@@ -216,6 +216,10 @@ def post_update_to_influx(d):
         d['comment'] = f'{new_msg}'
     # Set new check status
     d['event_value'] = args.new_check_status
+
+    # Convert any double quotes into escaped double-quotes
+    for field in d.keys():
+        d[field] = d[field].replace('"', '\\"')
 
     headers = {
         'Authorization': "Token " + influx_token,
