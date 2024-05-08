@@ -541,7 +541,7 @@ class RgtTest():
                 key_modified = rgt_variable_name_modification(key)
                 tmp_value = os.getenv(key_modified)
                 if tmp_value :
-                    self.__builtin_params[key] = tmp_value
+                    self.__user_params[key] = tmp_value
                 else :
                     error_message = "Unable to reconcile shell environmental variables and self.__user_params[{key}]={value}.".format(key=key,value=value)
                     raise ErrorRgtParameterReconcile(error_message)
