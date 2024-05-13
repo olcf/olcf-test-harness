@@ -28,13 +28,13 @@ class SingleApplicationGitRepository(BaseRepository):
     @classmethod
     def get_repository_url_of_application(cls,application):
         my_machine = os.getenv("RGT_GIT_MACHINE_NAME")
-        parent_directory = cls.get_application_parent_directory()
+        parent_directory = cls.get_application_parent_directory() + "/" + my_machine
 
         data_transfer_protocol = os.getenv("RGT_GIT_DATA_TRANSFER_PROTOCOL")
 
         if  data_transfer_protocol == "ssh" :
             my_git_server_url=os.getenv("RGT_GIT_SSH_SERVER_URL")
-            path1 = my_git_server_url + ":" + parent_directory + "/" + my_machine + "/"
+            path1 = my_git_server_url + ":" + parent_directory + "/"
             path2 = application + ".git"
             git_url_to_remote_repsitory_application = path1 + path2
         elif data_transfer_protocol == "https":
