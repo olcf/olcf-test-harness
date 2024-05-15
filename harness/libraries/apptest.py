@@ -148,29 +148,34 @@ class subtest(base_apptest, apptest_layout):
                 self.doInfoLogging("Start of cloning repository")
                 destination = self.getLocalPathToTests()
 
-                self.cloneRepository(my_repository,
+                exit_code = self.cloneRepository(my_repository,
                                      destination)
 
                 self.doInfoLogging("End of cloning repository")
 
-
                 if test_checkout_lock:
                     test_checkout_lock.release()
+
+                if exit_code:
+                    return 1
 
             else:
                 if not self.check_paths():
                     self.logger.doErrorLogging(f"Aborting task {harness_task}. Could not find all required paths.")
                     message = "Could not find all required paths on the file system for application {app1}, test {test1}.".format(app1=self.getNameOfApplication(),
                                                                                                                                 test1=self.getNameOfSubtest())
-                    raise ApptestFilePathError(message)
+                    return 1
                 if harness_task == Harness.starttest:
                     message = "Start of starting test."
                     self.doInfoLogging(message)
 
-                    self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
+                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
 
                     message = "End of starting test"
                     self.doInfoLogging(message)
+
+                    if exit_code:
+                        return 1
 
                 elif harness_task == Harness.stoptest:
                     self._stop_test()
@@ -204,13 +209,13 @@ class subtest(base_apptest, apptest_layout):
 
         if exit_status > 0:
             string1 = "Cloning of repository failed."
-            self.doInfoLogging(string1)
-            sys.exit(string1)
+            self.doCriticalLogging(string1)
+            return 1
         else:
             message = "Cloning of repository passed"
             self.doInfoLogging(message)
 
-        return
+        return 0
 
     #
     # Displays the status of the tests.
@@ -552,7 +557,7 @@ class subtest(base_apptest, apptest_layout):
             self.doCriticalLogging(message)
 
             string1 = "Command failed: " + starttestcomand
-            sys.exit(string1)
+            return 1
         else:
             message =  "In function {function_name}, the command '{cmd}' has executed sucessfully.\n".format(function_name=self.__name_of_current_function(),cmd=starttestcomand)
             message += "stdout of command : {}\n".format(stdout)
@@ -1035,13 +1040,19 @@ def do_application_tasks(launch_id,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False):
+    # Returns [#Passed,#Failed]
+    ret = [0,0]
     for app_test in app_test_list:
         print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
-        app_test.doTasks(launchid=launch_id,
+        # Non-zero exit status is failure
+        if app_test.doTasks(launchid=launch_id,
                          tasks=tasks,
                          stdout_stderr=stdout_stderr,
-                         separate_build_stdio=separate_build_stdio)
-    return
+                         separate_build_stdio=separate_build_stdio):
+            ret[1] += 1
+        else:
+            ret[0] += 1
+    return ret
 
 def wait_for_jobs_to_complete_in_queue(harness_config,
                                        app_test_list,

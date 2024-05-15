@@ -280,11 +280,13 @@ class Harness:
                 if my_future_exception:
                     message = "Application {} future exception:\n{}".format(appname, my_future_exception)
                     self.__myLogger.doCriticalLogging(message)
-                    self.__skipped_tests += 1
                 else:
                     message = "Application {} future is completed.".format(appname)
                     self.__myLogger.doInfoLogging(message)
-                    self.__launched_tests += 1
+
+                subtest_result = my_future.result()
+                self.__launched_tests += subtest_result[0]
+                self.__skipped_tests += subtest_result[1]
 
             message = "All applications completed futures. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
