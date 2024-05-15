@@ -1041,7 +1041,7 @@ def do_application_tasks(launch_id,
                          stdout_stderr,
                          separate_build_stdio=False):
     # Returns [#Passed,#Failed]
-    ret = [0,0]
+    ret = [0, 0, []]
     for app_test in app_test_list:
         print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
         # Non-zero exit status is failure
@@ -1050,6 +1050,7 @@ def do_application_tasks(launch_id,
                          stdout_stderr=stdout_stderr,
                          separate_build_stdio=separate_build_stdio):
             ret[1] += 1
+            ret[2].append(f"{app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
         else:
             ret[0] += 1
     return ret

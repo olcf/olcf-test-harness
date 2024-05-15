@@ -80,7 +80,8 @@ class Harness:
             testshot_str = testshot_cfg[testshot_key]
         self.__launch_id = f'{testshot_str}/{user_str}@{time_str}'
         self.__launched_tests = 0
-        self.__skipped_tests = 0
+        self.__failed_tests = 0
+        self.__failed_test_list = []
 
         # Define a logger that streams to file.
         logger_name=Harness.LOGGER_NAME
@@ -286,12 +287,18 @@ class Harness:
 
                 subtest_result = my_future.result()
                 self.__launched_tests += subtest_result[0]
-                self.__skipped_tests += subtest_result[1]
+                self.__failed_tests += subtest_result[1]
+                if self.__failed_tests:
+                    self.__failed_test_list.extend(subtest_result[2])
 
             message = "All applications completed futures. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
             # For the moment, hard-code this as a print statement.
-            print(f"Launched {self.__launched_tests} tests, skipped {self.__skipped_tests} tests.")
+            print(f"Launched {self.__launched_tests} tests, failed to launch {self.__failed_tests} tests.")
+            if self.__failed_tests:
+                print("Failed tests:")
+                for t in self.__failed_test_list:
+                    print(f"\t{t}")
 
         return
 
