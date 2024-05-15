@@ -1024,17 +1024,6 @@ class ApptestImproperInstantiationError(BaseApptestError):
     def message(self):
         return self.__message
 
-class ApptestFilePathError(BaseApptestError):
-    """Raised when the class subtest is run and required paths on the file system are missing."""
-    def __init__(self,
-                 message):
-        self.__message = message
-        return
-
-    @property
-    def message(self):
-        return self.__message
-
 def do_application_tasks(launch_id,
                          app_test_list,
                          tasks,
