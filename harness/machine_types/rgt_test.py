@@ -439,10 +439,13 @@ class RgtTest():
                 raise ErrorRgtTestInputFileNotFound(error_message)
         except ErrorRgtParameterReconcile as err:
             self.__logger.doCriticalLogging(err.message)
-            sys.exit(err.message)
+            exit(err.message)
         except ErrorRgtTestInputFileNotFound as err:
             self.__logger.doCriticalLogging(err.message)
-            sys.exit(err.message)
+            exit(err.message)
+        except Exception as e:
+            self.__logger.doCriticalLogging(e)
+            exit(1)
 
     # Private methods
 
