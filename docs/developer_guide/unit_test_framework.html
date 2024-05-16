@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -94,7 +96,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/overview.html#purpose">Purpose</a><ul class="simple">
@@ -142,6 +144,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#define-replacement-variables-instead-of-envvars">Define replacement variables instead of EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/adding_new_machine.html">Adding a New Machine</a><ul>
@@ -229,13 +237,13 @@
            <div itemprop="articleBody">
             
   <div class="section" id="git-unit-test-framework">
-<h1>Git Unit Test Framework<a class="headerlink" href="#git-unit-test-framework" title="Permalink to this headline">¶</a></h1>
+<h1>Git Unit Test Framework<a class="headerlink" href="#git-unit-test-framework" title="Permalink to this heading">¶</a></h1>
 <p>The Harness unit testing framework uses Python’s pytest module
 to implement the unit tests, and GitLab’s CI/CD service to run
 the tests. The unit tests can also be ran without GitLabs CI/CD
 service.</p>
 <div class="section" id="organizational-structure">
-<h2>Organizational Structure<a class="headerlink" href="#organizational-structure" title="Permalink to this headline">¶</a></h2>
+<h2>Organizational Structure<a class="headerlink" href="#organizational-structure" title="Permalink to this heading">¶</a></h2>
 <p>The source for the Harness unit tests are located in directory
 <em>olcf-test-harness/ci_testing_utilities</em>. The main driver scripts to run the
 generic and machine specific tests are located in directory
@@ -272,9 +280,9 @@ generic and machine specific tests.</p>
 </div>
 </div>
 <div class="section" id="setting-up-the-harness-unit-testing-runtime-environment">
-<h2>Setting Up the Harness Unit Testing Runtime Environment<a class="headerlink" href="#setting-up-the-harness-unit-testing-runtime-environment" title="Permalink to this headline">¶</a></h2>
+<h2>Setting Up the Harness Unit Testing Runtime Environment<a class="headerlink" href="#setting-up-the-harness-unit-testing-runtime-environment" title="Permalink to this heading">¶</a></h2>
 <div class="section" id="generic-tests">
-<h3>Generic Tests<a class="headerlink" href="#generic-tests" title="Permalink to this headline">¶</a></h3>
+<h3>Generic Tests<a class="headerlink" href="#generic-tests" title="Permalink to this heading">¶</a></h3>
 <p>To set up the runtime environment to run the generic
 Harness unit tests, within directory <em>olcf-test-harness</em>
 one needs to do following commands:</p>
@@ -285,7 +293,7 @@ one needs to do following commands:</p>
 </div></blockquote>
 </div>
 <div class="section" id="machine-specific-tests">
-<h3>Machine Specific Tests<a class="headerlink" href="#machine-specific-tests" title="Permalink to this headline">¶</a></h3>
+<h3>Machine Specific Tests<a class="headerlink" href="#machine-specific-tests" title="Permalink to this heading">¶</a></h3>
 <p>To set up the runtime environment to run the machine specific
 Harness unit tests, within directory <em>olcf-test-harness</em>
 one needs to do following commands:</p>
@@ -299,16 +307,16 @@ one needs to do following commands:</p>
 </div>
 </div>
 <div class="section" id="running-the-harness-unit-tests">
-<h2>Running the Harness Unit Tests<a class="headerlink" href="#running-the-harness-unit-tests" title="Permalink to this headline">¶</a></h2>
+<h2>Running the Harness Unit Tests<a class="headerlink" href="#running-the-harness-unit-tests" title="Permalink to this heading">¶</a></h2>
 <div class="section" id="id1">
-<h3>Generic Tests<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<h3>Generic Tests<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
 <p>To run the generic unit tests run the command:</p>
 <blockquote>
 <div><p><strong>run_generic_unit_tests.py</strong></p>
 </div></blockquote>
 </div>
 <div class="section" id="id2">
-<h3>Machine Specific Tests<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<h3>Machine Specific Tests<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
 <p>To run the machine specific unit tests, appropiately define the environmental
 variables <em>HUT_MACHINE_NAME</em> and <em>HUT_CONFIG_TAG</em>, then run the command:</p>
 <blockquote>
@@ -318,7 +326,7 @@ variables <em>HUT_MACHINE_NAME</em> and <em>HUT_CONFIG_TAG</em>, then run the co
 </div>
 </div>
 <div class="section" id="harness-unit-testing-api">
-<h2>Harness Unit Testing API<a class="headerlink" href="#harness-unit-testing-api" title="Permalink to this headline">¶</a></h2>
+<h2>Harness Unit Testing API<a class="headerlink" href="#harness-unit-testing-api" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="unit_test_framework/git_ci_test_framework.html">Usage and Developer Documentation for GitLab CI/CD</a></li>

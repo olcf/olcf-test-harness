@@ -259,6 +259,7 @@ Check Script
 ^^^^^^^^^^^^
 
 The check script can be a shell script, Python script, or other executable command.
+This must be an absolute path to a command (ie, ``/usr/bin/echo`` instead of ``echo``).
 
 Check scripts are used to verify that application tests ran as expected, and thus use standardized return codes to inform the OTH on the test result.
 Checking performance is optional but recommended for most tests.
@@ -301,6 +302,7 @@ The report script is launched from **$RESULTS_DIR** and stdout/stderr is capture
 
     In many cases, the check script serves the function of both the check and report script.
     In that event, report scripts often just ``exit 0``.
+    An alternative to a no-op bash script, you may use ``/usr/bin/echo`` on most Linux systems.
 
 
 Example Test from the Ground Up

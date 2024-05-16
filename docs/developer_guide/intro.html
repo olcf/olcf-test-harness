@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -94,7 +96,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/overview.html#purpose">Purpose</a><ul class="simple">
@@ -142,6 +144,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#define-replacement-variables-instead-of-envvars">Define replacement variables instead of EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/adding_new_machine.html">Adding a New Machine</a><ul>
@@ -229,11 +237,11 @@
            <div itemprop="articleBody">
             
   <div class="section" id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <div class="section" id="raison-d-etre">
-<h2>Raison d’etre<a class="headerlink" href="#raison-d-etre" title="Permalink to this headline">¶</a></h2>
+<h2>Raison d’etre<a class="headerlink" href="#raison-d-etre" title="Permalink to this heading">¶</a></h2>
 <p>The OLCF Test Harness, hereafter referred as the Harness, is used for OLCF
 machine acceptances, and is generally designed for Linux
 or UNIX like operating systems. The Harness goal is to replicate users
@@ -243,7 +251,7 @@ applications’ jobs to the job scheduler (PBS, LSF, etc.), and recording the
 results of the applications’ builds and runs.</p>
 </div>
 <div class="section" id="organizational-structure">
-<h2>Organizational Structure<a class="headerlink" href="#organizational-structure" title="Permalink to this headline">¶</a></h2>
+<h2>Organizational Structure<a class="headerlink" href="#organizational-structure" title="Permalink to this heading">¶</a></h2>
 <p>The Harness top-level directory contains the directory <em>.git</em> and is hereafter
 referred to as <em>olcf-test-harness</em>. The Harness organization structure has 4
 parts. The first part is the Python files to run the application tests for
@@ -266,7 +274,7 @@ directory <em>olcf-test-harness/doc-sphinx</em>.</p>
 </div>
 </div>
 <div class="section" id="prequisites">
-<h2>Prequisites<a class="headerlink" href="#prequisites" title="Permalink to this headline">¶</a></h2>
+<h2>Prequisites<a class="headerlink" href="#prequisites" title="Permalink to this heading">¶</a></h2>
 <p>The harness requires:</p>
 <blockquote>
 <div><ul class="simple">
@@ -281,7 +289,7 @@ directory <em>olcf-test-harness/doc-sphinx</em>.</p>
 </div></blockquote>
 </div>
 <div class="section" id="indices-and-tables">
-<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>

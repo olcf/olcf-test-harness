@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -96,7 +98,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
@@ -144,6 +146,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#define-replacement-variables-instead-of-envvars">Define replacement variables instead of EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Machine</a><ul>
@@ -231,7 +239,7 @@
            <div itemprop="articleBody">
             
   <div class="section" id="adding-a-new-machine">
-<span id="section-new-machine"></span><h1>Adding a New Machine<a class="headerlink" href="#adding-a-new-machine" title="Permalink to this headline">¶</a></h1>
+<span id="section-new-machine"></span><h1>Adding a New Machine<a class="headerlink" href="#adding-a-new-machine" title="Permalink to this heading">¶</a></h1>
 <p>The following steps can be used to add support for a new system:</p>
 <ol class="arabic simple">
 <li><p>Create a machine master configuration (e.g. <em>lyra.ini</em>, placed in <em>$OLCF_HARNESS_DIR/configs/lyra.ini</em>).</p></li>
@@ -246,7 +254,7 @@
 <p>Creating a machine configuration file is discussed below.
 The creation of tests is discussed in another section</p>
 <div class="section" id="create-a-basic-machine-configuration">
-<h2>Create a Basic Machine Configuration<a class="headerlink" href="#create-a-basic-machine-configuration" title="Permalink to this headline">¶</a></h2>
+<h2>Create a Basic Machine Configuration<a class="headerlink" href="#create-a-basic-machine-configuration" title="Permalink to this heading">¶</a></h2>
 <p>An example input file with detailed explanation is contained below.
 All settings in the <em>machine.ini</em> file are used to set environment variables that can be used throughout the test.
 For example, <strong>gpus_per_node</strong> is used to set <strong>RGT_GPUS_PER_NODE</strong>, which could be used in a job script.

@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -96,7 +98,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
@@ -144,6 +146,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#define-replacement-variables-instead-of-envvars">Define replacement variables instead of EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
@@ -231,13 +239,13 @@
            <div itemprop="articleBody">
             
   <div class="section" id="extensions">
-<h1>Extensions<a class="headerlink" href="#extensions" title="Permalink to this headline">¶</a></h1>
+<h1>Extensions<a class="headerlink" href="#extensions" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <p>Optional extensions have been developed for use with the OLCF Test Harness (OTH).
 Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.</p>
 <div class="section" id="influxdb-event-logging">
-<h2>InfluxDB Event Logging<a class="headerlink" href="#influxdb-event-logging" title="Permalink to this headline">¶</a></h2>
+<h2>InfluxDB Event Logging<a class="headerlink" href="#influxdb-event-logging" title="Permalink to this heading">¶</a></h2>
 <p>The OTH leaves behind event information in files on the file system, with data like timestamp, filesystem paths for work, scratch and archive directories, test name, etc.
 This information can additionally be logged to an InfluxDB time-series database.
 To enable this extension, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
@@ -304,7 +312,7 @@ If you do not want a test instance to be logged, set <strong>RGT_INFLUX_DISABLED
 </div>
 </div>
 <div class="section" id="logging-application-metrics-to-influxdb">
-<h2>Logging application metrics to InfluxDB<a class="headerlink" href="#logging-application-metrics-to-influxdb" title="Permalink to this headline">¶</a></h2>
+<h2>Logging application metrics to InfluxDB<a class="headerlink" href="#logging-application-metrics-to-influxdb" title="Permalink to this heading">¶</a></h2>
 <p>The OTH provides capability to log metrics from each test to InfluxDB.
 This extension is a great way to visualize performance of a certain test over time.
 This requires that InfluxDB event logging is enabled.</p>
@@ -328,7 +336,7 @@ Note that the correct computation of <strong>execution_time</strong>  requires p
 since <strong>execution_time</strong> is the difference in time between the two <em>log_binary_execution_time.py</em> calls.</p>
 </div>
 <div class="section" id="monitoring-the-health-of-individual-nodes">
-<h2>Monitoring the health of individual nodes<a class="headerlink" href="#monitoring-the-health-of-individual-nodes" title="Permalink to this headline">¶</a></h2>
+<h2>Monitoring the health of individual nodes<a class="headerlink" href="#monitoring-the-health-of-individual-nodes" title="Permalink to this heading">¶</a></h2>
 <p>In many-node systems, it can be very difficult to monitor the health of specific nodes.
 To address this, the OTH supports node-centric monitoring.
 Similar to metrics logging, this extension requires that InfluxDB event logging is enabled, and this extension is triggered by the presence of a <em>nodecheck.txt</em> file in the Run_Archive directory of a test launch.
@@ -379,7 +387,7 @@ An example portion from this file may look like:</p>
 <p>Then, when querying InfluxDB in this example, you may use <strong>cabinet</strong>, <strong>switch</strong>, and <strong>slot</strong> to filter records.</p>
 </div>
 <div class="section" id="check-alias">
-<h2>Check Alias<a class="headerlink" href="#check-alias" title="Permalink to this headline">¶</a></h2>
+<h2>Check Alias<a class="headerlink" href="#check-alias" title="Permalink to this heading">¶</a></h2>
 <p>Check aliasing allows codes to provide an alpha-numeric explanation to the check script exit code.
 For example, the OTH uses a <strong>check_end</strong> event value of <code class="docutils literal notranslate"><span class="pre">1</span></code> to dictate a failure.
 Failures come in many shapes and sizes, so an example of how you would use a check alias is by having distinct values such as <code class="docutils literal notranslate"><span class="pre">MPI_ERR</span></code>, <code class="docutils literal notranslate"><span class="pre">BUS_ERR</span></code>, <code class="docutils literal notranslate"><span class="pre">TIMEOUT</span></code>, <code class="docutils literal notranslate"><span class="pre">INPUT_ERR</span></code>.

@@ -35,7 +35,9 @@
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
         <script src="../../../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
@@ -94,7 +96,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_guide/overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/overview.html#purpose">Purpose</a><ul class="simple">
@@ -142,6 +144,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../user_guide/adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../user_guide/adding_new_test.html#define-replacement-variables-instead-of-envvars">Define replacement variables instead of EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../user_guide/adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_guide/adding_new_machine.html">Adding a New Machine</a><ul>
@@ -229,12 +237,12 @@
            <div itemprop="articleBody">
             
   <div class="section" id="git-repository-module-documentation">
-<span id="git-repository-module"></span><h1>git_repository Module Documentation<a class="headerlink" href="#git-repository-module-documentation" title="Permalink to this headline">¶</a></h1>
+<span id="git-repository-module"></span><h1>git_repository Module Documentation<a class="headerlink" href="#git-repository-module-documentation" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <span class="target" id="module-git_repository"></span><dl class="py class">
 <dt class="sig sig-object py" id="git_repository.GitRepository">
-<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">GitRepository</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">git_remote_repository_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_repository_branch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'master'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#git_repository.GitRepository" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GitRepository</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">git_remote_repository_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_repository_branch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'master'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#git_repository.GitRepository" title="Permalink to this definition">¶</a></dt>
 <dd><p>This class encapsulates the data transfer from the remote git repository</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -246,19 +254,19 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="git_repository.GitRepository.binaryName">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">binaryName</span></span><a class="headerlink" href="#git_repository.GitRepository.binaryName" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">binaryName</span></span><a class="headerlink" href="#git_repository.GitRepository.binaryName" title="Permalink to this definition">¶</a></dt>
 <dd><p>A property for the name of the git binary.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="git_repository.GitRepository.repository_branch">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">repository_branch</span></span><a class="headerlink" href="#git_repository.GitRepository.repository_branch" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">repository_branch</span></span><a class="headerlink" href="#git_repository.GitRepository.repository_branch" title="Permalink to this definition">¶</a></dt>
 <dd><p>A property for the name of the remote repository branch</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="git_repository.GitRepository.remote_repository_URL">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">remote_repository_URL</span></span><a class="headerlink" href="#git_repository.GitRepository.remote_repository_URL" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">remote_repository_URL</span></span><a class="headerlink" href="#git_repository.GitRepository.remote_repository_URL" title="Permalink to this definition">¶</a></dt>
 <dd><p>A property for the name of the remote repository URL.</p>
 </dd></dl>
 
