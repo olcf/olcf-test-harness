@@ -437,14 +437,8 @@ class RgtTest():
             else:
                 error_message = "Test input file {} not found".format(self.test_input_filename)
                 raise ErrorRgtTestInputFileNotFound(error_message)
-        except ErrorRgtParameterReconcile as err:
+        except Exception as err:
             self.__logger.doCriticalLogging(err.message)
-            exit(err.message)
-        except ErrorRgtTestInputFileNotFound as err:
-            self.__logger.doCriticalLogging(err.message)
-            exit(err.message)
-        except Exception as e:
-            self.__logger.doCriticalLogging(e)
             exit(1)
 
     # Private methods
