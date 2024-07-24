@@ -13,6 +13,12 @@ class rgt_database_logger:
     # which enable/disable various database backends
     # ie, RGT_INFLUX_URI
 
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Public methods.                                                 @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     def __init__(self, logger=None, subtest=None):
         """ 
         Parameters
@@ -35,7 +41,73 @@ class rgt_database_logger:
         self.disabled_backends = self._find_disabled_backends()
         self.enabled_backends = self._add_db_backends()
 
-    # Private methods
+    def log_event(self, event_dict : dict):
+        """
+        Logs the provided event to all databases
+        """
+        for backend in self.enabled_backends:
+            try:
+                backend.send_event(event_dict)
+            except Exception as e:
+                self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e.message}.")
+                pass
+
+    def log_metrics(self, metrics_dict : dict):
+        """
+        Logs the provided event to all databases
+        """
+        if not ('RGT_SYSTEM_LOG_TAG' in os.environ and 'RGT_MACHINE_NAME' in os.environ):
+            self.__logger.doErrorLogging("Logging metrics requires both RGT_SYSTEM_LOG_TAG and RGT_MACHINE_NAME to be set")
+            return False
+        # requires 'test_id','app','test','runtag','machine'
+        test_info_dict = {
+            'test_id': self.subtest.get_harness_id(),
+            'app': self.subtest.getNameOfApplication(),
+            'test': self.subtest.getNameOfSubtest(),
+            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'],
+            'machine': os.environ['RGT_MACHINE_NAME']
+        }
+        for backend in self.enabled_backends:
+            try:
+                backend.send_metrics(test_info_dict, metrics_dict)
+            except Exception as e:
+                self.logger.doErrorLogging(f"The following exception occurred while logging metrics to {backend.url}: {e.message}.")
+                pass
+
+    def log_node_health(self, node_health_dict : dict):
+        """
+        Logs the provided event to all databases
+        """
+        if not ('RGT_SYSTEM_LOG_TAG' in os.environ and 'RGT_MACHINE_NAME' in os.environ):
+            self.__logger.doErrorLogging("Logging node health results requires both RGT_SYSTEM_LOG_TAG and RGT_MACHINE_NAME to be set")
+            return False
+        # requires 'test_id','test','runtag','machine'
+        test_info_dict = {
+            'test_id': self.subtest.get_harness_id(),
+            'test': self.subtest.getNameOfSubtest(),
+            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'],
+            'machine': os.environ['RGT_MACHINE_NAME']
+        }
+        for backend in self.enabled_backends:
+            try:
+                backend.send_node_health_results(test_info_dict, node_health_dict)
+            except Exception as e:
+                self.logger.doErrorLogging(f"The following exception occurred while logging node health results to {backend.url}: {e.message}.")
+                pass
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of public methods.                                          @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # Private methods.                                                @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     def _find_disabled_backends(self):
         """
         Parses the RGT_DISABLE_* environment variables to add appropriate dot-files to disable database logging
@@ -61,7 +133,7 @@ class rgt_database_logger:
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
-            from db_backends.influxdb import influxdb_logger
+            from db_backends.rgt_influxdb import influxdb_logger
             influxdb_loaded = True
         except ImportError as e:
             self.logger.doErrorLogging(f"The following exception occurred while loading InfluxDB: {e.message}.")
@@ -86,3 +158,9 @@ class rgt_database_logger:
                             self.logger.doErrorLogging(e.message)
 
         return db_backends
+
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    #                                                                 @
+    # End of private methods.                                         @
+    #                                                                 @
+    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

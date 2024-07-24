@@ -39,17 +39,16 @@ class base_db(ABC):
         return
 
     @abstractmethod
-    def send_metrics(self, metrics_dict : dict):
+    def send_metrics(self, test_info_dict : dict, metrics_dict : dict):
         return
 
     @abstractmethod
-    def send_node_health_results(self, node_health_dict : dict):
+    def send_node_health_results(self, test_info_dict : dict, node_health_dict : dict):
         return
 
     @abstractmethod
     def is_alive(self):
         return
-
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -59,6 +58,34 @@ class base_db(ABC):
 
 # Raised when there is an initialization error
 class DatabaseInitError(Exception):
+    """The base error class for this module."""
+    def __init__(self,
+                 message,
+                 args):
+        self.__message = message
+        self.__args = args
+        return
+
+    @property
+    def message(self):
+        return self.__message
+
+# Raised when there is an data error
+class DatabaseDataError(Exception):
+    """The base error class for this module."""
+    def __init__(self,
+                 message,
+                 args):
+        self.__message = message
+        self.__args = args
+        return
+
+    @property
+    def message(self):
+        return self.__message
+
+# Raised when there is an environment variable-related error
+class DatabaseEnvironmentError(Exception):
     """The base error class for this module."""
     def __init__(self,
                  message,
