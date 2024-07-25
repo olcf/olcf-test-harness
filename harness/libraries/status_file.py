@@ -22,7 +22,7 @@ import dateutil.parser
 import subprocess
 
 from libraries.layout_of_apps_directory import apptest_layout
-import libraries.rgt_database_loggers.rgt_database_logger_factory
+from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""
@@ -281,7 +281,7 @@ class StatusFile:
         """
         self.__logger = logger
         self.__test_id = test_id
-        self.__db_logger = rgt_database_logger_factory.create_rgt_db_logger(logger=logger)
+        self.__db_logger = create_rgt_db_logger(logger=logger)
 
         # The first task is set the path to status file.
         self.__status_file_path = path_to_status_file

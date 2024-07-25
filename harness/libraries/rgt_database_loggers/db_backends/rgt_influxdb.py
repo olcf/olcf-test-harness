@@ -5,8 +5,9 @@ from datetime import datetime
 import requests
 from urllib.parse import urlparse
 import re
+import json
 
-from base_db import *
+from libraries.rgt_database_loggers.db_backends.base_db import *
 
 class InfluxDBLogger(BaseDBLogger):
 
@@ -109,7 +110,7 @@ class InfluxDBLogger(BaseDBLogger):
         return '.disable_influxdb'
 
     @property
-    def disable_file_name(self):
+    def name(self):
         return 'influxdb'
 
     def send_event(self, event_dict : dict):
@@ -296,10 +297,18 @@ class InfluxDBLogger(BaseDBLogger):
             'Accept': "application/json"
         }
 
+        print(f'{self.url}/api/v2/buckets')
         r = requests.get(f'{self.url}/api/v2/buckets', headers=headers)
         if int(r.status_code) >= 400:
             return f"status_code = {r.status_code}, text = {r.text}, reason = {r.reason}"
-        resp = r.json()
+        json_success = False
+        try:
+            resp = r.json()
+            json_success = True
+        except Exception as e:
+            pass
+        if not json_success:
+            return f"JSON response in is_alive() failed to parse."
         if not 'buckets' in resp:
             return f"no buckets found in the InfluxDB instance"
         found_bucket = False

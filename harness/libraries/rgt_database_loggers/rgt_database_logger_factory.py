@@ -4,13 +4,9 @@ This module implements the factory class for creating rgt_loggers.
 """
 
 
-from .rgt_database_logging import RgtDatabaseLogger
+from .rgt_database_logger import RgtDatabaseLogger
 
-def create_rgt_db_logger(logger_name=None,
-                         fh_filepath=None,
-                         logger_threshold_log_level=None,
-                         fh_threshold_log_level=None,
-                         ch_threshold_log_level=None):
+def create_rgt_db_logger(logger=None):
     """Creates and returns an instance of rgt_database_logger.
 
     Parameters
@@ -24,5 +20,5 @@ def create_rgt_db_logger(logger_name=None,
         An instance of the RgtDatabaseLogger class.
     """
 
-    a_rgt_logger = RgtDatabaseLogger(logger_name=logger_name)
+    a_rgt_logger = RgtDatabaseLogger(logger=logger)
     return a_rgt_logger
