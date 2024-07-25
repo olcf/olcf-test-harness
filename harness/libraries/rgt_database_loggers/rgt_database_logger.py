@@ -224,7 +224,11 @@ class RgtDatabaseLogger:
                 if influxdb_loaded:
                     for i in range(0,len(influxdb_uris)):
                         try:
+                            # If you use multiple InfluxDB instances, you must not use the RGT_INFLUXDB_BUCKET or RGT_INFLUXDB_ORG variables
+                            # unless the same bucket and org name apply to all InfluxDB instances
+                            # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
                             influxdb_backend = influxdb_logger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger, subtest=self.subtest)
+                            self.__logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                             self.enabled_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
                             self.logger.doErrorLogging(e.message)
