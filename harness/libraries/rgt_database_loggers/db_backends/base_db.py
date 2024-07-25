@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod, ABCMeta
 import os
 from datetime import datetime
 
-class base_db(ABC):
+class BaseDBLogger(ABC):
 
     """
     An abstract base class that implements the database logging interface.
@@ -17,9 +17,8 @@ class base_db(ABC):
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def __init__(self, subtest=None):
-
-        self.__subtest = subtest
+    def __init__(self):
+        return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -33,6 +32,17 @@ class base_db(ABC):
     # Public methods.                                                 @
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    # The name of the dot-file that disables this backend
+    @property
+    @abstractmethod
+    def disable_file_name(self):
+        return
+
+    @property
+    @abstractmethod
+    def name(self):
+        return
 
     @abstractmethod
     def send_event(self, event_dict : dict):

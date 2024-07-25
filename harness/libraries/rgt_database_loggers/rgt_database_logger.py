@@ -7,11 +7,13 @@ This module implements the database logging capability of the harness.
 
 import os
 
-class rgt_database_logger:
+class RgtDatabaseLogger:
 
-    # This class is entirely parameterized by environment variables and dot-files in a test's Run_Archive directory,
-    # which enable/disable various database backends
-    # ie, RGT_INFLUX_URI
+    # This class depends solely on the dictionaries provided to the log_* methods
+    # There is no dependence on the subtest or statusfile classes
+
+    # Information required in the log_* methods to be able to send the test information to InfluxDB
+    REQUIRED_TEST_INFO = ['test_id', 'app', 'test', 'runtag', 'machine', 'runarchive_dir']
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -19,25 +21,19 @@ class rgt_database_logger:
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def __init__(self, logger=None, subtest=None):
+    def __init__(self, logger=None):
         """ 
         Parameters
         ----------
         logger : str
             The rgt_logger of the current scope. Since this class only serves for logging,
             we want it to inherit the logger from the calling class.
-
-        subtest : subtest
-            The subtest associated with this database logger
         """
 
         if not logger:
             print("Invalid call to rgt_database_logger constructor: no logger provided")
             return
         self.logger = logger
-        if not subtest:
-            self.logger.doErrorLogging("Invalid call to rgt_database_logger constructor: no apptest provided")
-        self.subtest = subtest
         self.disabled_backends = self._find_disabled_backends()
         self.enabled_backends = self._add_db_backends()
 
@@ -45,6 +41,13 @@ class rgt_database_logger:
         """
         Logs the provided event to all databases
         """
+
+        if not self._check_test_info_exists(test_info_dict):
+            return False
+
+        if self._check_test_disabled_backend(test_info_dict['runarchive_dir']):
+            return False
+
         for backend in self.enabled_backends:
             try:
                 backend.send_event(event_dict)
@@ -52,21 +55,28 @@ class rgt_database_logger:
                 self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e.message}.")
                 pass
 
-    def log_metrics(self, metrics_dict : dict):
+    def log_metrics(self, test_info_dict : dict, metrics_dict : dict):
         """
         Logs the provided event to all databases
+        ----
+        Parameters:
+          test_info_dict : dict
+              a dictionary providing test_id, app, test, runtag, machine, and runarchive_dir
+
+          metrics_dict : dict
+              a dictionary providing all key-value metrics pairings
+        ----
+        Returns:
+            True if logging is successful for all backends
+            False otherwise
         """
-        if not ('RGT_SYSTEM_LOG_TAG' in os.environ and 'RGT_MACHINE_NAME' in os.environ):
-            self.__logger.doErrorLogging("Logging metrics requires both RGT_SYSTEM_LOG_TAG and RGT_MACHINE_NAME to be set")
+
+        if not self._check_test_info_exists(test_info_dict):
             return False
-        # requires 'test_id','app','test','runtag','machine'
-        test_info_dict = {
-            'test_id': self.subtest.get_harness_id(),
-            'app': self.subtest.getNameOfApplication(),
-            'test': self.subtest.getNameOfSubtest(),
-            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'],
-            'machine': os.environ['RGT_MACHINE_NAME']
-        }
+
+        if self._check_test_disabled_backend(test_info_dict['runarchive_dir']):
+            return False
+
         for backend in self.enabled_backends:
             try:
                 backend.send_metrics(test_info_dict, metrics_dict)
@@ -74,20 +84,28 @@ class rgt_database_logger:
                 self.logger.doErrorLogging(f"The following exception occurred while logging metrics to {backend.url}: {e.message}.")
                 pass
 
-    def log_node_health(self, node_health_dict : dict):
+    def log_node_health(self, test_info_dict : dict, node_health_dict : dict):
         """
         Logs the provided event to all databases
+        ----
+        Parameters:
+          test_info_dict : dict
+              a dictionary providing test_id, app, test, runtag, machine, and runarchive_dir
+
+          node_health_dict : dict
+              a dictionary providing all node statuses and messages
+        ----
+        Returns:
+            True if logging is successful for all backends
+            False otherwise
         """
-        if not ('RGT_SYSTEM_LOG_TAG' in os.environ and 'RGT_MACHINE_NAME' in os.environ):
-            self.__logger.doErrorLogging("Logging node health results requires both RGT_SYSTEM_LOG_TAG and RGT_MACHINE_NAME to be set")
+
+        if not self._check_test_info_exists(test_info_dict):
             return False
-        # requires 'test_id','test','runtag','machine'
-        test_info_dict = {
-            'test_id': self.subtest.get_harness_id(),
-            'test': self.subtest.getNameOfSubtest(),
-            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'],
-            'machine': os.environ['RGT_MACHINE_NAME']
-        }
+
+        if self._check_test_disabled_backend(test_info_dict['runarchive_dir']):
+            return False
+
         for backend in self.enabled_backends:
             try:
                 backend.send_node_health_results(test_info_dict, node_health_dict)
@@ -108,25 +126,79 @@ class rgt_database_logger:
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+    def _check_test_info_exists(self, test_info_dict : dict):
+        """
+        Checks that all required information exits in the provided test_info_dict
+        Parameters
+        ----------
+            test_info_dict : dict
+                A dictionary supplying information about a test needed to log the test
+        Returns
+        -------
+            True if all required information exists
+            False otherwise
+        """
+        provided_keys = list(test_info_dict.keys())
+        for key in self.REQUIRED_TEST_INFO:
+            if not key in provided_keys:
+                self.__logger.doErrorLogging(f'Missing key in provided test info for database logging: {key}')
+                return False
+        return True
+
+    def _check_test_disabled_backend(self, runarchive_dir : str, db_logger):
+        """
+        Checks if a specific test has disabled the specified backend
+        Checks BOTH environment variables (and creates the dot-files if they don't exist) and the dot-files
+
+        Parameters
+        ----------
+            runarchive_dir : str
+                Path to the Run_Archive directory for the specific test.
+
+            db_logger : instantiation of the base_db class
+                Database logger object
+
+        Returns
+        -------
+            True if test/run has disabled the specific backend
+            False otherwise
+        """
+
+        # Check if the environment variables to disable the backend are set
+        if db_logger.name in self.disabled_backends:
+            return True
+
+        # Check if the dot-file exists in Run_Archive/test_id to disable the backend
+        # Since the DB backend initialization is NOT done on a per-test basis, it's
+        # possible that a test previously had InfluxDB disabled, but was not explicitly
+        # disabled in the current environment. We want to enforce the past disabling
+        if os.path.exists(os.path.join(runarchive_dir, db_logger.disable_file_name)):
+            self.logger.doDebugLogging(f'Found {db_logger.disable_file_name} in {runarchive_dir}. Disabling {db_logger.name}.')
+            return True
+
+        return False
+
     def _find_disabled_backends(self):
         """
         Parses the RGT_DISABLE_* environment variables to add appropriate dot-files to disable database logging
+
+        Returns
+        -------
+            A list of explicitly-disabled backends
         """
         disabled_backends = []
         if 'RGT_DISABLE_INFLUXDB' in os.environ and str(os.environ['RGT_DISABLE_INFLUXDB']) == '1':
-            self.logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUXDB=1")
-            self.logger.doInfoLogging(f"Creating .disable_influxdb file in {os.path.join(self.subtest.get_path_to_runarchive(), '.disable_influxdb')}")
-            self.logger.doInfoLogging("If this was not intended, remove the .disable_influxdb file and run the harness under mode 'influx_log'")
-            os.mknod(os.path.join(self.subtest.get_path_to_runarchive(), '.disable_influxdb'))
-        # Check in a separate if, since the file could already exist without environment variables being set
-        if os.path.exists(os.path.join(self.subtest.get_path_to_runarchive(), '.disable_influxdb')):
-            self.logger.doInfoLogging("Found a .disable_influxdb dot-file, disabling all InfluxDB logging")
+            self.logger.doInfoLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUXDB=1")
             disabled_backeds.append('influxdb')
         return disabled_backends
 
     def _add_db_backends(self):
         """
         Parses the available environment variables to enable specific backends
+
+        Returns
+        -------
+            A list of enabled backends
         """
         db_backends = []
 
@@ -140,8 +212,8 @@ class rgt_database_logger:
             pass
 
         if ( influxdb_logger.kw['uri'] in os.environ and influxdb_logger.kw['token'] in os.environ ) \
-             and not 'influxdb' in self.disabled_backends \
-             and influxdb_loaded:
+                and not 'influxdb' in self.disabled_backends \
+                and influxdb_loaded:
             # Then we enable InfluxDB
             # Fields for multiple InfluxDB databases can be separated by semicolons
             influxdb_uris = os.environ[influxdb_logger.kw['uri']].split(';')

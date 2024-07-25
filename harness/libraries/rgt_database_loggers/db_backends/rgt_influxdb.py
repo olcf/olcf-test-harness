@@ -7,9 +7,8 @@ from urllib.parse import urlparse
 import re
 
 from base_db import *
-from libraries.status_file import StatusFile
 
-class influxdb_logger(base_db):
+class InfluxDBLogger(BaseDBLogger):
 
     """
     The logging class for InfluxDB databases
@@ -21,8 +20,12 @@ class influxdb_logger(base_db):
         'bucket': 'RGT_INFLUXDB_BUCKET',
         'org': 'RGT_INFLUXDB_ORG',
         'precision': 'RGT_INFLUXDB_PRECISION',
-        'dryrun': 'RGT_INFLUXDB_DRY_RUN'
+        'dryrun': 'RGT_INFLUXDB_DRY_RUN',
+        'disable': 'RGT_DISABLE_INFLUXDB'
     }
+
+    # Re-defines the StatusFile.NOVALUE
+    NO_VALUE = '[NO_VALUE]'
 
     #---Influx key identifiers.
     INFLUX_TAGS = [
@@ -66,13 +69,11 @@ class influxdb_logger(base_db):
     def __init__(self,
                  uri='',
                  token='',
-                 logger=None,
-                 subtest=None):
+                 logger=None):
 
         # This function can't be reached except through the parent
         # rgt_database_logger, which checks if the logger is not None
         self.__logger = logger
-        self.__subtest = subtest
         self.full_uri = uri
         self.token = token
 
@@ -103,11 +104,19 @@ class influxdb_logger(base_db):
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+    @property
+    def disable_file_name(self):
+        return '.disable_influxdb'
+
+    @property
+    def disable_file_name(self):
+        return 'influxdb'
+
     def send_event(self, event_dict : dict):
         """
             Posts the event to InfluxDB.
         """
-        self.__logger.doDebugLogging(f"Posting event {event_dict['event_name']} for test id: {self.__subtest.test_id} to Influx")
+        self.__logger.doDebugLogging(f"Posting event {event_dict['event_name']} for test id: {event_dict['test_id']} to Influx")
 
         # Initialize the tags for record string
         influx_event_record_string = 'events'
@@ -130,7 +139,7 @@ class influxdb_logger(base_db):
                 # We don't expect the comment or reason to be populated yet.
                 if not (field_name == 'comment' or field_name == 'reason'):
                     self.__logger.doWarningLogging(f"Couldn't find InfluxDB field: {field_name}. Setting to NOVALUE")
-                event_dict[field_name] = StatusFile.NO_VALUE
+                event_dict[field_name] = self.NO_VALUE
             influx_event_record_string += f'{sep}{field_name}="{event_dict[field_name]}"'
             sep = ','
 
@@ -183,7 +192,7 @@ class influxdb_logger(base_db):
                 influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
         else:
             # Even if event is not one with an output file, still log the output_txt metric
-            influx_event_record_string += ",output_txt=\"" + StatusFile.NO_VALUE  + "\""
+            influx_event_record_string += ",output_txt=\"" + self.NO_VALUE  + "\""
 
         influx_event_record_string += f" {str(self._event_time_to_timestamp(event_dict['event_time']))}"
 
@@ -198,7 +207,7 @@ class influxdb_logger(base_db):
         """
             Posts metrics to InfluxDB.
         """
-        self.__logger.doDebugLogging(f"Posting event: {event_id} with test id: {self.__subtest.test_id} to Influx")
+        self.__logger.doDebugLogging(f"Posting event: {event_id} with test id: {test_info_dict['test_id']} to Influx")
 
         # Initialize the tags for record string
         influx_event_record_string = 'metrics'
