@@ -585,7 +585,8 @@ class subtest(base_apptest, apptest_layout):
             'test': self.getNameOfSubtest(),
             'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
             'machine': machine_name,
-            'test_id': self.get_harness_id()
+            'test_id': self.get_harness_id(),
+            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START)
         }
 
         success_log = 0
@@ -615,7 +616,7 @@ class subtest(base_apptest, apptest_layout):
         node_healths = self._get_node_health()
         self.logger.doDebugLogging(f"Found {len(node_healths)} nodes reported for node health")
         if len(node_healths) > 0:
-            if not self.__db_logger.log_node_health(test_info, node_health):
+            if not self.__db_logger.log_node_health(test_info, node_healths):
                 failed_log += 1
                 self.logger.doWarningLogging(f"Logging node_health failed to log to at least one database.")
             else:
@@ -625,20 +626,20 @@ class subtest(base_apptest, apptest_layout):
         os.chdir(currentdir)
         return failed_log == 0
 
-    def _get_build_time(self, test_id):
+    def _get_build_time(self):
         """ Parses the build time from the status file """
         return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][0], \
-                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0], test_id)
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0])
 
-    def _get_execution_time(self, test_id):
+    def _get_execution_time(self):
         """ Parses the binary execution time from the status file """
         return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_START][0], \
-                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0], test_id)
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0])
 
-    def _get_run_timestamp(self, test_id):
+    def _get_run_timestamp(self, event=StatusFile.EVENT_CHECK_END):
         # Check for start event file and end event file
-        check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
-        check_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]}"
+        check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
+        check_status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
         if not os.path.exists(f"{check_status_file}"):
             self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
@@ -653,9 +654,22 @@ class subtest(base_apptest, apptest_layout):
             ns_utc = int(datetime.timestamp(dt_utc)) * 1000 * 1000 * 1000
         return ns_utc
 
-    def _get_time_diff_of_status_files(self, start_event_file, end_event_file, test_id):
+    def _get_event_time(self, event=StatusFile.EVENT_CHECK_END):
         # Check for start event file and end event file
-        status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}"
+        status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
+        status_file += f"{StatusFile.EVENT_DICT[event][0]}"
+
+        if not os.path.exists(f"{status_file}"):
+            self.logger.doWarningLogging(f"Couldn't find required file event time fetching: {status_file}")
+            return -1
+        with open(f"{status_file}", 'r') as fstr:
+            line = next(fstr)
+            event_time = line.split()[0]
+        return event_time
+
+    def _get_time_diff_of_status_files(self, start_event_file, end_event_file):
+        # Check for start event file and end event file
+        status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}"
 
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:

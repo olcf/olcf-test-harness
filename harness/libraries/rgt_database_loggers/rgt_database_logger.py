@@ -52,12 +52,12 @@ class RgtDatabaseLogger:
                 if not self._check_test_disabled_backend(backend):
                     backend.send_event(event_dict)
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e.message}.")
+                self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e}.")
                 pass
 
     def log_metrics(self, test_info_dict : dict, metrics_dict : dict):
         """
-        Logs the provided event to all databases
+        Logs the provided metrics data to all databases
         ----
         Parameters:
           test_info_dict : dict
@@ -79,7 +79,7 @@ class RgtDatabaseLogger:
                 if not self._check_test_disabled_backend(backend):
                     backend.send_metrics(test_info_dict, metrics_dict)
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging metrics to {backend.url}: {e.message}.")
+                self.logger.doErrorLogging(f"The following exception occurred while logging metrics to {backend.url}: {e}.")
                 pass
 
     def log_node_health(self, test_info_dict : dict, node_health_dict : dict):
@@ -106,7 +106,7 @@ class RgtDatabaseLogger:
                 if not self._check_test_disabled_backend(backend):
                     backend.send_node_health_results(test_info_dict, node_health_dict)
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging node health results to {backend.url}: {e.message}.")
+                self.logger.doErrorLogging(f"The following exception occurred while logging node health results to {backend.url}: {e}.")
                 pass
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

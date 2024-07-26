@@ -17,7 +17,6 @@ import socket
 import pprint
 import abc
 import urllib
-import glob
 import dateutil.parser
 import subprocess
 

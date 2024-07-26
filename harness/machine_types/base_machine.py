@@ -408,19 +408,20 @@ class BaseMachine(metaclass=ABCMeta):
         exit_status = self._start_report_script(self.test_config.get_report_command())
         return exit_status
 
-    def log_to_influx(self):
-        """Logs the results to influx if able
+    def log_to_db(self):
+        """
+        Logs the results to enabled database backends if able
         
         Return
         ------
-        bool: Success (True), otherwise, not logged to influxDB
+        bool: Success (True), otherwise, not logged to Databases
         """
         messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function()) 
-        message = f"{messloc} attempting to log to influxDB."
+        message = f"{messloc} attempting to log to Databases."
 
         self.logger.doInfoLogging(message)
         
-        exit_status = self._log_to_influx()
+        exit_status = self._log_to_db()
         return exit_status
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -500,8 +501,8 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(currentdir)
         return report_exit_status
 
-    def _log_to_influx(self):
-        return self.apptest._log_to_influx(self.apptest.get_harness_id())
+    def _log_to_db(self):
+        return self.apptest._run_db_extensions()
 
     def _build_jobLauncher_command(self,template_dict):
         """ Return the jobLauncher command."""

@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 
-import os
 from datetime import datetime
+import glob
+import json
+import os
+import re
 import requests
 from urllib.parse import urlparse
-import re
-import json
 
 from libraries.rgt_database_loggers.db_backends.base_db import *
 
@@ -208,7 +209,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
             Posts metrics to InfluxDB.
         """
-        self.__logger.doDebugLogging(f"Posting event: {event_id} with test id: {test_info_dict['test_id']} to Influx")
+        self.__logger.doDebugLogging(f"Posting metrics from test id: {test_info_dict['test_id']} to InfluxDB")
 
         # Initialize the tags for record string
         influx_event_record_string = 'metrics'
@@ -235,6 +236,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
         Send node health data to InfluxDB
         """
+        self.__logger.doDebugLogging(f"Posting node health data from test id: {test_info_dict['test_id']} to InfluxDB")
         # Required environment variable: RGT_NODE_LOCATION_FILE
         if not 'RGT_NODE_LOCATION_FILE' in os.environ:
             raise DatabaseEnvironmentError("RGT_NODE_LOCATION_FILE required to enable node health logging")
@@ -278,7 +280,7 @@ class InfluxDBLogger(BaseDBLogger):
                 # then it's a node location identifier
                 for k in node_locations[node_name].keys():
                     influx_event_record_string += f',{k}={node_locations[node_name][k]}'
-            node_data_string = ','.join([f'{k}={v}' for k,v in node_health_dict.items()])
+            node_data_string = ','.join([f'{k}="{v}"' for k,v in node_health_dict[node_name].items()])
             influx_event_record_string += f' test_id="{test_info_dict["test_id"]}",{node_data_string}'
             influx_event_record_string += f" {str(self._event_time_to_timestamp(test_info_dict['event_time']))}"
             post_lines.append(influx_event_record_string)
@@ -297,7 +299,7 @@ class InfluxDBLogger(BaseDBLogger):
             'Accept': "application/json"
         }
 
-        print(f'{self.url}/api/v2/buckets')
+        self.__logger.doDebugLogging(f'Using the following endpoint for InfluxDB health check and bucket verification: {self.url}/api/v2/buckets')
         r = requests.get(f'{self.url}/api/v2/buckets', headers=headers)
         if int(r.status_code) >= 400:
             return f"status_code = {r.status_code}, text = {r.text}, reason = {r.reason}"
@@ -392,6 +394,7 @@ class InfluxDBLogger(BaseDBLogger):
             self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
             return
 
+        self.__logger.doDebugLogging(f"Sending message to InfluxDB: {message}")
         # We do not catch the exception here -- it will be caught in the database manager class
         r = requests.post(full_url, data=message, headers=headers)
 
