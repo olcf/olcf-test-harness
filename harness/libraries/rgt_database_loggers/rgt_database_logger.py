@@ -137,7 +137,7 @@ class RgtDatabaseLogger:
         provided_keys = list(test_info_dict.keys())
         for key in self.REQUIRED_TEST_INFO:
             if not key in provided_keys:
-                self.__logger.doErrorLogging(f'Missing key in provided test info for database logging: {key}')
+                self.logger.doErrorLogging(f'Missing key in provided test info for database logging: {key}')
                 return False
         return True
 
@@ -221,8 +221,8 @@ class RgtDatabaseLogger:
                             # unless the same bucket and org name apply to all InfluxDB instances
                             # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
                             influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
-                            self.__logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
-                            self.enabled_backends.append(influxdb_backend)
+                            self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                            db_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
                             self.logger.doErrorLogging(e.message)
 

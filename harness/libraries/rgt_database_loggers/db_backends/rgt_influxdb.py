@@ -396,11 +396,11 @@ class InfluxDBLogger(BaseDBLogger):
         r = requests.post(full_url, data=message, headers=headers)
 
         if r.status_code == 200 or r.status_code == 204:
-            self.__logger.doDebugLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {influx_event_record_string}")
+            self.__logger.doDebugLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {message}")
         else:
             self.__logger.doErrorLogging(f"Failed to post to InfluxDB. Message: {message}, Response: {r.status_code} - {r.reason}")
 
-    def _event_time_to_timstamp(self, event_time : str):
+    def _event_time_to_timestamp(self, event_time : str):
         """ Converts a time string to Unix timestamp in EST """
 
         # Check for different time formats
