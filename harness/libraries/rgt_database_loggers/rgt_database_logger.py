@@ -47,13 +47,20 @@ class RgtDatabaseLogger:
         if not self._check_test_info_exists(event_dict):
             return False
 
+        num_failed = 0
+
         for backend in self.enabled_backends:
             try:
                 if not self._check_test_disabled_backend(backend):
-                    backend.send_event(event_dict)
+                    if not backend.send_event(event_dict):
+                        self.logger.doErrorLogging(f"An error occurred while logging an event to {backend.url}. Please see log files for more details.")
+                        num_failed += 1
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e}.")
+                num_failed += 1
                 pass
+
+        return num_failed == 0
 
     def log_metrics(self, test_info_dict : dict, metrics_dict : dict):
         """
@@ -74,13 +81,19 @@ class RgtDatabaseLogger:
         if not self._check_test_info_exists(test_info_dict):
             return False
 
+        num_failed = 0
+
         for backend in self.enabled_backends:
             try:
                 if not self._check_test_disabled_backend(backend):
-                    backend.send_metrics(test_info_dict, metrics_dict)
+                    if not backend.send_metrics(test_info_dict, metrics_dict):
+                        self.logger.doErrorLogging(f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details.")
+                        num_failed += 1
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging metrics to {backend.url}: {e}.")
+                num_failed += 1
                 pass
+        return num_failed == 0
 
     def log_node_health(self, test_info_dict : dict, node_health_dict : dict):
         """
@@ -101,13 +114,18 @@ class RgtDatabaseLogger:
         if not self._check_test_info_exists(test_info_dict):
             return False
 
+        num_failed = 0
         for backend in self.enabled_backends:
             try:
                 if not self._check_test_disabled_backend(backend):
-                    backend.send_node_health_results(test_info_dict, node_health_dict)
+                    if not backend.send_node_health_results(test_info_dict, node_health_dict):
+                        self.logger.doErrorLogging(f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details.")
+                        num_failed += 1
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging node health results to {backend.url}: {e}.")
+                num_failed += 1
                 pass
+        return num_failed == 0
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

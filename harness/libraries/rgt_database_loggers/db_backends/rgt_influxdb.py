@@ -200,10 +200,8 @@ class InfluxDBLogger(BaseDBLogger):
 
         headers = {'Authorization': f'Token {self.token}', 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
 
-        # Send message to InfluxDB
-        self._send_message(self._get_write_url(), influx_event_record_string, headers)
-
-        return
+        # Send message to InfluxDB & return the result True/False
+        return self._send_message(self._get_write_url(), influx_event_record_string, headers)
 
     def send_metrics(self, test_info_dict : dict, metrics_dict : dict):
         """
@@ -227,10 +225,8 @@ class InfluxDBLogger(BaseDBLogger):
 
         headers = {'Authorization': f'Token {self.token}', 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
 
-        # Send message to InfluxDB
-        self._send_message(self._get_write_url(), influx_event_record_string, headers)
-
-        return
+        # Send message to InfluxDB & return the result True/False
+        return self._send_message(self._get_write_url(), influx_event_record_string, headers)
 
     def send_node_health_results(self, test_info_dict : dict, node_health_dict : dict):
         """
@@ -286,8 +282,8 @@ class InfluxDBLogger(BaseDBLogger):
             post_lines.append(influx_event_record_string)
 
         headers = {'Authorization': f'Token {self.token}', 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
-        # Send message to InfluxDB
-        self._send_message(self._get_write_url(), '\n'.join(post_lines), headers)
+        # Send message to InfluxDB & return the True/False result
+        return self._send_message(self._get_write_url(), '\n'.join(post_lines), headers)
 
     def is_alive(self):
         """
@@ -400,8 +396,10 @@ class InfluxDBLogger(BaseDBLogger):
 
         if r.status_code == 200 or r.status_code == 204:
             self.__logger.doDebugLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {message}")
+            return True
         else:
             self.__logger.doErrorLogging(f"Failed to post to InfluxDB. Message: {message}, Response: {r.status_code} - {r.reason}")
+            return False
 
     def _event_time_to_timestamp(self, event_time : str):
         """ Converts a time string to Unix timestamp in EST """
