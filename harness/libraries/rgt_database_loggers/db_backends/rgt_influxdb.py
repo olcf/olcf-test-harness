@@ -388,7 +388,7 @@ class InfluxDBLogger(BaseDBLogger):
 
         if self.dryrun:
             self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
-            return
+            return True
 
         self.__logger.doDebugLogging(f"Sending message to InfluxDB: {message}")
         # We do not catch the exception here -- it will be caught in the database manager class
