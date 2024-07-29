@@ -36,8 +36,11 @@ class RgtDatabaseLogger:
             print("Invalid call to rgt_database_logger constructor: no logger provided")
             return
         self.logger = logger
-        self.disabled_backends = self._find_disabled_backends()
-        self.enabled_backends = self._add_db_backends()
+        self.disabled_backends = [] # strings -- 'influxdb', 'kafka', etc
+        self.disabled_backends_filenames = [] # strings -- '.disable_influxdb', etc
+        self._find_disabled_backends()
+        self.enabled_backends = [] # database logger objects
+        self._add_db_backends()
 
     def log_event(self, event_dict : dict):
         """
@@ -51,6 +54,11 @@ class RgtDatabaseLogger:
         currentdir = os.getcwd()
         runarchive_dir = event_dict['run_archive']
         os.chdir(runarchive_dir)
+
+        # Make sure that any explicitly-disabled backends create the dot-file
+        for dotfile in self.disabled_backends_filenames:
+            if not os.path.exists(dotfile):
+                os.mknod(dotfile)
 
         num_failed = 0
 
@@ -216,14 +224,12 @@ class RgtDatabaseLogger:
             self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}.")
             pass
 
-        disabled_backends = []
-
         if influxdb_loaded and InfluxDBLogger.kw['disable'] in os.environ and \
                             str(os.environ[InfluxDBLogger.kw['disable']]) == '1':
             self.logger.doInfoLogging(f"InfluxDB logging is explicitly disabled with {InfluxDBLogger.kw['disable']}=1")
-            disabled_backeds.append('influxdb')
-
-        return disabled_backends
+            self.disabled_backends.append('influxdb')
+            self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
+        return
 
     def _add_db_backends(self):
         """
@@ -231,10 +237,8 @@ class RgtDatabaseLogger:
 
         Returns
         -------
-            A list of enabled backends
+            None
         """
-        db_backends = []
-
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
@@ -261,11 +265,10 @@ class RgtDatabaseLogger:
                             # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
                             influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
                             self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
-                            db_backends.append(influxdb_backend)
+                            self.enabled_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
                             self.logger.doErrorLogging(e.message)
-
-        return db_backends
+        return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

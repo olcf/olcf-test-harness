@@ -62,6 +62,8 @@ class InfluxDBLogger(BaseDBLogger):
                 'output_txt'
     ]
 
+    DISABLE_DOTFILE_NAME = '.disable_influxdb'
+
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # Special methods                                                 @
@@ -108,7 +110,7 @@ class InfluxDBLogger(BaseDBLogger):
 
     @property
     def disable_file_name(self):
-        return '.disable_influxdb'
+        return self.DISABLE_DOTFILE_NAME
 
     @property
     def name(self):
