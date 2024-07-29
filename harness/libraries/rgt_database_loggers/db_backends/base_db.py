@@ -39,6 +39,12 @@ class BaseDBLogger(ABC):
     def disable_file_name(self):
         return
 
+    # The name of the dot-file that indicates successful, completed logging
+    @property
+    @abstractmethod
+    def successful_file_name(self):
+        return
+
     @property
     @abstractmethod
     def name(self):

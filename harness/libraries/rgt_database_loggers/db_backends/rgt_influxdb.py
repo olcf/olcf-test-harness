@@ -63,6 +63,7 @@ class InfluxDBLogger(BaseDBLogger):
     ]
 
     DISABLE_DOTFILE_NAME = '.disable_influxdb'
+    SUCCESSFUL_DOTFILE_NAME = '.success_influxdb'
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -111,6 +112,10 @@ class InfluxDBLogger(BaseDBLogger):
     @property
     def disable_file_name(self):
         return self.DISABLE_DOTFILE_NAME
+
+    @property
+    def successful_file_name(self):
+        return self.SUCCESSFUL_DOTFILE_NAME
 
     @property
     def name(self):

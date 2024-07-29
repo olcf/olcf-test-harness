@@ -7,8 +7,6 @@ This module implements the database logging capability of the harness.
 
 import os
 
-from libraries.rgt_database_loggers.db_backends.base_db import *
-
 class RgtDatabaseLogger:
 
     # This class depends solely on the dictionaries provided to the log_* methods
@@ -55,10 +53,12 @@ class RgtDatabaseLogger:
         runarchive_dir = event_dict['run_archive']
         os.chdir(runarchive_dir)
 
-        # Make sure that any explicitly-disabled backends create the dot-file
-        for dotfile in self.disabled_backends_filenames:
-            if not os.path.exists(dotfile):
-                os.mknod(dotfile)
+        # Use event file name to match the logging_start event
+        if event_dict['event_name'] == 'logging_start':
+            # Make sure that any explicitly-disabled backends create the dot-file
+            for dotfile in self.disabled_backends_filenames:
+                if not os.path.exists(dotfile):
+                    os.mknod(dotfile)
 
         num_failed = 0
 
@@ -68,6 +68,9 @@ class RgtDatabaseLogger:
                     if not backend.send_event(event_dict):
                         self.logger.doErrorLogging(f"An error occurred while logging an event to {backend.url}. Please see log files for more details.")
                         num_failed += 1
+                    elif event_dict['event_name'] == 'check_end':
+                        # If we just successfully logged check_end, then we add a dot-file to indicate logging completed
+                        os.mknod(backend.successful_file_name)
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e}.")
                 num_failed += 1
