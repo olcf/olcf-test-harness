@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import csv
 from datetime import datetime
 import glob
 import json
@@ -325,6 +326,45 @@ class InfluxDBLogger(BaseDBLogger):
             return f"could not find bucket {self.bucket}"
 
         return
+
+    def query(self, query):
+        """
+        Query the /api/v2/read endpoint of the InfluxDB server to check for the specified bucket.
+
+        Parameters:
+            query: a Flux-formatted query string
+
+        Returns:
+            a list of dictionary objects
+        """
+        headers = {
+            'Authorization': f'Token {self.token}',
+            'Content-Type': "application/vnd.flux",
+            'Accept': "application/json"
+        }
+
+        self.__logger.doDebugLogging(f'Sending query: {query} to: {self.url}/api/v2/query')
+        r = requests.post(f'{self.url}/api/v2/query?org={self.org}', headers=headers)
+        if int(r.status_code) >= 400:
+            return f"status_code = {r.status_code}, text = {r.text}, reason = {r.reason}"
+        rdc = r.content.decode('utf-8')
+        resp = list(csv.reader(rdc.splitlines(), delimiter=','))
+        # each entry in series is a record
+        col_names = resp[0]
+        # Transforming into list of dictionaries
+        ret_data = []
+        for entry_index in range(1, len(resp)):
+            data_tmp = {}
+            if len(resp[entry_index]) < len(col_names):
+                self.__logger.doErrorLogging(f"Not enough columns in row. Skipping row: {resp[entry_index]}.")
+                continue
+            # First column is useless
+            for c_index in range(1, len(col_names)):
+                # Ignore result, table & _time
+                if not col_names[c_index] in ["result", "table", "_time"]:
+                    data_tmp[col_names[c_index]] = resp[entry_index][c_index]
+            ret_data.append(data_tmp)
+        return ret_data
 
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

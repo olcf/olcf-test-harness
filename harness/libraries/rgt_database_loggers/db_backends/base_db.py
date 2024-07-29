@@ -66,6 +66,10 @@ class BaseDBLogger(ABC):
     def is_alive(self):
         return
 
+    @abstractmethod
+    def query(self, query):
+        return
+
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of public methods.                                          @
