@@ -23,7 +23,7 @@ class InfluxDBLogger(BaseDBLogger):
         'org': 'RGT_INFLUXDB_ORG',
         'precision': 'RGT_INFLUXDB_PRECISION',
         'dryrun': 'RGT_INFLUXDB_DRY_RUN',
-        'disable': 'RGT_DISABLE_INFLUXDB'
+        'disable': 'RGT_INFLUXDB_DISABLE'
     }
 
     # Re-defines the StatusFile.NOVALUE

@@ -47,6 +47,11 @@ class RgtDatabaseLogger:
         if not self._check_test_info_exists(event_dict):
             return False
 
+        # Go to the Run_Archive directory to be consistent with metrics & node health logging
+        currentdir = os.getcwd()
+        runarchive_dir = event_dict['run_archive']
+        os.chdir(runarchive_dir)
+
         num_failed = 0
 
         for backend in self.enabled_backends:
@@ -60,6 +65,7 @@ class RgtDatabaseLogger:
                 num_failed += 1
                 pass
 
+        os.chdir(currentdir)
         return num_failed == 0
 
     def log_metrics(self, test_info_dict : dict, metrics_dict : dict):
@@ -178,6 +184,9 @@ class RgtDatabaseLogger:
 
         # Check if the environment variables to disable the backend are set
         if db_logger.name in self.disabled_backends:
+            # Create dot-file if it doesn't already exist
+            if not os.path.exists(db_logger.disable_file_name):
+                os.mknod(db_logger.disable_file_name)
             return True
 
         # Check if the dot-file exists in Run_Archive/test_id to disable the backend
@@ -192,16 +201,28 @@ class RgtDatabaseLogger:
 
     def _find_disabled_backends(self):
         """
-        Parses the RGT_DISABLE_* environment variables to add appropriate dot-files to disable database logging
+        Parses the RGT_* environment variables to add appropriate dot-files to disable database logging
 
         Returns
         -------
             A list of explicitly-disabled backends
         """
+        # Load InfluxDB now, because we use templated env-vars
+        influxdb_loaded = False
+        try:
+            from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+            influxdb_loaded = True
+        except ImportError as e:
+            self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}.")
+            pass
+
         disabled_backends = []
-        if 'RGT_DISABLE_INFLUXDB' in os.environ and str(os.environ['RGT_DISABLE_INFLUXDB']) == '1':
-            self.logger.doInfoLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUXDB=1")
+
+        if influxdb_loaded and InfluxDBLogger.kw['disable'] in os.environ and \
+                            str(os.environ[InfluxDBLogger.kw['disable']]) == '1':
+            self.logger.doInfoLogging(f"InfluxDB logging is explicitly disabled with {InfluxDBLogger.kw['disable']}=1")
             disabled_backeds.append('influxdb')
+
         return disabled_backends
 
     def _add_db_backends(self):
