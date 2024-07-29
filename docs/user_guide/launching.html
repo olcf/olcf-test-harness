@@ -45,7 +45,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Adding a New Test" href="adding_new_test.html" />
+    <link rel="next" title="Environment Variables" href="envvars.html" />
     <link rel="prev" title="Overview of the Test Harness" href="overview.html" /> 
 </head>
 
@@ -128,6 +128,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#harness-maintained-log-files">Harness-maintained Log Files</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="envvars.html">Environment Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#run-time-variables">Run-Time Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#extension-specific-variables">Extension-specific Variables</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test</a><ul>
@@ -433,7 +439,7 @@ The build, submit, and check stages have pre-defined locations for the output:</
 <div class="section" id="harness-maintained-log-files">
 <h3>Harness-maintained Log Files<a class="headerlink" href="#harness-maintained-log-files" title="Permalink to this heading">¶</a></h3>
 <p>The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
-These log files can be used to check internal error messages reported by extensions of the OTH such as InfluxDB event and metric logging.
+These log files can be used to check internal error messages reported by extensions of the OTH such as database event and metric logging.
 These log files are found in <strong>${RESULTS_DIR}/LogFiles</strong>.</p>
 </div>
 </div>
@@ -445,7 +451,7 @@ These log files are found in <strong>${RESULTS_DIR}/LogFiles</strong>.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="adding_new_test.html" class="btn btn-neutral float-right" title="Adding a New Test" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="envvars.html" class="btn btn-neutral float-right" title="Environment Variables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="overview.html" class="btn btn-neutral float-left" title="Overview of the Test Harness" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
