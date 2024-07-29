@@ -240,5 +240,5 @@ Harness-maintained Log Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
-These log files can be used to check internal error messages reported by extensions of the OTH such as InfluxDB event and metric logging.
+These log files can be used to check internal error messages reported by extensions of the OTH such as database event and metric logging.
 These log files are found in **${RESULTS_DIR}/LogFiles**.
