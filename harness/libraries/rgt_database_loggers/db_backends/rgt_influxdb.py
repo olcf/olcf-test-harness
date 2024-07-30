@@ -198,7 +198,8 @@ class InfluxDBLogger(BaseDBLogger):
                     # Truncate to 64 kb
                     output = output[-65534:].replace('"', '\\"')
                     influx_event_record_string += ",output_txt=\"" + output + "\""
-            else:
+            elif not 'output_txt' in event_dict.keys():
+                # if the update_databases wrapper calls this method, then it will provide an output_txt
                 influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
         else:
             # Even if event is not one with an output file, still log the output_txt metric

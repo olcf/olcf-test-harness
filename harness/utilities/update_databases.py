@@ -268,8 +268,10 @@ for db in db_logger.enabled_backends:
             if 'node-failed' in slurm_data[entry['job_id']] and slurm_data[entry['job_id']]['node-failed']:
                 # Then we possibly had a user-cancelled job following a node failure
                 entry['output_txt'] = 'NODE_FAIL detected. Job canceled'
+                entry['event_value'] = state_to_value['node_fail']
             else:
                 entry['output_txt'] = 'Job canceled'
+                entry['event_value'] = state_to_value['fail']
             # Update fields in entry
             entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
@@ -296,6 +298,7 @@ for db in db_logger.enabled_backends:
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
             entry['event_filename'] = StatusFile.NO_VALUE
+            entry['event_value'] = state_to_value['node_fail']
             entry['hostname'] = socket.gethostname()
             entry['user'] = os.environ['USER']
             entry['output_txt'] = f"Node failure detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
@@ -305,9 +308,11 @@ for db in db_logger.enabled_backends:
             if 'node-failed' in slurm_data[entry['job_id']] and slurm_data[entry['job_id']]['node-failed']:
                 logger.doDebugLogging(f"Found node_fail + timed out job: {entry['job_id']}")
                 entry['output_txt'] = f"NODE_FAIL followed by TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
+                entry['event_value'] = state_to_value['node_fail']
             else:
                 logger.doDebugLogging(f"Found timed out job: {entry['job_id']}")
                 entry['output_txt'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
+                entry['event_value'] = state_to_value['timeout']
             entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
@@ -321,7 +326,7 @@ for db in db_logger.enabled_backends:
             sent += 1
             # Then the job completed, but did not successfully log results (perhaps the compute node can't reach the db?)
             # So we search for status files of events more recent than the one we have
-            logger.doDebugLogging(f"Found job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']}. Newest event state was {entry['event_name']}.")
+            logger.doInfoLogging(f"Found job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']}. Newest event state was {entry['event_name']}.")
             # Annoyingly, status_dir is not stored in the status file, so we have to use Run_Archive
             status_file_path = os.path.join(entry['run_archive'], '..', '..', 'Status', entry['test_id'])
             current_event_num = int(entry['event_filename'].split('_')[1])
@@ -330,14 +335,17 @@ for db in db_logger.enabled_backends:
                 logger.doErrorLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
                 continue
             os.chdir(status_file_path)
+            found_checkend = False
             for status_file_name in glob.glob("Event_*.txt"):
                 event_number = int(status_file_name.split('_')[1]) # used to sort if this is a newer event than current
                 if event_number > current_event_num:
                     # Then get the info from the status file & log it to the database
                     event_info = get_status_info_from_file(status_file_name)
                     # This is a global call for all enabled databases -- re-posting an event to InfluxDB doesn't hurt
+                    logger.doInfoLogging(f"Logging event {status_file_name} for test {entry['test_id']}")
                     db_logger.log_event(event_info)
                 if status_file_name == StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]:
+                    found_checkend = True
                     # Then we initialize a subtest object to go look for metrics & node health results
                     subtest = SubtestFactory.make_subtest(name_of_application=entry['app'],
                                                           name_of_subtest=entry['test'],
@@ -345,10 +353,23 @@ for db in db_logger.enabled_backends:
                                                           logger=logger,
                                                           tag=entry['test_id'],
                                                           db_logger=db_logger)
+                    logger.doInfoLogging(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']}")
                     # This is also effectively a global call for all enabled databases
                     if not subtest.run_db_extensions():
                         logger.doErrorLogging(f"Logging metric & node health data to databases failed for test_id {entry['test_id']} (job {entry['job_id']})")
-
+            if not found_checkend:
+                # If the test didn't log a check_end event, we simulate one here
+                logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event")
+                entry['output_txt'] = f"Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
+                entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+                entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
+                entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
+                entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
+                entry['event_filename'] = StatusFile.NO_VALUE
+                entry['event_value'] = state_to_value['fail']
+                entry['hostname'] = socket.gethostname()
+                entry['user'] = os.environ['USER']
+                db_logger.log_event(entry)
             os.chdir(cur_dir)
         else:
             logger.doWarningLogging(f"Unrecognized job state: {slurm_data[entry['job_id']]['state']}. No action is being taken for job {entry['job_id']}.")

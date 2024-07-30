@@ -145,7 +145,7 @@ default harness task will we default to the tasks in the runtests.py input file.
 
 """
 
-PERMITTED_HARNESS_TASKS=('checkout','start','stop','status','influx_log')
+PERMITTED_HARNESS_TASKS=('checkout','start','stop','status')
 """
 A tuple of the permitted harness tasks.
 
@@ -157,7 +157,6 @@ command: --mode | -m <permitted_tasks>. The following tasks are supported.
 * start - Starts the application-test(s).
 * stop - Stops an application-test(s).
 * status - Prints to std out the status of the application-test(s).
-* influx_log - Log application-test(s) to InfluxDB.
 
 Specifying an unsupported task will result in the harness aborting with
 an error.
@@ -308,8 +307,7 @@ def create_parser():
                  "  'checkout'   - checkout application tests listed in input file\n"
                  "  'start'      - start application tests listed in input file\n"
                  "  'stop'       - stop application tests listed in input file\n"
-                 "  'status'     - check status of application tests listed in input file\n"
-                 "  'influx_log' - attempt to log application tests listed in input file to InfluxDB\n")
+                 "  'status'     - check status of application tests listed in input file\n")
     parser.add_argument('-m', '--mode',
                         required=False,
                         help=mode_help,
