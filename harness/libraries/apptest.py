@@ -54,7 +54,8 @@ class subtest(base_apptest, apptest_layout):
                  local_path_to_tests=None,
                  number_of_iterations=-1,
                  logger=None,
-                 tag=None):
+                 tag=None,
+                 db_logger=None):
 
         # Ensure that tag is not None.
         if (tag == None):
@@ -83,7 +84,10 @@ class subtest(base_apptest, apptest_layout):
         self.__number_of_iterations = -1
         self.__myLogger = logger
 
-        self.__db_logger = create_rgt_db_logger(logger=logger)
+        if db_logger == None:
+            self.__db_logger = create_rgt_db_logger(logger=logger)
+        else:
+            self.__db_logger = db_logger
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -503,6 +507,10 @@ class subtest(base_apptest, apptest_layout):
         ret_val = mymachine.did_all_tests_pass(self)
 
         return ret_val
+
+    def run_db_extensions(self):
+        """ Public method for the _run_db_extensions function """
+        return self._run_db_extensions()
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

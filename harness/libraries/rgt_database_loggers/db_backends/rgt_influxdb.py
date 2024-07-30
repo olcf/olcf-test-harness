@@ -344,7 +344,7 @@ class InfluxDBLogger(BaseDBLogger):
         }
 
         self.__logger.doDebugLogging(f'Sending query: {query} to: {self.url}/api/v2/query')
-        r = requests.post(f'{self.url}/api/v2/query?org={self.org}', headers=headers)
+        r = requests.post(f'{self.url}/api/v2/query?org={self.org}', data=query, headers=headers)
         if int(r.status_code) >= 400:
             return f"status_code = {r.status_code}, text = {r.text}, reason = {r.reason}"
         rdc = r.content.decode('utf-8')

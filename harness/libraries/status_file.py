@@ -811,6 +811,29 @@ def get_status_info(test_id, event_type, event_subtype,
 
     return status_info
 
+def get_status_info_from_file(event_filename):
+    """
+    Return a Dictionary of the status info contained in event_filename
+    """
+
+    event_info = {}
+
+    if not os.path.exists(event_filename):
+        event_info['text'] = f'Could not find file {event_filename}'
+        return event_info
+    file_ = open(event_filename, 'r')
+    status_info_line = file_.readline().strip().split()
+    file_.close()
+
+    # Skips event_time and event_value at the beginning, since those are also
+    # present in the key=value section
+    for i in range(2, len(status_info_line)-2):
+        item = status_info_line[i].split('=')
+        event_info[item[0]] = item[1]
+
+    return event_info
+
+
 #------------------------------------------------------------------------------
 
 def write_system_log(test_id, status_info):
