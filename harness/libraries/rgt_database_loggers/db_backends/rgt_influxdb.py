@@ -59,7 +59,6 @@ class InfluxDBLogger(BaseDBLogger):
                 'user',
                 'workdir',
                 'comment',
-                'reason',
                 'output_txt'
     ]
 
@@ -146,8 +145,8 @@ class InfluxDBLogger(BaseDBLogger):
                 # don't add output_txt yet
                 continue
             elif not field_name in event_dict.keys():
-                # We don't expect the comment or reason to be populated yet.
-                if not (field_name == 'comment' or field_name == 'reason'):
+                # We don't expect the comment to be populated yet.
+                if not field_name == 'comment':
                     self.__logger.doWarningLogging(f"Couldn't find InfluxDB field: {field_name}. Setting to NOVALUE")
                 event_dict[field_name] = self.NO_VALUE
             influx_event_record_string += f'{sep}{field_name}="{event_dict[field_name]}"'
@@ -359,6 +358,9 @@ class InfluxDBLogger(BaseDBLogger):
         ret_data = []
         for entry_index in range(1, len(resp)):
             data_tmp = {}
+            if len(resp[entry_index]) == 0:
+                # Empty row, usually just a spacing formality
+                continue
             if len(resp[entry_index]) < len(col_names):
                 self.__logger.doErrorLogging(f"Not enough columns in row. Skipping row: {resp[entry_index]}.")
                 continue
