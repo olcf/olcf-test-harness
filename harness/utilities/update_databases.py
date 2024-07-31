@@ -232,6 +232,9 @@ def slurm_time_to_harness_time(timecode):
     return f'{timecode}.000000'
 
 
+skipped = 0
+sent = 0
+
 # The calls to db_logger.log_event are for ALL enabled backends, so
 # the subsequent iterations in this loop will have fewer un-logged
 # results
@@ -245,8 +248,6 @@ for db in db_logger.enabled_backends:
     # A job ID will have a field named `node-failed` = True if it survived a node failure via --no-kill
     slurm_data = check_job_status(slurm_job_ids)
 
-    skipped = 0
-    sent = 0
 
     for entry in results:
         # check to see if this entry should be parsed
@@ -323,17 +324,17 @@ for db in db_logger.enabled_backends:
             db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['success'] or \
              slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['fail']:
-            sent += 1
             # Then the job completed, but did not successfully log results (perhaps the compute node can't reach the db?)
             # So we search for status files of events more recent than the one we have
-            logger.doInfoLogging(f"Found job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']}. Newest event state was {entry['event_name']}.")
+            logger.doDebugLogging(f"Found job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']}. Newest event state was {entry['event_name']}.")
             # Annoyingly, status_dir is not stored in the status file, so we have to use Run_Archive
             status_file_path = os.path.join(entry['run_archive'], '..', '..', 'Status', entry['test_id'])
             current_event_num = int(entry['event_filename'].split('_')[1])
             cur_dir = os.getcwd()
             if not (os.path.exists(status_file_path) and os.path.exists(entry['run_archive'])):
-                logger.doErrorLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
+                logger.doDebugLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
                 continue
+            sent += 1
             os.chdir(status_file_path)
             found_checkend = False
             for status_file_name in glob.glob("Event_*.txt"):
@@ -356,10 +357,10 @@ for db in db_logger.enabled_backends:
                     logger.doInfoLogging(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']}")
                     # This is also effectively a global call for all enabled databases
                     if not subtest.run_db_extensions():
-                        logger.doErrorLogging(f"Logging metric & node health data to databases failed for test_id {entry['test_id']} (job {entry['job_id']})")
+                        logger.doWarningLogging(f"Logging metric & node health data to databases failed for test_id {entry['test_id']} (job {entry['job_id']})")
             if not found_checkend:
                 # If the test didn't log a check_end event, we simulate one here
-                logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event")
+                logger.doInfoLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
                 entry['output_txt'] = f"Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
                 entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
                 entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
