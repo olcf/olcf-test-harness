@@ -201,6 +201,9 @@ class InfluxDBLogger(BaseDBLogger):
             elif not 'output_txt' in event_dict.keys():
                 # if the update_databases wrapper calls this method, then it will provide an output_txt
                 influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
+            else:
+                influx_event_record_string += ",output_txt=\"" + event_dict['output_txt'] + "\""
+                
         else:
             # Even if event is not one with an output file, still log the output_txt metric
             influx_event_record_string += ",output_txt=\"" + self.NO_VALUE  + "\""
