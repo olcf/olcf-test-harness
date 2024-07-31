@@ -152,60 +152,61 @@ class InfluxDBLogger(BaseDBLogger):
             influx_event_record_string += f'{sep}{field_name}="{event_dict[field_name]}"'
             sep = ','
 
-        # Add handling for pasting outputs to influxdb
-        if event_dict['event_name'] == "build_end":
-            file_name = os.path.join(event_dict['build_directory'], "output_build.txt")
-            self.__logger.doDebugLogging(f"Using {file_name} for build output for Influx")
-            if os.path.exists(file_name):
-                with open(file_name, "r") as f:
-                    output = f.read()
-                    # Truncate to 64 kb
-                    output = output[-65534:].replace('"', '\\"')
-                    influx_event_record_string += ",output_txt=\"" + output + "\""
-            else:
-                influx_event_record_string += ",output_txt=\"Output file not found in " + file_name  + "\""
-        elif event_dict['event_name'] == "submit_end":
-            file_name = os.path.join(event_dict['run_archive'], "submit.err")
-            self.__logger.doDebugLogging(f"Using {file_name} for submit errors for Influx")
-            if os.path.exists(file_name):
-                with open(file_name, "r") as f:
-                    output = f.read()
-                    # Truncate to 64 kb
-                    output = output[-65534:].replace('"', '\\"')
-                    influx_event_record_string += ",output_txt=\"" + output + "\""
-            else:
-                influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
-        elif event_dict['event_name'] == "binary_execute_end":
-            found_job_file = False
-            for file_name in glob.glob(event_dict['run_archive'] + "/*.o" + event_dict['job_id']):
-                self.__logger.doDebugLogging(f"Using {file_name} for job output for Influx")
+        if not 'output_txt' in event_dict.keys():
+            # Add handling for pasting outputs to influxdb
+            if event_dict['event_name'] == "build_end":
+                file_name = os.path.join(event_dict['build_directory'], "output_build.txt")
+                self.__logger.doDebugLogging(f"Using {file_name} for build output for Influx")
                 if os.path.exists(file_name):
-                    found_job_file = True
                     with open(file_name, "r") as f:
                         output = f.read()
                         # Truncate to 64 kb
                         output = output[-65534:].replace('"', '\\"')
                         influx_event_record_string += ",output_txt=\"" + output + "\""
-            if not found_job_file:
-                influx_event_record_string += ",output_txt=\"Job output file not found" + "\""
-        elif event_dict['event_name'] == "check_end":
-            file_name = os.path.join(event_dict['run_archive'], "output_check.txt")
-            self.__logger.doDebugLogging(f"Using {file_name} for check output for Influx")
-            if os.path.exists(file_name):
-                with open(file_name, "r") as f:
-                    output = f.read()
-                    # Truncate to 64 kb
-                    output = output[-65534:].replace('"', '\\"')
-                    influx_event_record_string += ",output_txt=\"" + output + "\""
-            elif not 'output_txt' in event_dict.keys():
-                # if the update_databases wrapper calls this method, then it will provide an output_txt
-                influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
+                else:
+                    influx_event_record_string += ",output_txt=\"Output file not found in " + file_name  + "\""
+            elif event_dict['event_name'] == "submit_end":
+                file_name = os.path.join(event_dict['run_archive'], "submit.err")
+                self.__logger.doDebugLogging(f"Using {file_name} for submit errors for Influx")
+                if os.path.exists(file_name):
+                    with open(file_name, "r") as f:
+                        output = f.read()
+                        # Truncate to 64 kb
+                        output = output[-65534:].replace('"', '\\"')
+                        influx_event_record_string += ",output_txt=\"" + output + "\""
+                else:
+                    influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
+            elif event_dict['event_name'] == "binary_execute_end":
+                found_job_file = False
+                for file_name in glob.glob(event_dict['run_archive'] + "/*.o" + event_dict['job_id']):
+                    self.__logger.doDebugLogging(f"Using {file_name} for job output for Influx")
+                    if os.path.exists(file_name):
+                        found_job_file = True
+                        with open(file_name, "r") as f:
+                            output = f.read()
+                            # Truncate to 64 kb
+                            output = output[-65534:].replace('"', '\\"')
+                            influx_event_record_string += ",output_txt=\"" + output + "\""
+                if not found_job_file:
+                    influx_event_record_string += ",output_txt=\"Job output file not found" + "\""
+            elif event_dict['event_name'] == "check_end":
+                file_name = os.path.join(event_dict['run_archive'], "output_check.txt")
+                self.__logger.doDebugLogging(f"Using {file_name} for check output for Influx")
+                if os.path.exists(file_name):
+                    with open(file_name, "r") as f:
+                        output = f.read()
+                        # Truncate to 64 kb
+                        output = output[-65534:].replace('"', '\\"')
+                        influx_event_record_string += ",output_txt=\"" + output + "\""
+                else:
+                    # if the update_databases wrapper calls this method, then it will provide an output_txt
+                    influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
             else:
-                influx_event_record_string += ",output_txt=\"" + event_dict['output_txt'] + "\""
-                
+                # Even if event is not one with an output file, still log the output_txt metric
+                influx_event_record_string += ",output_txt=\"" + self.NO_VALUE  + "\""
         else:
-            # Even if event is not one with an output file, still log the output_txt metric
-            influx_event_record_string += ",output_txt=\"" + self.NO_VALUE  + "\""
+            influx_event_record_string += ",output_txt=\"" + event_dict['output_txt'] + "\""
+                
 
         influx_event_record_string += f" {str(self._event_time_to_timestamp(event_dict['event_time']))}"
 
