@@ -264,6 +264,10 @@ class InfluxDBLogger(BaseDBLogger):
 
         if 'RGT_NODE_LOCATION_FILE' in os.environ and str(os.environ['RGT_NODE_LOCATION_FILE']).lower() == 'none':
             use_node_location_file = False
+        elif not 'RGT_NODE_LOCATION_FILE' in os.environ:
+            # We want to abort in this case because previous runs may have been logged
+            # with node location data, and we do not want to log incomplete data
+            raise DatabaseEnvironmentError("The RGT_NODE_LOCATION_FILE environment variable is required. If you do not want this functionality, please set to \"None\".")
         else:
             # else, we assume it is a path and we look for it
             if not os.path.exists(os.environ['RGT_NODE_LOCATION_FILE']):
