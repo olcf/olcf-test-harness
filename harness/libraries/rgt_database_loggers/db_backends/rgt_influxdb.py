@@ -94,7 +94,7 @@ class InfluxDBLogger(BaseDBLogger):
         alive_msg = self.is_alive()
         if alive_msg:
             message = f'An InfluxDB server at {self.url} is not alive: {alive_msg}'
-            raise DatabaseInitError(message, {})
+            raise DatabaseInitError(message)
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -403,7 +403,7 @@ class InfluxDBLogger(BaseDBLogger):
         # Check for a specified protocol (http, https)
         if len(parsed.scheme) == 0:
             message = f'The InfluxDB URI must specify the protocol (http, https, etc).'
-            raise DatabaseInitError(message, {})
+            raise DatabaseInitError(message)
         # Get the raw URL for the InfluxDB server
         self.url = f'{parsed.scheme}://{parsed.netloc}'
         for arg in parsed.query.split('&'):
@@ -416,7 +416,7 @@ class InfluxDBLogger(BaseDBLogger):
                 self.precision = arg_split[1]
             else:
                 message = f'Unrecognized URL-encoded keyword argument: {arg_split[0]}'
-                raise DatabaseInitError(message, {})
+                raise DatabaseInitError(message)
 
         # Check if RGT_INFLUXDB_BUCKET, RGT_INFLUXDB_ORG, or
         # RGT_INFLUXDB_PRECISION are in the environment
@@ -433,7 +433,7 @@ class InfluxDBLogger(BaseDBLogger):
         if (not self.bucket) or (not self.org):
             message = f'The bucket and organization for the InfluxDB server could not be found.'
             message += f' The InfluxDB URI was {self.full_uri}.'
-            raise DatabaseInitError(message, {})
+            raise DatabaseInitError(message)
 
     def _send_message(self, full_url : str, message : str, headers : dict):
         """

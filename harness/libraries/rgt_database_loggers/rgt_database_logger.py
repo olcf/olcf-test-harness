@@ -271,7 +271,7 @@ class RgtDatabaseLogger:
                             self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                             self.enabled_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
-                            self.logger.doErrorLogging(e.message)
+                            self.logger.doErrorLogging(f"Failed to enable the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}: {e}")
         return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
