@@ -248,17 +248,17 @@
 <span id="section-new-machine"></span><h1>Adding a New Machine<a class="headerlink" href="#adding-a-new-machine" title="Permalink to this heading">¶</a></h1>
 <p>The following steps can be used to add support for a new system:</p>
 <ol class="arabic simple">
-<li><p>Create a machine master configuration (e.g. <em>lyra.ini</em>, placed in <em>$OLCF_HARNESS_DIR/configs/lyra.ini</em>).</p></li>
+<li><p>Create a machine configuration file (e.g. <em>lyra.ini</em>, placed in <em>$OLCF_HARNESS_DIR/configs/lyra.ini</em>).</p></li>
 <li><dl class="simple">
 <dt>Create the location of the repository that will hold all applications and tests for that particular machine</dt><dd><ul class="simple">
-<li><p>This can be in a remote Git repository, or a directory on the file system</p></li>
+<li><p>This can be in a remote Git repository, or a directory on the file system (which is then used as <strong>Path_to_tests</strong> in the input file)</p></li>
 </ul>
 </dd>
 </dl>
 </li>
 </ol>
-<p>Creating a machine configuration file is discussed below.
-The creation of tests is discussed in another section</p>
+<p>Creating a new machine configuration file is discussed below.
+The creation of new tests is discussed in <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test</span></a>.</p>
 <div class="section" id="create-a-basic-machine-configuration">
 <h2>Create a Basic Machine Configuration<a class="headerlink" href="#create-a-basic-machine-configuration" title="Permalink to this heading">¶</a></h2>
 <p>An example input file with detailed explanation is contained below.
@@ -267,13 +267,13 @@ For example, <strong>gpus_per_node</strong> is used to set <strong>RGT_GPUS_PER_
 These settings do not override existing environment variables.
 If <strong>RGT_SCHEDULER_TYPE</strong> is set by the user, then the <em>machine.ini</em> file will not override it.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[MachineDetails]
-# Required:
+# Required variables :
 machine_name = crusher
-# Options: linux_x86_64 or ibm_power9
+# options: linux_x86_64 or ibm_power9
 machine_type = linux_x86_64
-# Options: slurm, pbs, lsf
+# options: slurm, pbs, lsf
 scheduler_type = slurm
-# Options: srun, aprun, jsrun, poe
+# options: srun, aprun, jsrun, poe
 joblauncher_type = srun
 # Default queue/partition to submit jobs to
 batch_queue = batch
@@ -314,7 +314,7 @@ git_https_server_url = https://www.github.com
 # The path used for building the application and scratch space used for running
 path_to_sspace = /default/path/to/scratch/space
 # A string that can be used to identify tests run for a specific purpose (ie: &#39;summit_tshot_cuda11&#39;)
-system_log_tag = some_default_log_tag
+system_log_tag = frontier_test
 </pre></div>
 </div>
 <div class="admonition note">

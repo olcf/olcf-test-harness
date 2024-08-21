@@ -253,7 +253,7 @@ This document describes how to add an application and associated tests for a spe
 <p>The top-level group in a GitLab group (or GitHub repo) contains a sub-group for each target machine.</p>
 <div class="section" id="repository-url">
 <h3>Repository URL<a class="headerlink" href="#repository-url" title="Permalink to this heading">¶</a></h3>
-<p>Each application that can be tested on a given machine has a repository within the machine’s group.</p>
+<p>Each application that can be run on a given machine should have a repository (or directory) within that machine’s group.</p>
 </div>
 <div class="section" id="repository-structure">
 <span id="id1"></span><h3>Repository structure<a class="headerlink" href="#repository-structure" title="Permalink to this heading">¶</a></h3>
@@ -271,10 +271,10 @@ This document describes how to add an application and associated tests for a spe
 </div>
 <p>First, each application test must have its own subdirectory.
 The test directory has a mandatory <em>Scripts</em> subdirectory,
-which should contain the test input file (see <a class="reference internal" href="#application-test-input"><span class="std std-ref">Application Test Input</span></a> below)
+which should contain the test configuration file (see <a class="reference internal" href="#application-test-input"><span class="std std-ref">Application Test Input</span></a> below)
 and other required scripts (see <a class="reference internal" href="#required-application-test-scripts"><span class="std std-ref">Required Application Test Scripts</span></a> below).
-This directory contains templates and input files for the test – a test must not modify this directory, but it may use files stored in this directory.</p>
-<p>Second, the application’s source code and required build script must reside within the <em>Source</em> directory of the repository.</p>
+This directory contains templates and input files for the test – a test must not modify files in this directory.</p>
+<p>Second, the application’s source code and required build script should reside within the <em>Source</em> directory of the repository.</p>
 </div>
 <div class="section" id="example-repository-structure">
 <h3>Example Repository Structure<a class="headerlink" href="#example-repository-structure" title="Permalink to this heading">¶</a></h3>
@@ -290,14 +290,14 @@ This directory contains templates and input files for the test – a test must n
 </div>
 <div class="section" id="application-test-input">
 <span id="id2"></span><h2>Application Test Input<a class="headerlink" href="#application-test-input" title="Permalink to this heading">¶</a></h2>
-<p>Each test scripts directory should contain a test input file named <em>rgt_test_input.ini</em>.
+<p>Each test’s <em>Scripts</em> directory should contain a test input file named <em>rgt_test_input.ini</em>.
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
 The test input file follows the Python3 <a class="reference external" href="https://docs.python.org/3/library/configparser.html">configparser</a> file format.
 The fields in the <code class="docutils literal notranslate"><span class="pre">[DEFAULT]</span></code> section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
 All the fields in the <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section can be used in the job script template and will be replaced when creating the batch script (see <a class="reference internal" href="#job-script-template"><span class="std std-ref">Job Script Template</span></a> section below).
 Variables in <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> cannot be referenced from <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code>.
 The fields in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section allow you to set environment variables that all stages of your test will be able to use.
-See <a class="reference internal" href="#best-practices"><span class="std std-ref">Best Practices</span></a> section for recommendations on when to use EnvVars or Replacements.</p>
+See <a class="reference internal" href="#best-practices"><span class="std std-ref">Best Practices</span></a> section for recommendations on when to use EnvVars vs Replacements.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Environment variables cannot be used in the definition of other environment variables – ie, <code class="docutils literal notranslate"><span class="pre">foo</span> <span class="pre">=</span> <span class="pre">$bar</span></code> (See: <a class="reference external" href="https://github.com/olcf/olcf-test-harness/issues/132">Issue 132</a>).</p>
@@ -343,9 +343,12 @@ For example, if you set <code class="docutils literal notranslate"><span class="
 </div>
 <div class="section" id="required-application-test-scripts">
 <span id="id3"></span><h2>Required Application Test Scripts<a class="headerlink" href="#required-application-test-scripts" title="Permalink to this heading">¶</a></h2>
-<p>The OTH requires each application test to provide a build script, a job script template, a check script, and a reporting script.
+<p>The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script, and (4) a reporting script.
 These scripts should be placed in the locations described in <a class="reference internal" href="#repository-structure"><span class="std std-ref">Repository structure</span></a>.
-If the OTH cannot find the scripts specified in the test input, it will fail to launch.</p>
+The build, check, and reporting scripts may also be set to Linux commands such as <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code>.
+This is useful in cases where a script is not needed.
+For example, a test that relies on standard system-provided tools can set the build script to <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> to remove the need to have an empty build script.
+If the OTH cannot find the scripts specified by the test input file (<em>rgt_test_input.ini</em>), it will fail to launch.</p>
 <div class="section" id="build-script">
 <h3>Build Script<a class="headerlink" href="#build-script" title="Permalink to this heading">¶</a></h3>
 <p>The build script can be a shell script, a Python script, or other executable command.
@@ -416,9 +419,9 @@ scontrol<span class="w"> </span>show<span class="w"> </span>hostnames<span class
 <span class="c1"># Run the executable.</span>
 log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>start
 
-<span class="nv">CMD</span><span class="o">=</span><span class="s2">&quot;srun -n __total_processes__ -N __nodes__ </span><span class="nv">$BUILD_DIR</span><span class="s2">/bin/</span><span class="nv">$EXECUTABLE</span><span class="s2">&quot;</span>
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span>
-<span class="nv">$CMD</span>
+<span class="nb">set</span><span class="w"> </span>-x
+srun<span class="w"> </span>-n<span class="w"> </span>__total_processes__<span class="w"> </span>-N<span class="w"> </span>__nodes__<span class="w"> </span><span class="nv">$BUILD_DIR</span>/bin/<span class="nv">$EXECUTABLE</span>
+<span class="nb">set</span><span class="w"> </span>+x
 
 log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>final
 

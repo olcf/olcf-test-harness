@@ -6,12 +6,12 @@ Adding a New Machine
 
 The following steps can be used to add support for a new system:
 
-1. Create a machine master configuration (e.g. *lyra.ini*, placed in *$OLCF_HARNESS_DIR/configs/lyra.ini*).
+1. Create a machine configuration file (e.g. *lyra.ini*, placed in *$OLCF_HARNESS_DIR/configs/lyra.ini*).
 2. Create the location of the repository that will hold all applications and tests for that particular machine
-    - This can be in a remote Git repository, or a directory on the file system
+    - This can be in a remote Git repository, or a directory on the file system (which is then used as **Path_to_tests** in the input file)
 
-Creating a machine configuration file is discussed below.
-The creation of tests is discussed in another section
+Creating a new machine configuration file is discussed below.
+The creation of new tests is discussed in :ref:`section_new_test`.
 
 
 Create a Basic Machine Configuration
@@ -26,13 +26,13 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
 .. code-block:: text
 
     [MachineDetails]
-    # Required:
+    # Required variables :
     machine_name = crusher
-    # Options: linux_x86_64 or ibm_power9
+    # options: linux_x86_64 or ibm_power9
     machine_type = linux_x86_64
-    # Options: slurm, pbs, lsf
+    # options: slurm, pbs, lsf
     scheduler_type = slurm
-    # Options: srun, aprun, jsrun, poe
+    # options: srun, aprun, jsrun, poe
     joblauncher_type = srun
     # Default queue/partition to submit jobs to
     batch_queue = batch
@@ -73,7 +73,7 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
     # The path used for building the application and scratch space used for running
     path_to_sspace = /default/path/to/scratch/space
     # A string that can be used to identify tests run for a specific purpose (ie: 'summit_tshot_cuda11')
-    system_log_tag = some_default_log_tag
+    system_log_tag = frontier_test
 
 
 .. note::

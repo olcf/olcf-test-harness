@@ -256,12 +256,13 @@ Extensions are enabled through environment variables and metadata files placed i
 This information can additionally be logged to an InfluxDB time-series database.
 To enable this extension, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
 <table class="hlist"><tr><td><ul class="simple">
-<li><p>RGT_INFLUX_URI : the URL (with appropriate endpoint) for your InfluxDB instance (ie, <code class="docutils literal notranslate"><span class="pre">https://my-influxdb.domain.com/api/v2/write?org=my-org&amp;bucket=my-bucket&amp;precision=ns</span></code>)</p></li>
-<li><p>RGT_INFLUX_TOKEN : the token for your InfluxDB instance</p></li>
+<li><p>RGT_INFLUXDB_URI : the URL for your InfluxDB instance (ie, <code class="docutils literal notranslate"><span class="pre">https://my-influxdb.domain.com/api/v2/write?org=my-org&amp;bucket=my-bucket&amp;precision=ns</span></code>)</p></li>
+<li><p>RGT_INFLUXDB_TOKEN : the token for your InfluxDB instance</p></li>
 </ul>
 </td></tr></table>
-<p>Note that the <strong>RGT_INFLUX_URI</strong> contains information such as the organization name, bucket name, and desired precision.
-Currently the OTH only supports nanosecond precision.</p>
+<p>Note that this is a minimal configuration.
+Multiple InfluxDB instances can be logged to by supplying a semicolon-separated list of URIs and tokens.
+Please see <a class="reference internal" href="envvars.html#env-vars-ext"><span class="std std-ref">Extension-specific Variables</span></a> for the full list of InfluxDB-related environment variables.</p>
 <p>Events are logged using the following data as tags in the InfluxDB measurement:</p>
 <table class="hlist"><tr><td><ul class="simple">
 <li><p><strong>time</strong></p></li>
@@ -269,7 +270,7 @@ Currently the OTH only supports nanosecond precision.</p>
 <li><p><strong>app</strong> : name of the application</p></li>
 <li><p><strong>test</strong> : name of the test</p></li>
 <li><p><strong>test_id</strong> : test identifier of this test instance</p></li>
-<li><p><strong>machine</strong> : machine name</p></li>
+<li><p><strong>machine</strong> : machine name, equal to <strong>RGT_MACHINE_NAME</strong></p></li>
 </ul>
 </td></tr></table>
 <p>Tags are a set of unique identifiers used by InfluxDB to index records.
@@ -292,12 +293,11 @@ Event fields logged to InfluxDB are:</p>
 <li><p><strong>job_id</strong> : JobID referenced by the scheduler</p></li>
 <li><p><strong>path_to_rgt_package</strong> : path to the harness source code used</p></li>
 <li><p><strong>rgt_system_log_tag</strong> : log tag defined for this run (mirrors <strong>runtag</strong>)</p></li>
-<li><p><strong>test_instance</strong> : a string set to “$app,$test,$test_id”</p></li>
 <li><p><strong>user</strong> : username of the user that launched the harness</p></li>
 <li><p><strong>comment</strong> : enables the user to log comments to specific events</p></li>
 <li><p><strong>reason</strong> : used by some harness utility scripts to log explanations to InfluxDB, such as node failure messages</p></li>
 <li><p><strong>output_txt</strong> : output of specific events mined from files (last 64 kB only).</p></li>
-<li><p><strong>check_alias</strong> : an optional extension - alpha-numeric supplement of <strong>event_value</strong></p></li>
+<li><p><strong>check_alias</strong> : an optional extension - alpha-numeric supplement to <strong>event_value</strong></p></li>
 </ul>
 </td></tr></table>
 <p>These fields are largely self-explanatory, but additional details for <strong>output_txt</strong> are provided below.
@@ -308,14 +308,6 @@ For <strong>submit_end</strong>, the OTH reads the <strong>submit.err</strong> f
 For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <strong>.o${job_id}</strong>, and reads the last 64 kB from that file.
 This file is not automatically created by the harness.
 For <strong>check_end</strong>, the OTH looks for a file named <strong>output_check.txt</strong>, which is automatically created by the harness to store output from the check script.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If compute nodes do not have access to the internet or if InfluxDB was not enabled for a set of runs, <em>runtests.py</em> provides <code class="docutils literal notranslate"><span class="pre">--mode</span> <span class="pre">influx_log</span></code>,
-which finds all event files and logs them to InfluxDB after the run is completed.
-This mode also applies to metric and node health logging.</p>
-<p>Finding runs to log is not selective – any test instance that has not already been sent to InfluxDB or explicitly disabled InfluxDB will be processed.
-If you do not want a test instance to be logged, set <strong>RGT_INFLUX_DISABLED=1</strong> at run-time, or create a file named <strong>$RUNARCHIVE_DIR/.influx_disabled</strong>.</p>
-</div>
 </div>
 <div class="section" id="logging-application-metrics-to-influxdb">
 <h2>Logging application metrics to InfluxDB<a class="headerlink" href="#logging-application-metrics-to-influxdb" title="Permalink to this heading">¶</a></h2>
@@ -343,7 +335,7 @@ since <strong>execution_time</strong> is the difference in time between the two 
 </div>
 <div class="section" id="monitoring-the-health-of-individual-nodes">
 <h2>Monitoring the health of individual nodes<a class="headerlink" href="#monitoring-the-health-of-individual-nodes" title="Permalink to this heading">¶</a></h2>
-<p>In many-node systems, it can be very difficult to monitor the health of specific nodes.
+<p>In many-node systems, it can be very difficult to monitor the health of each node.
 To address this, the OTH supports node-centric monitoring.
 Similar to metrics logging, this extension requires that InfluxDB event logging is enabled, and this extension is triggered by the presence of a <em>nodecheck.txt</em> file in the Run_Archive directory of a test launch.
 This extension also requires geospatial information about the node, by default.
@@ -372,7 +364,7 @@ These values are:</p>
 <p>This extension logs results to the <strong>node_health</strong> measurement (table) of InfluxDB using <strong>machine</strong>, <strong>node</strong>, and <strong>test</strong> as tags.
 By default, this extension also requires geospatial information about each node (ie, cabinet number, board number, row number).
 This information is used as an InfluxDB tag to correlate failures by location.
-To bypass this feature (useful for small systems, especially), set the <strong>RGT_IGNORE_NODE_LOCATION</strong> environment variable to <code class="docutils literal notranslate"><span class="pre">1</span></code>.
+To bypass this feature (common for single-cabinet systems), set the <strong>RGT_NODE_LOCATION_FILE</strong> environment variable to <code class="docutils literal notranslate"><span class="pre">none</span></code> (not case-sensitive).
 To utilize this feature, provide the absolute path to a JSON file containing the desired information by using the <strong>RGT_NODE_LOCATION_FILE</strong> environment variable.
 An example portion from this file may look like:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>

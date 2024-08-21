@@ -15,7 +15,7 @@ The top-level group in a GitLab group (or GitHub repo) contains a sub-group for 
 Repository URL
 ^^^^^^^^^^^^^^
 
-Each application that can be tested on a given machine has a repository within the machine's group.
+Each application that can be run on a given machine should have a repository (or directory) within that machine's group.
 
 .. _repository-structure:
 
@@ -39,11 +39,11 @@ The application repository must be structured as shown below:
 
 First, each application test must have its own subdirectory.
 The test directory has a mandatory *Scripts* subdirectory,
-which should contain the test input file (see :ref:`application-test-input` below)
+which should contain the test configuration file (see :ref:`application-test-input` below)
 and other required scripts (see :ref:`required-application-test-scripts` below).
-This directory contains templates and input files for the test -- a test must not modify this directory, but it may use files stored in this directory.
+This directory contains templates and input files for the test -- a test must not modify files in this directory.
 
-Second, the application's source code and required build script must reside within the *Source* directory of the repository.
+Second, the application's source code and required build script should reside within the *Source* directory of the repository.
 
 Example Repository Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,14 +65,14 @@ Note that the test names are not required to follow any specific naming conventi
 Application Test Input
 ----------------------
 
-Each test scripts directory should contain a test input file named *rgt_test_input.ini*.
+Each test's *Scripts* directory should contain a test input file named *rgt_test_input.ini*.
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
 The test input file follows the Python3 `configparser <https://docs.python.org/3/library/configparser.html>`_ file format.
 The fields in the ``[DEFAULT]`` section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
 All the fields in the ``[Replacements]`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
 Variables in ``[Replacements]`` cannot be referenced from ``[EnvVars]``.
 The fields in the ``[EnvVars]`` section allow you to set environment variables that all stages of your test will be able to use.
-See :ref:`best-practices` section for recommendations on when to use EnvVars or Replacements.
+See :ref:`best-practices` section for recommendations on when to use EnvVars vs Replacements.
 
 .. note::
 
@@ -123,9 +123,12 @@ The following is a sample input for the single node test of the *hello_mpi* appl
 Required Application Test Scripts
 ---------------------------------
 
-The OTH requires each application test to provide a build script, a job script template, a check script, and a reporting script.
+The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script, and (4) a reporting script.
 These scripts should be placed in the locations described in :ref:`repository-structure`.
-If the OTH cannot find the scripts specified in the test input, it will fail to launch.
+The build, check, and reporting scripts may also be set to Linux commands such as ``/usr/bin/echo``.
+This is useful in cases where a script is not needed.
+For example, a test that relies on standard system-provided tools can set the build script to ``/usr/bin/echo`` to remove the need to have an empty build script.
+If the OTH cannot find the scripts specified by the test input file (*rgt_test_input.ini*), it will fail to launch.
 
 Build Script
 ^^^^^^^^^^^^
@@ -209,9 +212,9 @@ An example SLURM template script for the *hello_mpi* application follows:
     # Run the executable.
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
     
-    CMD="srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE"
-    echo "$CMD"
-    $CMD
+    set -x
+    srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE
+    set +x
     
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
     

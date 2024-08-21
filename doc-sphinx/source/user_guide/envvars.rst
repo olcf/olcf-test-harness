@@ -8,20 +8,24 @@ Environment Variables
 The OLCF Test Harness (OTH) is extremely flexible and can be configured in a number of ways.
 There are a few command-line options, but many more environment variables.
 In addition to the environment variables used to configure the OTH behavior, the OTH sets several useful environment variables during a test.
-These environment variables are provided below.
+These environment variables are detailed below.
 
 .. note::
 
     The ``<machine>.ini`` file can contain user-defined environment variables (such as ``mpi_version``, which sets ``RGT_MPI_VERSION`` in the environment).
     The only variables covered in this section are those ingested by the core harness code.
 
+.. _env_vars_config:
+
 Configuration Variables
 =======================
 
 There are many variables required to parameterize the OTH behavior.
-All but one of these can have default values provided through the ``<machine>ini`` file,
+All but ONE of these can have default values provided through the ``<machine>ini`` file,
 which can be overridden by setting the environment variable prior to launching the harness.
 These variables are all available for use in the build, run, and check stages of an OTH job.
+These variables canl also be used as a replacement in the ``rgt_test_input.ini`` file by setting the variable name to ``<obtain_from_environment>``.
+For example, ``machine_name = <obtain_from_environment>`` will fetch the value from ``RGT_MACHINE_NAME`` and use it while evaluating replacements.
 
 .. note::
 
@@ -33,7 +37,7 @@ These variables are all available for use in the build, run, and check stages of
 
     OLCF_HARNESS_MACHINE            Name of the system, used to find the machine ini file (default: 'master')
                                         This is the ONLY variable that CANNOT be set in ``<machine>.ini``,
-                                        since it is needed to locate that file
+                                        since it is needed to locate that file.
     RGT_MACHINE_NAME                Name of the system (can be different than OLCF_HARNESS_MACHINE).
                                         Used for status file and database logging.
     RGT_MACHINE_TYPE                System architecture: 'linux_x86_64' or 'ibm_power9'.
@@ -70,11 +74,14 @@ These variables are all available for use in the build, run, and check stages of
     RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file & database logging.
 
 
+.. _env_vars_run:
 
 Run-Time Variables
 =====================
 
-The OLCF Test Harness also sets many variables while inside of a test. These variables are detailed below:
+The OLCF Test Harness also SETS many variables while inside of a test.
+These variables cannot be used by the ``rgt_test_input.ini`` file via ``<obtain_from_environment>``.
+These variables are detailed below:
 
 .. code-block::
 
@@ -86,6 +93,8 @@ The OLCF Test Harness also sets many variables while inside of a test. These var
     RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
     RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
 
+
+.. _env_vars_ext:
 
 Extension-specific Variables
 ============================
@@ -113,8 +122,8 @@ These are grouped below by extension. The general naming convention is ``RGT_<ex
     RGT_INFLUXDB_PRECISION      The precision to log with in InfluxDB. Only `ms` (milliseconds) or `ns` (nanoseconds) are supported.
                                     Default: 'ns'
                                     If >1 InfluxDB instance, use URL encoding to specify the precision if not the same.
-    RGT_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it.
+    RGT_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it to the database.
 
-    RGT_NODE_LOCATION_FILE      Provides additional information about the location of a node to the node health
-                                database logging extension.
+    RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
+                                database logging extension. Set to "none" (not case-sensitive) to disable.
 

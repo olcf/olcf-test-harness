@@ -296,7 +296,7 @@ For creating a new machine, see <a class="reference internal" href="adding_new_m
 <h2>Launching the OTH<a class="headerlink" href="#launching-the-oth" title="Permalink to this heading">¶</a></h2>
 <div class="section" id="basic-usage">
 <h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading">¶</a></h3>
-<p>Create a directory for your run - this is where you will place input files and retrieve a copy of OTH log files. No computation will be done here:</p>
+<p>Create a directory where you will place input files. No computation will be done here:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>summit_testshot
 <span class="nb">cd</span><span class="w"> </span>summit_testshot
 </pre></div>
@@ -310,7 +310,7 @@ In this example for Summit, the application <strong>hello_mpi</strong> is used a
 <p class="admonition-title">Note</p>
 <p>Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.
 The OTH can automatically clone Git repositories from remote servers.
-Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>).
+Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a> or <a class="reference internal" href="envvars.html#env-vars-config"><span class="std std-ref">Configuration Variables</span></a>).
 Applications not hosted in GitHub/GitLab must be manually placed in <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.</p>
 </div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">################################################################################</span>
@@ -366,12 +366,11 @@ This section details the command-line parameters and the next section details av
                         &#39;screen&#39;  - print messages to console (default)
                         &#39;logfile&#39; - print messages to log file
 -m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: &#39;use_harness_tasks_in_rgt_input_file&#39;)
-                Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status,influx_log]
+                Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status]
                         &#39;checkout&#39;   - checkout application tests listed in input file
                         &#39;start&#39;      - start application tests listed in input file
                         &#39;stop&#39;       - stop application tests listed in input file
                         &#39;status&#39;     - check status of application tests listed in input file
-                        &#39;influx_log&#39; - log all runs for application tests listed in input file to InfluxDB
 
 --fireworks                         Use FireWorks to run harness tasks (beta)
 -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
@@ -389,17 +388,17 @@ This issue is tracked by <a class="reference external" href="https://github.com/
 Nearly all parameters in the <em>$OLCF_HARNESS_MACHINE.ini</em> file can be directly overridden by a corresponding environment variable.
 For example, <em>git_reps_branch</em> is a parameter in <em>$OLCF_HARNESS_MACHINE.ini</em> that specifies the branch of the remote repository to clone.
 The <em>RGT_GIT_REPS_BRANCH</em> environment variable can be used to override this value at launch time.
-The precedence of configuration options from lowest to highest is:</p>
+The general precedence of configuration options from lowest to highest is:</p>
 <ol class="arabic simple">
 <li><p><em>$OLCF_HARNESS_MACHINE.ini</em></p></li>
-<li><p>User-set environment variables (ie, <em>RGT_GIT_REPS_BRANCH</em>, <em>RGT_PROJ_ID</em>)</p></li>
-<li><p><em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.[ini,txt]</em></p></li>
+<li><p>User-set environment variables (ie, <em>RGT_GIT_REPS_BRANCH</em>, <em>RGT_PROJECT_ID</em>)</p></li>
+<li><p><em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.ini</em></p></li>
 </ol>
 <p>The specific parameters are defined in <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test</span></a> and <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>.</p>
 <p>The exception to this is setting the batch queue and project ID used for submission.
 The precedence of configuration options for the batch queue and project ID from lowest to highest is:</p>
 <ol class="arabic simple">
-<li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>$OLCF_HARNESS_MACHINE.ini</em> (<strong>RGT_BATCH_QUEUE</strong> and <strong>RGT_PROJECT_ID</strong>)</p></li>
+<li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>$OLCF_HARNESS_MACHINE.ini</em> (overridden by setting <strong>RGT_BATCH_QUEUE</strong> and <strong>RGT_PROJECT_ID</strong> at launch)</p></li>
 <li><p><strong>batch_queue</strong> and <strong>project_id</strong> from <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.ini</em></p></li>
 <li><p>User-set environment variables: <strong>RGT_SUBMIT_QUEUE</strong> and <strong>RGT_SUBMIT_ACCT</strong></p></li>
 </ol>
@@ -432,7 +431,7 @@ The build, submit, and check stages have pre-defined locations for the output:</
 <h3>Application Output<a class="headerlink" href="#application-output" title="Permalink to this heading">¶</a></h3>
 <p>Output from the executable run can be found in one of two places.</p>
 <ul class="simple">
-<li><p>Uncaptured output to stdout/stderr: <strong>${RESULTS_DIR}/&lt;job_stdout/stderr_file&gt;</strong></p></li>
+<li><p>Uncaptured output will go to the scheduler’s stdout/stderr mechanism, and will commonly be found in <strong>${RESULTS_DIR}</strong></p></li>
 <li><p>Any output files created by the application should be in <strong>${WORK_DIR}</strong></p></li>
 </ul>
 </div>
