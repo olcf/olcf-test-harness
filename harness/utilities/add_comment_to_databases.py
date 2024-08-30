@@ -57,8 +57,12 @@ logger.doInfoLogging(f"Enabled {len(db_logger.enabled_backends)} database backen
 
 for db in db_logger.enabled_backends:
     if not db.name == "influxdb":
-        self.doErrorLogging(f"Unsupported db backend: {db.name}")
+        self.doErrorLogging(f"Unsupported db backend for add_comment_to_databases.py: {db.name}")
         exit(1)
+
+if args.dry_run:
+    for db in db_logger.enabled_backends:
+        os.environ[db.disable_envvar_name] = "1"
 
 # Checking format of provided times ############################################
 if not (args.time.endswith('d') or args.time.endswith('h')):
