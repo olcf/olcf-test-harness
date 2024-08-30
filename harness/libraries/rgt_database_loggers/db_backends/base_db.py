@@ -39,6 +39,12 @@ class BaseDBLogger(ABC):
     def disable_file_name(self):
         return
 
+    # This environment variable name set to 1 disables this backend
+    @property
+    @abstractmethod
+    def disable_envvar_name(self):
+        return
+
     # The name of the dot-file that indicates successful, completed logging
     @property
     @abstractmethod

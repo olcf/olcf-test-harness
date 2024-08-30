@@ -235,6 +235,10 @@ def slurm_time_to_harness_time(timecode):
 skipped = 0
 sent = 0
 
+if args.dry_run:
+    for db in db_logger.enabled_backends:
+        os.environ[db.disable_envvar_name] = "1"
+
 # The calls to db_logger.log_event are for ALL enabled backends, so
 # the subsequent iterations in this loop will have fewer un-logged
 # results

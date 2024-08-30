@@ -114,6 +114,10 @@ class InfluxDBLogger(BaseDBLogger):
         return self.DISABLE_DOTFILE_NAME
 
     @property
+    def disable_envvar_name(self):
+        return self.kw['dryrun']
+
+    @property
     def successful_file_name(self):
         return self.SUCCESSFUL_DOTFILE_NAME
 
@@ -445,6 +449,11 @@ class InfluxDBLogger(BaseDBLogger):
         """
 
         if self.dryrun:
+            self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            return True
+        elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
+            # A Harness utility may set the environment variable after DB init time
+            self.dryrun = True
             self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
             return True
 
