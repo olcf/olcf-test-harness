@@ -39,6 +39,12 @@ class BaseDBLogger(ABC):
     def disable_file_name(self):
         return
 
+    # This environment variable name set to 1 disables this backend
+    @property
+    @abstractmethod
+    def disable_envvar_name(self):
+        return
+
     # The name of the dot-file that indicates successful, completed logging
     @property
     @abstractmethod
@@ -78,42 +84,21 @@ class BaseDBLogger(ABC):
 
 # Raised when there is an initialization error
 class DatabaseInitError(Exception):
-    """The base error class for this module."""
-    def __init__(self,
-                 message,
-                 args):
-        self.__message = message
-        self.__args = args
+    """ An exception to indicate a database initialization failure """
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
         return
-
-    @property
-    def message(self):
-        return self.__message
 
 # Raised when there is an data error
 class DatabaseDataError(Exception):
-    """The base error class for this module."""
-    def __init__(self,
-                 message,
-                 args):
-        self.__message = message
-        self.__args = args
+    """ An exception to indicate a problem in the data provided by the harness to log to a database """
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
         return
-
-    @property
-    def message(self):
-        return self.__message
 
 # Raised when there is an environment variable-related error
 class DatabaseEnvironmentError(Exception):
-    """The base error class for this module."""
-    def __init__(self,
-                 message,
-                 args):
-        self.__message = message
-        self.__args = args
+    """ An exception to indicate a problem with the RGT_ environment variables """
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
         return
-
-    @property
-    def message(self):
-        return self.__message

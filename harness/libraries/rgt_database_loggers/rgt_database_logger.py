@@ -78,7 +78,8 @@ class RgtDatabaseLogger:
                         num_failed += 1
                     elif event_dict['event_name'] == 'check_end':
                         # If we just successfully logged check_end, then we add a dot-file to indicate logging completed
-                        os.mknod(backend.successful_file_name)
+                        if not os.path.exists(backend.successful_file_name):
+                            os.mknod(backend.successful_file_name)
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e}.")
                 num_failed += 1
@@ -318,7 +319,7 @@ class RgtDatabaseLogger:
                                 self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                                 self.enabled_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
-                            self.logger.doErrorLogging(e.message)
+                            self.logger.doErrorLogging(f"Failed to enable the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}: {e}")
         return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

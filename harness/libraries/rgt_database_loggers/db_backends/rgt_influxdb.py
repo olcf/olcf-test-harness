@@ -94,7 +94,7 @@ class InfluxDBLogger(BaseDBLogger):
         alive_msg = self.is_alive()
         if alive_msg:
             message = f'An InfluxDB server at {self.url} is not alive: {alive_msg}'
-            raise DatabaseInitError(message, {})
+            raise DatabaseInitError(message)
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -112,6 +112,10 @@ class InfluxDBLogger(BaseDBLogger):
     @property
     def disable_file_name(self):
         return self.DISABLE_DOTFILE_NAME
+
+    @property
+    def disable_envvar_name(self):
+        return self.kw['dryrun']
 
     @property
     def successful_file_name(self):
@@ -264,6 +268,10 @@ class InfluxDBLogger(BaseDBLogger):
 
         if 'RGT_NODE_LOCATION_FILE' in os.environ and str(os.environ['RGT_NODE_LOCATION_FILE']).lower() == 'none':
             use_node_location_file = False
+        elif not 'RGT_NODE_LOCATION_FILE' in os.environ:
+            # We want to abort in this case because previous runs may have been logged
+            # with node location data, and we do not want to log incomplete data
+            raise DatabaseEnvironmentError("The RGT_NODE_LOCATION_FILE environment variable is required. If you do not want this functionality, please set to \"None\".")
         else:
             # else, we assume it is a path and we look for it
             if not os.path.exists(os.environ['RGT_NODE_LOCATION_FILE']):
@@ -403,7 +411,7 @@ class InfluxDBLogger(BaseDBLogger):
         # Check for a specified protocol (http, https)
         if len(parsed.scheme) == 0:
             message = f'The InfluxDB URI must specify the protocol (http, https, etc).'
-            raise DatabaseInitError(message, {})
+            raise DatabaseInitError(message)
         # Get the raw URL for the InfluxDB server
         self.url = f'{parsed.scheme}://{parsed.netloc}'
         for arg in parsed.query.split('&'):
@@ -416,7 +424,7 @@ class InfluxDBLogger(BaseDBLogger):
                 self.precision = arg_split[1]
             else:
                 message = f'Unrecognized URL-encoded keyword argument: {arg_split[0]}'
-                raise DatabaseInitError(message, {})
+                raise DatabaseInitError(message)
 
         # Check if RGT_INFLUXDB_BUCKET, RGT_INFLUXDB_ORG, or
         # RGT_INFLUXDB_PRECISION are in the environment
@@ -433,7 +441,7 @@ class InfluxDBLogger(BaseDBLogger):
         if (not self.bucket) or (not self.org):
             message = f'The bucket and organization for the InfluxDB server could not be found.'
             message += f' The InfluxDB URI was {self.full_uri}.'
-            raise DatabaseInitError(message, {})
+            raise DatabaseInitError(message)
 
     def _send_message(self, full_url : str, message : str, headers : dict):
         """
@@ -441,6 +449,11 @@ class InfluxDBLogger(BaseDBLogger):
         """
 
         if self.dryrun:
+            self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            return True
+        elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
+            # A Harness utility may set the environment variable after DB init time
+            self.dryrun = True
             self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
             return True
 
