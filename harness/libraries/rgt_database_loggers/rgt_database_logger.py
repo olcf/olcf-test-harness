@@ -286,7 +286,6 @@ class RgtDatabaseLogger:
         -------
             None
         """
-        print(f"Have only={only}")
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
