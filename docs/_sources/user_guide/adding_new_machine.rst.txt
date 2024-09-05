@@ -27,35 +27,30 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
 
     [MachineDetails]
     # Required variables :
-    machine_name = crusher
+    machine_name = frontier
     # options: linux_x86_64 or ibm_power9
     machine_type = linux_x86_64
     # options: slurm, pbs, lsf
     scheduler_type = slurm
     # options: srun, aprun, jsrun, poe
     joblauncher_type = srun
-    # Default queue/partition to submit jobs to
-    batch_queue = batch
-    # Overridden if project_id is set in the test's input file
-    project_id = <default account for scheduler>
-    # Any required flags to job scheduler (ie, ``-M clustername`` in Slurm)
-    submit_args =
-    nccs_test_harness_module = olcf_harness
 
     # Optional: specify some details about the machine
     # Each of these becomes an environment variable,
     # ie **RGT_CPUS_PER_NODE**, that can be used to template tests
-    node_count = 1000
-    cpus_per_node = 64
-    sockets_per_node = 2
+    # These can also be set in SiteCustom, but the harness does attempt to read these
+    # The harness just doesn't act on these yet
+    node_count = 9408
+    cpus_per_node = 56
+    sockets_per_node = 1
     gpus_per_node = 8
 
     # This section is only required when ``--mode checkout`` is used
     [RepoDetails]
     # Git is currently the only supported type of remote repository
     type_of_repository = git
-    # Branch/tag to clone from remote repo
-    git_reps_branch = master
+    # Branch/tag to clone from remote repo -- we recommend NOT setting this unless needed
+    #git_reps_branch = master
     # Protocol to use when cloning
     git_data_transfer_protocol = ssh
     # Sub-project/group in the Git repository
@@ -74,6 +69,17 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
     path_to_sspace = /default/path/to/scratch/space
     # A string that can be used to identify tests run for a specific purpose (ie: 'summit_tshot_cuda11')
     system_log_tag = frontier_test
+    # Default queue/partition to submit jobs to
+    batch_queue = batch
+    # Overridden if project_id is set in the test's input file
+    project_id = <default account for scheduler>
+    # Any required flags to job scheduler (ie, ``-M clustername`` in Slurm)
+    submit_args =
+
+    # This optional section is where you can define custom environment variables you might use
+    [SiteCustom]
+    # An example usage could be providing a variable to tell your code what the name of the MPI module is
+    my_mpi_module_name = openmpi/4.1.6
 
 
 .. note::

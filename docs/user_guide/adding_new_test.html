@@ -154,7 +154,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#define-replacement-variables-instead-of-envvars">Define replacement variables instead of EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#define-replacement-variables-instead-of-just-envvars">Define replacement variables instead of just EnvVars</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#check-for-expected-environment-variables">Check for expected environment variables</a></li>
 </ul>
 </li>
@@ -733,8 +733,8 @@ and <code class="docutils literal notranslate"><span class="pre">source</span></
 For the build script, this can be accomplished as simply <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">env.sh</span></code>, if the script is in the top level of the Source directory.
 For the job script, this can be accomplished by <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">$BUILD_DIR/env.sh</span></code>, if the <strong>$BUILD_DIR</strong> environment variable is defined as in the <a class="reference internal" href="#job-script-template"><span class="std std-ref">Job Script Template</span></a> section above.</p>
 </div>
-<div class="section" id="define-replacement-variables-instead-of-envvars">
-<h3>Define replacement variables instead of EnvVars<a class="headerlink" href="#define-replacement-variables-instead-of-envvars" title="Permalink to this heading">¶</a></h3>
+<div class="section" id="define-replacement-variables-instead-of-just-envvars">
+<h3>Define replacement variables instead of just EnvVars<a class="headerlink" href="#define-replacement-variables-instead-of-just-envvars" title="Permalink to this heading">¶</a></h3>
 <p>In <strong>rgt_test_input.ini</strong>, it is recommended that if you define an environment variable in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section,
 that you also define a replacement variable in <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> that is used in the job script to re-define that environment variable.
 This helps to create a re-usable job script.
@@ -757,7 +757,7 @@ The following is recommended within the test input file:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MY_ENV_VAR</span><span class="o">=</span><span class="s2">&quot;__my_custom_variable__&quot;</span>
 </pre></div>
 </div>
-<p>If the job script template requires an environment variable that is set by the harness (ie, <strong>RGT_MACHINE_NAME</strong>),
+<p>If the job script template requires an environment variable that is set by the harness (ie, <strong>RGT_MACHINE_NAME</strong>, <strong>RGT_CPUS_PER_NODE</strong>),
 it may be best to define a replacement in the test input file that inherits the value of the environment variable using <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code> like so:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Internal name modification translates `machine_name` to `RGT_MACHINE_NAME`</span>
 <span class="nv">machine_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>&lt;obtain_from_environment&gt;

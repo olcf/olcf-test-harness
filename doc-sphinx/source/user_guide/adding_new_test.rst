@@ -569,8 +569,8 @@ and ``source`` that script from the build and job scripts.
 For the build script, this can be accomplished as simply ``source env.sh``, if the script is in the top level of the Source directory.
 For the job script, this can be accomplished by ``source $BUILD_DIR/env.sh``, if the **$BUILD_DIR** environment variable is defined as in the :ref:`job-script-template` section above.
 
-Define replacement variables instead of EnvVars
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Define replacement variables instead of just EnvVars
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In **rgt_test_input.ini**, it is recommended that if you define an environment variable in the ``[EnvVars]`` section,
 that you also define a replacement variable in ``[Replacements]`` that is used in the job script to re-define that environment variable.
@@ -598,7 +598,7 @@ Then, within the job script template:
 
     export MY_ENV_VAR="__my_custom_variable__"
 
-If the job script template requires an environment variable that is set by the harness (ie, **RGT_MACHINE_NAME**),
+If the job script template requires an environment variable that is set by the harness (ie, **RGT_MACHINE_NAME**, **RGT_CPUS_PER_NODE**),
 it may be best to define a replacement in the test input file that inherits the value of the environment variable using ``<obtain_from_environment>`` like so:
 
 .. code-block:: bash
