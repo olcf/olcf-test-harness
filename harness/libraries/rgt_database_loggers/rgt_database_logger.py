@@ -151,10 +151,45 @@ class RgtDatabaseLogger:
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_node_health_results(test_info_dict, node_health_dict):
-                        self.logger.doErrorLogging(f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details.")
+                        self.logger.doErrorLogging(f"An error occurred while logging node health data to {backend.url}. Please see log files for more details.")
                         num_failed += 1
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging node health results to {backend.url}: {e}.")
+                num_failed += 1
+                pass
+        return num_failed == 0
+
+    def log_external_metrics(self, table : str, tags : dict, values : dict, log_time : str, only=None):
+        """
+        Logs the provided external metrics to the databases
+        ----
+        Parameters:
+          table : str
+              The table/measurement to log this data to
+
+          tags : dict
+              A dictionary providing all tags to log the data under
+
+          values : dict
+              A dictionary providing all data to log
+
+          log_time : str
+              The timestamp (isoformat) to associate with this metric
+        ----
+        Returns:
+            True if logging is successful for all backends
+            False otherwise
+        """
+
+        # Logging external metrics is very simple -- just do it. No dot-files, just environment variables
+        num_failed = 0
+        for backend in self._make_db_target_list(only):
+            try:
+                if not backend.send_external_metrics(table, tags, values, log_time):
+                    self.logger.doErrorLogging(f"An error occurred while logging external metrics to {backend.url}. Please see log files for more details.")
+                    num_failed += 1
+            except Exception as e:
+                self.logger.doErrorLogging(f"The following exception occurred while logging external metrics to {backend.url}: {e}.")
                 num_failed += 1
                 pass
         return num_failed == 0

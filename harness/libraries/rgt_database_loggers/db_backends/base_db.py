@@ -69,6 +69,10 @@ class BaseDBLogger(ABC):
         return
 
     @abstractmethod
+    def send_external_metrics(self, table : str, tags : dict, values : dict, log_time : str):
+        return
+
+    @abstractmethod
     def is_alive(self):
         return
 

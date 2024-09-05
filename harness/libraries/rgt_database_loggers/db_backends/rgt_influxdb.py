@@ -305,6 +305,28 @@ class InfluxDBLogger(BaseDBLogger):
         # Send message to InfluxDB & return the True/False result
         return self._send_message(self._get_write_url(), '\n'.join(post_lines), headers)
 
+    def send_external_metrics(self, table : str, tags : dict, values : dict, log_time : str):
+        """
+            Posts external metrics to InfluxDB.
+        """
+        self.__logger.doDebugLogging(f"Posting external metrics to InfluxDB")
+
+        # Initialize the tags for record string
+        influx_event_record_string = table
+
+        # Check that required tags exist
+        for tag_name in tags.keys():
+            influx_event_record_string += f',{tag_name}={tags[tag_name]}'
+
+        influx_event_record_string += ' '
+        influx_event_record_string += ','.join([f"{k}={v}" for k, v in values.items()])
+        influx_event_record_string += f" {str(self._event_time_to_timestamp(log_time))}"
+
+        headers = {'Authorization': f'Token {self.token}', 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
+
+        # Send message to InfluxDB & return the result True/False
+        return self._send_message(self._get_write_url(), influx_event_record_string, headers)
+
     def is_alive(self):
         """
         Query the /api/v2/buckets endpoint of the InfluxDB server to check for the specified bucket.
@@ -475,10 +497,19 @@ class InfluxDBLogger(BaseDBLogger):
         if re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}$", event_time):
             # YYYY-MM-DDTHH:MM:SS.UUUUUU -- this is the default harness output
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f")
-            if self.precision == "ms":
-                return round(datetime.timestamp(log_time) * 1000 * 1000)
-            else:
-                return round(datetime.timestamp(log_time) * 1000 * 1000) * 1000
+        elif re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
+            # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
+            log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        elif re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
+            # YYYY-MM-DDTHH:MM:SS
+            log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
+        elif re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", event_time):
+            # YYYY-MM-DDTHH:MM:SSZ
+            log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
         else:
             raise DatabaseDataError(f"Unrecognized time format in string {event_time}.")
 
+        if self.precision == "ms":
+            return round(datetime.timestamp(log_time) * 1000 * 1000)
+        else:
+            return round(datetime.timestamp(log_time) * 1000 * 1000) * 1000
