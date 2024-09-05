@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 07-30-2024
+# Date modified: 09-05-2024
 ################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB.
