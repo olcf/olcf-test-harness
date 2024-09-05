@@ -195,6 +195,7 @@ skipped = 0
 sent = 0
 
 for db in db_logger.enabled_backends:
+    single_db_logger = create_rgt_db_logger(logger=logger, only=db.url)
     results = []
     if db.name == "influxdb":
         results.extend(influxdb_get_results(db))
@@ -214,5 +215,5 @@ for db in db_logger.enabled_backends:
             entry['comment'] += f"\n{timestamp} - {user}: {args.message}"
         elif not 'comment' in entry.keys():
             entry['comment'] = f"{timestamp} - {user}: {args.message}"
-        db.send_event(entry)
+        single_db_logger.log_event(entry)
 
