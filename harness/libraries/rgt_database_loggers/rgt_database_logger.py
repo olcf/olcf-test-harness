@@ -21,13 +21,15 @@ class RgtDatabaseLogger:
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, only=None):
         """ 
         Parameters
         ----------
-        logger : str
+        logger : rgt_logger
             The rgt_logger of the current scope. Since this class only serves for logging,
             we want it to inherit the logger from the calling class.
+        only : str
+            (Optional) a string URL for a specific database backend to initialize
         """
 
         if not logger:
@@ -38,11 +40,17 @@ class RgtDatabaseLogger:
         self.disabled_backends_filenames = [] # strings -- '.disable_influxdb', etc
         self._find_disabled_backends()
         self.enabled_backends = [] # database logger objects
-        self._add_db_backends()
+        self._add_db_backends(only=only)
 
-    def log_event(self, event_dict : dict):
+    def log_event(self, event_dict : dict, only=None):
         """
         Logs the provided event to all databases
+        ----
+        Parameters:
+          event_dict : dict
+              a dictionary providing all event information to log
+          only : str
+              a string URL specifying which database backend to log to (defaults to logging to all)
         """
 
         if not self._check_test_info_exists(event_dict):
@@ -62,7 +70,7 @@ class RgtDatabaseLogger:
 
         num_failed = 0
 
-        for backend in self.enabled_backends:
+        for backend in self._make_db_target_list(only):
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_event(event_dict):
@@ -79,7 +87,7 @@ class RgtDatabaseLogger:
         os.chdir(currentdir)
         return num_failed == 0
 
-    def log_metrics(self, test_info_dict : dict, metrics_dict : dict):
+    def log_metrics(self, test_info_dict : dict, metrics_dict : dict, only=None):
         """
         Logs the provided metrics data to all databases
         ----
@@ -89,6 +97,9 @@ class RgtDatabaseLogger:
 
           metrics_dict : dict
               a dictionary providing all key-value metrics pairings
+
+          only : str
+              a string URL specifying which database backend to log to (defaults to logging to all)
         ----
         Returns:
             True if logging is successful for all backends
@@ -100,7 +111,7 @@ class RgtDatabaseLogger:
 
         num_failed = 0
 
-        for backend in self.enabled_backends:
+        for backend in self._make_db_target_list(only):
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_metrics(test_info_dict, metrics_dict):
@@ -112,7 +123,7 @@ class RgtDatabaseLogger:
                 pass
         return num_failed == 0
 
-    def log_node_health(self, test_info_dict : dict, node_health_dict : dict):
+    def log_node_health(self, test_info_dict : dict, node_health_dict : dict, only=None):
         """
         Logs the provided event to all databases
         ----
@@ -122,6 +133,9 @@ class RgtDatabaseLogger:
 
           node_health_dict : dict
               a dictionary providing all node statuses and messages
+
+          only : str
+              a string URL specifying which database backend to log to (defaults to logging to all)
         ----
         Returns:
             True if logging is successful for all backends
@@ -132,7 +146,7 @@ class RgtDatabaseLogger:
             return False
 
         num_failed = 0
-        for backend in self.enabled_backends:
+        for backend in self._make_db_target_list(only):
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_node_health_results(test_info_dict, node_health_dict):
@@ -210,6 +224,30 @@ class RgtDatabaseLogger:
 
         return False
 
+    def _make_db_target_list(self, only=None):
+        """
+        Creates the list of databases to send messages to
+        Optionally with a string URL specifier (only)
+
+        Parameters
+        ----------
+            only : string
+                (Optional) string specifying the URL of the database to select
+
+        Returns
+        -------
+            A list of databases matching the criteria to iterate over
+        """
+        if not only:
+            return self.enabled_backends
+        db_list = []
+        for db in self.enabled_backends:
+            if db.url == only:
+                db_list.append(db)
+        if len(db_list) == 0:
+            self.logger.doWarningLogging(f"Found no database backends matching the URL {only}")
+        return db_list
+
     def _find_disabled_backends(self):
         """
         Parses the RGT_* environment variables to add appropriate dot-files to disable database logging
@@ -234,9 +272,14 @@ class RgtDatabaseLogger:
             self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
         return
 
-    def _add_db_backends(self):
+    def _add_db_backends(self, only=None):
         """
         Parses the available environment variables to enable specific backends
+
+        Parameters
+        ----------
+            only : string
+                (Optional) string specifying the URL of the database to select
 
         Returns
         -------
@@ -267,8 +310,9 @@ class RgtDatabaseLogger:
                             # unless the same bucket and org name apply to all InfluxDB instances
                             # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
                             influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
-                            self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
-                            self.enabled_backends.append(influxdb_backend)
+                            if (not only) or (only and influxdb_backend.url == only):
+                                self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                                self.enabled_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
                             self.logger.doErrorLogging(e.message)
         return
