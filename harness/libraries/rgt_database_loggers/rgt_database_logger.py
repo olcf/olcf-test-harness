@@ -285,6 +285,7 @@ class RgtDatabaseLogger:
         -------
             None
         """
+        print(f"Have only={only}")
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
@@ -310,7 +311,10 @@ class RgtDatabaseLogger:
                             # unless the same bucket and org name apply to all InfluxDB instances
                             # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
                             influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
-                            if (not only) or (only and influxdb_backend.url == only):
+                            if not only:
+                                self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                                self.enabled_backends.append(influxdb_backend)
+                            elif influxdb_backend.url == only:
                                 self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                                 self.enabled_backends.append(influxdb_backend)
                         except DatabaseInitError as e:
