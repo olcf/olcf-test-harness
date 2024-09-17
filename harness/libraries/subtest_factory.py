@@ -40,6 +40,7 @@ class SubtestFactory():
                      name_of_subtest=None,
                      local_path_to_tests=None,
                      logger=None,
+                     db_logger=None,
                      tag=None):
         """Returns an instance of a subtest object.
 
@@ -61,6 +62,9 @@ class SubtestFactory():
         logger : A rgt_logger object.
             A logger object
 
+        db_logger : A rgt_database_logger object
+            A database logger object.
+
         tag : str
             A string that serves as unique identifier for a subtest test iteration.
 
@@ -70,6 +74,7 @@ class SubtestFactory():
                             name_of_subtest=name_of_subtest,
                             local_path_to_tests=local_path_to_tests,
                             logger=logger,
+                            db_logger=db_logger,
                             tag=tag)
         return a_subtest
 
