@@ -324,6 +324,7 @@ class RgtDatabaseLogger:
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
+            # Can fail for a number of reasons. Mostly if `requests` module is not installed
             from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
             influxdb_loaded = True
         except ImportError as e:
@@ -352,8 +353,8 @@ class RgtDatabaseLogger:
                             elif influxdb_backend.url == only:
                                 self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                                 self.enabled_backends.append(influxdb_backend)
-                        except DatabaseInitError as e:
-                            self.logger.doErrorLogging(f"Failed to enable the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}: {e}")
+                        except Exception as e:
+                            self.logger.doErrorLogging(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
         return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
