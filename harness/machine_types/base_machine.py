@@ -459,6 +459,10 @@ class BaseMachine(metaclass=ABCMeta):
         # Use Error threshold to show this message all the time
         self.logger.doErrorLogging(f"Path to Build: {path_to_build_directory}")
 
+        path_to_runarchive_directory = self.apptest.get_path_to_runarchive()
+        # Use Error threshold to show this message all the time
+        self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
+
         shutil.copytree(src=path_to_source,
                         dst=path_to_build_directory,
                         symlinks=True)
