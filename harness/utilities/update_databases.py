@@ -40,6 +40,7 @@ parser.add_argument('--test', type=str, action='store', help="Specifies the test
 parser.add_argument('--runtag', type=str, action='store', help="Specifies the runtag to update jobs for.")
 parser.add_argument('--loglevel', default='INFO', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
 parser.add_argument('--dry-run', action='store_true', help="When set, prints messages to send to databases, but does not send them.")
+parser.add_argument('--build-timeout', type=float, default=6.0, action='store', help="Number of hours after a build_start event before logging a failed build_end event.")
 
 # Parse command-line arguments #################################################
 args = parser.parse_args()
@@ -262,8 +263,30 @@ for db in db_logger.enabled_backends:
         if entry['job_id'] == '[NO_VALUE]':
             # Then this test never made it to the scheduler. Ignore it
             logger.doDebugLogging(f"Test {entry['test_id']} has not made it to a scheduler.")
-            skipped += 1
-            continue
+            # if it's a build_start status that is older than args.build_timeout, then log a build_end status
+            if not entry['event_name'] == f"{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][1]}_{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][2]}":
+                skipped += 1
+                continue
+            timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%f")
+            timediff_hours = timediff_dt.total_seconds() / (60.0 * 60.0)
+            if timediff_hours < args.build_timeout:
+                skipped += 1
+                continue
+            # Update fields in entry
+            entry['event_time'] = datetime.now().isoformat()
+            entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][1]
+            entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][2]
+            entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
+            entry['event_filename'] = StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0]
+            entry['event_value'] = state_to_value['timeout']
+            entry['hostname'] = socket.gethostname()
+            entry['user'] = os.environ['USER']
+            sent += 1
+            entry['output_txt'] = f"Build timed out after {timediff_hours:.1f} hours."
+            if args.dry_run:
+                logger.doCriticalLogging(f"DRY-RUN: {','.join([ f'{key}={value}' for key, value in entry.items()])}")
+            else:
+                single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['pending']:
             # Then this job is still running/waiting in queue, we can skip
             logger.doDebugLogging(f"Job {entry['job_id']} is in state {slurm_data[entry['job_id']]['state']}. Skipping.")
