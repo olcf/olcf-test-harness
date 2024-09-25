@@ -380,7 +380,8 @@ class InfluxDBLogger(BaseDBLogger):
         self.__logger.doDebugLogging(f'Sending query: {query} to: {self.url}/api/v2/query')
         r = requests.post(f'{self.url}/api/v2/query?org={self.org}', data=query, headers=headers)
         if int(r.status_code) >= 400:
-            return f"status_code = {r.status_code}, text = {r.text}, reason = {r.reason}"
+            self.__logger.doErrorLogging(f"InfluxDB request failed. status_code = {r.status_code}, text = {r.text}, reason = {r.reason}")
+            return []
         rdc = r.content.decode('utf-8')
         resp = list(csv.reader(rdc.splitlines(), delimiter=','))
         # each entry in series is a record
