@@ -9,7 +9,7 @@ class rgt_config_file:
     # These are the named sections in the config file.
     machine_section    = 'MachineDetails'
     repository_section = 'RepoDetails'
-    influx_section = 'InfluxDefaults'
+    site_section = 'SiteCustom'
     testshot_section   = 'TestshotDefaults'
 
     def __init__(self,
@@ -18,7 +18,7 @@ class rgt_config_file:
 
         self.__machine_vars = {}
         self.__repo_vars = {}
-        self.__influx_vars = {}
+        self.__site_vars = {}
         self.__testshot_vars = {}
 
         if machinename != None:
@@ -55,10 +55,10 @@ class rgt_config_file:
             self.__repo_vars = master_cfg[rgt_config_file.repository_section]
             set_harness_environment(self.__repo_vars)
 
-            # Make Influx section optional, since some users don't use Influx
-            if master_cfg.has_section(rgt_config_file.influx_section):
-                self.__influx_vars = master_cfg[rgt_config_file.influx_section]
-                set_harness_environment(self.__influx_vars)
+            # Site-cutom configuration section is optional
+            if master_cfg.has_section(rgt_config_file.site_section):
+                self.__site_vars = master_cfg[rgt_config_file.site_section]
+                set_harness_environment(self.__site_vars)
 
             self.__testshot_vars = master_cfg[rgt_config_file.testshot_section]
             set_harness_environment(self.__testshot_vars)
@@ -74,8 +74,8 @@ class rgt_config_file:
     def get_repository_config(self):
         return self.__repo_vars
 
-    def get_influx_config(self):
-        return self.__influx_vars
+    def get_site_config(self):
+        return self.__site_vars
 
     def get_testshot_config(self):
         return self.__testshot_vars
