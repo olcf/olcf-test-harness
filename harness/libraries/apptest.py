@@ -15,11 +15,6 @@ import copy
 import re
 from types import *
 
-try:
-    import requests
-except ImportError as e:
-    print("Import Warning: Could not import requests in current Python environment. Influx logging will be disabled.")
-
 # NCCS Test Harness Package Imports
 from libraries.base_apptest import base_apptest
 from libraries.base_apptest import BaseApptestError
@@ -30,6 +25,8 @@ from libraries.status_file import summarize_status_file
 from libraries.status_file import StatusFile
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
 from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
+
+from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 #
 # Inherits "apptest_layout".
@@ -57,7 +54,8 @@ class subtest(base_apptest, apptest_layout):
                  local_path_to_tests=None,
                  number_of_iterations=-1,
                  logger=None,
-                 tag=None):
+                 tag=None,
+                 db_logger=None):
 
         # Ensure that tag is not None.
         if (tag == None):
@@ -85,7 +83,11 @@ class subtest(base_apptest, apptest_layout):
                                              name_of_subtest])
         self.__number_of_iterations = -1
         self.__myLogger = logger
-        self.__loglevel = self.__myLogger.get_ch_threshold_level()
+
+        if db_logger == None:
+            self.__db_logger = create_rgt_db_logger(logger=logger)
+        else:
+            self.__db_logger = db_logger
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -179,9 +181,6 @@ class subtest(base_apptest, apptest_layout):
 
                 elif harness_task == Harness.stoptest:
                     self._stop_test()
-
-                elif harness_task == Harness.influx_log:
-                    self._influx_log_mode()
 
                 elif harness_task == Harness.displaystatus:
                     if test_display_lock:
@@ -434,10 +433,6 @@ class subtest(base_apptest, apptest_layout):
             app_tasks1.append(Harness.summarize_results)
             taskwords1.remove(Harness.summarize_results)
 
-        if (Harness.influx_log in taskwords1):
-            app_tasks1.append(Harness.influx_log)
-            taskwords1.remove(Harness.influx_log)
-
         return app_tasks1
 
     def doInfoLogging(self,message):
@@ -513,6 +508,10 @@ class subtest(base_apptest, apptest_layout):
 
         return ret_val
 
+    def run_db_extensions(self):
+        """ Public method for the _run_db_extensions function """
+        return self._run_db_extensions()
+
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of public methods.                                          @
@@ -536,7 +535,7 @@ class subtest(base_apptest, apptest_layout):
             os.remove(pathtokillfile)
 
         # This will automatically build & submit
-        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.__loglevel}"
+        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.get_ch_threshold_level()}"
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
 
@@ -572,300 +571,83 @@ class subtest(base_apptest, apptest_layout):
         message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
         self.doInfoLogging(message)
 
-    # Used when --mode influx_log is run after a harness run
-    def _influx_log_mode(self):
-        """ Logs available tests to InfluxDB, via --mode influx_log """
+    def _run_db_extensions(self):
+        """
+        Enables the harness database logging extensions for Metrics and Node Health
+        """
         currentdir = os.getcwd()
-        self.logger.doInfoLogging(f"In {self.__name_of_current_function()}, cwd: {currentdir}")
-        testdir = self.get_path_to_test()
-        os.chdir(testdir)
-        # If Run_Archive exists, continue, else terminate because no tests have been run
-        if not os.path.exists(self.test_run_archive_dirname):
-            os.chdir(currentdir)
-            self.logger.doWarningLogging(f"No harness runs found in {testdir}")
-            return
-        os.chdir(self.test_run_archive_dirname)
-
-        # I don't need to worry about extraneous links, like `latest`, because there's no race conditions
-        for test_id in os.listdir('.'):
-            if not os.path.exists(f"./{test_id}/.influx_logged") and \
-                    not os.path.exists(f"./{test_id}/.influx_disabled") and \
-                    not os.path.islink(f"./{test_id}") \
-                    and self._machine_matches(test_id):
-                self.logger.doInfoLogging(f"Attempting to log {test_id}")
-                if self._log_to_influx(test_id, post_run=True):
-                    self.logger.doInfoLogging(f"Successfully logged {test_id}")
-                else:
-                    self.logger.doWarningLogging(f"Unable to log {test_id}")
-                if self._log_events_to_influx_post_run(test_id):
-                    self.logger.doInfoLogging(f"Successfully logged all events found for {test_id}")
-                else:
-                    self.logger.doWarningLogging(f"Unable to log all events for {test_id}")
-            elif os.path.islink(f"./{test_id}"):
-                self.logger.doDebugLogging(f"Ignoring link in influx_log_mode: {test_id}")
-            elif not self._machine_matches(test_id):
-                self.logger.doInfoLogging(f"Skipping test from another machine: {test_id}")
-
-        os.chdir(currentdir)
-
-    def _machine_matches(self, test_id):
-        """ Checks if RGT_MACHINE_NAME is the same as the test machine name """
-        if not 'RGT_MACHINE_NAME' in os.environ:
-            self.logger.doErrorLogging("RGT_MACHINE_NAME not found in environment. Skipping machine name check.")
-            return False
-        log_start_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
-        log_start_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_LOGGING_START][0]}"
-
-        if not os.path.exists(f"{log_start_status_file}"):
-            self.logger.doErrorLogging(f"Couldn't find required file for checking machine name: {log_start_status_file}")
-            return False
-        with open(f"{log_start_status_file}", 'r') as log_fstr:
-            line = next(log_fstr)
-            line_splt = line.split()
-            for i in range(1, len(line_splt)):
-                # range of 1 skips timestamp
-                entry = line_splt[i]
-                if '=' in line:
-                    entry_splt = entry.split('=')
-                    if entry_splt[0] == 'machine' and \
-                            entry_splt[1] == os.environ['RGT_MACHINE_NAME']:
-                        return True
-        return False
-
-    def _log_events_to_influx_post_run(self, test_id):
-        """ Logs events to Influx when running in mode influx_log """
-        from status_file_factory import StatusFileFactory
-
-        # StatusFile object to use to write the logs for each run
-        logging_status_file = StatusFileFactory.create(self.get_path_to_status_file(), self.logger, test_id=test_id)
-
-        currentdir = os.getcwd()
-        self.logger.doInfoLogging(f"Current directory in apptest: {currentdir}")
-        # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
-        scripts_dir = self.get_path_to_scripts()
-        os.chdir(scripts_dir)
-        self.logger.doInfoLogging(f"Starting post-run influxDB event logging in apptest: {os.getcwd()}")
-        files_found = 0
-        files_not_found = 0
-
-        for e in StatusFile.EVENT_LIST:
-            logging_status_file.post_event_to_influx(e)
-
-        os.chdir(currentdir)
-        # if we make it to the end, return True
-        return True
-
-    # Logs a single test ID to InfluxDB (when run AFTER a harness run, this class doesn't hold a single test ID)
-    def _log_to_influx(self, influx_test_id, post_run=False):
-        """ Check if metrics.txt exists, is proper format, and log to influxDB. """
-        currentdir = os.getcwd()
-        self.logger.doInfoLogging(f"current directory in apptest: {currentdir}")
-        # Can't use get_path_to_runarchive here, because the test ID may change without the apptest being reinitialized
-        runarchive_dir = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, f"{influx_test_id}")
+        self.logger.doDebugLogging(f"Current directory in apptest: {currentdir}")
+        runarchive_dir = self.get_path_to_runarchive()
         os.chdir(runarchive_dir)
-        self.logger.doInfoLogging(f"Starting influxDB logging in apptest: {os.getcwd()}")
+        self.logger.doInfoLogging(f"Starting the harness database extensions in apptest: {os.getcwd()}")
 
-        if 'RGT_DISABLE_INFLUX' in os.environ and str(os.environ['RGT_DISABLE_INFLUX']) == '1':
-            self.logger.doWarningLogging("InfluxDB logging is explicitly disabled with RGT_DISABLE_INFLUX=1")
-            self.logger.doInfoLogging("Creating .influx_disabled file in Run_Archive")
-            self.logger.doInfoLogging("If this was not intended, remove the .influx_disabled file and run the harness under mode 'influx_log'")
-            os.mknod('.influx_disabled')
-            os.chdir(currentdir)
-            return False
-        if not 'RGT_INFLUX_URI' in os.environ or not 'RGT_INFLUX_TOKEN' in os.environ:
-            self.logger.doWarningLogging("RGT_INFLUX_URI and RGT_INFLUX_TOKEN required in environment to use InfluxDB")
-            os.chdir(currentdir)
-            return False
-
-        # Check if influx was disabled for this run
-        if os.path.exists('.influx_disabled'):
-            self.logger.doWarningLogging("This harness test explicitly disabled influx logging. If this is by mistake, remove the .influx_disabled file and run again")
-            return False
-        # Check if the .influx_logged file already exists - it shouldn't, but just in case
-        if os.path.exists('.influx_logged'):
-            self.logger.doWarningLogging("The .influx_logged file already exists.")
-            return False
-
-        def local_send_to_influx(influx_url, influx_event_record_string, headers):
-            try:
-                if 'RGT_INFLUX_NO_SEND' in os.environ and os.environ['RGT_INFLUX_NO_SEND'] == '1':
-                    # RGT_INFLUX_NO_SEND explicitly tells the harness to print the Influx Event string, so use print()
-                    print(f"RGT_INFLUX_NO_SEND is set, echoing: {influx_event_record_string}")
-                elif not 'requests' in sys.modules:
-                    self.logger.doWarningLogging(f"InfluxDB is currently disabled. Reason: 'requests' module was unable to load. Skipping InfluxDB message: {influx_event_record_string}. This can be logged after the run using the harness --mode influx_log or by POSTing this message to the InfluxDB server.")
-                    return False
-                else:
-                    r = requests.post(influx_url, data=influx_event_record_string, headers=headers)
-                    if not int(r.status_code) < 400:
-                        self.logger.doWarningLogging(f"Influx returned status code: {r.status_code}")
-                        return False
-                self.logger.doInfoLogging(f"Successfully sent {influx_event_record_string} to {influx_url}")
-            except requests.exceptions.ConnectionError as e:
-                self.logger.doErrorLogging(f"InfluxDB is not reachable. Request not sent: {influx_event_record_string}")
-                return False
-            except Exception as e:
-                # TODO: add more graceful handling of unreachable influx servers
-                self.logger.doErrorLogging(f"Failed to send {influx_event_record_string} to {influx_url}:")
-                self.logger.doErrorLogging(e)
-                return False
-            return True
-
-        influx_url = os.environ['RGT_INFLUX_URI']
-        influx_token = os.environ['RGT_INFLUX_TOKEN']
-
-        headers = {
-            'Authorization': "Token " + influx_token,
-            'Content-Type': "text/plain; charset=utf-8",
-            'Accept': "application/json"
-        }
-
-        # Inherited from environment or 'unknown'
-        # This may be set as `unknown` if run outside of harness job
-        influx_runtag = (
-            os.environ['RGT_SYSTEM_LOG_TAG']
-            if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown')
-        # Fields defined by subtest class
-        influx_app = self.getNameOfApplication()
-        influx_test = self.getNameOfSubtest()
-
-        # Machine name
+        # Find the machine name, or give a best-guess
         if not 'RGT_MACHINE_NAME' in os.environ:
-            influx_machine_name = subprocess.check_output(['hostname', '--long'])
-            self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {influx_machine_name}")
+            machine_name = subprocess.check_output(['hostname', '--long'])
+            self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {machine_name}")
         else:
-            influx_machine_name = os.environ['RGT_MACHINE_NAME']
+            machine_name = os.environ['RGT_MACHINE_NAME']
 
-        # added as dictionary to support using StatusFile.INFLUX_TAGS
-        tag_values = {
-            'app': influx_app,
-            'test': influx_test,
-            'runtag': influx_runtag,
-            'machine': influx_machine_name,
-            'test_id': influx_test_id
+        test_info = {
+            'app': self.getNameOfApplication(),
+            'test': self.getNameOfSubtest(),
+            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
+            'machine': machine_name,
+            'test_id': self.get_harness_id(),
+            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START)
         }
 
-        for tag_name in StatusFile.INFLUX_TAGS:
-            if not tag_name in tag_values:
-                self.logger.doErrorLogging(f"Influx key not found in tag_values: {tag_name}. Aborting metrics and node health logging for {influx_test_id}")
-                os.chdir(currentdir)
-                return False
+        success_log = 0
+        failed_log = 0
 
-        # if mode is post-run harness logging, get Unix timestamp so that the time in InfluxDB is accurate
-        run_timestamp = ''
-        if post_run:
-            run_timestamp = self._get_run_timestamp(influx_test_id)
-            if run_timestamp < 0:
-                self.logger.doErrorLogging(f"Run Timestamp invalid for jobID {influx_test_id}: {run_timestamp}")
-                os.chdir(currentdir)
-                return False
-
-        # This serves as the exit status
-        failed_log_attempts = 0
-        success_log_attempts = 0
-
-        metrics = self._get_metrics(influx_machine_name, influx_app, influx_test)
+        metrics = self._get_metrics()
 
         if len(metrics) == 0:
-            self.logger.doWarningLogging(f"No metrics found to log to influxDB")
+            self.logger.doInfoLogging(f"No metrics found to log to influxDB")
         else:
-            do_log_metric = True
-            metrics[f'{influx_app}-{influx_test}-build_time'] = self._get_build_time(influx_test_id)
-            metrics[f'{influx_app}-{influx_test}-execution_time'] = self._get_execution_time(influx_test_id)
-            if metrics[f'{influx_app}-{influx_test}-build_time'] < 0:
-                self.logger.doWarningLogging(f"Invalid build time for jobID {influx_test_id}.")
+            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = self._get_build_time()
+            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = self._get_execution_time()
+            if metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] < 0:
+                self.logger.doErrorLogging(f"Invalid build time for jobID {test_info['test_id']}.")
                 do_log_metric = False
-            elif metrics[f'{influx_app}-{influx_test}-execution_time'] < 0:
-                self.logger.doWarningLogging(f"Invalid execution time for jobID {influx_test_id}.")
+            elif metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] < 0:
+                self.logger.doErrorLogging(f"Invalid execution time for jobID {test_info['test_id']}.")
                 do_log_metric = False
-    
-            tag_record_string = ','.join([f"{tag_name}={tag_values[tag_name]}" for tag_name in StatusFile.INFLUX_TAGS])
-            field_record_string = ','.join([f"{k}={v}" for k, v in metrics.items()])
-            influx_event_record_string = f'metrics,{tag_record_string} {field_record_string}'
-            # Add timestamp
-            if post_run:
-                influx_event_record_string += f" {run_timestamp}"
-            # If we've made it this far without do_log_metric set to False, then all our checking has completed 
-            if do_log_metric and local_send_to_influx(influx_url, influx_event_record_string, headers):
-                self.logger.doInfoLogging(f"Successfully logged metrics to Influx.")
-                success_log_attempts += 1
-            elif do_log_metric:
-                # Then logging failed
-                self.logger.doWarningLogging(f"Logging metrics to Influx failed.")
-                failed_log_attempts += 1
-    
-        # add node-based checking functionality
-        node_healths = self._get_node_health(influx_machine_name, influx_app, influx_test)
-        self.logger.doInfoLogging(f"Found {len(node_healths)} nodes reported for node health")
-        if len(node_healths) > 0:
-            # find and read node location file -- json file
-            use_node_location_file = False
-            node_locations = {}
-            # By default, we don't want to log node healths without extra node location (like cabinet, chassis, etc)
-            # But by setting RGT_IGNORE_NODE_LOCATION, that will be by-passed
-            if ('RGT_NODE_LOCATION_FILE' in os.environ and os.path.exists(os.environ['RGT_NODE_LOCATION_FILE'])) \
-                    or 'RGT_IGNORE_NODE_LOCATION' in os.environ:
-                # check if it's a file in valid JSON format
-                # each entry is node_name: { 'status': 'FAILED'|'SUCCESS', 'message': '' }
-                json_read_success = True
-                if not 'RGT_IGNORE_NODE_LOCATION' in os.environ:
-                    import json
-                    with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
-                        try:
-                            node_locations = json.loads(f.read())
-                        except json.JSONDecodeError as e:
-                            self.logger.doErrorLogging(f"JSONDecodeError detected: {e}. Skipping node health logging.")
-                            json_read_success = False
-                            pass
-                # if the JSON file fails to parse, we don't want to continue trying to log
-                if json_read_success:
-                    # for each node found in the nodecheck.txt
-                    for node_name in node_healths.keys():
-                        influx_event_record_string = f'node_health,machine={tag_values["machine"]},node={node_name},test={tag_values["test"]}'
-                        # If RGT_IGNORE_NODE_LOCATION is set, then all nodes will be logged with tags machine, node, test only
-                        if node_name in node_locations.keys():
-                            # then it's a node location identifier
-                            for k in node_locations[node_name].keys():
-                                influx_event_record_string += f',{k}={node_locations[node_name][k]}'
-                        influx_event_record_string += f' status="{node_healths[node_name]["status"]}",message="{node_healths[node_name]["message"]}",test_id="{tag_values["test_id"]}"'
-                        if post_run and not str(run_timestamp) == '':
-                            influx_event_record_string += f' {run_timestamp}'
-                        if local_send_to_influx(influx_url, influx_event_record_string, headers):
-                            success_log_attempts += 1
-                            self.logger.doInfoLogging(f"Successfully logged node health for {node_name} to Influx.")
-                        else:
-                            failed_log_attempts += 1
-                            self.logger.doErrorLogging(f"Logging node health to Influx failed.")
-            elif 'RGT_NODE_LOCATION_FILE' in os.environ:
-                message = f"Node location file path does not exist: {os.environ['RGT_NODE_LOCATION_FILE']}."
-                message += f"\nSkipping node health logging. To re-log, remove the .influx_logged file in Run_Archive and run in mode influx_log."
-                self.logger.doErrorLogging(message)
+            elif self.__db_logger.log_metrics(test_info, metrics):
+                success_log += 1
+                self.logger.doDebugLogging(f"Successfully logged {len(metrics)} metrics to all databases.")
             else:
-                self.logger.doErrorLogging(f"RGT_NODE_LOCATION_FILE not in os.environ, skipping node health logging.")
-
-
-        # We're in Run_Archive. The Influx POST request has succeeded, as far as we know,
-        # so let's create a .influx_logged file
-        if failed_log_attempts == 0 and success_log_attempts > 0:
-            os.mknod('.influx_logged')
+                failed_log += 1
+                self.logger.doWarningLogging(f"Logging metrics failed to log to at least one database.")
+    
+        # add node-based health checking
+        node_healths = self._get_node_health()
+        self.logger.doDebugLogging(f"Found {len(node_healths)} nodes reported for node health")
+        if len(node_healths) > 0:
+            if not self.__db_logger.log_node_health(test_info, node_healths):
+                failed_log += 1
+                self.logger.doWarningLogging(f"Logging node_health failed to log to at least one database.")
+            else:
+                success_log += 1
+                self.logger.doDebugLogging(f"Successfully logged {len(node_healths)} node health results to all databases.")
 
         os.chdir(currentdir)
-        # If >0 records have been sent, and no failed attempts, return True
-        return (failed_log_attempts == 0 and success_log_attempts > 0)
+        return failed_log == 0
 
-    def _get_build_time(self, test_id):
+    def _get_build_time(self):
         """ Parses the build time from the status file """
         return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][0], \
-                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0], test_id)
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_END][0])
 
-    def _get_execution_time(self, test_id):
+    def _get_execution_time(self):
         """ Parses the binary execution time from the status file """
         return self._get_time_diff_of_status_files(StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_START][0], \
-                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0], test_id)
+                                                    StatusFile.EVENT_DICT[StatusFile.EVENT_BINARY_EXECUTE_END][0])
 
-    def _get_run_timestamp(self, test_id):
+    def _get_run_timestamp(self, event=StatusFile.EVENT_CHECK_END):
         # Check for start event file and end event file
-        check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}/"
-        check_status_file += f"{StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]}"
+        check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
+        check_status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
         if not os.path.exists(f"{check_status_file}"):
             self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
@@ -880,9 +662,22 @@ class subtest(base_apptest, apptest_layout):
             ns_utc = int(datetime.timestamp(dt_utc)) * 1000 * 1000 * 1000
         return ns_utc
 
-    def _get_time_diff_of_status_files(self, start_event_file, end_event_file, test_id):
+    def _get_event_time(self, event=StatusFile.EVENT_CHECK_END):
         # Check for start event file and end event file
-        status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{test_id}"
+        status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
+        status_file += f"{StatusFile.EVENT_DICT[event][0]}"
+
+        if not os.path.exists(f"{status_file}"):
+            self.logger.doWarningLogging(f"Couldn't find required file event time fetching: {status_file}")
+            return -1
+        with open(f"{status_file}", 'r') as fstr:
+            line = next(fstr)
+            event_time = line.split()[0]
+        return event_time
+
+    def _get_time_diff_of_status_files(self, start_event_file, end_event_file):
+        # Check for start event file and end event file
+        status_dir = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}"
 
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:
@@ -907,7 +702,7 @@ class subtest(base_apptest, apptest_layout):
         diff = end_ts_dt - start_ts_dt
         return diff.total_seconds()   # diff in seconds
 
-    def _get_metrics(self, machine_name, app_name, test_name):
+    def _get_metrics(self):
         """ Parse the metrics.txt file for InfluxDB reporting """
         def is_numeric(s):
             """ Checks if an entry (RHS) is numeric """
@@ -922,6 +717,8 @@ class subtest(base_apptest, apptest_layout):
                 return False
 
         metrics = {}
+        app_name = self.getNameOfApplication()
+        test_name = self.getNameOfSubtest()
         if not os.path.isfile('metrics.txt'):
             self.logger.doWarningLogging(f"File metrics.txt not found")
             return metrics
@@ -955,14 +752,17 @@ class subtest(base_apptest, apptest_layout):
                         self.logger.doErrorLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
 
-    def _get_node_health(self, machine_name, app_name, test_name):
+    def _get_node_health(self):
         """ Parse the nodecheck.txt file for InfluxDB reporting """
         node_healths = {}
-        return_empty = False
+        node_name_list = []
+        app_name = self.getNameOfApplication()
+        test_name = self.getNameOfSubtest()
+
         if not os.path.isfile('nodecheck.txt'):
             self.logger.doInfoLogging(f"File nodecheck.txt not found.")
             return node_healths
-        self.logger.doInfoLogging("Processing file nodecheck.txt.")
+        self.logger.doDebugLogging("Processing file nodecheck.txt.")
         # Add additional desired statuses here and in the below for-loop
         status_decoder = {
             'FAILED': ['FAILED', 'FAIL', 'BAD'],
@@ -971,16 +771,19 @@ class subtest(base_apptest, apptest_layout):
             'PERF-FAIL': ['PERF', 'PERF-FAIL']
         }
         with open('nodecheck.txt', 'r') as nodes_f:
-            # Each line is in format crusher012 FAILED <msg>
-            # All whitespace in metric name will be replaced with underscores
+            # Each line is in format <nodename> <state> <msg>
             for line in nodes_f:
                 # Allows comment lines
                 if not line[0] == '#':
                     line_splt = line.strip().split()
                     if not len(line_splt) >= 2:
-                        self.logger.doWarningLogging(f"Invalid line in nodecheck.txt: {line}")
+                        self.logger.doErrorLogging(f"Invalid line in nodecheck.txt: {line}. Skipping.")
                         continue
                     node_name = line_splt[0]
+                    if node_name in node_name_list:
+                        self.logger.doErrorLogging(f"Found node name already present in the node_health results: {node_name}. Overwriting.")
+                    else:
+                        node_name_list.append(node_name)
                     node_healths[node_name] = {}
                     # Add additional statuses here
                     for status_string in status_decoder.keys():
@@ -988,15 +791,11 @@ class subtest(base_apptest, apptest_layout):
                             node_healths[node_name]['status'] = status_string
                             break
                     if not 'status' in node_healths[node_name]:
-                        self.logger.doErrorLogging(f"Could not find the status group for the status string {line_splt[1]}. Skipping node health logging.")
-                        return_empty = True
+                        self.logger.doErrorLogging(f"Could not identify the status given the status string {line_splt[1]}. Skipping {node_name}.")
+                        node_healths.pop(node_name)
                     node_healths[node_name]['message'] = ''
                     if len(line_splt) >= 3:
                         node_healths[node_name]['message'] = ' '.join(line_splt[2:])
-        # If there were errors parsing the node health file, we don't want to try to log anything
-        if return_empty:
-            self.logger.doErrorLogging(f"There were errors parsing nodecheck.txt. Not logging node healths.")
-            return {}
         return node_healths
 
     def __name_of_current_function(self):
