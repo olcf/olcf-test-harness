@@ -1,0 +1,408 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Environment Variables &mdash; NCCS_Test_Harness 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/js/custom.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding a New Test" href="adding_new_test.html" />
+    <link rel="prev" title="Quick-Start Guide" href="launching.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #efefef" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/olcf_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#execution-overview">Execution Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="launching.html">Quick-Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#launching-the-oth">Launching the OTH</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#command-line-options">Command-line Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#run-time-environment-parameters">Run-time environment parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="launching.html#finding-test-output">Finding Test Output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#build-submit-and-check-output">Build, Submit, and Check Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#application-output">Application Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="launching.html#harness-maintained-log-files">Harness-maintained Log Files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Environment Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-time-variables">Run-Time Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extension-specific-variables">Extension-specific Variables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-url">Repository URL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-structure">Repository structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#example-repository-structure">Example Repository Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-test-input">Application Test Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#required-application-test-scripts">Required Application Test Scripts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#build-script">Build Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#job-script-template">Job Script Template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-script">Check Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#report-script">Report Script</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#define-replacement-variables-instead-of-just-envvars">Define replacement variables instead of just EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_machine.html#create-a-basic-machine-configuration">Create a Basic Machine Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#influxdb-event-logging">InfluxDB Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#requesting-new-features">Requesting New Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#contributing-source-code">Contributing Source Code</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NCCS_Test_Harness</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content style-external-links">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Environment Variables</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/user_guide/envvars.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="environment-variables">
+<h1>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>The OLCF Test Harness (OTH) is extremely flexible and can be configured in a number of ways.
+There are a few command-line options, but many more environment variables.
+In addition to the environment variables used to configure the OTH behavior, the OTH sets several useful environment variables during a test.
+These environment variables are detailed below.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.ini</span></code> file can contain user-defined environment variables (such as <code class="docutils literal notranslate"><span class="pre">mpi_version</span></code>, which sets <code class="docutils literal notranslate"><span class="pre">RGT_MPI_VERSION</span></code> in the environment).
+The only variables covered in this section are those ingested by the core harness code.</p>
+</div>
+<div class="section" id="configuration-variables">
+<span id="env-vars-config"></span><h2>Configuration Variables<a class="headerlink" href="#configuration-variables" title="Permalink to this heading">¶</a></h2>
+<p>There are many variables required to parameterize the OTH behavior.
+All but ONE of these can have default values provided through the <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;ini</span></code> file,
+which can be overridden by setting the environment variable prior to launching the harness.
+These variables are all available for use in the build, run, and check stages of an OTH job.
+These variables canl also be used as a replacement in the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file by setting the variable name to <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>.
+For example, <code class="docutils literal notranslate"><span class="pre">machine_name</span> <span class="pre">=</span> <span class="pre">&lt;obtain_from_environment&gt;</span></code> will fetch the value from <code class="docutils literal notranslate"><span class="pre">RGT_MACHINE_NAME</span></code> and use it while evaluating replacements.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you re-run a test’s job script outside of the harness, these variables will not all be set.
+Consider using replacements with <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code> in your test’s ini file to capture the value of a variable,
+then explicitly set it using a replacement variable in the job script.</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>OLCF_HARNESS_MACHINE            Name of the system, used to find the machine ini file (default: &#39;master&#39;)
+                                    This is the ONLY variable that CANNOT be set in ``&lt;machine&gt;.ini``,
+                                    since it is needed to locate that file.
+RGT_MACHINE_NAME                Name of the system (can be different than OLCF_HARNESS_MACHINE).
+                                    Used for status file and database logging.
+RGT_MACHINE_TYPE                System architecture: &#39;linux_x86_64&#39; or &#39;ibm_power9&#39;.
+RGT_SCHEDULER_TYPE              Name of the scheduler: &#39;slurm&#39; or &#39;pbs&#39; or &#39;lsf&#39; or &#39;none&#39;.
+RGT_JOBLAUNCHER_TYPE            Name of the job launcher: &#39;srun&#39; or &#39;jsrun&#39; or &#39;mpirun&#39;.
+RGT_CPUS_PER_NODE               Number of CPUs per node.
+RGT_GPUS_PER_NODE               Number of GPUs per node.
+RGT_BATCH_QUEUE                 Which scheduler queue/partition to submit to.
+                                NOTE: is overridden by `batch_queue` in a test&#39;s ini file.
+                                To override a test&#39;s ini file, use `RGT_SUBMIT_QUEUE`
+                                    For Slurm, this is enforced with `-p $RGT_BATCH_QUEUE`
+                                    For LSF, this is enforced with `-q $RGT_BATCH_QUEUE`
+                                    For PBS, this is enforced with `-q $RGT_BATCH_QUEUE`
+RGT_PROJECT_ID                  Which project ID to use when submitting to the scheduler.
+                                NOTE: is overridden by `proj_id` in a test&#39;s ini file.
+                                    For Slurm and PBS, this is enforced with `-A $RGT_PROJECT_ID`
+                                    For LSF, this is enforced with `-P $RGT_PROJECT_ID`
+RGT_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
+RGT_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
+RGT_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
+RGT_NCCS_TEST_HARNESS_MODULE    Name of the OLCF Harness module
+
+RGT_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be &#39;git&#39; currently.
+RGT_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.
+RGT_GIT_DATA_TRANSFER_PROTOCOL  Protocol to use when communicating with Git. &#39;https&#39; or &#39;ssh&#39;.
+RGT_GIT_MACHINE_NAME            Name of machine to use for navigating the Git repo.
+                                    ie, a test system may use the same test as the corresponding production machine.
+RGT_GIT_SERVER_APPLICATION_PARENT_DIR
+                                Path from the root of the parent repo to find the machine name collections.
+RGT_GIT_SSH_SERVER_URL          URL for the SSH Git client
+RGT_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
+
+RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work &amp; build spaces).
+RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file &amp; database logging.
+</pre></div>
+</div>
+</div>
+<div class="section" id="run-time-variables">
+<span id="env-vars-run"></span><h2>Run-Time Variables<a class="headerlink" href="#run-time-variables" title="Permalink to this heading">¶</a></h2>
+<p>The OLCF Test Harness also SETS many variables while inside of a test.
+These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>.
+These variables are detailed below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PATH_TO_RGT_PACKAGE</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">OLCF</span> <span class="n">Test</span> <span class="n">Harness</span> <span class="n">code</span><span class="o">.</span>
+<span class="n">RGT_APP_SOURCE_DIR</span>          <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="s1">&#39;Source&#39;</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">current</span> <span class="n">application</span><span class="o">.</span>
+<span class="n">RGT_TEST_BUILD_DIR</span>          <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">build</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
+<span class="n">RGT_TEST_RUNARCHIVE_DIR</span>     <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">run</span> <span class="n">archive</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
+<span class="n">RGT_TEST_SCRIPTS_DIR</span>        <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">scripts</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
+<span class="n">RGT_TEST_STATUS_DIR</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">status</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
+<span class="n">RGT_TEST_WORK_DIR</span>           <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">work</span> <span class="p">(</span><span class="n">scratch</span><span class="p">)</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="extension-specific-variables">
+<span id="env-vars-ext"></span><h2>Extension-specific Variables<a class="headerlink" href="#extension-specific-variables" title="Permalink to this heading">¶</a></h2>
+<p>With the addition of several extensions to the OTH, there are a few more environment variables that configure extension behavior.
+These are grouped below by extension. The general naming convention is <code class="docutils literal notranslate"><span class="pre">RGT_&lt;extension&gt;_&lt;option&gt;</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>RGT_INFLUXDB_DISABLE        When set to &#39;1&#39;, explicitly disables InfluxDB logging for the run tests.
+                                Creates a `.disable_influxdb` dot-file in the Run_Archive/&lt;test_id&gt; directory
+                                to prevent any future logging for this test ID.
+RGT_INFLUXDB_URI            URL&#39;s to one or more InfluxDB server, separated by semi-colons. This may either be of format:
+                                https://my.influxdb.server:&lt;port&gt;/api/v2/write?org=myorg&amp;bucket=mybucket
+                                OR
+                                https://my.influxdb.server:&lt;port&gt;
+                                If the latter, you must provide RGT_INFLUXDB_BUCKET and RGT_INFLUXDB_ORG.
+                                Otherwise, the OTH can automatically detect your settings.
+                                Only org, bucket, and precision are supported.
+RGT_INFLUXDB_TOKEN          Authentication tokens for each provided InfluxDB server. Separate by semi-colons if &gt;1.
+RGT_INFLUXDB_BUCKET         The data bucket to log to in InfluxDB.
+                                If &gt;1 InfluxDB instance, use URL encoding to specify the bucket if not the same.
+RGT_INFLUXDB_ORG            The organization to log as in InfluxDB.
+                                If &gt;1 InfluxDB instance, use URL encoding to specify the org if not the same.
+RGT_INFLUXDB_PRECISION      The precision to log with in InfluxDB. Only `ms` (milliseconds) or `ns` (nanoseconds) are supported.
+                                Default: &#39;ns&#39;
+                                If &gt;1 InfluxDB instance, use URL encoding to specify the precision if not the same.
+RGT_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it to the database.
+
+RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
+                            database logging extension. Set to &quot;none&quot; (not case-sensitive) to disable.
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="adding_new_test.html" class="btn btn-neutral float-right" title="Adding a New Test" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="launching.html" class="btn btn-neutral float-left" title="Quick-Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

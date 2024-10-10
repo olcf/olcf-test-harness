@@ -15,7 +15,7 @@ The top-level group in a GitLab group (or GitHub repo) contains a sub-group for 
 Repository URL
 ^^^^^^^^^^^^^^
 
-Each application that can be tested on a given machine has a repository within the machine's group.
+Each application that can be run on a given machine should have a repository (or directory) within that machine's group.
 
 .. _repository-structure:
 
@@ -39,11 +39,11 @@ The application repository must be structured as shown below:
 
 First, each application test must have its own subdirectory.
 The test directory has a mandatory *Scripts* subdirectory,
-which should contain the test input file (see :ref:`application-test-input` below)
+which should contain the test configuration file (see :ref:`application-test-input` below)
 and other required scripts (see :ref:`required-application-test-scripts` below).
-This directory contains templates and input files for the test -- a test must not modify this directory, but it may use files stored in this directory.
+This directory contains templates and input files for the test -- a test must not modify files in this directory.
 
-Second, the application's source code and required build script must reside within the *Source* directory of the repository.
+Second, the application's source code and required build script should reside within the *Source* directory of the repository.
 
 Example Repository Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,10 +65,14 @@ Note that the test names are not required to follow any specific naming conventi
 Application Test Input
 ----------------------
 
-Each test scripts directory should contain a test input file named *rgt_test_input.ini*.
+Each test's *Scripts* directory should contain a test input file named *rgt_test_input.ini*.
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
+The test input file follows the Python3 `configparser <https://docs.python.org/3/library/configparser.html>`_ file format.
+The fields in the ``[DEFAULT]`` section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
 All the fields in the ``[Replacements]`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
+Variables in ``[Replacements]`` cannot be referenced from ``[EnvVars]``.
 The fields in the ``[EnvVars]`` section allow you to set environment variables that all stages of your test will be able to use.
+See :ref:`best-practices` section for recommendations on when to use EnvVars vs Replacements.
 
 .. note::
 
@@ -78,26 +82,30 @@ The following is a sample input for the single node test of the *hello_mpi* appl
 
 .. code-block:: bash
 
+    [DEFAULT]
+    # This is a comment
+    # The DEFAULT section defines variables that can be re-used in Replacements or EnvVars
+    my_custom_variable = abc
+
     [Replacements]
-    #-- This is a comment
-    #-- The following variables are required
+    # The following variables are required
     job_name = hello_mpi_c
     walltime = 10
-    #-- %(<variablename>)s is the notation to use the value of a previously-defined variable
+    # %(<variablename>)s is the notation to use the value of a previously-defined variable
     batch_filename = run_%(job_name)s.sh
     build_cmd = ./build_hello_mpi_c.sh
     check_cmd = ./check_hello_mpi_c.sh 
     report_cmd = ./report_hello_mpi_c.sh
-    #-- The following variables are optional
+    # The following variables are optional
     executable_path = hello
     resubmit = 0
-    #-- Use in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
-    #-- Set to 0 for indefinite resubmissions
+    # Optional: used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
+    # Set to 0 (or don't define) for indefinite resubmissions
     max_submissions = 3 
 
     
-    #-- The following are user-defined and used for Key-Value replacements 
-    #-- ie, nodes replaces __nodes__ in the job script template
+    # The following are user-defined and used for Key-Value replacements 
+    # ie, nodes replaces __nodes__ in the job script template
     nodes = 1
     total_processes = 16
     processes_per_node = 16
@@ -108,16 +116,19 @@ The following is a sample input for the single node test of the *hello_mpi* appl
 .. note::
 
     Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
-    For example, if you set ``nodes = <obtain_from_environemnt>`` and set *RGT_NODES=4* in your environment, then *__nodes__* will be replaced with 4.
+    For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment, then *__nodes__* will be replaced with 4.
 
 .. _required-application-test-scripts:
 
 Required Application Test Scripts
 ---------------------------------
 
-The OTH requires each application test to provide a build script, a job script template, a check script, and a reporting script.
+The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script, and (4) a reporting script.
 These scripts should be placed in the locations described in :ref:`repository-structure`.
-If the OTH cannot find the scripts specified in the test input, it will fail to launch.
+The build, check, and reporting scripts may also be set to Linux commands such as ``/usr/bin/echo``.
+This is useful in cases where a script is not needed.
+For example, a test that relies on standard system-provided tools can set the build script to ``/usr/bin/echo`` to remove the need to have an empty build script.
+If the OTH cannot find the scripts specified by the test input file (*rgt_test_input.ini*), it will fail to launch.
 
 Build Script
 ^^^^^^^^^^^^
@@ -201,9 +212,9 @@ An example SLURM template script for the *hello_mpi* application follows:
     # Run the executable.
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
     
-    CMD="srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE"
-    echo "$CMD"
-    $CMD
+    set -x
+    srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE
+    set +x
     
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
     
@@ -251,6 +262,7 @@ Check Script
 ^^^^^^^^^^^^
 
 The check script can be a shell script, Python script, or other executable command.
+This must be an absolute path to a command (ie, ``/usr/bin/echo`` instead of ``echo``).
 
 Check scripts are used to verify that application tests ran as expected, and thus use standardized return codes to inform the OTH on the test result.
 Checking performance is optional but recommended for most tests.
@@ -293,6 +305,7 @@ The report script is launched from **$RESULTS_DIR** and stdout/stderr is capture
 
     In many cases, the check script serves the function of both the check and report script.
     In that event, report scripts often just ``exit 0``.
+    An alternative to a no-op bash script, you may use ``/usr/bin/echo`` on most Linux systems.
 
 
 Example Test from the Ground Up
@@ -534,4 +547,77 @@ The Slurm template and check and report scripts are required in the *Scripts* di
 
 To expand to a 2-node *Hello, World!* test, we can just copy the *Scripts* directory from the single-node test, then modify the *rgt_test_input.ini* to specify 2 nodes instead of 1.
 Everything else is generalized, so no modification is needed.
+
+
+.. _best-practices:
+
+Best Practices
+--------------
+
+The OTH is very flexible and gives the user a lot of power.
+That power can be diminished by poor test design.
+
+With that in mind, this section presents some of the best practices in test design.
+
+Use a centralized script to set up the environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During a test run, the environment is independently set up during the build and run stages.
+If the build script and job script each contain several ``module load`` statements, there is a chance that those can diverge.
+To centralize where the environment is set to a single file, place a script containing the ``module`` commands and environment modifications in the build directory,
+and ``source`` that script from the build and job scripts.
+For the build script, this can be accomplished as simply ``source env.sh``, if the script is in the top level of the Source directory.
+For the job script, this can be accomplished by ``source $BUILD_DIR/env.sh``, if the **$BUILD_DIR** environment variable is defined as in the :ref:`job-script-template` section above.
+
+Define replacement variables instead of just EnvVars
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In **rgt_test_input.ini**, it is recommended that if you define an environment variable in the ``[EnvVars]`` section,
+that you also define a replacement variable in ``[Replacements]`` that is used in the job script to re-define that environment variable.
+This helps to create a re-usable job script.
+If the harness is responsible for defining environment variables that are required for the job to run,
+it can be very difficult to understand the resulting job script and to re-run the job script outside of the test harness if needed.
+The following is recommended within the test input file:
+
+.. code-block:: bash
+
+    [DEFAULT]
+    my_custom_var_default = abc
+
+    [Replacements]
+    ...
+    my_custom_variable = %(my_custom_var_default)s
+    ...
+    
+    [EnvVars]
+    MY_ENV_VAR = %(my_custom_var_default)s
+
+Then, within the job script template:
+
+.. code-block:: bash
+
+    export MY_ENV_VAR="__my_custom_variable__"
+
+If the job script template requires an environment variable that is set by the harness (ie, **RGT_MACHINE_NAME**, **RGT_CPUS_PER_NODE**),
+it may be best to define a replacement in the test input file that inherits the value of the environment variable using ``<obtain_from_environment>`` like so:
+
+.. code-block:: bash
+
+    # Internal name modification translates `machine_name` to `RGT_MACHINE_NAME`
+    machine_name = <obtain_from_environment>
+
+Then, in the job script, re-define the environment variable:
+
+.. code-block:: bash
+
+    export RGT_MACHINE_NAME="__machine_name__"
+
+The same feature cannot be used in the build script, which leads to the next best practice, checking for expected environment variables.
+
+Check for expected environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Following on the last best practice, if the harness or environment script define any environment variables required in the build and job scripts,
+the scripts should check that those are set and return an error if they are not.
+This increases the reusability of the scripts outside of the test harness and aids debugging.
 

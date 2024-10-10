@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -95,7 +97,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
@@ -127,6 +129,12 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="envvars.html">Environment Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#run-time-variables">Run-Time Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#extension-specific-variables">Extension-specific Variables</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_test.html">Adding a New Test</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#repository-url">Repository URL</a></li>
@@ -143,6 +151,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#define-replacement-variables-instead-of-just-envvars">Define replacement variables instead of just EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
@@ -230,11 +244,11 @@
            <div itemprop="articleBody">
             
   <div class="section" id="contributing">
-<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
+<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading">¶</a></h1>
 <p>Collaboration for the improvement of the OLCF Test Harness is greatly appreciated and highly encouraged.
 Contributions in the form of bug reports, feature requests, and source-code contributions are all efficient methods of contributing.</p>
 <div class="section" id="reporting-bugs">
-<h2>Reporting Bugs<a class="headerlink" href="#reporting-bugs" title="Permalink to this headline">¶</a></h2>
+<h2>Reporting Bugs<a class="headerlink" href="#reporting-bugs" title="Permalink to this heading">¶</a></h2>
 <p>Please report bugs to the <a class="reference external" href="https://github.com/olcf/olcf-test-harness">OTH GitHub Repository</a> Issues page.
 Include the following information in your Issue:</p>
 <ul class="simple">
@@ -248,7 +262,7 @@ Include the following information in your Issue:</p>
 </ul>
 </div>
 <div class="section" id="requesting-new-features">
-<h2>Requesting New Features<a class="headerlink" href="#requesting-new-features" title="Permalink to this headline">¶</a></h2>
+<h2>Requesting New Features<a class="headerlink" href="#requesting-new-features" title="Permalink to this heading">¶</a></h2>
 <p>To request a new feature (ie, new command-line flag, support for a new scheduler), please submit an Issue to the <a class="reference external" href="https://github.com/olcf/olcf-test-harness">OTH GitHub Repository</a> Issues page.
 Please add <strong>Feature Request:</strong> to the beginning of your issue title to help the development team quickly identify the request.
 Include the following information in your request:</p>
@@ -259,7 +273,7 @@ Include the following information in your request:</p>
 </ul>
 </div>
 <div class="section" id="contributing-source-code">
-<h2>Contributing Source Code<a class="headerlink" href="#contributing-source-code" title="Permalink to this headline">¶</a></h2>
+<h2>Contributing Source Code<a class="headerlink" href="#contributing-source-code" title="Permalink to this heading">¶</a></h2>
 <p>Source-code contribution is welcomed through GitHub Pull Requests to the <a class="reference external" href="https://github.com/olcf/olcf-test-harness">OTH GitHub Repository</a> Pull Requests page.
 For PRs that fix bugs or implement a new feature, please cite the specific Issue in the body of the PR.
 To create a PR, please follow the following steps:</p>

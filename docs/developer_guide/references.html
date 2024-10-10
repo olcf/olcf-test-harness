@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -94,7 +96,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/overview.html#purpose">Purpose</a><ul class="simple">
@@ -126,6 +128,12 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/envvars.html">Environment Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/envvars.html#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/envvars.html#run-time-variables">Run-Time Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/envvars.html#extension-specific-variables">Extension-specific Variables</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/adding_new_test.html">Adding a New Test</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#repository-url">Repository URL</a></li>
@@ -142,6 +150,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/adding_new_test.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#define-replacement-variables-instead-of-just-envvars">Define replacement variables instead of just EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/adding_new_test.html#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/adding_new_machine.html">Adding a New Machine</a><ul>
@@ -229,7 +243,7 @@
            <div itemprop="articleBody">
             
   <div class="section" id="references">
-<h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<h1>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h1>
 <dl class="citation">
 <dt class="label" id="nr1998"><span class="brackets">NR1998</span></dt>
 <dd><p>Newham, C., &amp; Rosenblatt, B. (1998). Learning the bash Shell, 3rd edition. Sesbastopol, USA: O’Reilly</p>

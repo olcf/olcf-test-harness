@@ -69,7 +69,7 @@ Launching the OTH
 Basic Usage
 ^^^^^^^^^^^
 
-Create a directory for your run - this is where you will place input files and retrieve a copy of OTH log files. No computation will be done here:
+Create a directory where you will place input files. No computation will be done here:
 
 .. code-block:: bash
 
@@ -86,7 +86,7 @@ In this example for Summit, the application **hello_mpi** is used and we specify
 
     Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``.
     The OTH can automatically clone Git repositories from remote servers.
-    Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine`).
+    Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine` or :ref:`env_vars_config`).
     Applications not hosted in GitHub/GitLab must be manually placed in ``Path_to_tests``.
 
 .. code-block:: bash
@@ -161,12 +161,11 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
                             'screen'  - print messages to console (default)
                             'logfile' - print messages to log file
     -m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: 'use_harness_tasks_in_rgt_input_file')
-                    Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status,influx_log]
+                    Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status]
                             'checkout'   - checkout application tests listed in input file
                             'start'      - start application tests listed in input file
                             'stop'       - stop application tests listed in input file
                             'status'     - check status of application tests listed in input file
-                            'influx_log' - log all runs for application tests listed in input file to InfluxDB
 
     --fireworks                         Use FireWorks to run harness tasks (beta)
     -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
@@ -185,18 +184,18 @@ The OTH is designed to automatically ingest some parameters from user-set enviro
 Nearly all parameters in the *$OLCF_HARNESS_MACHINE.ini* file can be directly overridden by a corresponding environment variable.
 For example, *git_reps_branch* is a parameter in *$OLCF_HARNESS_MACHINE.ini* that specifies the branch of the remote repository to clone.
 The *RGT_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
-The precedence of configuration options from lowest to highest is:
+The general precedence of configuration options from lowest to highest is:
 
 1. *$OLCF_HARNESS_MACHINE.ini*
-2. User-set environment variables (ie, *RGT_GIT_REPS_BRANCH*, *RGT_PROJ_ID*)
-3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.[ini,txt]*
+2. User-set environment variables (ie, *RGT_GIT_REPS_BRANCH*, *RGT_PROJECT_ID*)
+3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
 
 The specific parameters are defined in :ref:`section_new_test` and :ref:`section_new_machine`.
 
 The exception to this is setting the batch queue and project ID used for submission.
 The precedence of configuration options for the batch queue and project ID from lowest to highest is:
 
-1. **batch_queue** and **project_id** from *$OLCF_HARNESS_MACHINE.ini* (**RGT_BATCH_QUEUE** and **RGT_PROJECT_ID**)
+1. **batch_queue** and **project_id** from *$OLCF_HARNESS_MACHINE.ini* (overridden by setting **RGT_BATCH_QUEUE** and **RGT_PROJECT_ID** at launch)
 2. **batch_queue** and **project_id** from *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
 3. User-set environment variables: **RGT_SUBMIT_QUEUE** and **RGT_SUBMIT_ACCT**
 
@@ -233,12 +232,12 @@ Application Output
 
 Output from the executable run can be found in one of two places.
 
-- Uncaptured output to stdout/stderr: **${RESULTS_DIR}/<job_stdout/stderr_file>**
+- Uncaptured output will go to the scheduler's stdout/stderr mechanism, and will commonly be found in **${RESULTS_DIR}**
 - Any output files created by the application should be in **${WORK_DIR}**
 
 Harness-maintained Log Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
-These log files can be used to check internal error messages reported by extensions of the OTH such as InfluxDB event and metric logging.
+These log files can be used to check internal error messages reported by extensions of the OTH such as database event and metric logging.
 These log files are found in **${RESULTS_DIR}/LogFiles**.

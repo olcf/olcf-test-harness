@@ -35,7 +35,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -44,7 +46,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Adding a New Machine" href="adding_new_machine.html" />
-    <link rel="prev" title="Quick-Start Guide" href="launching.html" /> 
+    <link rel="prev" title="Environment Variables" href="envvars.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -96,7 +98,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of the Test Harness</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#purpose">Purpose</a><ul class="simple">
@@ -128,6 +130,12 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="envvars.html">Environment Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#configuration-variables">Configuration Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#run-time-variables">Run-Time Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envvars.html#extension-specific-variables">Extension-specific Variables</a></li>
+</ul>
+</li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Test</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#application-source-code-repository-structure">Application Source Code Repository Structure</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#repository-url">Repository URL</a></li>
@@ -144,6 +152,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#example-test-from-the-ground-up">Example Test from the Ground Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#use-a-centralized-script-to-set-up-the-environment">Use a centralized script to set up the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#define-replacement-variables-instead-of-just-envvars">Define replacement variables instead of just EnvVars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-for-expected-environment-variables">Check for expected environment variables</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine</a><ul>
@@ -231,18 +245,18 @@
            <div itemprop="articleBody">
             
   <div class="section" id="adding-a-new-test">
-<span id="section-new-test"></span><h1>Adding a New Test<a class="headerlink" href="#adding-a-new-test" title="Permalink to this headline">¶</a></h1>
+<span id="section-new-test"></span><h1>Adding a New Test<a class="headerlink" href="#adding-a-new-test" title="Permalink to this heading">¶</a></h1>
 <p>The OLCF Test Harness (OTH) requires a specific source code repository structure for application tests.
 This document describes how to add an application and associated tests for a specific system to the harness.</p>
 <div class="section" id="application-source-code-repository-structure">
-<h2>Application Source Code Repository Structure<a class="headerlink" href="#application-source-code-repository-structure" title="Permalink to this headline">¶</a></h2>
+<h2>Application Source Code Repository Structure<a class="headerlink" href="#application-source-code-repository-structure" title="Permalink to this heading">¶</a></h2>
 <p>The top-level group in a GitLab group (or GitHub repo) contains a sub-group for each target machine.</p>
 <div class="section" id="repository-url">
-<h3>Repository URL<a class="headerlink" href="#repository-url" title="Permalink to this headline">¶</a></h3>
-<p>Each application that can be tested on a given machine has a repository within the machine’s group.</p>
+<h3>Repository URL<a class="headerlink" href="#repository-url" title="Permalink to this heading">¶</a></h3>
+<p>Each application that can be run on a given machine should have a repository (or directory) within that machine’s group.</p>
 </div>
 <div class="section" id="repository-structure">
-<span id="id1"></span><h3>Repository structure<a class="headerlink" href="#repository-structure" title="Permalink to this headline">¶</a></h3>
+<span id="id1"></span><h3>Repository structure<a class="headerlink" href="#repository-structure" title="Permalink to this heading">¶</a></h3>
 <p>The application repository must be structured as shown below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">application</span> <span class="n">name</span><span class="o">&gt;/&lt;</span><span class="n">test</span> <span class="n">name</span><span class="o">&gt;/</span><span class="n">Scripts</span><span class="o">/</span>
                                       <span class="o">/</span><span class="n">rgt_test_input</span><span class="o">.</span><span class="n">ini</span>
@@ -257,75 +271,86 @@ This document describes how to add an application and associated tests for a spe
 </div>
 <p>First, each application test must have its own subdirectory.
 The test directory has a mandatory <em>Scripts</em> subdirectory,
-which should contain the test input file (see <a class="reference internal" href="#application-test-input"><span class="std std-ref">Application Test Input</span></a> below)
+which should contain the test configuration file (see <a class="reference internal" href="#application-test-input"><span class="std std-ref">Application Test Input</span></a> below)
 and other required scripts (see <a class="reference internal" href="#required-application-test-scripts"><span class="std std-ref">Required Application Test Scripts</span></a> below).
-This directory contains templates and input files for the test – a test must not modify this directory, but it may use files stored in this directory.</p>
-<p>Second, the application’s source code and required build script must reside within the <em>Source</em> directory of the repository.</p>
+This directory contains templates and input files for the test – a test must not modify files in this directory.</p>
+<p>Second, the application’s source code and required build script should reside within the <em>Source</em> directory of the repository.</p>
 </div>
 <div class="section" id="example-repository-structure">
-<h3>Example Repository Structure<a class="headerlink" href="#example-repository-structure" title="Permalink to this headline">¶</a></h3>
+<h3>Example Repository Structure<a class="headerlink" href="#example-repository-structure" title="Permalink to this heading">¶</a></h3>
 <p>For instance, let’s assume we have a Git repository for an application called <em>hello_mpi</em>.</p>
 <p>To add a single node test and a two node test, we would create a separate subdirectory for each test, including their required <em>Scripts</em> subdirectory:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hello_mpi/c_n001/Scripts/
-         /c_n002/Scripts/
-         /Source
+<span class="w">         </span>/c_n002/Scripts/
+<span class="w">         </span>/Source
 </pre></div>
 </div>
 <p>Note that the test names are not required to follow any specific naming convention, but you should avoid spaces and special characters in the names.</p>
 </div>
 </div>
 <div class="section" id="application-test-input">
-<span id="id2"></span><h2>Application Test Input<a class="headerlink" href="#application-test-input" title="Permalink to this headline">¶</a></h2>
-<p>Each test scripts directory should contain a test input file named <em>rgt_test_input.ini</em>.
+<span id="id2"></span><h2>Application Test Input<a class="headerlink" href="#application-test-input" title="Permalink to this heading">¶</a></h2>
+<p>Each test’s <em>Scripts</em> directory should contain a test input file named <em>rgt_test_input.ini</em>.
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
+The test input file follows the Python3 <a class="reference external" href="https://docs.python.org/3/library/configparser.html">configparser</a> file format.
+The fields in the <code class="docutils literal notranslate"><span class="pre">[DEFAULT]</span></code> section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
 All the fields in the <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section can be used in the job script template and will be replaced when creating the batch script (see <a class="reference internal" href="#job-script-template"><span class="std std-ref">Job Script Template</span></a> section below).
-The fields in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section allow you to set environment variables that all stages of your test will be able to use.</p>
+Variables in <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> cannot be referenced from <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code>.
+The fields in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section allow you to set environment variables that all stages of your test will be able to use.
+See <a class="reference internal" href="#best-practices"><span class="std std-ref">Best Practices</span></a> section for recommendations on when to use EnvVars vs Replacements.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Environment variables cannot be used in the definition of other environment variables – ie, <code class="docutils literal notranslate"><span class="pre">foo</span> <span class="pre">=</span> <span class="pre">$bar</span></code> (See: <a class="reference external" href="https://github.com/olcf/olcf-test-harness/issues/132">Issue 132</a>).</p>
 </div>
 <p>The following is a sample input for the single node test of the <em>hello_mpi</em> application mentioned above:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>Replacements<span class="o">]</span>
-<span class="c1">#-- This is a comment</span>
-<span class="c1">#-- The following variables are required</span>
-<span class="nv">job_name</span> <span class="o">=</span> hello_mpi_c
-<span class="nv">walltime</span> <span class="o">=</span> <span class="m">10</span>
-<span class="c1">#-- %(&lt;variablename&gt;)s is the notation to use the value of a previously-defined variable</span>
-<span class="nv">batch_filename</span> <span class="o">=</span> run_%<span class="o">(</span>job_name<span class="o">)</span>s.sh
-<span class="nv">build_cmd</span> <span class="o">=</span> ./build_hello_mpi_c.sh
-<span class="nv">check_cmd</span> <span class="o">=</span> ./check_hello_mpi_c.sh
-<span class="nv">report_cmd</span> <span class="o">=</span> ./report_hello_mpi_c.sh
-<span class="c1">#-- The following variables are optional</span>
-<span class="nv">executable_path</span> <span class="o">=</span> hello
-<span class="nv">resubmit</span> <span class="o">=</span> <span class="m">0</span>
-<span class="c1">#-- Use in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)</span>
-<span class="c1">#-- Set to 0 for indefinite resubmissions</span>
-<span class="nv">max_submissions</span> <span class="o">=</span> <span class="m">3</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>DEFAULT<span class="o">]</span>
+<span class="c1"># This is a comment</span>
+<span class="c1"># The DEFAULT section defines variables that can be re-used in Replacements or EnvVars</span>
+<span class="nv">my_custom_variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>abc
+
+<span class="o">[</span>Replacements<span class="o">]</span>
+<span class="c1"># The following variables are required</span>
+<span class="nv">job_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello_mpi_c
+<span class="nv">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<span class="c1"># %(&lt;variablename&gt;)s is the notation to use the value of a previously-defined variable</span>
+<span class="nv">batch_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>run_%<span class="o">(</span>job_name<span class="o">)</span>s.sh
+<span class="nv">build_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./build_hello_mpi_c.sh
+<span class="nv">check_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./check_hello_mpi_c.sh
+<span class="nv">report_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./report_hello_mpi_c.sh
+<span class="c1"># The following variables are optional</span>
+<span class="nv">executable_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello
+<span class="nv">resubmit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
+<span class="c1"># Optional: used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)</span>
+<span class="c1"># Set to 0 (or don&#39;t define) for indefinite resubmissions</span>
+<span class="nv">max_submissions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span>
 
 
-<span class="c1">#-- The following are user-defined and used for Key-Value replacements</span>
-<span class="c1">#-- ie, nodes replaces __nodes__ in the job script template</span>
-<span class="nv">nodes</span> <span class="o">=</span> <span class="m">1</span>
-<span class="nv">total_processes</span> <span class="o">=</span> <span class="m">16</span>
-<span class="nv">processes_per_node</span> <span class="o">=</span> <span class="m">16</span>
+<span class="c1"># The following are user-defined and used for Key-Value replacements</span>
+<span class="c1"># ie, nodes replaces __nodes__ in the job script template</span>
+<span class="nv">nodes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
+<span class="nv">total_processes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span>
+<span class="nv">processes_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span>
 
 <span class="o">[</span>EnvVars<span class="o">]</span>
-<span class="nv">FOO</span> <span class="o">=</span> bar
+<span class="nv">FOO</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>bar
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Setting a variable in the Replacements section to <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code> pulls in the value set by an environment variable.
-For example, if you set <code class="docutils literal notranslate"><span class="pre">nodes</span> <span class="pre">=</span> <span class="pre">&lt;obtain_from_environemnt&gt;</span></code> and set <em>RGT_NODES=4</em> in your environment, then <em>__nodes__</em> will be replaced with 4.</p>
+For example, if you set <code class="docutils literal notranslate"><span class="pre">nodes</span> <span class="pre">=</span> <span class="pre">&lt;obtain_from_environment&gt;</span></code> and set <em>RGT_NODES=4</em> in your environment, then <em>__nodes__</em> will be replaced with 4.</p>
 </div>
 </div>
 <div class="section" id="required-application-test-scripts">
-<span id="id3"></span><h2>Required Application Test Scripts<a class="headerlink" href="#required-application-test-scripts" title="Permalink to this headline">¶</a></h2>
-<p>The OTH requires each application test to provide a build script, a job script template, a check script, and a reporting script.
+<span id="id3"></span><h2>Required Application Test Scripts<a class="headerlink" href="#required-application-test-scripts" title="Permalink to this heading">¶</a></h2>
+<p>The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script, and (4) a reporting script.
 These scripts should be placed in the locations described in <a class="reference internal" href="#repository-structure"><span class="std std-ref">Repository structure</span></a>.
-If the OTH cannot find the scripts specified in the test input, it will fail to launch.</p>
+The build, check, and reporting scripts may also be set to Linux commands such as <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code>.
+This is useful in cases where a script is not needed.
+For example, a test that relies on standard system-provided tools can set the build script to <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> to remove the need to have an empty build script.
+If the OTH cannot find the scripts specified by the test input file (<em>rgt_test_input.ini</em>), it will fail to launch.</p>
 <div class="section" id="build-script">
-<h3>Build Script<a class="headerlink" href="#build-script" title="Permalink to this headline">¶</a></h3>
+<h3>Build Script<a class="headerlink" href="#build-script" title="Permalink to this heading">¶</a></h3>
 <p>The build script can be a shell script, a Python script, or other executable command.
 It is specified in the test input file as <em>build_cmd</em>, and the OTH will execute the provided value as a subprocess.
 The build script should return 0 on success, non-zero otherwise.</p>
@@ -333,12 +358,12 @@ The build script should return 0 on success, non-zero otherwise.</p>
 contain the following:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash -l</span>
 
-module load gcc
-module load openmpi
-module list
+module<span class="w"> </span>load<span class="w"> </span>gcc
+module<span class="w"> </span>load<span class="w"> </span>openmpi
+module<span class="w"> </span>list
 
-mkdir -p bin
-mpicc hello_mpi.c -o bin/hello
+mkdir<span class="w"> </span>-p<span class="w"> </span>bin
+mpicc<span class="w"> </span>hello_mpi.c<span class="w"> </span>-o<span class="w"> </span>bin/hello
 </pre></div>
 </div>
 <p>The build command be executed from the directory <strong>$BUILD_DIR</strong>, which is a copy of the contents of <em>Source/</em>.
@@ -346,7 +371,7 @@ This means the build script should be written as if it were executed from <em>So
 <p>Likewise, the path to the build script given by <em>build_cmd</em> in <em>rgt_test_input.ini</em> should be relative to the <em>Source/</em> directory.</p>
 </div>
 <div class="section" id="job-script-template">
-<span id="id4"></span><h3>Job Script Template<a class="headerlink" href="#job-script-template" title="Permalink to this headline">¶</a></h3>
+<span id="id4"></span><h3>Job Script Template<a class="headerlink" href="#job-script-template" title="Permalink to this heading">¶</a></h3>
 <p>The OTH will generate the batch job script from the job script template by replacing keywords
 of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> with the values specified in the test input <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section.</p>
 <p>The job script template must be named appropriately to match the specific scheduler of the target machine.
@@ -360,65 +385,65 @@ An example SLURM template script for the <em>hello_mpi</em> application follows:
 <span class="c1">#SBATCH -o __job_name__.o%j</span>
 
 <span class="c1"># Define environment variables needed</span>
-<span class="nb">export</span> <span class="nv">EXECUTABLE</span><span class="o">=</span><span class="s2">&quot;__executable_path__&quot;</span>
-<span class="nb">export</span> <span class="nv">SCRIPTS_DIR</span><span class="o">=</span><span class="s2">&quot;__scripts_dir__&quot;</span>
-<span class="nb">export</span> <span class="nv">WORK_DIR</span><span class="o">=</span><span class="s2">&quot;__working_dir__&quot;</span>
-<span class="nb">export</span> <span class="nv">RESULTS_DIR</span><span class="o">=</span><span class="s2">&quot;__results_dir__&quot;</span>
-<span class="nb">export</span> <span class="nv">HARNESS_ID</span><span class="o">=</span><span class="s2">&quot;__harness_id__&quot;</span>
-<span class="nb">export</span> <span class="nv">BUILD_DIR</span><span class="o">=</span><span class="s2">&quot;__build_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">EXECUTABLE</span><span class="o">=</span><span class="s2">&quot;__executable_path__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SCRIPTS_DIR</span><span class="o">=</span><span class="s2">&quot;__scripts_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">WORK_DIR</span><span class="o">=</span><span class="s2">&quot;__working_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RESULTS_DIR</span><span class="o">=</span><span class="s2">&quot;__results_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">HARNESS_ID</span><span class="o">=</span><span class="s2">&quot;__harness_id__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">BUILD_DIR</span><span class="o">=</span><span class="s2">&quot;__build_dir__&quot;</span>
 
-<span class="nb">echo</span> <span class="s2">&quot;Printing test directory environment variables:&quot;</span>
-env <span class="p">|</span> fgrep RGT_APP_SOURCE_
-env <span class="p">|</span> fgrep RGT_TEST_
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Printing test directory environment variables:&quot;</span>
+env<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>RGT_APP_SOURCE_
+env<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>RGT_TEST_
 <span class="nb">echo</span>
 
 <span class="c1"># Placing the environment setup script in a shared location reduces code duplication</span>
 <span class="c1"># and ensures you have the same environment in building &amp; running</span>
-<span class="nb">source</span> <span class="nv">$BUILD_DIR</span>/Common_Scripts/setup_env.sh
+<span class="nb">source</span><span class="w"> </span><span class="nv">$BUILD_DIR</span>/Common_Scripts/setup_env.sh
 
 <span class="c1"># Ensure we are in the starting directory</span>
-<span class="nb">cd</span> <span class="nv">$SCRIPTS_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRIPTS_DIR</span>
 
 <span class="c1"># Make the working scratch space directory.</span>
-<span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$WORK_DIR</span> <span class="o">]</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$WORK_DIR</span><span class="w"> </span><span class="o">]</span>
 <span class="k">then</span>
-    mkdir -p <span class="nv">$WORK_DIR</span>
+<span class="w">    </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$WORK_DIR</span>
 <span class="k">fi</span>
 
 <span class="c1"># Change directory to the working directory.</span>
-<span class="nb">cd</span> <span class="nv">$WORK_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$WORK_DIR</span>
 
-env <span class="p">&amp;</span>&gt; job.environ
-scontrol show hostnames &gt; job.nodes
+env<span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>job.environ
+scontrol<span class="w"> </span>show<span class="w"> </span>hostnames<span class="w"> </span>&gt;<span class="w"> </span>job.nodes
 
 <span class="c1"># Run the executable.</span>
-log_binary_execution_time.py --scriptsdir <span class="nv">$SCRIPTS_DIR</span> --uniqueid <span class="nv">$HARNESS_ID</span> --mode start
+log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>start
 
-<span class="nv">CMD</span><span class="o">=</span><span class="s2">&quot;srun -n __total_processes__ -N __nodes__ </span><span class="nv">$BUILD_DIR</span><span class="s2">/bin/</span><span class="nv">$EXECUTABLE</span><span class="s2">&quot;</span>
-<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span>
-<span class="nv">$CMD</span>
+<span class="nb">set</span><span class="w"> </span>-x
+srun<span class="w"> </span>-n<span class="w"> </span>__total_processes__<span class="w"> </span>-N<span class="w"> </span>__nodes__<span class="w"> </span><span class="nv">$BUILD_DIR</span>/bin/<span class="nv">$EXECUTABLE</span>
+<span class="nb">set</span><span class="w"> </span>+x
 
-log_binary_execution_time.py --scriptsdir <span class="nv">$SCRIPTS_DIR</span> --uniqueid <span class="nv">$HARNESS_ID</span> --mode final
+log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>final
 
 <span class="c1"># Ensure we return to the starting directory.</span>
-<span class="nb">cd</span> <span class="nv">$SCRIPTS_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRIPTS_DIR</span>
 
 <span class="c1"># Copy the output and results back to the $RESULTS_DIR</span>
 <span class="c1"># Depending on the size of files in $WORK_DIR, you may want to change this</span>
-cp -rf <span class="nv">$WORK_DIR</span>/* <span class="nv">$RESULTS_DIR</span>
-cp <span class="nv">$BUILD_DIR</span>/output_build*.txt <span class="nv">$RESULTS_DIR</span>
+cp<span class="w"> </span>-rf<span class="w"> </span><span class="nv">$WORK_DIR</span>/*<span class="w"> </span><span class="nv">$RESULTS_DIR</span>
+cp<span class="w"> </span><span class="nv">$BUILD_DIR</span>/output_build*.txt<span class="w"> </span><span class="nv">$RESULTS_DIR</span>
 
 <span class="c1"># Check the final results.</span>
-check_executable_driver.py -p <span class="nv">$RESULTS_DIR</span> -i <span class="nv">$HARNESS_ID</span>
+check_executable_driver.py<span class="w"> </span>-p<span class="w"> </span><span class="nv">$RESULTS_DIR</span><span class="w"> </span>-i<span class="w"> </span><span class="nv">$HARNESS_ID</span>
 
 <span class="c1"># Resubmit if needed:</span>
 <span class="c1"># If you always want tests to resubmit if ``.kill_test`` is not present,</span>
 <span class="c1"># then remove the conditional around calling ``test_harness_driver.py``.</span>
-<span class="k">case</span> __resubmit__ <span class="k">in</span>
-    <span class="m">0</span><span class="o">)</span>
-       <span class="nb">echo</span> <span class="s2">&quot;No resubmit&quot;</span><span class="p">;;</span>
-    <span class="m">1</span><span class="o">)</span>
-       test_harness_driver.py -r __max_submissions__ <span class="p">;;</span>
+<span class="k">case</span><span class="w"> </span>__resubmit__<span class="w"> </span><span class="k">in</span>
+<span class="w">    </span><span class="m">0</span><span class="o">)</span>
+<span class="w">       </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No resubmit&quot;</span><span class="p">;;</span>
+<span class="w">    </span><span class="m">1</span><span class="o">)</span>
+<span class="w">       </span>test_harness_driver.py<span class="w"> </span>-r<span class="w"> </span>__max_submissions__<span class="w"> </span><span class="p">;;</span>
 <span class="k">esac</span>
 </pre></div>
 </div>
@@ -428,7 +453,7 @@ The executable should then be run from <strong>$WORK_DIR</strong> directory, whi
 <p>One can access or copy any files relative to the <em>Scripts/</em> directory using the <strong>$SCRIPT_DIR</strong> environment variable.
 For example, if one stores a <em>CorrectResults</em> directory at the same level as <em>Scripts</em> and <em>Run_Archive</em> for a test case,
 it can be be copied by adding the line</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cp -a <span class="si">${</span><span class="nv">SCRIPT_DIR</span><span class="si">}</span>/../CorrectResults <span class="si">${</span><span class="nv">WORK_DIR</span><span class="si">}</span>/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span>-a<span class="w"> </span><span class="si">${</span><span class="nv">SCRIPT_DIR</span><span class="si">}</span>/../CorrectResults<span class="w"> </span><span class="si">${</span><span class="nv">WORK_DIR</span><span class="si">}</span>/
 </pre></div>
 </div>
 <p>inside the job script.</p>
@@ -437,8 +462,9 @@ The executable may still be inside <strong>$BUILD_DIR</strong> from the previous
 so one would need to either copy it to <strong>$WORK_DIR</strong> or provide the absolute path in the job script such as <strong>$BUILD_DIR/$EXECUTABLE</strong>.</p>
 </div>
 <div class="section" id="check-script">
-<h3>Check Script<a class="headerlink" href="#check-script" title="Permalink to this headline">¶</a></h3>
-<p>The check script can be a shell script, Python script, or other executable command.</p>
+<h3>Check Script<a class="headerlink" href="#check-script" title="Permalink to this heading">¶</a></h3>
+<p>The check script can be a shell script, Python script, or other executable command.
+This must be an absolute path to a command (ie, <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> instead of <code class="docutils literal notranslate"><span class="pre">echo</span></code>).</p>
 <p>Check scripts are used to verify that application tests ran as expected, and thus use standardized return codes to inform the OTH on the test result.
 Checking performance is optional but recommended for most tests.
 The check script return value should be one of the following:</p>
@@ -454,19 +480,19 @@ The check script is launched from <strong>$RESULTS_DIR</strong> and stdout/stder
 <p>For <em>hello_mpi</em>, an example check script named <em>check_hello_mpi_c.sh</em> may
 contain the following:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
-<span class="nb">echo</span> <span class="s2">&quot;This is the check script for hello_mpi.&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;This is the check script for hello_mpi.&quot;</span>
 <span class="nb">echo</span>
-<span class="nb">echo</span> -n <span class="s2">&quot;Working Directory: &quot;</span><span class="p">;</span> <span class="nb">pwd</span>
+<span class="nb">echo</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;Working Directory: &quot;</span><span class="p">;</span><span class="w"> </span><span class="nb">pwd</span>
 <span class="nb">echo</span>
-<span class="nb">echo</span> <span class="s2">&quot;Test Result Files:&quot;</span>
-ls ./*
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Test Result Files:&quot;</span>
+ls<span class="w"> </span>./*
 <span class="nb">echo</span>
-<span class="nb">exit</span> <span class="m">0</span>
+<span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="report-script">
-<h3>Report Script<a class="headerlink" href="#report-script" title="Permalink to this headline">¶</a></h3>
+<h3>Report Script<a class="headerlink" href="#report-script" title="Permalink to this heading">¶</a></h3>
 <p>Like the check script, the report script can be a shell script, Python script, or other executable command.
 Report scripts are generally used to compute performance metrics from the run.
 The exit code of report scripts is not checked by the OTH.
@@ -474,12 +500,13 @@ The report script is launched from <strong>$RESULTS_DIR</strong> and stdout/stde
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>In many cases, the check script serves the function of both the check and report script.
-In that event, report scripts often just <code class="docutils literal notranslate"><span class="pre">exit</span> <span class="pre">0</span></code>.</p>
+In that event, report scripts often just <code class="docutils literal notranslate"><span class="pre">exit</span> <span class="pre">0</span></code>.
+An alternative to a no-op bash script, you may use <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> on most Linux systems.</p>
 </div>
 </div>
 </div>
 <div class="section" id="example-test-from-the-ground-up">
-<h2>Example Test from the Ground Up<a class="headerlink" href="#example-test-from-the-ground-up" title="Permalink to this headline">¶</a></h2>
+<h2>Example Test from the Ground Up<a class="headerlink" href="#example-test-from-the-ground-up" title="Permalink to this heading">¶</a></h2>
 <p>This section details the thought process when developing a new test from the ground up.
 In this section, we develop an application repository named <code class="docutils literal notranslate"><span class="pre">mpi-tests</span></code>, which contains two “Hello, World!” MPI tests at different node counts.
 This section ignores Git integration and focuses on developing tests on an empty file system.</p>
@@ -505,20 +532,20 @@ This section ignores Git integration and focuses on developing tests on an empty
 </div>
 <p>First, we create the top-level directory structure:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the application&#39;s directory</span>
-mkdir mpi-tests
-<span class="nb">cd</span> mpi-tests/
+mkdir<span class="w"> </span>mpi-tests
+<span class="nb">cd</span><span class="w"> </span>mpi-tests/
 <span class="c1"># Create the Source directory</span>
-mkdir ./Source/
+mkdir<span class="w"> </span>./Source/
 <span class="c1"># Create directories for two tests -- hello_world_n0001 and hello_world_n0002</span>
-mkdir -p ./hello_world_n0001/Scripts ./hello_world_n0002/Scripts
+mkdir<span class="w"> </span>-p<span class="w"> </span>./hello_world_n0001/Scripts<span class="w"> </span>./hello_world_n0002/Scripts
 </pre></div>
 </div>
 <p>Both of these tests will use the same source code (this is very common for many tests), so we can go ahead and create that:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from mpi-tests root:</span>
-<span class="nb">cd</span> Source
+<span class="nb">cd</span><span class="w"> </span>Source
 <span class="c1"># create a directory to hold the source files</span>
-mkdir test_src
-<span class="nb">echo</span> <span class="s1">&#39;#include &lt;stdio.h&gt;</span>
+mkdir<span class="w"> </span>test_src
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;#include &lt;stdio.h&gt;</span>
 <span class="s1">#include &lt;mpi.h&gt;</span>
 <span class="s1">int main(int argc, char **argv) {</span>
 <span class="s1">  int rank, nranks;</span>
@@ -527,16 +554,16 @@ mkdir test_src
 <span class="s1">  MPI_Comm_size(MPI_COMM_WORLD, &amp;nranks);</span>
 <span class="s1">  printf(&quot;Hello, World from rank %d of %d!\n&quot;,rank,nranks);</span>
 <span class="s1">  MPI_Finalize();</span>
-<span class="s1">}&#39;</span> &gt; test_src/hello_world.c
+<span class="s1">}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>test_src/hello_world.c
 </pre></div>
 </div>
 <p>The environment and build scripts will also be the same for both tests, so we can create a build script and a script to set up the environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from mpi-tests root:</span>
-<span class="nb">cd</span> Source
+<span class="nb">cd</span><span class="w"> </span>Source
 <span class="c1"># create a directory to hold shared scripts -- &quot;Common_Scripts&quot; is a good name for it, but not required</span>
-mkdir Common_Scripts
+mkdir<span class="w"> </span>Common_Scripts
 <span class="c1"># Create a basic environment file:</span>
-<span class="nb">echo</span> <span class="s1">&#39;#!/bin/bash</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;#!/bin/bash</span>
 <span class="s1"># As an example, we do a ``module reset`` here</span>
 <span class="s1">module reset</span>
 <span class="s1"># The OTH is loaded by a module, so we need to re-add this to our environment</span>
@@ -545,15 +572,15 @@ mkdir Common_Scripts
 <span class="s1"># Now, we load a basic gcc and openmpi</span>
 <span class="s1">module load gcc</span>
 <span class="s1">module load openmpi</span>
-<span class="s1">&#39;</span> &gt; Common_Scripts/setup_env.sh
+<span class="s1">&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>Common_Scripts/setup_env.sh
 <span class="c1"># Now, create a build script in the top-level of the Source directory:</span>
-<span class="nb">echo</span> <span class="s1">&#39;#!/bin/bash</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;#!/bin/bash</span>
 <span class="s1"># Setup the environment:</span>
 <span class="s1">source ./Common_Scripts/setup_env.sh</span>
 <span class="s1"># Compile the code into a binary:</span>
 <span class="s1">cd test_src/</span>
 <span class="s1">mpicc -O1 -g -Wall -o hello_world hello_world.c</span>
-<span class="s1">&#39;</span> &gt; ./build.sh
+<span class="s1">&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>./build.sh
 </pre></div>
 </div>
 <p>Let’s give some thought to how we want to construct these tests.
@@ -596,69 +623,69 @@ Moving from 1 to 2 nodes shouldn’t change much about the job template, so let�
 <span class="c1">#SBATCH -t __walltime__</span>
 
 <span class="c1"># Define environment variables needed</span>
-<span class="nb">export</span> <span class="nv">EXECUTABLE</span><span class="o">=</span><span class="s2">&quot;__executable_path__&quot;</span>
-<span class="nb">export</span> <span class="nv">SCRIPTS_DIR</span><span class="o">=</span><span class="s2">&quot;__scripts_dir__&quot;</span>
-<span class="nb">export</span> <span class="nv">WORK_DIR</span><span class="o">=</span><span class="s2">&quot;__working_dir__&quot;</span>
-<span class="nb">export</span> <span class="nv">RESULTS_DIR</span><span class="o">=</span><span class="s2">&quot;__results_dir__&quot;</span>
-<span class="nb">export</span> <span class="nv">HARNESS_ID</span><span class="o">=</span><span class="s2">&quot;__harness_id__&quot;</span>
-<span class="nb">export</span> <span class="nv">BUILD_DIR</span><span class="o">=</span><span class="s2">&quot;__build_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">EXECUTABLE</span><span class="o">=</span><span class="s2">&quot;__executable_path__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SCRIPTS_DIR</span><span class="o">=</span><span class="s2">&quot;__scripts_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">WORK_DIR</span><span class="o">=</span><span class="s2">&quot;__working_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RESULTS_DIR</span><span class="o">=</span><span class="s2">&quot;__results_dir__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">HARNESS_ID</span><span class="o">=</span><span class="s2">&quot;__harness_id__&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">BUILD_DIR</span><span class="o">=</span><span class="s2">&quot;__build_dir__&quot;</span>
 
-<span class="nb">echo</span> <span class="s2">&quot;Printing test directory environment variables:&quot;</span>
-env <span class="p">|</span> fgrep RGT_APP_SOURCE_
-env <span class="p">|</span> fgrep RGT_TEST_
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Printing test directory environment variables:&quot;</span>
+env<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>RGT_APP_SOURCE_
+env<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>RGT_TEST_
 <span class="nb">echo</span>
 
 <span class="c1"># Placing the environment setup script in a shared location reduces code duplication</span>
 <span class="c1"># and ensures you have the same environment in building &amp; running</span>
-<span class="nb">source</span> <span class="nv">$BUILD_DIR</span>/Common_Scripts/setup_env.sh
+<span class="nb">source</span><span class="w"> </span><span class="nv">$BUILD_DIR</span>/Common_Scripts/setup_env.sh
 
 <span class="c1"># Ensure we are in the starting directory</span>
-<span class="nb">cd</span> <span class="nv">$SCRIPTS_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRIPTS_DIR</span>
 
 <span class="c1"># Make the working scratch space directory.</span>
-<span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$WORK_DIR</span> <span class="o">]</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$WORK_DIR</span><span class="w"> </span><span class="o">]</span>
 <span class="k">then</span>
-    mkdir -p <span class="nv">$WORK_DIR</span>
+<span class="w">    </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$WORK_DIR</span>
 <span class="k">fi</span>
 
 <span class="c1"># Change directory to the working directory.</span>
-<span class="nb">cd</span> <span class="nv">$WORK_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$WORK_DIR</span>
 
 <span class="c1"># These are very useful for debugging</span>
-env <span class="p">&amp;</span>&gt; job.environ
-scontrol show hostnames &gt; job.nodes
+env<span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>job.environ
+scontrol<span class="w"> </span>show<span class="w"> </span>hostnames<span class="w"> </span>&gt;<span class="w"> </span>job.nodes
 
 <span class="c1"># Run the executable.</span>
-log_binary_execution_time.py --scriptsdir <span class="nv">$SCRIPTS_DIR</span> --uniqueid <span class="nv">$HARNESS_ID</span> --mode start
+log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>start
 
 <span class="c1"># We use ${SLURM_NNODES} over __nodes__ for several reasons:</span>
 <span class="c1">#   1. for testing purposes, it&#39;s good to ensure that SLURM_NNODES is correct, since users will use that</span>
 <span class="c1">#   2. if you inadvertently set $RGT_SUBMIT_ARGS, using SLURM_NNODES will adapt to the size of the job</span>
-<span class="nb">set</span> -x
-srun -N <span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span> -n <span class="k">$((</span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="o">*</span>__ppn__<span class="k">))</span> --ntasks-per-node<span class="o">=</span>__ppn__ <span class="nv">$BUILD_DIR</span>/<span class="nv">$EXECUTABLE</span> <span class="p">&amp;</span>&gt; stdout.txt
-<span class="nb">set</span> +x
+<span class="nb">set</span><span class="w"> </span>-x
+srun<span class="w"> </span>-N<span class="w"> </span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="w"> </span>-n<span class="w"> </span><span class="k">$((</span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="o">*</span><span class="nv">__ppn__</span><span class="k">))</span><span class="w"> </span>--ntasks-per-node<span class="o">=</span>__ppn__<span class="w"> </span><span class="nv">$BUILD_DIR</span>/<span class="nv">$EXECUTABLE</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>stdout.txt
+<span class="nb">set</span><span class="w"> </span>+x
 
-log_binary_execution_time.py --scriptsdir <span class="nv">$SCRIPTS_DIR</span> --uniqueid <span class="nv">$HARNESS_ID</span> --mode final
+log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>final
 
 <span class="c1"># Ensure we return to the starting directory.</span>
-<span class="nb">cd</span> <span class="nv">$SCRIPTS_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRIPTS_DIR</span>
 
 <span class="c1"># Copy the output and results back to the $RESULTS_DIR</span>
 <span class="c1"># Depending on the size of files in $WORK_DIR, you may want to change this</span>
-cp -rf <span class="nv">$WORK_DIR</span>/* <span class="nv">$RESULTS_DIR</span>
-cp <span class="nv">$BUILD_DIR</span>/output_build*.txt <span class="nv">$RESULTS_DIR</span>
+cp<span class="w"> </span>-rf<span class="w"> </span><span class="nv">$WORK_DIR</span>/*<span class="w"> </span><span class="nv">$RESULTS_DIR</span>
+cp<span class="w"> </span><span class="nv">$BUILD_DIR</span>/output_build*.txt<span class="w"> </span><span class="nv">$RESULTS_DIR</span>
 
 <span class="c1"># Check the final results -- this will call your command specified by `check_cmd`</span>
-check_executable_driver.py -p <span class="nv">$RESULTS_DIR</span> -i <span class="nv">$HARNESS_ID</span>
+check_executable_driver.py<span class="w"> </span>-p<span class="w"> </span><span class="nv">$RESULTS_DIR</span><span class="w"> </span>-i<span class="w"> </span><span class="nv">$HARNESS_ID</span>
 
 <span class="c1"># Resubmit if needed:</span>
 <span class="c1"># If you always want tests to resubmit if ``.kill_test`` is not present,</span>
 <span class="c1"># then remove the conditional around calling ``test_harness_driver.py``.</span>
-<span class="k">case</span> __resubmit__ <span class="k">in</span>
-    <span class="m">0</span><span class="o">)</span>
-       <span class="nb">echo</span> <span class="s2">&quot;No resubmit&quot;</span><span class="p">;;</span>
-    <span class="m">1</span><span class="o">)</span>
-       test_harness_driver.py -r __max_submissions__ <span class="p">;;</span>
+<span class="k">case</span><span class="w"> </span>__resubmit__<span class="w"> </span><span class="k">in</span>
+<span class="w">    </span><span class="m">0</span><span class="o">)</span>
+<span class="w">       </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No resubmit&quot;</span><span class="p">;;</span>
+<span class="w">    </span><span class="m">1</span><span class="o">)</span>
+<span class="w">       </span>test_harness_driver.py<span class="w"> </span>-r<span class="w"> </span>__max_submissions__<span class="w"> </span><span class="p">;;</span>
 <span class="k">esac</span>
 </pre></div>
 </div>
@@ -668,13 +695,13 @@ Recall that we provided the check script with the total number of tasks to expec
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 
 <span class="nv">expected_ranks</span><span class="o">=</span><span class="nv">$1</span>
-<span class="nv">nranks</span><span class="o">=</span><span class="k">$(</span>grep <span class="s2">&quot;Hello, World from rank&quot;</span> <span class="si">${</span><span class="nv">RESULTS_DIR</span><span class="si">}</span>/stdout.txt <span class="p">|</span> wc -l<span class="k">)</span>
-<span class="k">if</span> <span class="o">[</span> ! <span class="s2">&quot;</span><span class="si">${</span><span class="nv">nranks</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">expected_ranks</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
-    <span class="nb">echo</span> <span class="s2">&quot;Found </span><span class="si">${</span><span class="nv">nranks</span><span class="si">}</span><span class="s2">, expected </span><span class="si">${</span><span class="nv">expected_ranks</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="nb">exit</span> <span class="m">1</span>
+<span class="nv">nranks</span><span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span><span class="s2">&quot;Hello, World from rank&quot;</span><span class="w"> </span><span class="si">${</span><span class="nv">RESULTS_DIR</span><span class="si">}</span>/stdout.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l<span class="k">)</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">nranks</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">expected_ranks</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Found </span><span class="si">${</span><span class="nv">nranks</span><span class="si">}</span><span class="s2">, expected </span><span class="si">${</span><span class="nv">expected_ranks</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 <span class="k">fi</span>
-<span class="nb">echo</span> <span class="s2">&quot;Success! Found </span><span class="si">${</span><span class="nv">nranks</span><span class="si">}</span><span class="s2">.&quot;</span>
-<span class="nb">exit</span> <span class="m">0</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Success! Found </span><span class="si">${</span><span class="nv">nranks</span><span class="si">}</span><span class="s2">.&quot;</span>
+<span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
 </pre></div>
 </div>
 <p>This check script is generic and should be able to be re-used in multiple tests, so let’s put it in <code class="docutils literal notranslate"><span class="pre">Source/Common_Scripts/check_hello_world.sh</span></code>.</p>
@@ -683,14 +710,71 @@ You can either create a script that immediately exits, or just link to your chec
 Here, we will just link to the check script.</p>
 <p>The Slurm template and check and report scripts are required in the <em>Scripts</em> directory, so we use symbolic links to achieve this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from mpi-tests</span>
-<span class="nb">cd</span> hello_world_n0001/Scripts
-ln -s ../../Source/Common_Scripts/slurm.template.x .
-ln -s ../../Source/Common_Scripts/check_hello_world.sh ./check.sh
-ln -s ../../Source/Common_Scripts/check_hello_world.sh ./report.sh
+<span class="nb">cd</span><span class="w"> </span>hello_world_n0001/Scripts
+ln<span class="w"> </span>-s<span class="w"> </span>../../Source/Common_Scripts/slurm.template.x<span class="w"> </span>.
+ln<span class="w"> </span>-s<span class="w"> </span>../../Source/Common_Scripts/check_hello_world.sh<span class="w"> </span>./check.sh
+ln<span class="w"> </span>-s<span class="w"> </span>../../Source/Common_Scripts/check_hello_world.sh<span class="w"> </span>./report.sh
 </pre></div>
 </div>
 <p>To expand to a 2-node <em>Hello, World!</em> test, we can just copy the <em>Scripts</em> directory from the single-node test, then modify the <em>rgt_test_input.ini</em> to specify 2 nodes instead of 1.
 Everything else is generalized, so no modification is needed.</p>
+</div>
+<div class="section" id="best-practices">
+<span id="id5"></span><h2>Best Practices<a class="headerlink" href="#best-practices" title="Permalink to this heading">¶</a></h2>
+<p>The OTH is very flexible and gives the user a lot of power.
+That power can be diminished by poor test design.</p>
+<p>With that in mind, this section presents some of the best practices in test design.</p>
+<div class="section" id="use-a-centralized-script-to-set-up-the-environment">
+<h3>Use a centralized script to set up the environment<a class="headerlink" href="#use-a-centralized-script-to-set-up-the-environment" title="Permalink to this heading">¶</a></h3>
+<p>During a test run, the environment is independently set up during the build and run stages.
+If the build script and job script each contain several <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span></code> statements, there is a chance that those can diverge.
+To centralize where the environment is set to a single file, place a script containing the <code class="docutils literal notranslate"><span class="pre">module</span></code> commands and environment modifications in the build directory,
+and <code class="docutils literal notranslate"><span class="pre">source</span></code> that script from the build and job scripts.
+For the build script, this can be accomplished as simply <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">env.sh</span></code>, if the script is in the top level of the Source directory.
+For the job script, this can be accomplished by <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">$BUILD_DIR/env.sh</span></code>, if the <strong>$BUILD_DIR</strong> environment variable is defined as in the <a class="reference internal" href="#job-script-template"><span class="std std-ref">Job Script Template</span></a> section above.</p>
+</div>
+<div class="section" id="define-replacement-variables-instead-of-just-envvars">
+<h3>Define replacement variables instead of just EnvVars<a class="headerlink" href="#define-replacement-variables-instead-of-just-envvars" title="Permalink to this heading">¶</a></h3>
+<p>In <strong>rgt_test_input.ini</strong>, it is recommended that if you define an environment variable in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section,
+that you also define a replacement variable in <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> that is used in the job script to re-define that environment variable.
+This helps to create a re-usable job script.
+If the harness is responsible for defining environment variables that are required for the job to run,
+it can be very difficult to understand the resulting job script and to re-run the job script outside of the test harness if needed.
+The following is recommended within the test input file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>DEFAULT<span class="o">]</span>
+<span class="nv">my_custom_var_default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>abc
+
+<span class="o">[</span>Replacements<span class="o">]</span>
+...
+<span class="nv">my_custom_variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>%<span class="o">(</span>my_custom_var_default<span class="o">)</span>s
+...
+
+<span class="o">[</span>EnvVars<span class="o">]</span>
+<span class="nv">MY_ENV_VAR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>%<span class="o">(</span>my_custom_var_default<span class="o">)</span>s
+</pre></div>
+</div>
+<p>Then, within the job script template:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MY_ENV_VAR</span><span class="o">=</span><span class="s2">&quot;__my_custom_variable__&quot;</span>
+</pre></div>
+</div>
+<p>If the job script template requires an environment variable that is set by the harness (ie, <strong>RGT_MACHINE_NAME</strong>, <strong>RGT_CPUS_PER_NODE</strong>),
+it may be best to define a replacement in the test input file that inherits the value of the environment variable using <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code> like so:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Internal name modification translates `machine_name` to `RGT_MACHINE_NAME`</span>
+<span class="nv">machine_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>&lt;obtain_from_environment&gt;
+</pre></div>
+</div>
+<p>Then, in the job script, re-define the environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RGT_MACHINE_NAME</span><span class="o">=</span><span class="s2">&quot;__machine_name__&quot;</span>
+</pre></div>
+</div>
+<p>The same feature cannot be used in the build script, which leads to the next best practice, checking for expected environment variables.</p>
+</div>
+<div class="section" id="check-for-expected-environment-variables">
+<h3>Check for expected environment variables<a class="headerlink" href="#check-for-expected-environment-variables" title="Permalink to this heading">¶</a></h3>
+<p>Following on the last best practice, if the harness or environment script define any environment variables required in the build and job scripts,
+the scripts should check that those are set and return an error if they are not.
+This increases the reusability of the scripts outside of the test harness and aids debugging.</p>
+</div>
 </div>
 </div>
 
@@ -701,7 +785,7 @@ Everything else is generalized, so no modification is needed.</p>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
         <a href="adding_new_machine.html" class="btn btn-neutral float-right" title="Adding a New Machine" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="launching.html" class="btn btn-neutral float-left" title="Quick-Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="envvars.html" class="btn btn-neutral float-left" title="Environment Variables" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
