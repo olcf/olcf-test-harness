@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>NCCS Harness repositories package &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -108,7 +109,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/launching.html">Quick-Start Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/launching.html#installation">Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide/launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../user_guide/launching.html#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../user_guide/launching.html#on-andes-and-frontier">On Andes and Frontier</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide/launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
@@ -242,17 +243,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="nccs-harness-repositories-package">
+  <section id="nccs-harness-repositories-package">
 <h1>NCCS Harness repositories package<a class="headerlink" href="#nccs-harness-repositories-package" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="intoduction">
+<section id="intoduction">
 <h2>Intoduction<a class="headerlink" href="#intoduction" title="Permalink to this heading">¶</a></h2>
 <p>This package provides the harness the functionality to clone the repositories
 that contain the applications and tests. Currently only git repositories are supported, and
 the git commands be passwordless authentication.</p>
-</div>
-<div class="section" id="prerequisite-environmental-variables">
+</section>
+<section id="prerequisite-environmental-variables">
 <h2>Prerequisite Environmental Variables<a class="headerlink" href="#prerequisite-environmental-variables" title="Permalink to this heading">¶</a></h2>
 <p>The following environmental variable must be set:</p>
 <ul>
@@ -272,8 +273,8 @@ the git commands be passwordless authentication.</p>
 <li><p><strong>RGT_GIT_MACHINE_NAME</strong> : The machine name part of the application URL</p></li>
 <li><p><strong>RGT_GIT_REPS_BRANCH</strong> : The branch of the repository to check out.</p></li>
 </ul>
-</div>
-<div class="section" id="examples">
+</section>
+<section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
 <p>Consider the following test repository “<a class="reference external" href="https://gitlab.ccs.ornl.gov/olcf-system-test/applications/summit/HelloWorld">https://gitlab.ccs.ornl.gov/olcf-system-test/applications/summit/HelloWorld</a>”
 located on the git server “<a class="reference external" href="https://gitlab.ccs.ornl.gov">https://gitlab.ccs.ornl.gov</a>”. We will use the ssh data transfer protocol and checkout
@@ -292,12 +293,12 @@ is</p>
 <span class="n">RGT_GIT_MACHINE_NAME</span><span class="o">=</span><span class="s1">&#39;summit&#39;</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="modules">
+</section>
+<section id="modules">
 <h2>Modules<a class="headerlink" href="#modules" title="Permalink to this heading">¶</a></h2>
 <p><a class="reference internal" href="../modules/repositories/git_repository.html#git-repository-module"><span class="std std-ref">git_repository Module Documentation</span></a></p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

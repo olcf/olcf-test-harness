@@ -52,6 +52,7 @@ class apptest_layout:
     test_run_archive_dirname = 'Run_Archive'
     test_scripts_dirname = 'Scripts'
     test_status_dirname = 'Status'
+    test_source_dirname = 'Source'
     test_performance_dirname = 'Performance'
     test_logfile_dirname = 'LogFiles'
 
@@ -67,6 +68,7 @@ class apptest_layout:
         'test'            : os.path.join("${pdir}", "${app}", "${test}"),
         'test_info'       : os.path.join("${pdir}", "${app}", "${test}", test_info_filename),
         'test_rc'         : os.path.join("${pdir}", "${app}", "${test}", test_rc_filename),
+        'test_source'     : os.path.join("${pdir}", "${app}", "${test}", test_source_dirname),
         'test_correct'    : os.path.join("${pdir}", "${app}", "${test}", test_correct_results_dirname),
         'test_perf'       : os.path.join("${pdir}", "${app}", "${test}", test_performance_dirname),
         'runarchive_dir'  : os.path.join("${pdir}", "${app}", "${test}", test_run_archive_dirname, "${id}"),
@@ -174,6 +176,12 @@ class apptest_layout:
     #
     def get_path_to_source(self):
         return self.__apptest_layout['app_source']
+
+    #
+    # Returns the path to the test's source directory.
+    #
+    def get_path_to_test_source(self):
+        return self.__apptest_layout['test_source']
 
     #
     # Returns the path to the test directory.

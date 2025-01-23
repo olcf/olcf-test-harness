@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import shlex
+import sys
 
 # Harness imports
 from libraries.apptest import subtest
@@ -303,7 +304,10 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doInfoLogging(message)
 
         # Copy the source to the build directory.
-        self._copy_source_to_build_directory()
+        copy_rc = self._copy_source_to_build_directory()
+        # short-circuit if the copy failed
+        if not copy_rc == 0:
+            return copy_rc
 
         message = f"{messloc} Copied source to build directory.\n"
         self.logger.doInfoLogging(message)
@@ -452,6 +456,7 @@ class BaseMachine(metaclass=ABCMeta):
         messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
 
         path_to_source = self.apptest.get_path_to_source()
+        path_to_test_source = self.apptest.get_path_to_test_source()
         # Use Error threshold to show this message all the time
         self.logger.doErrorLogging(f"Path to Source: {path_to_source}")
 
@@ -466,6 +471,21 @@ class BaseMachine(metaclass=ABCMeta):
         shutil.copytree(src=path_to_source,
                         dst=path_to_build_directory,
                         symlinks=True)
+
+        # If a Source directory exists inside test, overlay that over source directory
+        if os.path.exists(path_to_test_source):
+            # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
+            # Prior to that, it's easier to use shell commands to do what we want
+            if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
+                shutil.copytree(src=path_to_test_source,
+                    dst=path_to_build_directory,
+                    symlinks=False, dirs_exist_ok=True)
+            else:
+                proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
+                if not proc.returncode == 0:
+                    self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
+                    return proc.returncode
+        return 0
 
     def _write_check_exit_status(self, cstatus):
         """ Write the status of checking results to the status directory."""

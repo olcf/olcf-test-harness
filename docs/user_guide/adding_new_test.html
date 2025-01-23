@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Adding a New Test &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -110,7 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="launching.html">Quick-Start Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="launching.html#installation">Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-and-frontier">On Andes and Frontier</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
@@ -244,25 +245,29 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="adding-a-new-test">
+  <section id="adding-a-new-test">
 <span id="section-new-test"></span><h1>Adding a New Test<a class="headerlink" href="#adding-a-new-test" title="Permalink to this heading">¶</a></h1>
 <p>The OLCF Test Harness (OTH) requires a specific source code repository structure for application tests.
 This document describes how to add an application and associated tests for a specific system to the harness.</p>
-<div class="section" id="application-source-code-repository-structure">
+<section id="application-source-code-repository-structure">
 <h2>Application Source Code Repository Structure<a class="headerlink" href="#application-source-code-repository-structure" title="Permalink to this heading">¶</a></h2>
 <p>The top-level group in a GitLab group (or GitHub repo) contains a sub-group for each target machine.</p>
-<div class="section" id="repository-url">
+<section id="repository-url">
 <h3>Repository URL<a class="headerlink" href="#repository-url" title="Permalink to this heading">¶</a></h3>
 <p>Each application that can be run on a given machine should have a repository (or directory) within that machine’s group.</p>
-</div>
-<div class="section" id="repository-structure">
+</section>
+<section id="repository-structure">
 <span id="id1"></span><h3>Repository structure<a class="headerlink" href="#repository-structure" title="Permalink to this heading">¶</a></h3>
 <p>The application repository must be structured as shown below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">application</span> <span class="n">name</span><span class="o">&gt;/&lt;</span><span class="n">test</span> <span class="n">name</span><span class="o">&gt;/</span><span class="n">Scripts</span><span class="o">/</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">application</span> <span class="n">name</span><span class="o">&gt;/&lt;</span><span class="n">test</span> <span class="n">name</span><span class="o">&gt;/</span>
+                               <span class="n">Scripts</span><span class="o">/</span>
                                       <span class="o">/</span><span class="n">rgt_test_input</span><span class="o">.</span><span class="n">ini</span>
                                       <span class="o">/&lt;</span><span class="n">check</span> <span class="n">script</span><span class="o">&gt;</span>
                                       <span class="o">/&lt;</span><span class="n">report</span> <span class="n">script</span><span class="o">&gt;</span>
                                       <span class="o">/&lt;</span><span class="n">job</span> <span class="n">script</span> <span class="n">template</span><span class="o">&gt;</span>
+                               <span class="n">Source</span><span class="o">/</span> <span class="p">(</span><span class="n">optional</span><span class="p">)</span>
+                                     <span class="o">/&lt;</span><span class="n">an</span> <span class="n">alternate</span> <span class="n">build</span> <span class="n">script</span> <span class="n">just</span> <span class="k">for</span> <span class="n">this</span> <span class="n">test</span><span class="o">&gt;</span>
+                                     <span class="o">/&lt;</span><span class="n">a</span> <span class="n">modified</span> <span class="n">source</span> <span class="n">file</span><span class="o">&gt;</span>
 <span class="o">&lt;</span><span class="n">application</span> <span class="n">name</span><span class="o">&gt;/</span><span class="n">Source</span><span class="o">/</span>
                          <span class="o">/&lt;</span><span class="n">build</span> <span class="n">script</span><span class="o">&gt;</span>
                          <span class="o">/&lt;</span><span class="n">other</span> <span class="n">application</span> <span class="n">source</span> <span class="ow">and</span> <span class="n">build</span> <span class="n">files</span><span class="o">&gt;</span>
@@ -274,9 +279,11 @@ The test directory has a mandatory <em>Scripts</em> subdirectory,
 which should contain the test configuration file (see <a class="reference internal" href="#application-test-input"><span class="std std-ref">Application Test Input</span></a> below)
 and other required scripts (see <a class="reference internal" href="#required-application-test-scripts"><span class="std std-ref">Required Application Test Scripts</span></a> below).
 This directory contains templates and input files for the test – a test must not modify files in this directory.</p>
-<p>Second, the application’s source code and required build script should reside within the <em>Source</em> directory of the repository.</p>
-</div>
-<div class="section" id="example-repository-structure">
+<p>Second, the application’s source code and required build script should reside within the <em>Source</em> directory of the repository.
+Optionally, a test may add or override files from the application’s <em>Source</em> tree by providing a <em>Source</em> directory within the test directory.
+This directory will be overlayed over the application <em>Source</em> directory, so it may use the same internal directory structure.</p>
+</section>
+<section id="example-repository-structure">
 <h3>Example Repository Structure<a class="headerlink" href="#example-repository-structure" title="Permalink to this heading">¶</a></h3>
 <p>For instance, let’s assume we have a Git repository for an application called <em>hello_mpi</em>.</p>
 <p>To add a single node test and a two node test, we would create a separate subdirectory for each test, including their required <em>Scripts</em> subdirectory:</p>
@@ -285,10 +292,11 @@ This directory contains templates and input files for the test – a test must n
 <span class="w">         </span>/Source
 </pre></div>
 </div>
-<p>Note that the test names are not required to follow any specific naming convention, but you should avoid spaces and special characters in the names.</p>
-</div>
-</div>
-<div class="section" id="application-test-input">
+<p>Note that the test names are not required to follow any specific naming convention, but you should avoid spaces and special characters in the names.
+Since these tests are going to share the same source and build script, we are not going to create a <em>Source</em> subdirectory in either of the tests’ subdirectories.</p>
+</section>
+</section>
+<section id="application-test-input">
 <span id="id2"></span><h2>Application Test Input<a class="headerlink" href="#application-test-input" title="Permalink to this heading">¶</a></h2>
 <p>Each test’s <em>Scripts</em> directory should contain a test input file named <em>rgt_test_input.ini</em>.
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
@@ -340,8 +348,8 @@ See <a class="reference internal" href="#best-practices"><span class="std std-re
 <p>Setting a variable in the Replacements section to <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code> pulls in the value set by an environment variable.
 For example, if you set <code class="docutils literal notranslate"><span class="pre">nodes</span> <span class="pre">=</span> <span class="pre">&lt;obtain_from_environment&gt;</span></code> and set <em>RGT_NODES=4</em> in your environment, then <em>__nodes__</em> will be replaced with 4.</p>
 </div>
-</div>
-<div class="section" id="required-application-test-scripts">
+</section>
+<section id="required-application-test-scripts">
 <span id="id3"></span><h2>Required Application Test Scripts<a class="headerlink" href="#required-application-test-scripts" title="Permalink to this heading">¶</a></h2>
 <p>The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script, and (4) a reporting script.
 These scripts should be placed in the locations described in <a class="reference internal" href="#repository-structure"><span class="std std-ref">Repository structure</span></a>.
@@ -349,7 +357,7 @@ The build, check, and reporting scripts may also be set to Linux commands such a
 This is useful in cases where a script is not needed.
 For example, a test that relies on standard system-provided tools can set the build script to <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> to remove the need to have an empty build script.
 If the OTH cannot find the scripts specified by the test input file (<em>rgt_test_input.ini</em>), it will fail to launch.</p>
-<div class="section" id="build-script">
+<section id="build-script">
 <h3>Build Script<a class="headerlink" href="#build-script" title="Permalink to this heading">¶</a></h3>
 <p>The build script can be a shell script, a Python script, or other executable command.
 It is specified in the test input file as <em>build_cmd</em>, and the OTH will execute the provided value as a subprocess.
@@ -369,8 +377,8 @@ mpicc<span class="w"> </span>hello_mpi.c<span class="w"> </span>-o<span class="w
 <p>The build command be executed from the directory <strong>$BUILD_DIR</strong>, which is a copy of the contents of <em>Source/</em>.
 This means the build script should be written as if it were executed from <em>Source/</em>, regardless of where it actually is.</p>
 <p>Likewise, the path to the build script given by <em>build_cmd</em> in <em>rgt_test_input.ini</em> should be relative to the <em>Source/</em> directory.</p>
-</div>
-<div class="section" id="job-script-template">
+</section>
+<section id="job-script-template">
 <span id="id4"></span><h3>Job Script Template<a class="headerlink" href="#job-script-template" title="Permalink to this heading">¶</a></h3>
 <p>The OTH will generate the batch job script from the job script template by replacing keywords
 of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> with the values specified in the test input <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section.</p>
@@ -414,7 +422,8 @@ env<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep
 <span class="nb">cd</span><span class="w"> </span><span class="nv">$WORK_DIR</span>
 
 env<span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>job.environ
-scontrol<span class="w"> </span>show<span class="w"> </span>hostnames<span class="w"> </span>&gt;<span class="w"> </span>job.nodes
+scontrol<span class="w"> </span>show<span class="w"> </span>hostnames<span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>job.nodes
+ldd<span class="w"> </span><span class="nv">$BUILD_DIR</span>/bin/<span class="nv">$EXECUTABLE</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>ldd.log
 
 <span class="c1"># Run the executable.</span>
 log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>start
@@ -460,8 +469,8 @@ it can be be copied by adding the line</p>
 <p>The environment variable <strong>$EXECUTABLE</strong> is also populated based on <code class="docutils literal notranslate"><span class="pre">executable_path</span></code> entry in <em>rgt_test_input.ini</em> file.
 The executable may still be inside <strong>$BUILD_DIR</strong> from the previous step,
 so one would need to either copy it to <strong>$WORK_DIR</strong> or provide the absolute path in the job script such as <strong>$BUILD_DIR/$EXECUTABLE</strong>.</p>
-</div>
-<div class="section" id="check-script">
+</section>
+<section id="check-script">
 <h3>Check Script<a class="headerlink" href="#check-script" title="Permalink to this heading">¶</a></h3>
 <p>The check script can be a shell script, Python script, or other executable command.
 This must be an absolute path to a command (ie, <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> instead of <code class="docutils literal notranslate"><span class="pre">echo</span></code>).</p>
@@ -490,8 +499,8 @@ ls<span class="w"> </span>./*
 <span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="report-script">
+</section>
+<section id="report-script">
 <h3>Report Script<a class="headerlink" href="#report-script" title="Permalink to this heading">¶</a></h3>
 <p>Like the check script, the report script can be a shell script, Python script, or other executable command.
 Report scripts are generally used to compute performance metrics from the run.
@@ -503,9 +512,9 @@ The report script is launched from <strong>$RESULTS_DIR</strong> and stdout/stde
 In that event, report scripts often just <code class="docutils literal notranslate"><span class="pre">exit</span> <span class="pre">0</span></code>.
 An alternative to a no-op bash script, you may use <code class="docutils literal notranslate"><span class="pre">/usr/bin/echo</span></code> on most Linux systems.</p>
 </div>
-</div>
-</div>
-<div class="section" id="example-test-from-the-ground-up">
+</section>
+</section>
+<section id="example-test-from-the-ground-up">
 <h2>Example Test from the Ground Up<a class="headerlink" href="#example-test-from-the-ground-up" title="Permalink to this heading">¶</a></h2>
 <p>This section details the thought process when developing a new test from the ground up.
 In this section, we develop an application repository named <code class="docutils literal notranslate"><span class="pre">mpi-tests</span></code>, which contains two “Hello, World!” MPI tests at different node counts.
@@ -662,7 +671,7 @@ log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w">
 <span class="c1">#   1. for testing purposes, it&#39;s good to ensure that SLURM_NNODES is correct, since users will use that</span>
 <span class="c1">#   2. if you inadvertently set $RGT_SUBMIT_ARGS, using SLURM_NNODES will adapt to the size of the job</span>
 <span class="nb">set</span><span class="w"> </span>-x
-srun<span class="w"> </span>-N<span class="w"> </span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="w"> </span>-n<span class="w"> </span><span class="k">$((</span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="o">*</span><span class="nv">__ppn__</span><span class="k">))</span><span class="w"> </span>--ntasks-per-node<span class="o">=</span>__ppn__<span class="w"> </span><span class="nv">$BUILD_DIR</span>/<span class="nv">$EXECUTABLE</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>stdout.txt
+srun<span class="w"> </span>-N<span class="w"> </span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="w"> </span>-n<span class="w"> </span><span class="k">$((</span><span class="si">${</span><span class="nv">SLURM_NNODES</span><span class="si">}</span><span class="o">*</span>__ppn__<span class="k">))</span><span class="w"> </span>--ntasks-per-node<span class="o">=</span>__ppn__<span class="w"> </span><span class="nv">$BUILD_DIR</span>/<span class="nv">$EXECUTABLE</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>stdout.txt
 <span class="nb">set</span><span class="w"> </span>+x
 
 log_binary_execution_time.py<span class="w"> </span>--scriptsdir<span class="w"> </span><span class="nv">$SCRIPTS_DIR</span><span class="w"> </span>--uniqueid<span class="w"> </span><span class="nv">$HARNESS_ID</span><span class="w"> </span>--mode<span class="w"> </span>final
@@ -718,13 +727,13 @@ ln<span class="w"> </span>-s<span class="w"> </span>../../Source/Common_Scripts/
 </div>
 <p>To expand to a 2-node <em>Hello, World!</em> test, we can just copy the <em>Scripts</em> directory from the single-node test, then modify the <em>rgt_test_input.ini</em> to specify 2 nodes instead of 1.
 Everything else is generalized, so no modification is needed.</p>
-</div>
-<div class="section" id="best-practices">
+</section>
+<section id="best-practices">
 <span id="id5"></span><h2>Best Practices<a class="headerlink" href="#best-practices" title="Permalink to this heading">¶</a></h2>
 <p>The OTH is very flexible and gives the user a lot of power.
 That power can be diminished by poor test design.</p>
 <p>With that in mind, this section presents some of the best practices in test design.</p>
-<div class="section" id="use-a-centralized-script-to-set-up-the-environment">
+<section id="use-a-centralized-script-to-set-up-the-environment">
 <h3>Use a centralized script to set up the environment<a class="headerlink" href="#use-a-centralized-script-to-set-up-the-environment" title="Permalink to this heading">¶</a></h3>
 <p>During a test run, the environment is independently set up during the build and run stages.
 If the build script and job script each contain several <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span></code> statements, there is a chance that those can diverge.
@@ -732,8 +741,8 @@ To centralize where the environment is set to a single file, place a script cont
 and <code class="docutils literal notranslate"><span class="pre">source</span></code> that script from the build and job scripts.
 For the build script, this can be accomplished as simply <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">env.sh</span></code>, if the script is in the top level of the Source directory.
 For the job script, this can be accomplished by <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">$BUILD_DIR/env.sh</span></code>, if the <strong>$BUILD_DIR</strong> environment variable is defined as in the <a class="reference internal" href="#job-script-template"><span class="std std-ref">Job Script Template</span></a> section above.</p>
-</div>
-<div class="section" id="define-replacement-variables-instead-of-just-envvars">
+</section>
+<section id="define-replacement-variables-instead-of-just-envvars">
 <h3>Define replacement variables instead of just EnvVars<a class="headerlink" href="#define-replacement-variables-instead-of-just-envvars" title="Permalink to this heading">¶</a></h3>
 <p>In <strong>rgt_test_input.ini</strong>, it is recommended that if you define an environment variable in the <code class="docutils literal notranslate"><span class="pre">[EnvVars]</span></code> section,
 that you also define a replacement variable in <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> that is used in the job script to re-define that environment variable.
@@ -768,15 +777,15 @@ it may be best to define a replacement in the test input file that inherits the 
 </pre></div>
 </div>
 <p>The same feature cannot be used in the build script, which leads to the next best practice, checking for expected environment variables.</p>
-</div>
-<div class="section" id="check-for-expected-environment-variables">
+</section>
+<section id="check-for-expected-environment-variables">
 <h3>Check for expected environment variables<a class="headerlink" href="#check-for-expected-environment-variables" title="Permalink to this heading">¶</a></h3>
 <p>Following on the last best practice, if the harness or environment script define any environment variables required in the build and job scripts,
 the scripts should check that those are set and return an error if they are not.
 This increases the reusability of the scripts outside of the test harness and aids debugging.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>

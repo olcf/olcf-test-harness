@@ -19,8 +19,8 @@ This can be done in two ways: by obtaining your own copy of the code or using th
 Option 1: Using the centralized (pre-built) OTH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On Andes, Crusher, Frontier, and Summit
-"""""""""""""""""""""""""""""""""""""""
+On Andes and Frontier
+"""""""""""""""""""""
 
 On most OLCF machines, the code is already installed in: */sw/acceptance/olcf-test-harness*
 
@@ -31,7 +31,7 @@ Setup the environment:
     export OLCF_HARNESS_DIR=/sw/acceptance/olcf-test-harness
     module use $OLCF_HARNESS_DIR/modulefiles
     module load olcf_harness
-    # Machine name examples: andes, crusher, frontier, summit
+    # Machine name examples: andes, frontier, odo
     # Check ${OLCF_HARNESS_DIR}/configs/*.ini to see all available machines
     export OLCF_HARNESS_MACHINE=<machine_name>
 

@@ -26,11 +26,15 @@ The application repository must be structured as shown below:
 
 .. code-block::
 
-    <application name>/<test name>/Scripts/
+    <application name>/<test name>/
+                                   Scripts/
                                           /rgt_test_input.ini
                                           /<check script>
                                           /<report script>
                                           /<job script template>
+                                   Source/ (optional)
+                                         /<an alternate build script just for this test>
+                                         /<a modified source file>
     <application name>/Source/
                              /<build script>
                              /<other application source and build files>
@@ -44,6 +48,8 @@ and other required scripts (see :ref:`required-application-test-scripts` below).
 This directory contains templates and input files for the test -- a test must not modify files in this directory.
 
 Second, the application's source code and required build script should reside within the *Source* directory of the repository.
+Optionally, a test may add or override files from the application's *Source* tree by providing a *Source* directory within the test directory.
+This directory will be overlayed over the application *Source* directory, so it may use the same internal directory structure.
 
 Example Repository Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -59,6 +65,7 @@ To add a single node test and a two node test, we would create a separate subdir
              /Source
 
 Note that the test names are not required to follow any specific naming convention, but you should avoid spaces and special characters in the names.
+Since these tests are going to share the same source and build script, we are not going to create a *Source* subdirectory in either of the tests' subdirectories.
 
 .. _application-test-input:
 
@@ -207,7 +214,8 @@ An example SLURM template script for the *hello_mpi* application follows:
     cd $WORK_DIR
     
     env &> job.environ
-    scontrol show hostnames > job.nodes
+    scontrol show hostnames &> job.nodes
+    ldd $BUILD_DIR/bin/$EXECUTABLE &> ldd.log
     
     # Run the executable.
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start

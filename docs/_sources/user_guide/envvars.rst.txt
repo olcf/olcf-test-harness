@@ -89,6 +89,7 @@ These variables are detailed below:
     RGT_APP_SOURCE_DIR          Path to the 'Source' directory of the current application.
     RGT_TEST_BUILD_DIR          Path to the build directory of the currently-running test.
     RGT_TEST_RUNARCHIVE_DIR     Path to the run archive directory of the currently-running test.
+    RGT_TEST_SOURCE_DIR         Path to the source overlay directory of the currently-running test.
     RGT_TEST_SCRIPTS_DIR        Path to the scripts directory of the currently-running test.
     RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
     RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.

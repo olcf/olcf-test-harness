@@ -449,6 +449,7 @@ def test_harness_driver(argv=None):
         'TEST_SCRIPTS_DIR'    : testscripts,
         'TEST_BUILD_DIR'      : apptest.get_path_to_workspace_build(),
         'TEST_WORK_DIR'       : apptest.get_path_to_workspace_run(),
+        'TEST_SOURCE_DIR'     : apptest.get_path_to_test_source(),
         'TEST_STATUS_DIR'     : status_dir,
         'TEST_RUNARCHIVE_DIR' : ra_dir
     }

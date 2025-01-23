@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Extensions &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -110,7 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="launching.html">Quick-Start Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="launching.html#installation">Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="launching.html#option-1-using-the-centralized-pre-built-oth">Option 1: Using the centralized (pre-built) OTH</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-crusher-frontier-and-summit">On Andes, Crusher, Frontier, and Summit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="launching.html#on-andes-and-frontier">On Andes and Frontier</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="launching.html#option-2-using-your-own-copy-of-the-harness">Option 2: Using your own copy of the harness</a></li>
@@ -244,13 +245,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="extensions">
+  <section id="extensions">
 <h1>Extensions<a class="headerlink" href="#extensions" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <p>Optional extensions have been developed for use with the OLCF Test Harness (OTH).
 Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.</p>
-<div class="section" id="influxdb-event-logging">
+<section id="influxdb-event-logging">
 <h2>InfluxDB Event Logging<a class="headerlink" href="#influxdb-event-logging" title="Permalink to this heading">¶</a></h2>
 <p>The OTH leaves behind event information in files on the file system, with data like timestamp, filesystem paths for work, scratch and archive directories, test name, etc.
 This information can additionally be logged to an InfluxDB time-series database.
@@ -308,8 +309,8 @@ For <strong>submit_end</strong>, the OTH reads the <strong>submit.err</strong> f
 For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <strong>.o${job_id}</strong>, and reads the last 64 kB from that file.
 This file is not automatically created by the harness.
 For <strong>check_end</strong>, the OTH looks for a file named <strong>output_check.txt</strong>, which is automatically created by the harness to store output from the check script.</p>
-</div>
-<div class="section" id="logging-application-metrics-to-influxdb">
+</section>
+<section id="logging-application-metrics-to-influxdb">
 <h2>Logging application metrics to InfluxDB<a class="headerlink" href="#logging-application-metrics-to-influxdb" title="Permalink to this heading">¶</a></h2>
 <p>The OTH provides capability to log metrics from each test to InfluxDB.
 This extension is a great way to visualize performance of a certain test over time.
@@ -332,8 +333,8 @@ These events are logged as <strong>build_time</strong> and <strong>execution_tim
 If you’re interested only in <strong>build_time</strong> and <strong>execution_time</strong>, have your check script create a dummy <em>metrics.txt</em> file with a line like <code class="docutils literal notranslate"><span class="pre">dummy=1</span></code>.
 Note that the correct computation of <strong>execution_time</strong>  requires proper placement of the <em>log_binary_execution_time.py</em> calls in the job script,
 since <strong>execution_time</strong> is the difference in time between the two <em>log_binary_execution_time.py</em> calls.</p>
-</div>
-<div class="section" id="monitoring-the-health-of-individual-nodes">
+</section>
+<section id="monitoring-the-health-of-individual-nodes">
 <h2>Monitoring the health of individual nodes<a class="headerlink" href="#monitoring-the-health-of-individual-nodes" title="Permalink to this heading">¶</a></h2>
 <p>In many-node systems, it can be very difficult to monitor the health of each node.
 To address this, the OTH supports node-centric monitoring.
@@ -383,8 +384,8 @@ An example portion from this file may look like:</p>
 </pre></div>
 </div>
 <p>Then, when querying InfluxDB in this example, you may use <strong>cabinet</strong>, <strong>switch</strong>, and <strong>slot</strong> to filter records.</p>
-</div>
-<div class="section" id="check-alias">
+</section>
+<section id="check-alias">
 <h2>Check Alias<a class="headerlink" href="#check-alias" title="Permalink to this heading">¶</a></h2>
 <p>Check aliasing allows codes to provide an alpha-numeric explanation to the check script exit code.
 For example, the OTH uses a <strong>check_end</strong> event value of <code class="docutils literal notranslate"><span class="pre">1</span></code> to dictate a failure.
@@ -394,8 +395,8 @@ This simply supplies an alphabetic dimension to categorizing failures.</p>
 <strong>check_alias</strong> is set to the content of the first line of this file.
 This <strong>check_alias</strong> field is set in each event file, so InfluxDB is not required for this extension.
 <strong>check_alias</strong> is sent to InfluxDB alongside the standard event metadata, if InfluxDB is enabled.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
