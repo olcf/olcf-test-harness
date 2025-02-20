@@ -1,7 +1,7 @@
 # OLCF Test Harness (OTH)
 
 This repository hosts the source code and documentation of the OLCF Test Harness (OTH).
-The full OTH documentation can be found at [](https://olcf.github.io/olcf-test-harness),
+The full OTH documentation can be found [here](https://olcf.github.io/olcf-test-harness),
 or can be viewed locally by cloning this repository and launching a Python HTTP server in the `docs` directory:
 
 ```
