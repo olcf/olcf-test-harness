@@ -46,6 +46,11 @@ class SLURM(BaseScheduler):
         elif 'RGT_PROJECT_ID' in os.environ:
             qargs += " -A " + os.environ.get('RGT_PROJECT_ID')
 
+        # Fix issue #181 -- reset SHLVL to 1 every time we submit
+        # Since this is not an interactive session, SHLVL is functionally useless
+        if 'SHLVL' in os.environ:
+            os.environ['SHLVL'] = "1"
+
         qcommand = self.__submitCmd + " " + qargs + " " + batchfilename
         print(qcommand)
 
