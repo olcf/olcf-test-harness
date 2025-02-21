@@ -6,19 +6,19 @@ from .slurm import SLURM
 class SchedulerFactory:
 
     @staticmethod
-    def create_scheduler(scheduler_type):
-        print("Creating scheduler")
-
+    def create_scheduler(scheduler_type, logger=None):
         tmp_scheduler = None
         if scheduler_type == "LSF" or scheduler_type == "lsf":
-            tmp_scheduler = LSF()
+            tmp_scheduler = LSF(logger=logger)
         elif scheduler_type == "SLURM" or scheduler_type == "slurm":
-            tmp_scheduler = SLURM()
+            tmp_scheduler = SLURM(logger=logger)
         elif scheduler_type == "PBS" or scheduler_type == "pbs":
-            tmp_scheduler = PBS()
+            tmp_scheduler = PBS(logger=logger)
         else:
-            print("Scheduler not supported. Good bye!")
-
+            if logger:
+                logger.doCriticalLogging("Scheduler not supported. Good bye!")
+            else:
+                print("Scheduler not supported. Good bye!")
         return tmp_scheduler
 
     def __init__(self):
