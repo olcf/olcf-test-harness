@@ -1,5 +1,4 @@
 __all__ = [
-                'schedulers',
                 'rgt_utilities',
                 'rgt_job_info',
                 'layout_of_apps_directory',
