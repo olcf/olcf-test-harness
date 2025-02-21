@@ -6,7 +6,7 @@ from .slurm import SLURM
 class SchedulerFactory:
 
     @staticmethod
-    def create_scheduler(scheduler_type, logger=None):
+    def create_scheduler(scheduler_type, logger):
         tmp_scheduler = None
         if scheduler_type == "LSF" or scheduler_type == "lsf":
             tmp_scheduler = LSF(logger=logger)
@@ -15,10 +15,7 @@ class SchedulerFactory:
         elif scheduler_type == "PBS" or scheduler_type == "pbs":
             tmp_scheduler = PBS(logger=logger)
         else:
-            if logger:
-                logger.doCriticalLogging("Scheduler not supported. Good bye!")
-            else:
-                print("Scheduler not supported. Good bye!")
+            logger.doCriticalLogging("Scheduler not supported. Good bye!")
         return tmp_scheduler
 
     def __init__(self):
