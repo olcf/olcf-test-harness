@@ -831,7 +831,7 @@ def do_application_tasks(launch_id,
     # Returns [#Passed,#Failed]
     ret = [0, 0, []]
     for app_test in app_test_list:
-        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+        app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
         # Non-zero exit status is failure
         if app_test.doTasks(launchid=launch_id,
                          tasks=tasks,
