@@ -27,9 +27,3 @@ from ..machine_types.poe import Poe
 #my_scheduler = PBS()
 #print my_scheduler.get_scheduler_name()
 #my_scheduler.print_scheduler_info()
-#
-#my_job_launcher = Aprun()
-#my_job_launcher.print_jobLauncher_info()
-#
-#my_job_launcher = Poe()
-#my_job_launcher.print_jobLauncher_info()
