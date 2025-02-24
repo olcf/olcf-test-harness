@@ -242,7 +242,7 @@ The OTH also produces log files throughout the run using the Python ``logging`` 
 These log files default to the Python logging level of INFO, but will be changed to default if the ``--loglevel=DEBUG`` flag is provided on the command-line.
 The table below lists the available log files and what scope messages in each file is from, in relative chronological order.
 
-.. list-table:: Title
+.. list-table:: Harness-generated log files
    :widths: 50 25 80
    :header-rows: 1
 
