@@ -14,12 +14,14 @@ class rgt_config_file:
 
     def __init__(self,
                  configfilename=None,
-                 machinename=None):
+                 machinename=None,
+                 logger=None):
 
         self.__machine_vars = {}
         self.__repo_vars = {}
         self.__site_vars = {}
         self.__testshot_vars = {}
+        self.__logger = logger
 
         if machinename != None:
             self.__configFileName = machinename + ".ini"
@@ -45,7 +47,10 @@ class rgt_config_file:
 
     def __read_config_file(self):
         if os.path.isfile(self.__configFileName):
-            print(f'reading harness config {self.__configFileName}')
+            if not self.__logger:
+                print(f'reading harness config {self.__configFileName}')
+            else:
+                self.__logger.doInfoLogging(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)
 
@@ -81,12 +86,15 @@ class rgt_config_file:
         return self.__testshot_vars
 
     @staticmethod
-    def getDefaultConfigFile():
+    def getDefaultConfigFile(logger=None):
         """Returns the default config file name."""
         machinename = 'master'
         if 'OLCF_HARNESS_MACHINE' in os.environ:
             machinename = os.environ['OLCF_HARNESS_MACHINE']
         configfile = machinename + '.ini'
-        print('Using machine config:', configfile)
+        if not logger:
+            print(f'Using machine config: {configfile}')
+        else:
+            logger.doInfoLogging(f'Using machine config: {configfile}')
         return configfile
 
