@@ -32,7 +32,7 @@ class rgt_config_file:
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             ch.setFormatter(formatter)
             self.__logger.addHandler(ch)
-            self.__logger.info("Created a logger in rgt_input_file, since one was not provided.")
+            self.__logger.info("Created a logger in rgt_config_file, since one was not provided.")
 
         if machinename != None:
             self.__configFileName = machinename + ".ini"

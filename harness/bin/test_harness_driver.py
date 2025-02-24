@@ -313,6 +313,15 @@ def test_harness_driver(argv=None):
     else:
         Vargs = my_parser.parse_args(argv)
 
+    # Create a stdout-only logger for test_harness_driver.py
+    driver_logger = logging.getLogger('test_harness_driver_logger')
+    driver_logger.setLevel('DEBUG')
+    ch = logging.StreamHandler()
+    ch.setLevel(Vargs.loglevel)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    driver_logger.addHandler(ch)
+
     do_build = Vargs.build
     do_check = Vargs.check
     do_submit = Vargs.submit
@@ -344,7 +353,7 @@ def test_harness_driver(argv=None):
     }
 
     # Create a harness config (which sets harness env vars)
-    harness_cfg = rgt_config_file(configfilename=Vargs.configfile)
+    harness_cfg = rgt_config_file(configfilename=Vargs.configfile, logger=driver_logger)
 
     # Get the launch id for this test instance.
     launch_id = Vargs.launchid
@@ -361,11 +370,17 @@ def test_harness_driver(argv=None):
         if testshot_key in testshot_cfg.keys():
             testshot_str = testshot_cfg[testshot_key]
         launch_id = f'{testshot_str}/{user_str}@{time_str}'
+        driver_logger.info(f'Using launch id: {launch_id}')
+    else:
+        driver_logger.info(f'Generated launch id: {launch_id}')
 
     # Get the unique id for this test instance.
     unique_id = Vargs.uniqueid
     if unique_id == None:
         unique_id = rgt_utilities.unique_harness_id()
+        driver_logger.info(f'Generated unique id: {unique_id}')
+    else:
+        driver_logger.info(f'Using unique id: {unique_id}')
 
     # Make sure we are executing in app/test/Scripts
     testscripts = Vargs.scriptsdir
@@ -397,16 +412,6 @@ def test_harness_driver(argv=None):
                                           local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=unique_id)
-
-    if Vargs.launchid == launch_id:
-        apptest.logger.doInfoLogging(f'Using launch id: {launch_id}')
-    else:
-        apptest.logger.doInfoLogging(f'Generated launch id: {launch_id}')
-
-    if Vargs.uniqueid == unique_id:
-        apptest.logger.doInfoLogging(f'Using unique id: {unique_id}')
-    else:
-        apptest.logger.doInfoLogging(f'Generated unique id: {unique_id}')
 
     #
     # Check for the existence of the file "kill_test".
