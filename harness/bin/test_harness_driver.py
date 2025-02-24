@@ -372,15 +372,11 @@ def test_harness_driver(argv=None):
         if testshot_key in testshot_cfg.keys():
             testshot_str = testshot_cfg[testshot_key]
         launch_id = f'{testshot_str}/{user_str}@{time_str}'
-        print(f'Generated launch id: {launch_id}')
-    else:
-        print(f'Using launch id: {launch_id}')
 
     # Get the unique id for this test instance.
     unique_id = Vargs.uniqueid
     if unique_id == None:
         unique_id = rgt_utilities.unique_harness_id()
-        print(f'Generated test unique id: {unique_id}')
 
     # Make sure we are executing in app/test/Scripts
     testscripts = Vargs.scriptsdir
@@ -400,7 +396,6 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    #print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -413,8 +408,16 @@ def test_harness_driver(argv=None):
                                           local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=unique_id)
-    message = "The length of sys.path is " + str(len(sys.path))
-    apptest.logger.doInfoLogging(message)
+
+    if Vargs.launchid == launch_id:
+        apptest.logger.doInfoLogging(f'Using launch id: {launch_id}')
+    else:
+        apptest.logger.doInfoLogging(f'Generated launch id: {launch_id}')
+
+    if Vargs.uniqueid == unique_id:
+        apptest.logger.doInfoLogging(f'Using unique id: {unique_id}')
+    else:
+        apptest.logger.doInfoLogging(f'Generated unique id: {unique_id}')
 
     #
     # Check for the existence of the file "kill_test".
@@ -466,7 +469,6 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    #print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     sfile_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
