@@ -202,10 +202,10 @@ class RgtTest():
         return self.__builtin_params
 
     def print_user_parameters(self):
-        print("RGT Test Parameters - User")
-        print("==========================")
+        self.__logger.doErrorLogging("RGT Test Parameters - User")
+        self.__logger.doErrorLogging("==========================")
         for (k,v) in (self.user_parameters).items():
-            print(k,"=",v)
+            self.__logger.doErrorLogging(f'{k}={v}')
 
     # Methods to manage runtime environment commands
     @property
@@ -597,10 +597,10 @@ class RgtTest():
             exit(1)
 
     def _print_builtin_parameters(self):
-        print("RGT Test Parameters - Builtin")
-        print("=============================")
+        self.__logger.doErrorLogging("RGT Test Parameters - Builtin")
+        self.__logger.doErrorLogging("=============================")
         for (k,v) in (self.builtin_parameters).items():
-            print(k,"=",v)
+            self.__logger.doErrorLogging(f'{k}={v}')
 
     def _set_user_param(self, key, val):
         self.__user_params[key] = val
