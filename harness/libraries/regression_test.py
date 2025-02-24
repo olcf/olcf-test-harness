@@ -54,7 +54,6 @@ class Harness:
         self.__apptests_dict = collections.OrderedDict()
         self.__app_subtests = []
         self.__log_level = log_level
-        self.__myLogger = None
         self.__stdout_stderr = stdout_stderr
         self.__num_workers = 1
         self.__use_fireworks = use_fireworks
@@ -85,9 +84,9 @@ class Harness:
         # Define a logger that streams to file.
         logger_name=Harness.LOGGER_NAME
         fh_filepath="./harness_log_files" + "." + self.__timestamp + "/" + Harness.LOGGER_NAME + "." + self.__timestamp + ".txt"
-        logger_threshold = "NOTSET"
+        logger_threshold = "DEBUG"
         # Log file always has a consistent log level. Console log level changes
-        fh_threshold_log_level = "INFO"
+        fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
         ch_threshold_log_level = self.__log_level
         self.__myLogger = rgt_logger_factory.create_rgt_logger(
                                      logger_name=logger_name,
@@ -95,6 +94,7 @@ class Harness:
                                      logger_threshold_log_level=logger_threshold,
                                      fh_threshold_log_level=fh_threshold_log_level,
                                      ch_threshold_log_level=ch_threshold_log_level)
+
     def __str__(self):
         message = ( "\n Local path to tests: " + self.__local_path_to_tests  + "\n"
                     "Tests: " + str(self.__tests) + "\n"
@@ -238,9 +238,9 @@ class Harness:
 
                 logger_name = appname + "." + testname + "." + self.__timestamp
                 fh_filepath = "harness_log_files" + "." + self.__timestamp + "/" + appname + "/" + appname + "__" + testname +  ".logfile.txt"
-                logger_threshold = "NOTSET"
+                logger_threshold = "DEBUG"
                 # Log file always has a consistent log level. Console log level changes
-                fh_threshold_log_level = "INFO"
+                fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
                 ch_threshold_log_level = self.__log_level
                 a_logger = rgt_logger_factory.create_rgt_logger(logger_name=logger_name,
                                       fh_filepath=fh_filepath,
@@ -278,10 +278,10 @@ class Harness:
                 # Check if an exception has been raised
                 my_future_exception = my_future.exception()
                 if my_future_exception:
-                    message = "Application {} future exception:\n{}".format(appname, my_future_exception)
+                    message = "Application {} exception encountered:\n{}".format(appname, my_future_exception)
                     self.__myLogger.doCriticalLogging(message)
                 else:
-                    message = "Application {} future is completed.".format(appname)
+                    message = "Application {} is launched.".format(appname)
                     self.__myLogger.doInfoLogging(message)
 
                 subtest_result = my_future.result()
@@ -290,14 +290,13 @@ class Harness:
                 if self.__failed_tests:
                     self.__failed_test_list.extend(subtest_result[2])
 
-            message = "All applications completed futures. Yahoo!!"
+            message = "All applications are launched. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
-            # For the moment, hard-code this as a print statement.
-            print(f"Launched {self.__launched_tests} tests, failed to launch {self.__failed_tests} tests.")
+            self.__myLogger.doCriticalLogging(f"Launched {self.__launched_tests} tests, failed to launch {self.__failed_tests} tests.")
             if self.__failed_tests:
-                print("Failed tests:")
+                self.__myLogger.doErrorLogging("Failed tests:")
                 for t in self.__failed_test_list:
-                    print(f"\t{t}")
+                    self.__myLogger.doErrorLogging(f"\t{t}")
 
         return
 
