@@ -50,7 +50,7 @@ class rgt_config_file:
             if not self.__logger:
                 print(f'reading harness config {self.__configFileName}')
             else:
-                self.__logger.doInfoLogging(f'reading harness config {self.__configFileName}')
+                self.__logger.info(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)
 
@@ -95,6 +95,6 @@ class rgt_config_file:
         if not logger:
             print(f'Using machine config: {configfile}')
         else:
-            logger.doInfoLogging(f'Using machine config: {configfile}')
+            logger.info(f'Using machine config: {configfile}')
         return configfile
 
