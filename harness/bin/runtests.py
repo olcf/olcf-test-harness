@@ -406,7 +406,11 @@ def runtests(my_arg_string=None):
         return
     
     main_logger.info("Reading the harness config file.")
-    config = rgt_config_file(configfilename=harness_arguments.configfile)
+    try:
+        config = rgt_config_file(configfilename=harness_arguments.configfile, logger=main_logger)
+    except NameError as e:
+        main_logger.critical(f"Could not find Harness config file: {harness_arguments.configfile}.")
+        exit(1)
     main_logger.info("Completed reading the harness config file.")
 
     # Create and run the harness
