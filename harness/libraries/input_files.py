@@ -4,6 +4,7 @@
 import string
 import os
 import configparser
+import logging
 
 # My harness package imports
 from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE

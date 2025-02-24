@@ -38,17 +38,6 @@ from libraries.rgt_loggers import rgt_logger_factory
 from machine_types.machine_factory import MachineFactory
 from machine_types.base_machine import SetBuildRTEError
 
-DEFAULT_CONFIGURE_FILE = rgt_config_file.getDefaultConfigFile()
-"""
-The default configuration filename.
-
-The configuration file contains the machine settings, number of CPUs
-per node, etc., for the machine the harness is being run on. Each machine
-has a default configuration file that will be used unless another
-configuration is specified by the command line or input file.
-
-"""
-
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
 """str : The logging level for this module. """
 
@@ -68,7 +57,7 @@ def get_logger_name():
     """Returns the logger name for this module."""
     return MODULE_LOGGER_NAME
 
-def create_parser():
+def create_parser(logger=None):
     my_parser = argparse.ArgumentParser(description="Application Test Driver",
                                         allow_abbrev=False)
     my_parser.add_argument('-b', '--build',
@@ -82,7 +71,7 @@ def create_parser():
                            action='store_true')
     my_parser.add_argument('-C', '--configfile',
                            required=False,
-                           default=DEFAULT_CONFIGURE_FILE,
+                           default=rgt_config_file.getDefaultConfigFile(logger=logger),
                            type=str,
                            help="Configuration file name (default: %(default)s)")
     my_parser.add_argument('-d', '--scriptsdir',

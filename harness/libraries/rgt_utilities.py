@@ -68,12 +68,15 @@ def try_symlink(target, link_name):
 ########################################################################
 # Set environment variables that control harness behavior.
 ########################################################################
-def set_harness_environment(env_vars, override=False):
+def set_harness_environment(env_vars, override=False, logger=None):
     for k in env_vars:
         envk = rgt_variable_name_modification(k)
         v = env_vars[k]
         if envk in os.environ and not override:
-            print(envk + " is already set. Skipping.")
+            if not logger:
+                print(envk + " is already set. Skipping.")
+            else:
+                logger.info(envk + " is already set. Skipping.")
         else:
             os.environ[envk] = v
 
