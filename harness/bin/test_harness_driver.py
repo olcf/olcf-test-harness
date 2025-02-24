@@ -414,7 +414,7 @@ def test_harness_driver(argv=None):
                                           logger=a_logger,
                                           tag=unique_id)
     message = "The length of sys.path is " + str(len(sys.path))
-    apptest.doInfoLogging(message)
+    apptest.logger.doInfoLogging(message)
 
     #
     # Check for the existence of the file "kill_test".
@@ -427,7 +427,7 @@ def test_harness_driver(argv=None):
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
-            apptest.doCriticalLogging(message)
+            apptest.logger.doCriticalLogging(message)
             runarchive_dir = apptest.get_path_to_runarchive()
             logging.shutdown()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
@@ -502,22 +502,22 @@ def test_harness_driver(argv=None):
     build_exit_value = 0
     if actions['build']:
         build_exit_value = exit_values['build']
-        apptest.doInfoLogging(f'build exit value = {build_exit_value}')
+        apptest.logger.doInfoLogging(f'build exit value = {build_exit_value}')
 
     submit_exit_value = 0
     if actions['submit']:
         submit_exit_value = exit_values['submit']
-        apptest.doInfoLogging(f'submit exit value = {submit_exit_value}')
+        apptest.logger.doInfoLogging(f'submit exit value = {submit_exit_value}')
 
     run_exit_value = 0
     if actions['run']:
         run_exit_value = exit_values['run']
-        apptest.doInfoLogging(f'run exit value = {run_exit_value}')
+        apptest.logger.doInfoLogging(f'run exit value = {run_exit_value}')
 
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
-        apptest.doInfoLogging(f'check exit value = {check_exit_value}')
+        apptest.logger.doInfoLogging(f'check exit value = {check_exit_value}')
 
         # Now read the result from the job_status.txt file.
         jspath = os.path.join(status_dir, layout.job_status_filename)
