@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Git Unit Test Framework &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -243,13 +242,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="git-unit-test-framework">
+  <div class="section" id="git-unit-test-framework">
 <h1>Git Unit Test Framework<a class="headerlink" href="#git-unit-test-framework" title="Permalink to this heading">¶</a></h1>
 <p>The Harness unit testing framework uses Python’s pytest module
 to implement the unit tests, and GitLab’s CI/CD service to run
 the tests. The unit tests can also be ran without GitLabs CI/CD
 service.</p>
-<section id="organizational-structure">
+<div class="section" id="organizational-structure">
 <h2>Organizational Structure<a class="headerlink" href="#organizational-structure" title="Permalink to this heading">¶</a></h2>
 <p>The source for the Harness unit tests are located in directory
 <em>olcf-test-harness/ci_testing_utilities</em>. The main driver scripts to run the
@@ -285,10 +284,10 @@ generic and machine specific tests.</p>
     `-- GenericMachine-GenericConfigTag.unit_tests.lua
 </pre></div>
 </div>
-</section>
-<section id="setting-up-the-harness-unit-testing-runtime-environment">
+</div>
+<div class="section" id="setting-up-the-harness-unit-testing-runtime-environment">
 <h2>Setting Up the Harness Unit Testing Runtime Environment<a class="headerlink" href="#setting-up-the-harness-unit-testing-runtime-environment" title="Permalink to this heading">¶</a></h2>
-<section id="generic-tests">
+<div class="section" id="generic-tests">
 <h3>Generic Tests<a class="headerlink" href="#generic-tests" title="Permalink to this heading">¶</a></h3>
 <p>To set up the runtime environment to run the generic
 Harness unit tests, within directory <em>olcf-test-harness</em>
@@ -298,8 +297,8 @@ one needs to do following commands:</p>
 <p><strong>module \-\-ignore-cache use modulefiles</strong></p>
 <p><strong>module load olcf_harness</strong></p>
 </div></blockquote>
-</section>
-<section id="machine-specific-tests">
+</div>
+<div class="section" id="machine-specific-tests">
 <h3>Machine Specific Tests<a class="headerlink" href="#machine-specific-tests" title="Permalink to this heading">¶</a></h3>
 <p>To set up the runtime environment to run the machine specific
 Harness unit tests, within directory <em>olcf-test-harness</em>
@@ -311,18 +310,18 @@ one needs to do following commands:</p>
 <p><strong>export HUT_MACHINE_NAME &lt;The machine name&gt;</strong></p>
 <p><strong>export HUT_CONFIG_TAG &lt;The config tag for the machine&gt;</strong></p>
 </div></blockquote>
-</section>
-</section>
-<section id="running-the-harness-unit-tests">
+</div>
+</div>
+<div class="section" id="running-the-harness-unit-tests">
 <h2>Running the Harness Unit Tests<a class="headerlink" href="#running-the-harness-unit-tests" title="Permalink to this heading">¶</a></h2>
-<section id="id1">
+<div class="section" id="id1">
 <h3>Generic Tests<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
 <p>To run the generic unit tests run the command:</p>
 <blockquote>
 <div><p><strong>run_generic_unit_tests.py</strong></p>
 </div></blockquote>
-</section>
-<section id="id2">
+</div>
+<div class="section" id="id2">
 <h3>Machine Specific Tests<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
 <p>To run the machine specific unit tests, appropiately define the environmental
 variables <em>HUT_MACHINE_NAME</em> and <em>HUT_CONFIG_TAG</em>, then run the command:</p>
@@ -330,9 +329,9 @@ variables <em>HUT_MACHINE_NAME</em> and <em>HUT_CONFIG_TAG</em>, then run the co
 <div><p><strong>run_machine_specific_unit_tests.py</strong></p>
 </div></blockquote>
 <p>See ?? for a list of machine names and config tags.</p>
-</section>
-</section>
-<section id="harness-unit-testing-api">
+</div>
+</div>
+<div class="section" id="harness-unit-testing-api">
 <h2>Harness Unit Testing API<a class="headerlink" href="#harness-unit-testing-api" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
@@ -340,8 +339,8 @@ variables <em>HUT_MACHINE_NAME</em> and <em>HUT_CONFIG_TAG</em>, then run the co
 <li class="toctree-l1"><a class="reference internal" href="unit_test_framework/pytest_test_framework.html">Usage and Developer Documentation for Harness’ pytest Unit Tests</a></li>
 </ul>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>
