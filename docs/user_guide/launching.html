@@ -438,9 +438,45 @@ The build, submit, and check stages have pre-defined locations for the output:</
 </section>
 <section id="harness-maintained-log-files">
 <h3>Harness-maintained Log Files<a class="headerlink" href="#harness-maintained-log-files" title="Permalink to this heading">¶</a></h3>
-<p>The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
-These log files can be used to check internal error messages reported by extensions of the OTH such as database event and metric logging.
-These log files are found in <strong>${RESULTS_DIR}/LogFiles</strong>.</p>
+<p>The OTH also produces log files throughout the run using the Python <code class="docutils literal notranslate"><span class="pre">logging</span></code> module, containing messages from the harness with data useful for debugging failed tests.
+These log files default to the Python logging level of INFO, but will be changed to default if the <code class="docutils literal notranslate"><span class="pre">--loglevel=DEBUG</span></code> flag is provided on the command-line.
+The table below lists the available log files and what scope messages in each file is from, in relative chronological order.</p>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Harness-generated log files</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 16%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Directory</p></th>
+<th class="head"><p>Logfile name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>&lt;launch_directory&gt;</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">main.log</span></code></p></td>
+<td><p>The highest-level execution information. For example, “Completed reading the harness input file.” This scope ends when the <code class="docutils literal notranslate"><span class="pre">runtests.py</span></code> command returns.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>&lt;launch_directory&gt;/harness_log_files.&lt;timestamp&gt;</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">libraries.regression_test.&lt;timestamp&gt;.txt</span></code></p></td>
+<td><p>High-level logging messages while preparing tests. For example, “Application Hello, World! has completed launching.” This scope ends when the <code class="docutils literal notranslate"><span class="pre">runtests.py</span></code> command returns.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>&lt;launch_directory&gt;/harness_log_files.&lt;timestamp&gt;/&lt;app&gt;</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;app&gt;__&lt;test&gt;.logfile.txt</span></code></p></td>
+<td><p>A brief scope between the regression_test log-file and the log files located inside the test’s results directory. This scope ends when the <code class="docutils literal notranslate"><span class="pre">runtests.py</span></code> command returns.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>${RESULTS_DIR}/LogFiles</strong></p></td>
+<td><p>application_logfile.txt</p></td>
+<td><p>The majority of log messages generated while building, submitting, running, and checking a test.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>${RESULTS_DIR}/LogFiles</strong></p></td>
+<td><p>status_logfile.txt</p></td>
+<td><p>Log messages generated at various checkpoints during the lifetime of a test such as <code class="docutils literal notranslate"><span class="pre">build_end</span></code> <code class="docutils literal notranslate"><span class="pre">binary_execute_start</span></code> and <code class="docutils literal notranslate"><span class="pre">check_end</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 </section>
 </section>
