@@ -250,6 +250,8 @@ def auto_generated_scripts(harness_config,
                     message = f"{messloc} Submit error, failed to retrieve the job id."
                     a_logger.doCriticalLogging(message)
                     submit_exit_value = 1
+        else:
+            submit_exit_value = 1
 
     run_exit_value = 0
     if actions['run']:
