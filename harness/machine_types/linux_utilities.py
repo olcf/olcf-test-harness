@@ -90,7 +90,7 @@ def make_batch_script_for_linux(a_machine):
             templatelines = templatefileobj.readlines()
     except OSError as err:
         bstatus = False
-        message = ( f"{messloc} Error opening bath template file '{batch_template_file}' for reading."
+        message = ( f"{messloc} Error opening batch template file '{batch_template_file}' for reading."
                     f"Handling error: {err}\n" )
         a_machine.logger.doCriticalLogging(message)
     
@@ -111,7 +111,7 @@ def make_batch_script_for_linux(a_machine):
                     batch_job.write(record)
         except OSError as err:
             bstatus = False
-            message = ( f"{messloc} Error opening bath template file '{batch_file_path}' for writing.\n"
+            message = ( f"{messloc} Error opening batch template file '{batch_file_path}' for writing.\n"
                         f"Handling error: {err}\n" )
             a_machine.logger.doCriticalLogging(message)
 
