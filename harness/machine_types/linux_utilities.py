@@ -70,7 +70,6 @@ def make_batch_script_for_linux(a_machine):
     function_name = inspect.getframeinfo(frame).function
 
     # Log that our execution location.
-    messloc = "In function {functionname}:".format(functionname=function_name ) 
     message = "Making batch script for {} using file {}.".format(a_machine.machine_name,a_machine.get_scheduler_template_file_name())
     a_machine.logger.doInfoLogging(message)
 
@@ -81,7 +80,7 @@ def make_batch_script_for_linux(a_machine):
     batch_file_path = os.path.join(a_machine.apptest.get_path_to_runarchive(),
                                    a_machine.test_config.get_batch_file())
 
-    message = f"{messloc} The batch scheduler template file is {batch_template_file}."
+    message = f"The batch scheduler template file is {batch_template_file}."
     a_machine.logger.doInfoLogging(message)
     
     # Get batch job template lines
@@ -90,12 +89,12 @@ def make_batch_script_for_linux(a_machine):
             templatelines = templatefileobj.readlines()
     except OSError as err:
         bstatus = False
-        message = ( f"{messloc} Error opening bath template file '{batch_template_file}' for reading."
+        message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
                     f"Handling error: {err}\n" )
         a_machine.logger.doCriticalLogging(message)
     
     if bstatus:
-        message = f"{messloc} Completed reading lines of the batch template file {batch_template_file}."
+        message = f"Completed reading lines of the batch template file {batch_template_file}."
         a_machine.logger.doInfoLogging(message)
 
         # Create test batch job script in run archive directory
@@ -111,11 +110,11 @@ def make_batch_script_for_linux(a_machine):
                     batch_job.write(record)
         except OSError as err:
             bstatus = False
-            message = ( f"{messloc} Error opening bath template file '{batch_file_path}' for writing.\n"
+            message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
                         f"Handling error: {err}\n" )
             a_machine.logger.doCriticalLogging(message)
 
-        message = f"{messloc} Completed regex substitutions."
+        message = f"Completed regex substitutions."
         a_machine.logger.doInfoLogging(message)
 
     return bstatus

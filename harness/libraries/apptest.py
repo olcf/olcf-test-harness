@@ -547,6 +547,7 @@ class subtest(base_apptest, apptest_layout):
                         "The exit return value is {value}\n.").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
             self.logger.doCriticalLogging(message)
 
+
             string1 = "Command failed: " + starttestcomand
             return 1
         else:
