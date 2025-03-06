@@ -8,6 +8,7 @@ This module implements the logging capability of the harness.
 import logging
 import time
 import os
+import inspect
 
 class rgt_logger:
 
@@ -73,29 +74,39 @@ class rgt_logger:
     def get_ch_threshold_level(self):
         return self.__ch_threshold_level
 
+    def getLocation(self, message):
+        loc=""
+        if message != "" and self.get_logger_threshold_level() == "DEBUG":
+            stack = inspect.stack()
+            i = 2
+            while stack[i][3] == stack[1][3] and i < len(stack):
+                i += 1
+            loc = "In function " + stack[i][3] + ": " + message
+        return loc
+
     def doDebugLogging(self,
                       message):
-        self.__myLogger.debug(message)
+        self.__myLogger.debug(self.getLocation(message))
         return
 
     def doInfoLogging(self,
                       message):
-        self.__myLogger.info(message)
+        self.__myLogger.info(self.getLocation(message))
         return
 
     def doWarningLogging(self,
                          message):
-        self.__myLogger.warning(message)
+        self.__myLogger.warning(self.getLocation(message))
         return
 
     def doErrorLogging(self,
                        message):
-        self.__myLogger.error(message)
+        self.__myLogger.error(self.getLocation(message))
         return
 
     def doCriticalLogging(self,
                           message):
-        self.__myLogger.critical(message)
+        self.__myLogger.critical(self.getLocation(message))
 
     # Private methods
     def _add_file_handler(self):
