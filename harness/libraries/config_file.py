@@ -1,6 +1,7 @@
 import string
 import os
 import configparser
+import logging
 
 from rgt_utilities import set_harness_environment
 
@@ -14,18 +15,30 @@ class rgt_config_file:
 
     def __init__(self,
                  configfilename=None,
-                 machinename=None):
+                 machinename=None,
+                 logger=None):
 
         self.__machine_vars = {}
         self.__repo_vars = {}
         self.__site_vars = {}
         self.__testshot_vars = {}
+        self.__logger = logger
+
+        if not logger:
+            self.__logger = logging.getLogger('rgt_config_file_logger')
+            self.__logger.setLevel('DEBUG')
+            ch = logging.StreamHandler()
+            ch.setLevel('DEBUG')
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            ch.setFormatter(formatter)
+            self.__logger.addHandler(ch)
+            self.__logger.info("Created a logger in rgt_config_file, since one was not provided.")
 
         if machinename != None:
             self.__configFileName = machinename + ".ini"
         else:
             if configfilename == None:
-                configfilename = self.getDefaultConfigFile()
+                configfilename = self.getDefaultConfigFile(logger=logger)
             self.__configFileName = configfilename
 
         base_filename = os.path.basename(self.__configFileName)
@@ -45,23 +58,23 @@ class rgt_config_file:
 
     def __read_config_file(self):
         if os.path.isfile(self.__configFileName):
-            print(f'reading harness config {self.__configFileName}')
+            self.__logger.info(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)
 
             self.__machine_vars = master_cfg[rgt_config_file.machine_section]
-            set_harness_environment(self.__machine_vars)
+            set_harness_environment(self.__machine_vars, logger=self.__logger)
 
             self.__repo_vars = master_cfg[rgt_config_file.repository_section]
-            set_harness_environment(self.__repo_vars)
+            set_harness_environment(self.__repo_vars, logger=self.__logger)
 
             # Site-cutom configuration section is optional
             if master_cfg.has_section(rgt_config_file.site_section):
                 self.__site_vars = master_cfg[rgt_config_file.site_section]
-                set_harness_environment(self.__site_vars)
+                set_harness_environment(self.__site_vars, logger=self.__logger)
 
             self.__testshot_vars = master_cfg[rgt_config_file.testshot_section]
-            set_harness_environment(self.__testshot_vars)
+            set_harness_environment(self.__testshot_vars, logger=self.__logger)
         else:
             raise NameError("Harness config file not found: %s" % self.__configFileName)
 
@@ -81,12 +94,15 @@ class rgt_config_file:
         return self.__testshot_vars
 
     @staticmethod
-    def getDefaultConfigFile():
+    def getDefaultConfigFile(logger=None):
         """Returns the default config file name."""
         machinename = 'master'
         if 'OLCF_HARNESS_MACHINE' in os.environ:
             machinename = os.environ['OLCF_HARNESS_MACHINE']
         configfile = machinename + '.ini'
-        print('Using machine config:', configfile)
+        if not logger:
+            print(f'Using machine config: {configfile}')
+        else:
+            logger.info(f'Using machine config: {configfile}')
         return configfile
 

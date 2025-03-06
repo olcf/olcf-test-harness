@@ -202,10 +202,10 @@ class RgtTest():
         return self.__builtin_params
 
     def print_user_parameters(self):
-        print("RGT Test Parameters - User")
-        print("==========================")
+        self.__logger.doErrorLogging("RGT Test Parameters - User")
+        self.__logger.doErrorLogging("==========================")
         for (k,v) in (self.user_parameters).items():
-            print(k,"=",v)
+            self.__logger.doErrorLogging(f'{k}={v}')
 
     # Methods to manage runtime environment commands
     @property
@@ -321,7 +321,7 @@ class RgtTest():
                 self._harness_params[key] = value 
             else:
                 # TODO: Throw an exception if an invalid key,value is assigned.
-                print("No key found for", key)
+                self.__logger.doCriticalLogging("No key found for", key)
 
     def get_test_replacements(self):
         """Returns a dictionary of key word replacements.
@@ -467,7 +467,7 @@ class RgtTest():
             return True
         else:
             if warn:
-                print("WARNING: Ignoring invalid built-in parameter key {}".format(key))
+                self.__logger.doWarningLogging("WARNING: Ignoring invalid built-in parameter key {}".format(key))
             return False
 
     def _is_rte_param(self,key):
@@ -486,7 +486,7 @@ class RgtTest():
         rgt_test_config.read(self.test_input_filename)
 
         if not 'Replacements' in rgt_test_config:
-            print("ERROR: missing [Replacements] section in test input")
+            self.__logger.doCriticalLogging("Missing [Replacements] section in test input")
             replace = dict()
         else:
             replace = rgt_test_config['Replacements']
@@ -597,10 +597,10 @@ class RgtTest():
             exit(1)
 
     def _print_builtin_parameters(self):
-        print("RGT Test Parameters - Builtin")
-        print("=============================")
+        self.__logger.doErrorLogging("RGT Test Parameters - Builtin")
+        self.__logger.doErrorLogging("=============================")
         for (k,v) in (self.builtin_parameters).items():
-            print(k,"=",v)
+            self.__logger.doErrorLogging(f'{k}={v}')
 
     def _set_user_param(self, key, val):
         self.__user_params[key] = val

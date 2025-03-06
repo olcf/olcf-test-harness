@@ -15,7 +15,7 @@ class LSF(BaseScheduler):
 
     """ LSF class represents an LSF scheduler. """
 
-    def __init__(self):
+    def __init__(self, logger):
         self.__name = 'LSF'
         self.__submitCmd = 'bsub'
         self.__statusCmd = 'bjobs'
@@ -24,13 +24,14 @@ class LSF(BaseScheduler):
         self.__numTasksOpt = '-n'
         self.__jobNameOpt = '-N'
         self.__templateFile = 'lsf.template.x'
+        self.__logger = logger
         BaseScheduler.__init__(self, self.__name,
                                self.__submitCmd, self.__statusCmd, self.__deleteCmd,
                                self.__walltimeOpt, self.__numTasksOpt, self.__jobNameOpt,
                                self.__templateFile)
 
     def submit_job(self, batchfilename):
-        print("Submitting job from LSF class using batchfilename " + batchfilename)
+        self.__logger.doInfoLogging(f"Submitting job from LSF class using batchfilename {batchfilename}")
 
         qargs = ""
         if 'RGT_SUBMIT_QUEUE' in os.environ:
@@ -47,7 +48,7 @@ class LSF(BaseScheduler):
             qargs += " -P " + os.environ.get('RGT_PROJECT_ID')
 
         qcommand = self.__submitCmd + " " + qargs + " " + batchfilename
-        print(qcommand)
+        self.__logger.doInfoLogging(f"{qcommand}")
 
         args = shlex.split(qcommand)
         temp_stdout = "submit.out"
@@ -75,20 +76,20 @@ class LSF(BaseScheduler):
             jobid_pattern = re.compile('\d+')
             jobid = jobid_pattern.findall(records[0])[0]
             self.set_job_id(jobid)
-            print("LSF jobID = ",self.get_job_id())
+            self.__logger.doErrorLogging(f"LSF jobID = {self.get_job_id()}")
         else:
             with open(temp_stderr,"r") as submit_stderr:
-                print(submit_stderr.read())
+                self.__logger.doCriticalLogging(f"{submit_stderr.read()}")
 
         return p.returncode
 
     def set_job_id_from_environ(self):
-        print("Setting job id from environment in LSF class")
+        self.__logger.doInfoLogging("Setting job id from environment in LSF class")
         jobvar = 'LSB_JOBID'
         if jobvar in os.environ:
             self.set_job_id(os.environ[jobvar])
         else:
-            print(f'{jobvar} not set in environment!')
+            self.__logger.doErrorLogging(f'{jobvar} not set in environment!')
         return
 
 if __name__ == '__main__':

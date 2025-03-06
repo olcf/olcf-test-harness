@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Environment Variables &mdash; NCCS_Test_Harness 1.0 documentation</title>
@@ -245,7 +244,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="environment-variables">
+  <div class="section" id="environment-variables">
 <h1>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
@@ -258,7 +257,7 @@ These environment variables are detailed below.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.ini</span></code> file can contain user-defined environment variables (such as <code class="docutils literal notranslate"><span class="pre">mpi_version</span></code>, which sets <code class="docutils literal notranslate"><span class="pre">RGT_MPI_VERSION</span></code> in the environment).
 The only variables covered in this section are those ingested by the core harness code.</p>
 </div>
-<section id="configuration-variables">
+<div class="section" id="configuration-variables">
 <span id="env-vars-config"></span><h2>Configuration Variables<a class="headerlink" href="#configuration-variables" title="Permalink to this heading">¶</a></h2>
 <p>There are many variables required to parameterize the OTH behavior.
 All but ONE of these can have default values provided through the <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;ini</span></code> file,
@@ -311,8 +310,8 @@ RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work 
 RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file &amp; database logging.
 </pre></div>
 </div>
-</section>
-<section id="run-time-variables">
+</div>
+<div class="section" id="run-time-variables">
 <span id="env-vars-run"></span><h2>Run-Time Variables<a class="headerlink" href="#run-time-variables" title="Permalink to this heading">¶</a></h2>
 <p>The OLCF Test Harness also SETS many variables while inside of a test.
 These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>.
@@ -327,8 +326,8 @@ These variables are detailed below:</p>
 <span class="n">RGT_TEST_WORK_DIR</span>           <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">work</span> <span class="p">(</span><span class="n">scratch</span><span class="p">)</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
 </pre></div>
 </div>
-</section>
-<section id="extension-specific-variables">
+</div>
+<div class="section" id="extension-specific-variables">
 <span id="env-vars-ext"></span><h2>Extension-specific Variables<a class="headerlink" href="#extension-specific-variables" title="Permalink to this heading">¶</a></h2>
 <p>With the addition of several extensions to the OTH, there are a few more environment variables that configure extension behavior.
 These are grouped below by extension. The general naming convention is <code class="docutils literal notranslate"><span class="pre">RGT_&lt;extension&gt;_&lt;option&gt;</span></code>.</p>
@@ -356,8 +355,8 @@ RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physi
                             database logging extension. Set to &quot;none&quot; (not case-sensitive) to disable.
 </pre></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

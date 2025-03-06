@@ -38,17 +38,6 @@ from libraries.rgt_loggers import rgt_logger_factory
 from machine_types.machine_factory import MachineFactory
 from machine_types.base_machine import SetBuildRTEError
 
-DEFAULT_CONFIGURE_FILE = rgt_config_file.getDefaultConfigFile()
-"""
-The default configuration filename.
-
-The configuration file contains the machine settings, number of CPUs
-per node, etc., for the machine the harness is being run on. Each machine
-has a default configuration file that will be used unless another
-configuration is specified by the command line or input file.
-
-"""
-
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
 """str : The logging level for this module. """
 
@@ -68,7 +57,7 @@ def get_logger_name():
     """Returns the logger name for this module."""
     return MODULE_LOGGER_NAME
 
-def create_parser():
+def create_parser(logger=None):
     my_parser = argparse.ArgumentParser(description="Application Test Driver",
                                         allow_abbrev=False)
     my_parser.add_argument('-b', '--build',
@@ -82,7 +71,7 @@ def create_parser():
                            action='store_true')
     my_parser.add_argument('-C', '--configfile',
                            required=False,
-                           default=DEFAULT_CONFIGURE_FILE,
+                           default=rgt_config_file.getDefaultConfigFile(logger=logger),
                            type=str,
                            help="Configuration file name (default: %(default)s)")
     my_parser.add_argument('-d', '--scriptsdir',
@@ -326,6 +315,15 @@ def test_harness_driver(argv=None):
     else:
         Vargs = my_parser.parse_args(argv)
 
+    # Create a stdout-only logger for test_harness_driver.py
+    driver_logger = logging.getLogger('test_harness_driver_logger')
+    driver_logger.setLevel('DEBUG')
+    ch = logging.StreamHandler()
+    ch.setLevel(Vargs.loglevel)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    driver_logger.addHandler(ch)
+
     do_build = Vargs.build
     do_check = Vargs.check
     do_submit = Vargs.submit
@@ -357,7 +355,7 @@ def test_harness_driver(argv=None):
     }
 
     # Create a harness config (which sets harness env vars)
-    harness_cfg = rgt_config_file(configfilename=Vargs.configfile)
+    harness_cfg = rgt_config_file(configfilename=Vargs.configfile, logger=driver_logger)
 
     # Get the launch id for this test instance.
     launch_id = Vargs.launchid
@@ -374,15 +372,17 @@ def test_harness_driver(argv=None):
         if testshot_key in testshot_cfg.keys():
             testshot_str = testshot_cfg[testshot_key]
         launch_id = f'{testshot_str}/{user_str}@{time_str}'
-        print(f'Generated launch id: {launch_id}')
+        driver_logger.info(f'Using launch id: {launch_id}')
     else:
-        print(f'Using launch id: {launch_id}')
+        driver_logger.info(f'Generated launch id: {launch_id}')
 
     # Get the unique id for this test instance.
     unique_id = Vargs.uniqueid
     if unique_id == None:
         unique_id = rgt_utilities.unique_harness_id()
-        print(f'Generated test unique id: {unique_id}')
+        driver_logger.info(f'Generated unique id: {unique_id}')
+    else:
+        driver_logger.info(f'Using unique id: {unique_id}')
 
     # Make sure we are executing in app/test/Scripts
     testscripts = Vargs.scriptsdir
@@ -402,7 +402,6 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    #print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -415,8 +414,6 @@ def test_harness_driver(argv=None):
                                           local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=unique_id)
-    message = "The length of sys.path is " + str(len(sys.path))
-    apptest.doInfoLogging(message)
 
     #
     # Check for the existence of the file "kill_test".
@@ -429,7 +426,7 @@ def test_harness_driver(argv=None):
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
-            apptest.doCriticalLogging(message)
+            apptest.logger.doCriticalLogging(message)
             runarchive_dir = apptest.get_path_to_runarchive()
             logging.shutdown()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
@@ -468,7 +465,6 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    #print(f"In test_harness_driver, creating logger with name={logger_name}, filepath={fh_filepath}")
     sfile_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=logger_name,
                                          fh_filepath=fh_filepath,
@@ -504,22 +500,22 @@ def test_harness_driver(argv=None):
     build_exit_value = 0
     if actions['build']:
         build_exit_value = exit_values['build']
-        apptest.doInfoLogging(f'build exit value = {build_exit_value}')
+        apptest.logger.doInfoLogging(f'build exit value = {build_exit_value}')
 
     submit_exit_value = 0
     if actions['submit']:
         submit_exit_value = exit_values['submit']
-        apptest.doInfoLogging(f'submit exit value = {submit_exit_value}')
+        apptest.logger.doInfoLogging(f'submit exit value = {submit_exit_value}')
 
     run_exit_value = 0
     if actions['run']:
         run_exit_value = exit_values['run']
-        apptest.doInfoLogging(f'run exit value = {run_exit_value}')
+        apptest.logger.doInfoLogging(f'run exit value = {run_exit_value}')
 
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
-        apptest.doInfoLogging(f'check exit value = {check_exit_value}')
+        apptest.logger.doInfoLogging(f'check exit value = {check_exit_value}')
 
         # Now read the result from the job_status.txt file.
         jspath = os.path.join(status_dir, layout.job_status_filename)

@@ -238,6 +238,30 @@ Output from the executable run can be found in one of two places.
 Harness-maintained Log Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The OTH also produces log files, which contain messages from the harness with data useful for debugging failed tests.
-These log files can be used to check internal error messages reported by extensions of the OTH such as database event and metric logging.
-These log files are found in **${RESULTS_DIR}/LogFiles**.
+The OTH also produces log files throughout the run using the Python ``logging`` module, containing messages from the harness with data useful for debugging failed tests.
+These log files default to the Python logging level of INFO, but will be changed to DEBUG if the ``--loglevel=DEBUG`` flag is provided on the command-line.
+The table below lists the available log files and what scope messages in each file is from, in relative chronological order.
+
+.. list-table:: Harness-generated log files
+   :widths: 50 25 80
+   :header-rows: 1
+
+   * - Directory
+     - Logfile name
+     - Description
+   * - **<launch_directory>**
+     - ``main.log``
+     - The highest-level execution information. For example, "Completed reading the harness input file." This scope ends when the ``runtests.py`` command returns.
+   * - **<launch_directory>/harness_log_files.<timestamp>**
+     - ``libraries.regression_test.<timestamp>.txt``
+     - High-level logging messages while preparing tests. For example, "Application Hello, World! has completed launching." This scope ends when the ``runtests.py`` command returns.
+   * - **<launch_directory>/harness_log_files.<timestamp>/<app>**
+     - ``<app>__<test>.logfile.txt``
+     - A brief scope between the regression_test log-file and the log files located inside the test's results directory. This scope ends when the ``runtests.py`` command returns.
+   * - **${RESULTS_DIR}/LogFiles**
+     - application_logfile.txt
+     - The majority of log messages generated while building, submitting, running, and checking a test.
+   * - **${RESULTS_DIR}/LogFiles**
+     - status_logfile.txt
+     - Log messages generated at various checkpoints during the lifetime of a test such as ``build_end`` ``binary_execute_start`` and ``check_end``.
+

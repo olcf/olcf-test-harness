@@ -129,7 +129,7 @@ class subtest(base_apptest, apptest_layout):
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
-        self.doInfoLogging(message)
+        self.logger.doInfoLogging(message)
 
         for harness_task in tasks:
             if harness_task == Harness.checkout:
@@ -147,13 +147,13 @@ class subtest(base_apptest, apptest_layout):
                                                          url_to_remote_repsitory_application,
                                                          my_repository_branch)
 
-                self.doInfoLogging("Start of cloning repository")
+                self.logger.doInfoLogging("Start of cloning repository")
                 destination = self.getLocalPathToTests()
 
                 exit_code = self.cloneRepository(my_repository,
                                      destination)
 
-                self.doInfoLogging("End of cloning repository")
+                self.logger.doInfoLogging("End of cloning repository")
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -169,12 +169,12 @@ class subtest(base_apptest, apptest_layout):
                     return 1
                 if harness_task == Harness.starttest:
                     message = "Start of starting test."
-                    self.doInfoLogging(message)
+                    self.logger.doInfoLogging(message)
 
                     exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
 
                     message = "End of starting test"
-                    self.doInfoLogging(message)
+                    self.logger.doInfoLogging(message)
 
                     if exit_code:
                         return 1
@@ -199,7 +199,7 @@ class subtest(base_apptest, apptest_layout):
         cwd = os.getcwd()
 
         message = "For the cloning, my current directory is " + cwd
-        self.doInfoLogging(message)
+        self.logger.doInfoLogging(message)
 
         my_repository.cloneRepository(destination,
                                       self.__myLogger)
@@ -208,11 +208,11 @@ class subtest(base_apptest, apptest_layout):
 
         if exit_status > 0:
             string1 = "Cloning of repository failed."
-            self.doCriticalLogging(string1)
+            self.logger.doCriticalLogging(string1)
             return 1
         else:
             message = "Cloning of repository passed"
-            self.doInfoLogging(message)
+            self.logger.doInfoLogging(message)
 
         return 0
 
@@ -435,14 +435,6 @@ class subtest(base_apptest, apptest_layout):
 
         return app_tasks1
 
-    def doInfoLogging(self,message):
-        if self.__myLogger:
-            self.__myLogger.doInfoLogging(message)
-
-    def doCriticalLogging(self,message):
-        if self.__myLogger:
-            self.__myLogger.doCriticalLogging(message)
-
     def waitForAllJobsToCompleteQueue(self, harness_config, timeout):
         """Waits for subtest cycle to end.
 
@@ -552,8 +544,9 @@ class subtest(base_apptest, apptest_layout):
         if exit_status > 0:
             message = ( "In function {function_name} we have a critical error.\n"
                         "The command '{cmd}' has exited with a failure.\n"
-                        "The exit return value is {value}.\n").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
-            self.doCriticalLogging(message)
+                        "The exit return value is {value}\n.").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
+            self.logger.doCriticalLogging(message)
+
 
             string1 = "Command failed: " + starttestcomand
             return 1
@@ -561,7 +554,7 @@ class subtest(base_apptest, apptest_layout):
             message =  "In function {function_name}, the command '{cmd}' has executed sucessfully.\n".format(function_name=self.__name_of_current_function(),cmd=starttestcomand)
             message += "stdout of command : {}\n".format(stdout)
             message += "stderr of command : {}\n".format(stderr)
-            self.doInfoLogging(message)
+            self.logger.doInfoLogging(message)
 
     def _stop_test(self):
         pathtokillfile = self.get_path_to_kill_file()
@@ -569,7 +562,7 @@ class subtest(base_apptest, apptest_layout):
             kill_file.write("")
 
         message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
-        self.doInfoLogging(message)
+        self.logger.doInfoLogging(message)
 
     def _run_db_extensions(self):
         """
@@ -831,7 +824,7 @@ def do_application_tasks(launch_id,
     # Returns [#Passed,#Failed]
     ret = [0, 0, []]
     for app_test in app_test_list:
-        print(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+        app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
         # Non-zero exit status is failure
         if app_test.doTasks(launchid=launch_id,
                          tasks=tasks,
