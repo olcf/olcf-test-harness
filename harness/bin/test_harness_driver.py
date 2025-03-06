@@ -148,8 +148,6 @@ def auto_generated_scripts(harness_config,
 
     """
 
-    messloc = "In function {functionname}:".format(functionname="auto_generated_scripts")
-
     status_dir = apptest.get_path_to_status()
     ra_dir = apptest.get_path_to_runarchive()
 
@@ -167,7 +165,7 @@ def auto_generated_scripts(harness_config,
         try:
             build_exit_value = mymachine.build_executable()
         except SetBuildRTEError as error:
-            message = f"{messloc} Unable to set the build runtime environnment."
+            message = f"Unable to set the build runtime environnment."
             message += error.message
             a_logger.doCriticalLogging(message)
         finally:
@@ -185,7 +183,7 @@ def auto_generated_scripts(harness_config,
     submit_exit_value = 0
     if actions['submit'] and (build_exit_value != 0):
         submit_exit_value = 1
-        message = f"{messloc} No submit action due to prior failed build."
+        message = f"No submit action due to prior failed build."
         a_logger.doCriticalLogging(message)
     elif actions['submit'] and (build_exit_value == 0):
 
@@ -236,7 +234,7 @@ def auto_generated_scripts(harness_config,
                 if job_id != "0":
                     jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
                 else:
-                    message = f"{messloc} Submit error, failed to retrieve the job id."
+                    message = f"Submit error, failed to retrieve the job id."
                     a_logger.doCriticalLogging(message)
                     submit_exit_value = 1
         else:
@@ -268,7 +266,7 @@ def auto_generated_scripts(harness_config,
             run_exit_value = p.returncode
             run_stdout.close()
         else:
-            message = f"{messloc} Run error, failed to retrieve the job id."
+            message = f"Run error, failed to retrieve the job id."
             a_logger.doCriticalLogging(message)
             run_exit_value = 1
 
@@ -286,7 +284,7 @@ def auto_generated_scripts(harness_config,
             mymachine.start_report_executable()
             mymachine.log_to_db()
         else:
-            message = f"{messloc} check error, failed to retrieve the job id."
+            message = f"Check error, failed to retrieve the job id."
             a_logger.doCriticalLogging(message)
             check_exit_value = 1
 
