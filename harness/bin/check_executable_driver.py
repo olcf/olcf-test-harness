@@ -124,7 +124,7 @@ def main():
     check_exit_value = os.WEXITSTATUS(check_exit_raw)
 
     message = f"The check command return status is {check_exit_value}."
-    apptest.doInfoLogging(message)
+    apptest.logger.doInfoLogging(message)
 
     if currentdir != scriptsdir:
         os.chdir(currentdir)
