@@ -138,13 +138,11 @@ def check_executable(a_machine,new_env):
     my_current_frame = inspect.currentframe()
     my_current_frame_info = inspect.getframeinfo(my_current_frame)
     my_functioname = my_current_frame_info.function
-    messloc = "In function {functionname}:".format(functionname=my_functioname ) 
-
     checkcmd = a_machine.check_command
     path_to_checkscript = a_machine.apptest.get_path_to_scripts()
     check_command_line = _form_proper_command_line(path_to_checkscript,checkcmd)
 
-    message = f"{messloc} The check command line is {check_command_line}."
+    message = f"The check command line is {check_command_line}."
     a_machine.logger.doInfoLogging(message)
 
     check_outfile = "output_check.txt"
@@ -160,7 +158,7 @@ def check_executable(a_machine,new_env):
 
     check_exit_status = p.returncode
 
-    message = f"{messloc} The check command return code {check_exit_status}."
+    message = f"The check command return code {check_exit_status}."
     a_machine.logger.doInfoLogging(message)
 
     return check_exit_status
@@ -384,7 +382,6 @@ def build_executable(a_machine, new_env):
     # Get the name of the current function.
     frame = inspect.currentframe()
     function_name = inspect.getframeinfo(frame).function
-    messloc = "In function {functionname}:".format(functionname=function_name ) 
 
     # Update the build environment
     env_vars = a_machine.test_config.test_environment
@@ -405,7 +402,7 @@ def build_executable(a_machine, new_env):
 
     # We get the command for bulding the binary.
     buildcmd = a_machine.test_config.get_build_command()
-    message = f"{messloc} The build command: {buildcmd}"
+    message = f"The build command: {buildcmd}"
     a_machine.logger.doInfoLogging(message)
 
     if a_machine.separate_build_stdio:
@@ -429,7 +426,6 @@ def submit_batch_script(a_machine, new_env):
     # Get the name of the current function.
     frame = inspect.currentframe()
     function_name = inspect.getframeinfo(frame).function
-    messloc = "In function {functionname}:".format(functionname=function_name) 
 
     # Update the batch submission environment
     env_vars = a_machine.test_config.test_environment
@@ -452,7 +448,7 @@ def submit_batch_script(a_machine, new_env):
     batch_script = a_machine.test_config.get_batch_file()
     submit_exit_value = a_machine.submit_to_scheduler(batch_script)
 
-    message = f"{messloc} Submitted batch script {batch_script} with exit status of {submit_exit_value}."
+    message = f"Submitted batch script {batch_script} with exit status of {submit_exit_value}."
     return submit_exit_value
 
 #-----------------------------------------------------

@@ -542,16 +542,15 @@ class subtest(base_apptest, apptest_layout):
             run_as_subprocess_command_return_exitstatus(starttestcomand,
                                                         command_execution_directory=pathtoscripts)
         if exit_status > 0:
-            message = ( "In function {function_name} we have a critical error.\n"
-                        "The command '{cmd}' has exited with a failure.\n"
-                        "The exit return value is {value}\n.").format(function_name=self.__name_of_current_function(), cmd=starttestcomand,value=exit_status)
+            message = ( "The command '{cmd}' has exited with a failure.\n"
+                        "The exit return value is {value}\n.").format(cmd=starttestcomand,value=exit_status)
             self.logger.doCriticalLogging(message)
 
 
             string1 = "Command failed: " + starttestcomand
             return 1
         else:
-            message =  "In function {function_name}, the command '{cmd}' has executed sucessfully.\n".format(function_name=self.__name_of_current_function(),cmd=starttestcomand)
+            message =  "'{cmd}' has executed sucessfully.\n".format(cmd=starttestcomand)
             message += "stdout of command : {}\n".format(stdout)
             message += "stderr of command : {}\n".format(stderr)
             self.logger.doInfoLogging(message)
@@ -561,7 +560,7 @@ class subtest(base_apptest, apptest_layout):
         with open(pathtokillfile,"w") as kill_file:
             kill_file.write("")
 
-        message =  "In function {function_name}, The kill file '{filename}' has been created.\n".format(function_name=self.__name_of_current_function(),filename=pathtokillfile)
+        message =  "The kill file '{filename}' has been created.\n".format(filename=pathtokillfile)
         self.logger.doInfoLogging(message)
 
     def _run_db_extensions(self):
