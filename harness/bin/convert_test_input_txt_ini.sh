@@ -4,6 +4,8 @@ usage() {
     my_program=$1
     echo >&2 "USAGE: $my_program <rgt_test_input.txt> [<rgt_test_input.ini>]"
     echo >&2 "  - if output file (2nd parameter) omitted, contents will be generated to stdout"
+    echo >&2 "This script converts legacy rgt_test_input.txt files into the current"
+    echo >&2 "rgt_test_input.ini format when adapting legacy tests into a new system. "
 }
 
 if [[ $# -lt 1 || $# -gt 2 || $1 == "-h" ]]; then
@@ -44,5 +46,22 @@ s|reportcmd *=|report_cmd =|;
 s|reportscriptname *=|report_cmd =|;
 s|resubmitme *=|resubmit =|'
 
+format_warn=0
+if grep -q batchqueue "$input_file"; then
+	echo "Specifying the batch queue per-test is no longer recommended."
+	format_warn=1
+fi
+if grep -q projectid "$input_file"; then
+	echo "Specifying the project ID per-test is no longer recommended."
+	format_warn=1
+fi
+
+if [[ $format_warn -ne 0 ]]; then
+	echo "These should instead be specified as default per machine or at runtime."
+	echo "This allows the user to rely on the default or override per testshot."
+	echo
+fi
+echo "Job script template #BSUB directives updates are needed as appropriate."
+echo
 echo "[Replacements]"
 sed -e "$sed_substitutions" $input_file
