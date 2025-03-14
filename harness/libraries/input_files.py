@@ -118,6 +118,14 @@ class rgt_input_file:
                 # by the last word.
                 app = words[2]
                 subtest = words[3]
+
+                # Check that no slashes are in app or subtest name
+                if '/' in app:
+                    self.__logger.error(f"Invalid application name contains slashes in line: {tmpline}. Skipping.")
+                    continue
+                if '/' in subtest:
+                    self.__logger.error(f"Invalid test name contains slashes in line: {tmpline}. Skipping.")
+                    continue
                 if len(words) == 5:
                     nm_iters = int(words[4])
                     # Add nm_iters parallel copies of the same test
