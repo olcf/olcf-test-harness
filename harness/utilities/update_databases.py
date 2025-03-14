@@ -288,6 +288,8 @@ for db in db_logger.enabled_backends:
             else:
                 logger.doInfoLogging(f"Logging build timeout for test {entry['test_id']} to {db.url}.")
                 single_db_logger.log_event(entry)
+        elif not entry['job_id'] in slurm_data.keys():
+            logger.doErrorLogging(f"Couldn't find job id {entry['job_id']} in Slurm data. It's possible the job has not finished yet.")
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['pending']:
             # Then this job is still running/waiting in queue, we can skip
             logger.doDebugLogging(f"Job {entry['job_id']} is in state {slurm_data[entry['job_id']]['state']}. Skipping.")
