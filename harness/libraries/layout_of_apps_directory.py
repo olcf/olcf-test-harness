@@ -26,7 +26,6 @@ class apptest_layout:
     # Define specific file names
     app_info_filename = 'application_info.txt'
     test_info_filename = 'test_info.txt'
-    test_input_txt_filename = 'rgt_test_input.txt'
     test_input_ini_filename = 'rgt_test_input.ini'
     test_kill_filename = '.kill_test'
     test_rc_filename = '.testrc'
@@ -74,7 +73,6 @@ class apptest_layout:
         'runarchive_dir'  : os.path.join("${pdir}", "${app}", "${test}", test_run_archive_dirname, "${id}"),
         'scripts_dir'     : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname),
         'test_input_ini'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_ini_filename),
-        'test_input_txt'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_txt_filename),
         'kill_file'       : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_kill_filename),
         'status_dir'      : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}"),
         'job_id_file'     : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}", job_id_filename),
@@ -127,8 +125,8 @@ class apptest_layout:
         if not os.path.exists(self.get_path_to_scripts()):
             self.__logger.doErrorLogging(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
             return False
-        # Check that the an rgt_test_ini file exists (either .ini or .txt)
-        if not (os.path.exists(self.__apptest_layout['test_input_ini']) or os.path.exists(self.__apptest_layout['test_input_txt'])):
+        # Check that the an rgt_test_ini.ini file exists 
+        if not (os.path.exists(self.__apptest_layout['test_input_ini'])):
             self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
             return False
         return True

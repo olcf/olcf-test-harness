@@ -477,24 +477,15 @@ def test_harness_driver(argv=None):
     jstatus.initialize_subtest(launch_id, unique_id)
 
     #
-    # Determine whether we are using auto-generated or user-generated
-    # scripts based on existence of rgt_test_input file
+    # Build tests
     #
-    input_txt = os.path.join(testscripts, layout.test_input_txt_filename)
-    input_ini = os.path.join(testscripts, layout.test_input_ini_filename)
-    if (os.path.isfile(input_txt) or os.path.isfile(input_ini)):
-        exit_values = auto_generated_scripts(harness_cfg,
-                                             apptest,
-                                             jstatus,
-                                             launch_id,
-                                             actions,
-                                             a_logger,
-                                             Vargs.separate_build_stdio)
-    else:
-        error_message = "The user generated scripts functionality is no longer supported"
-        a_logger.doCriticalLogging(error_message)
-        sys.exit(error_message)
-
+    exit_values = auto_generated_scripts(harness_cfg,
+                                         apptest,
+                                         jstatus,
+                                         launch_id,
+                                         actions,
+                                         a_logger,
+                                         Vargs.separate_build_stdio)
     build_exit_value = 0
     if actions['build']:
         build_exit_value = exit_values['build']

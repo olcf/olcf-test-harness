@@ -22,7 +22,6 @@ class Linux_x86_64(BaseMachine):
                  numNodes=1,
                  numSocketsPerNode=1,
                  numCoresPerSocket=1,
-                 rgt_test_input_file=None,
                  apptest=None,
                  separate_build_stdio=False):
 
@@ -37,10 +36,7 @@ class Linux_x86_64(BaseMachine):
 
         # process test input file. The subtest knows the path to the
         # the test input file.
-        if rgt_test_input_file == None:
-            path_to_test_input_file = apptest.path_of_test_input_file
-        else:
-            path_to_test_input_file = rgt_test_input_file
+        path_to_test_input_file = apptest.path_of_test_input_file
         self._rgt_test = RgtTest(path_to_test_input_file,logger=self.logger)
         self._rgt_test.read_input_file()
 
