@@ -273,14 +273,11 @@ machine_name = frontier
 machine_type = linux_x86_64
 # options: slurm, pbs, lsf
 scheduler_type = slurm
-# options: srun, aprun, jsrun, poe
-joblauncher_type = srun
 
 # Optional: specify some details about the machine
 # Each of these becomes an environment variable,
 # ie **RGT_CPUS_PER_NODE**, that can be used to template tests
-# These can also be set in SiteCustom, but the harness does attempt to read these
-# The harness just doesn&#39;t act on these yet
+# These can also be set in [SiteCustom], but the harness may use these variables in the future
 node_count = 9408
 cpus_per_node = 56
 sockets_per_node = 1
@@ -306,18 +303,18 @@ git_https_server_url = https://www.github.com
 
 # This section provides defaults for testshot variables
 [TestshotDefaults]
-# The path used for building the application and scratch space used for running
+# The default path used for building the application and scratch space used for running. This will generally be overridden at run-time
 path_to_sspace = /default/path/to/scratch/space
-# A string that can be used to identify tests run for a specific purpose (ie: &#39;summit_tshot_cuda11&#39;)
+# A string that can be used to identify tests run for a specific purpose (ie: &#39;summit_tshot_cuda11&#39;). This will generally be overridden at run-time
 system_log_tag = frontier_test
 # Default queue/partition to submit jobs to
 batch_queue = batch
-# Overridden if project_id is set in the test&#39;s input file
+# Default project to submit jobs under
 project_id = &lt;default account for scheduler&gt;
 # Any required flags to job scheduler (ie, ``-M clustername`` in Slurm)
 submit_args =
 
-# This optional section is where you can define custom environment variables you might use
+# This optional section is where you can define custom environment variables you might use in your tests
 [SiteCustom]
 # An example usage could be providing a variable to tell your code what the name of the MPI module is
 my_mpi_module_name = openmpi/4.1.6
@@ -326,8 +323,8 @@ my_mpi_module_name = openmpi/4.1.6
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>These variables can all be overridden by setting <strong>RGT_&lt;VARIABLE_NAME&gt;</strong> in the environment prior to launching.
-However, that usage of <strong>batch_queue</strong>/<strong>RGT_BATCH_QUEUE</strong> and <strong>project_id</strong>/<strong>RGT_PROJECT_ID</strong> may be incorrect.
-For handling these variables, please see <a class="reference internal" href="launching.html#runtime-configurable-parameters"><span class="std std-ref">Run-time environment parameters</span></a>.</p>
+However, that usage of <strong>batch_queue</strong>/<strong>RGT_BATCH_QUEUE</strong> and <strong>project_id</strong>/<strong>RGT_PROJECT_ID</strong> may be ineffective.
+For handling these two specific variables, please see <a class="reference internal" href="launching.html#runtime-configurable-parameters"><span class="std std-ref">Run-time environment parameters</span></a>.</p>
 </div>
 </div>
 </div>

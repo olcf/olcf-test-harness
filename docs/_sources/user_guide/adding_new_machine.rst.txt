@@ -32,14 +32,11 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
     machine_type = linux_x86_64
     # options: slurm, pbs, lsf
     scheduler_type = slurm
-    # options: srun, aprun, jsrun, poe
-    joblauncher_type = srun
 
     # Optional: specify some details about the machine
     # Each of these becomes an environment variable,
     # ie **RGT_CPUS_PER_NODE**, that can be used to template tests
-    # These can also be set in SiteCustom, but the harness does attempt to read these
-    # The harness just doesn't act on these yet
+    # These can also be set in [SiteCustom], but the harness may use these variables in the future
     node_count = 9408
     cpus_per_node = 56
     sockets_per_node = 1
@@ -65,18 +62,18 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
 
     # This section provides defaults for testshot variables
     [TestshotDefaults]
-    # The path used for building the application and scratch space used for running
+    # The default path used for building the application and scratch space used for running. This will generally be overridden at run-time
     path_to_sspace = /default/path/to/scratch/space
-    # A string that can be used to identify tests run for a specific purpose (ie: 'summit_tshot_cuda11')
+    # A string that can be used to identify tests run for a specific purpose (ie: 'summit_tshot_cuda11'). This will generally be overridden at run-time
     system_log_tag = frontier_test
     # Default queue/partition to submit jobs to
     batch_queue = batch
-    # Overridden if project_id is set in the test's input file
+    # Default project to submit jobs under
     project_id = <default account for scheduler>
     # Any required flags to job scheduler (ie, ``-M clustername`` in Slurm)
     submit_args =
 
-    # This optional section is where you can define custom environment variables you might use
+    # This optional section is where you can define custom environment variables you might use in your tests
     [SiteCustom]
     # An example usage could be providing a variable to tell your code what the name of the MPI module is
     my_mpi_module_name = openmpi/4.1.6
@@ -85,5 +82,5 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
 .. note::
 
     These variables can all be overridden by setting **RGT_<VARIABLE_NAME>** in the environment prior to launching.
-    However, that usage of **batch_queue**/**RGT_BATCH_QUEUE** and **project_id**/**RGT_PROJECT_ID** may be incorrect.
-    For handling these variables, please see :ref:`runtime_configurable_parameters`.
+    However, that usage of **batch_queue**/**RGT_BATCH_QUEUE** and **project_id**/**RGT_PROJECT_ID** may be ineffective.
+    For handling these two specific variables, please see :ref:`runtime_configurable_parameters`.
