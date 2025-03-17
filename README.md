@@ -18,6 +18,7 @@ Sample tests can be found at https://github.com/olcf/olcf-test-harness-examples.
 ### Obtaining the OTH source code
 
 To obtain the OTH source code, run the following commands on the machine you are testing:
+
 ```
 git clone git@github.com:olcf/olcf-test-harness.git  
 cd olcf-test-harness
@@ -30,13 +31,13 @@ export OLCF_HARNESS_MACHINE=<machine>
 ### Configuring the machine settings
 
 If you are using an OLCF machine, there are machine configuration files provided in `${OLCF_HARNESS_DIR}/configs/olcf_examples`.
-Please copy these into the `configs` directory.
-If you are using a machine which is not provided in the `${OLCF_HARNESS_DIR}/configs/olcf_examples` directory, please see the [OTH User Guide](https://olcf.github.io/olcf-test-harness).
+Please copy these into the `${OLCF_HARNESS_DIR}/configs` directory.
+If you are using a machine which is not provided in the `${OLCF_HARNESS_DIR}/configs/olcf_examples` directory, please see the [OTH User Guide](https://olcf.github.io/olcf-test-harness) for how to create a new machine.
 
 ### Specifying tests to run
 
 Once the `${OLCF_HARNESS_MACHINE}.ini` file is placed in the `${OLCF_HARNESS_DIR}/configs` directory, construct an input file to provide the OTH at run-time.
-In this example, we will name it `rgt.inp`, but the name is not important, as long as you specify the correct name with the `-i` command-line flag.
+In this example, we will name the file `rgt.inp`, but the name is not important, as long as you specify the correct name with the `-i` command-line flag.
 
 First, clone the OLCF Test Harness examples:
 ```
@@ -44,12 +45,12 @@ mkdir -p /home/auser/oth/applications
 git clone https://github.com/olcf/olcf-test-harness-examples.git /home/auser/oth/applications/olcf-test-harness-examples
 ```
 
-rgt.inp:
+Then add the following contents to `rgt.inp`:
 ```
 # Within the Path_to_tests directory, you will place application repositories
 # Inside each application is one or more tests that can be called
 # In this case, the OTH examples are nested deeply to support >1 machine,
-# so we have to specify the Frontier applications directory
+# so we have to specify the Frontier applications directory of the olcf-test-harness-examples
 Path_to_tests = /home/auser/oth/applications/olcf-test-harness-examples/frontier
 
 # Syntax for defining a test to run:
@@ -64,7 +65,8 @@ Test = lammps test_1node_4mil_reax
 To launch one of the examples from the [OTH Examples Repo](https://github.com/olcf/olcf-test-harness-examples) on Frontier:
 
 ```
-# Optional: replace with your own instance of the OTH
+# On OLCF machines, you may use our centralized install of the harness
+# Otherwise, point to your clone of the olcf-test-harness
 export OLCF_HARNESS_DIR="/sw/acceptance/olcf-test-harness"
 module use $OLCF_HARNESS_DIR/modulefiles
 module load olcf_harness
@@ -87,7 +89,7 @@ submit exit value = 0
 Skipped 0, launched 1.
 ```
 
-When you see `submit exit value = 0`, you know your job was successfully launched.
+When you see `submit exit value = 0`, you know your job was successfully submitted to the scheduler.
 
 ### Checking Test Results
 
