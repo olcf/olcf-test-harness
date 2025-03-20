@@ -39,8 +39,8 @@ def initialize_parser():
     parser.add_argument('--endtime', type=str, action='store', help="Absolute end time. Format: YYYY-MM-DDTHH:MM:SSZ. Should only be used with --starttime.")
 
     # Optional customization of preserving/removal behavior
-    parser.add_argument('--keep-workdir', default=ON_FAIL, choices=[ON_FAIL, ALWAYS, NEVER] type=str, action='store', help="Customize when to copy the work directory to archive (default: ON_FAIL).")
-    parser.add_argument('--keep-builddir', default=ON_FAIL, choices=[ON_FAIL, ALWAYS, NEVER] type=str, action='store', help="Customize when to copy the build directory to archive (default: ON_FAIL).")
+    parser.add_argument('--keep-workdir', default=ON_FAIL, choices=[ON_FAIL, ALWAYS, NEVER], type=str, action='store', help="Customize when to copy the work directory to archive (default: ON_FAIL).")
+    parser.add_argument('--keep-builddir', default=ON_FAIL, choices=[ON_FAIL, ALWAYS, NEVER], type=str, action='store', help="Customize when to copy the build directory to archive (default: ON_FAIL).")
     parser.add_argument('--delete-scratch-dir', action='store_true', help="If set, deletes the build and work directories after archiving.")
     parser.add_argument('--delete-run-dir', action='store_true', help="If set, deletes the Run_Archive and Status directories after archiving.")
 
