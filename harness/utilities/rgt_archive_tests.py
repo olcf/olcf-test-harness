@@ -91,8 +91,8 @@ if args.endtime:
         logger.doCriticalLogging("Time validation failed. Exiting.")
         exit(1)
 
-if not (args.time.endswith('y') or args.time.endswith('m') or args.time.endswith('d')):
-    logger.doCriticalLogging(f"Unrecognized time parameter: {args.time[0]}.")
+if not (args.age.endswith('y') or args.age.endswith('m') or args.age.endswith('d')):
+    logger.doCriticalLogging(f"Unrecognized --age parameter: {args.age}.")
     logger.doCriticalLogging(f"This program allows years (y), months (m), or days (d) to be specified as '1y' or '1m' or '1d' for one year, month, or day, respectively.")
     exit(1)
 ################################################################################
