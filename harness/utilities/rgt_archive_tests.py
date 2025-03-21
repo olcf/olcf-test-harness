@@ -42,8 +42,8 @@ def initialize_parser():
     # Optional customization of preserving/removal behavior
     parser.add_argument('--keep-workdir', default=ON_FAIL, choices=[ON_FAIL, ALWAYS, NEVER], type=str, action='store', help="Customize when to copy the work directory to archive (default: ON_FAIL).")
     parser.add_argument('--keep-builddir', default=ON_FAIL, choices=[ON_FAIL, ALWAYS, NEVER], type=str, action='store', help="Customize when to copy the build directory to archive (default: ON_FAIL).")
-    parser.add_argument('--delete-scratch-dir', action='store_true', help="If set, deletes the build and work directories after archiving.")
-    parser.add_argument('--delete-run-dir', action='store_true', help="If set, deletes the Run_Archive and Status directories after archiving.")
+    parser.add_argument('--delete-scratch-dir', action='store_true', help="DANGEROUS. If set, deletes the build and work directories after archiving.")
+    parser.add_argument('--delete-run-dir', action='store_true', help="DANGEROUS. If set, deletes the Run_Archive and Status directories after archiving.")
 
     # Optional filters to pick a subset of apps/tests
     parser.add_argument('--users', type=str, nargs='+', action='store', help="Specifies one or more UNIX users to archive jobs for (default: all).")
@@ -55,9 +55,10 @@ def initialize_parser():
     # Operational tuning
     parser.add_argument('--no-tqdm', action='store_true', help="If set, disables using TQDM progress bars.")
     parser.add_argument('--print-summary', action='store_true', help="If set, prints a summary of how many test instances are archived for each app-test.")
+    parser.add_argument('--force', action='store_true', help="DANGEROUS. If set, will remove the archive of an existing test if found, then re-archive.")
     parser.add_argument('--compress', action='store_true', help="If set, tar's and gzip's the resulting archive directory.")
     parser.add_argument('--limit', type=int, action='store', help="Maximum number of tests to archive.")
-    parser.add_argument('--stop-after', type=int, action='store', help="Specify a number of hours after which to cleanly pause archiving and exit.")
+    parser.add_argument('--stop-after', type=float, action='store', help="Specify a number of hours after which to cleanly pause archiving and exit.")
     parser.add_argument('--loglevel', default='ERROR', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
     parser.add_argument('--logfile', default=os.path.join(os.getcwd(), 'archive.log'), type=str, action='store', help="Name/location of the log file (default: archive.log). Set to /dev/null to disable log file.")
 
@@ -141,10 +142,6 @@ if not os.path.exists(args.path_to_archive):
 
 # Locate candidate directories
 my_apptests = build_apptest_list()
-# Key: apptest name, value: number of tests archived
-archive_counts = {}
-
-test_id_regex = re.compile('^[0-9]+\.[0-9]+$')
 
 def should_archive_test(test_path, test_id):
     """ Verifies conditions from --users, --machines, --runtags are met by a specific test id """
@@ -195,6 +192,22 @@ def should_archive_test(test_path, test_id):
 
 def archive_test(apptest, test_id):
     """ Archives a test_id to the args.path_to_archive argument """
+    archive_file_name = os.path.join(args.path_to_archive, apptest, 'Run_Archive', test_id)
+    test_run_archive = os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname, test_id)
+    test_status = os.path.join(args.path_to_tests, apptest, apptest_layout.test_status_dirname, test_id)
+    # check for existing archive:
+    if os.path.isdir(archive_file_name):
+        logger.doWarningLogging(f"Found {apptest}/{test_id} in archive already at {archive_file_name}. Skipping.")
+        return False
+    elif os.path.isdir(f'{archive_file_name}.tar.gz'):
+        logger.doWarningLogging(f"Found a compressed {apptest}/{test_id} in archive already at {archive_file_name}.tar.gz. Skipping.")
+        return False
+
+
+    return True
+
+def archive_apptest_common_files(apptest):
+    """ Archives app-Source, test-Scripts, and test-Source directories, if they are not already archived """
     return True
 
 # Handle --no-tqdm flag
@@ -204,26 +217,53 @@ if not args.no_tqdm:
 else:
     my_apptests_for = my_apptests
 
+# Key: apptest name, value: number of tests archived
+archive_counts = {}
+for apptest in my_apptests:
+    archive_counts[apptest] = 0
+
+test_id_regex = re.compile('^[0-9]+\.[0-9]+$')
+
+total_logged = 0
+limit_reached = False
+
+timestart = datetime.now()
+import time
+
 for apptest in my_apptests_for:
     # We assume that Run_Archive and Status hold the same set of test IDs, and that there is at least 1 test_id in there
     for testid in os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname)):
+        time.sleep(60)
         if not test_id_regex.match(testid):
             logger.doDebugLogging(f"Excluding test ID that does not match regex: {testid}")
         elif should_archive_test(f"{args.path_to_tests}/{apptest}", testid):
             # Then this run passed any other validation checks and we should archive this test
             logger.doInfoLogging(f"Logging {apptest}/{testid}")
             exit_code = archive_test(apptest, testid)
-            if not exit_code:
-                logger.doErrorLogging(f"Failed to archive {testid} from {args.path_to_tests}/{apptest}.")
-            else:
-                if apptest in archive_counts.keys():
-                    archive_counts[apptest] += 1
-                else:
-                    archive_counts[apptest] = 1
+            # a warning will already be printed by the archive_test function if the test fails to archive
+            if exit_code:
+                total_logged += 1
+                archive_counts[apptest] += 1
+
+        timenow = datetime.now()
+        time_elapsed_dt = timenow - timestart
+        total_hours = float(time_elapsed_dt.seconds) / float(60 * 60)
+        if args.limit and total_logged == args.limit:
+            logger.doCriticalLogging("Reached the maximum number of tests to archive set by --limit. Exiting.")
+            limit_reached = True
+            break
+        elif args.stop_after and total_hours > args.stop_after:
+            logger.doCriticalLogging("Reached the maximum amount of time set by --stop-after. Exiting.")
+            limit_reached = True
+            break
 
     # If we archived more than 1 run for this test, make sure the app's Source directory and the test's Scripts/Source directories exist
-    #if archive_counts[apptest] > 0:
-        #archive_apptest_common_files(apptest)
+    if archive_counts[apptest] > 0:
+        archive_apptest_common_files(apptest)
+
+    if limit_reached:
+        break
+
 
 if args.print_summary:
     logger.doCriticalLogging("Archive Summary Statistics ---------------------------------------------------------------")
