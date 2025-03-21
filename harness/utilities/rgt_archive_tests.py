@@ -192,7 +192,13 @@ def should_archive_test(test_path, test_id):
 
     return True
 
-for apptest in my_apptests:
+if not args.no_tqdm:
+    import tqdm
+    my_apptests_for = tqdm.tqdm(my_apptests)
+else:
+    my_apptests_for = my_apptests
+
+for apptest in my_apptests_for:
     # We assume that Run_Archive and Status hold the same set of test IDs, and that there is at least 1 test_id in there
     for testid in os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname)):
         if not test_id_regex.match(testid):
