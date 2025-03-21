@@ -12,6 +12,7 @@
 from datetime import datetime
 import os
 import argparse
+import re
 
 # For directory names
 from libraries.layout_of_apps_directory import apptest_layout
@@ -49,7 +50,7 @@ def initialize_parser():
     parser.add_argument('--machines', type=str, nargs='+', action='store', help="Specifies one or more machines to archive jobs for (default: all).")
     parser.add_argument('--apps', type=str, nargs='+', action='store', help="Specifies one or more apps to archive jobs for (default: all).")
     parser.add_argument('--tests', type=str, nargs='+', action='store', help="Specifies one or more tests to archive jobs for (default: all).")
-    parser.add_argument('--runtags', type=str, nargs='+', action='store', help="Specifies one or more runtags to archive jobs for (default: all).")
+    parser.add_argument('--runtags', type=str, nargs='+', action='store', help="Specifies one or more runtags to archive jobs for (default: all). This filter supports regex.")
 
     # Operational tuning
     parser.add_argument('--no-tqdm', action='store_true', help="If set, disables using TQDM progress bars.")
@@ -139,7 +140,68 @@ if not os.path.exists(args.path_to_archive):
 
 # Locate candidate directories
 my_apptests = build_apptest_list()
+# Key: apptest name, value: number of tests archived
+archive_counts = {}
 
+test_id_regex = re.compile('^[0-9]+\.[0-9]+$')
 
+def should_archive_test(test_path, test_id):
+    """ Verifies conditions from --users, --machines, --runtags are met by a specific test id """
+    # Read the latest status file for this test to get machine, runtag, and user info
+    status_dir = f"{test_path}/{apptest_layout.test_status_dirname}/{test_id}"
+    if not os.path.isdir(status_dir):
+        logger.doDebugLogging(f"Could not find status directory for test_id {test_id} in {status_dir}. Skipping")
+        return False
 
+    # If none of the optional filters are set, short-circuit
+    if (not args.users) and (not args.machines) and (not args.runtags):
+        return True
+
+    latest_status_file = None
+    current_event_num = 0
+    status_file_regex = re.compile('^Event_[0-9]+_.*\.txt$')
+
+    for status_file_name in os.listdir(status_dir):
+        if not status_file_regex.match(status_file_name):
+            continue
+        event_number = int(status_file_name.split('_')[1]) # used to sort if this is a newer event than current
+        if event_number > current_event_num:
+            # Then get the info from the status file & log it to the database
+            latest_status_file = status_file_name
+            current_event_num = event_number
+    
+    logger.doDebugLogging(f"Using status file {status_file_name}")
+    event_info = get_status_info_from_file(os.path.join(status_dir, status_file_name))
+
+    if args.users:
+        if not event_info['user'] in args.users:
+            logger.doDebugLogging(f"Excluding test_id {test_id} in {test_path} due to --users filter")
+            return False
+    if args.machines:
+        if not event_info['machine'] in args.machines:
+            logger.doDebugLogging(f"Excluding test_id {test_id} in {test_path} due to --machines filter")
+            return False
+    if args.runtags:
+        matched = False
+        for runtag_regex in args.runtags:
+            if re.match(runtag_regex, event_info['rgt_system_log_tag']):
+                matched = True
+        if not matched:
+            logger.doDebugLogging(f"Excluding test_id {test_id} in {test_path} due to --runtags filter")
+            return False
+
+    return True
+
+for apptest in my_apptests:
+    # We assume that Run_Archive and Status hold the same set of test IDs, and that there is at least 1 test_id in there
+    for testid in os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname)):
+        if not test_id_regex.match(testid):
+            logger.doDebugLogging(f"Excluding test ID that does not match regex: {testid}")
+        elif should_archive_test(f"{args.path_to_tests}/{apptest}", testid):
+            # Then this run passed any other validation checks and we should archive this test
+            logger.doInfoLogging(f"Logging {apptest}/{testid}")
+
+    # If we archived more than 1 run for this test, make sure the app's Source directory and the test's Scripts/Source directories exist
+    #if archive_counts[apptest] > 0:
+        #archive_apptest_common_files(apptest)
 
