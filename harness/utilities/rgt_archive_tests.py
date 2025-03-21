@@ -37,9 +37,8 @@ def initialize_parser():
     parser.add_argument('--path-to-archive', required=True, type=str, action='store', help="Path to the archive location.")
 
     # Time filtering options:
-    parser.add_argument('--age', default='6m', type=str, action='store', help="How old a test must be to be archived (default: 6 months).")
-    parser.add_argument('--starttime', type=str, action='store', help="Absolute start time. Format: YYYY-MM-DDTHH:MM:SSZ. Overrides --time")
-    parser.add_argument('--endtime', type=str, action='store', help="Absolute end time. Format: YYYY-MM-DDTHH:MM:SSZ. Should only be used with --starttime.")
+    parser.add_argument('--starttime', type=str, action='store', help="Absolute start time. Format: YYYY-MM-DDTHH:MM.")
+    parser.add_argument('--endtime', type=str, action='store', help="Absolute end time. Format: YYYY-MM-DDTHH:MM.")
 
     # Optional customization of preserving/removal behavior
     parser.add_argument('--keep-workdir', default=KW_ON_FAIL, choices=[KW_ON_FAIL, KW_ALWAYS, KW_NEVER], type=str, action='store', help=f"Customize when to copy the work directory to archive (default: {KW_ON_FAIL}).")
@@ -69,7 +68,7 @@ def initialize_parser():
 def validate_args():
     def check_time_format(s):
         try:
-            dt = datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+            dt = datetime.strptime(s, "%Y-%m-%dT%H:%M")
         except Exception as e:
             logger.doCriticalLogging(f"Invalid time format: {s}.")
             raise
@@ -85,10 +84,6 @@ def validate_args():
         if not check_time_format(args.endtime):
             logger.doCriticalLogging("End time validation failed. Exiting.")
             errs += 1
-    if not (args.age.endswith('y') or args.age.endswith('m') or args.age.endswith('d')):
-        logger.doCriticalLogging(f"Unrecognized --age format: {args.age}.")
-        logger.doCriticalLogging(f"This program allows years (y), months (m), or days (d) to be specified as '1y' or '1m' or '1d' for one year, month, or day, respectively.")
-        errs += 1
 
     # Check if path to tests exists
     if not os.path.exists(args.path_to_tests):
@@ -146,16 +141,12 @@ if not os.path.exists(args.path_to_archive):
 my_apptests = build_apptest_list()
 
 def should_archive_test(test_path, test_id):
-    """ Verifies conditions from --users, --machines, --runtags are met by a specific test id """
-    # Read the latest status file for this test to get machine, runtag, and user info
+    """ Verifies conditions from --age, --starttime, --endtime, --users, --machines, --runtags are met by a specific test id """
+    # Read the latest status file for this test to get time, machine, runtag, and user info
     status_dir = f"{test_path}/{apptest_layout.test_status_dirname}/{test_id}"
     if not os.path.isdir(status_dir):
         logger.doDebugLogging(f"Could not find status directory for test_id {test_id} in {status_dir}. Skipping")
         return False
-
-    # If none of the optional filters are set, short-circuit
-    if (not args.users) and (not args.machines) and (not args.runtags):
-        return True
 
     latest_status_file = None
     current_event_num = 0
@@ -170,8 +161,22 @@ def should_archive_test(test_path, test_id):
             latest_status_file = status_file_name
             current_event_num = event_number
     
-    logger.doDebugLogging(f"Using status file {status_dir/status_file_name}")
+    logger.doDebugLogging(f"Using status file {status_dir}/{status_file_name}")
     event_info = get_status_info_from_file(os.path.join(status_dir, status_file_name))
+    event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
+
+    # Verify time conditions are met
+    if args.starttime:
+        if args.starttime > event_time_modified:
+            logger.doDebugLogging(f"Rejecting {test_id} using starttime filter.")
+            return False
+        if args.endtime and args.endtime < event_time_modified:
+            logger.doDebugLogging(f"Rejecting {test_id} using endtime filter.")
+            return False
+
+    # If none of the optional filters are set, short-circuit
+    if (not args.users) and (not args.machines) and (not args.runtags):
+        return True
 
     if args.users:
         if not event_info['user'] in args.users:
