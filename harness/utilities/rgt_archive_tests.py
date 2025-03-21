@@ -54,10 +54,11 @@ def initialize_parser():
 
     # Operational tuning
     parser.add_argument('--no-tqdm', action='store_true', help="If set, disables using TQDM progress bars.")
+    parser.add_argument('--print-summary', action='store_true', help="If set, prints a summary of how many test instances are archived for each app-test.")
     parser.add_argument('--compress', action='store_true', help="If set, tar's and gzip's the resulting archive directory.")
     parser.add_argument('--limit', type=int, action='store', help="Maximum number of tests to archive.")
     parser.add_argument('--stop-after', type=int, action='store', help="Specify a number of hours after which to cleanly pause archiving and exit.")
-    parser.add_argument('--loglevel', default='INFO', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
+    parser.add_argument('--loglevel', default='ERROR', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
     parser.add_argument('--logfile', default=os.path.join(os.getcwd(), 'archive.log'), type=str, action='store', help="Name/location of the log file (default: archive.log). Set to /dev/null to disable log file.")
 
     return parser
@@ -170,16 +171,16 @@ def should_archive_test(test_path, test_id):
             latest_status_file = status_file_name
             current_event_num = event_number
     
-    logger.doDebugLogging(f"Using status file {status_file_name}")
+    logger.doDebugLogging(f"Using status file {status_dir/status_file_name}")
     event_info = get_status_info_from_file(os.path.join(status_dir, status_file_name))
 
     if args.users:
         if not event_info['user'] in args.users:
-            logger.doDebugLogging(f"Excluding test_id {test_id} in {test_path} due to --users filter")
+            logger.doInfoLogging(f"Excluding test_id {test_id} in {test_path} due to --users filter")
             return False
     if args.machines:
         if not event_info['machine'] in args.machines:
-            logger.doDebugLogging(f"Excluding test_id {test_id} in {test_path} due to --machines filter")
+            logger.doInfoLogging(f"Excluding test_id {test_id} in {test_path} due to --machines filter")
             return False
     if args.runtags:
         matched = False
@@ -187,11 +188,16 @@ def should_archive_test(test_path, test_id):
             if re.match(runtag_regex, event_info['rgt_system_log_tag']):
                 matched = True
         if not matched:
-            logger.doDebugLogging(f"Excluding test_id {test_id} in {test_path} due to --runtags filter")
+            logger.doInfoLogging(f"Excluding test_id {test_id} in {test_path} due to --runtags filter")
             return False
 
     return True
 
+def archive_test(apptest, test_id):
+    """ Archives a test_id to the args.path_to_archive argument """
+    return True
+
+# Handle --no-tqdm flag
 if not args.no_tqdm:
     import tqdm
     my_apptests_for = tqdm.tqdm(my_apptests)
@@ -206,8 +212,20 @@ for apptest in my_apptests_for:
         elif should_archive_test(f"{args.path_to_tests}/{apptest}", testid):
             # Then this run passed any other validation checks and we should archive this test
             logger.doInfoLogging(f"Logging {apptest}/{testid}")
+            exit_code = archive_test(apptest, testid)
+            if not exit_code:
+                logger.doErrorLogging(f"Failed to archive {testid} from {args.path_to_tests}/{apptest}.")
+            else:
+                if apptest in archive_counts.keys():
+                    archive_counts[apptest] += 1
+                else:
+                    archive_counts[apptest] = 1
 
     # If we archived more than 1 run for this test, make sure the app's Source directory and the test's Scripts/Source directories exist
     #if archive_counts[apptest] > 0:
         #archive_apptest_common_files(apptest)
 
+if args.print_summary:
+    logger.doCriticalLogging("Archive Summary Statistics ---------------------------------------------------------------")
+    for apptest in archive_counts.keys():
+        logger.doCriticalLogging(f"{apptest: <80}:{str(archive_counts[apptest]): >9}")
