@@ -277,7 +277,7 @@ def archive_test(apptest, test_id):
     if args.delete_scratch_dir and os.path.isdir(test_info['workdir']):
         logger.doDebugLogging(f"Removing scratch directory for test {apptest}/{test_id}.")
         # scratch directory for this test is the parent directory of workdir or build_directory
-        shutil.rmtree(os.dirname(test_info['workdir']))
+        shutil.rmtree(os.path.dirname(test_info['workdir']))
 
     if args.delete_run_dir:
         logger.doDebugLogging(f"Removing Run_Archive and Status directories for test {apptest}/{test_id}.")
@@ -309,7 +309,8 @@ def archive_apptest_common_files(apptest):
     app_source = os.path.join(os.path.dirname(apptest_root), apptest_layout.app_source_dirname)
 
     # app/Source
-    shutil.copytree(app_source, os.path.join(os.path.dirname(test_archive_dir), apptest_layout.app_source_dirname), symlinks=True)
+    if not os.path.isdir(os.path.join(os.path.dirname(test_archive_dir), apptest_layout.app_source_dirname)):
+        shutil.copytree(app_source, os.path.join(os.path.dirname(test_archive_dir), apptest_layout.app_source_dirname), symlinks=True)
 
     # app/test/Source
     if os.path.isdir(test_source):
