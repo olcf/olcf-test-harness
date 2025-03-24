@@ -377,3 +377,4 @@ if args.print_summary:
     logger.doCriticalLogging("Archive Summary Statistics ---------------------------------------------------------------")
     for apptest in archive_counts.keys():
         logger.doCriticalLogging(f"{apptest: <80}:{str(archive_counts[apptest]): >9}")
+    logger.doCriticalLogging(f"Total: {str(total_logged)}")
