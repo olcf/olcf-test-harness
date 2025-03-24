@@ -166,13 +166,12 @@ def should_archive_test(test_path, test_id):
     event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
 
     # Verify time conditions are met
-    if args.starttime:
-        if args.starttime > event_time_modified:
+    if args.starttime and args.starttime > event_time_modified:
             logger.doDebugLogging(f"Rejecting {test_id} using starttime filter.")
             return False
-        if args.endtime and args.endtime < event_time_modified:
-            logger.doDebugLogging(f"Rejecting {test_id} using endtime filter.")
-            return False
+    if args.endtime and args.endtime < event_time_modified:
+        logger.doDebugLogging(f"Rejecting {test_id} using endtime filter.")
+        return False
 
     # If none of the optional filters are set, short-circuit
     if (not args.users) and (not args.machines) and (not args.runtags):
