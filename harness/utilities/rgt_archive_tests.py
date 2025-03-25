@@ -126,7 +126,7 @@ args = parser.parse_args()
 fh_log_level = 'DEBUG' if args.loglevel == 'DEBUG' else 'INFO'
 
 logger = rgt_logger_factory.create_rgt_logger(logger_name='rgt_archive_test_utility',
-                fh_filepath=args.logfile, logger_threshold_log_level=args.loglevel,
+                fh_filepath=args.logfile, logger_threshold_log_level=fh_log_level,
                 fh_threshold_log_level=fh_log_level, ch_threshold_log_level=args.loglevel)
 
 exit_code = validate_args()
@@ -325,9 +325,6 @@ def archive_apptest_common_files(apptest):
 # Handle --no-tqdm flag
 if not args.no_tqdm:
     import tqdm
-    my_apptests_for = tqdm.tqdm(my_apptests)
-else:
-    my_apptests_for = my_apptests
 
 # Key: apptest name, value: number of tests archived
 archive_counts = {}
@@ -341,9 +338,15 @@ limit_reached = False
 
 timestart = datetime.now()
 
-for apptest in my_apptests_for:
+for apptest in my_apptests:
+    # Handle --no-tqdm flag
+    my_tests = os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname))
+    if not args.no_tqdm:
+        my_tests_for = tqdm.tqdm(my_tests)
+    else:
+        my_tests_for = my_tests
     # We assume that Run_Archive and Status hold the same set of test IDs, and that there is at least 1 test_id in there
-    for testid in os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname)):
+    for testid in my_tests_for:
         if not test_id_regex.match(testid):
             logger.doDebugLogging(f"Excluding test ID that does not match regex: {testid}")
         elif should_archive_test(f"{args.path_to_tests}/{apptest}", testid):
