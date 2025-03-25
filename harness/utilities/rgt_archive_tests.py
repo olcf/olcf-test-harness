@@ -163,8 +163,8 @@ def should_archive_test(test_path, test_id):
             latest_status_file = status_file_name
             current_event_num = event_number
     
-    logger.doDebugLogging(f"Using status file {status_dir}/{status_file_name}")
-    event_info = get_status_info_from_file(os.path.join(status_dir, status_file_name))
+    logger.doDebugLogging(f"Using status file {status_dir}/{latest_status_file}")
+    event_info = get_status_info_from_file(os.path.join(status_dir, latest_status_file))
     event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
 
     # Verify time conditions are met
@@ -219,9 +219,9 @@ def archive_test(apptest, test_id):
             latest_status_file = status_file_name
             current_event_num = event_number
     
-    logger.doDebugLogging(f"Using status file {test_status}/{status_file_name}")
+    logger.doDebugLogging(f"Using status file {test_status}/{latest_status_file}")
     # status file used for exit codes and build_directory and workdir paths
-    test_info = get_status_info_from_file(os.path.join(test_status, status_file_name))
+    test_info = get_status_info_from_file(os.path.join(test_status, latest_status_file))
 
     # check for existing archive:
     if os.path.isdir(test_archive_dir):
