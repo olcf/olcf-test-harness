@@ -339,6 +339,8 @@ limit_reached = False
 timestart = datetime.now()
 
 for apptest in my_apptests:
+    # this output message may help with the multiple TQDM progress bars
+    logger.doErrorLogging(f"Archiving tests for {apptest}.")
     # Handle --no-tqdm flag
     my_tests = os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname))
     if not args.no_tqdm:
