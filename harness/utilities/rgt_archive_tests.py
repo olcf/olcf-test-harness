@@ -123,9 +123,11 @@ def build_apptest_list():
 parser = initialize_parser()
 args = parser.parse_args()
 
+fh_log_level = 'DEBUG' if args.loglevel == 'DEBUG' else 'INFO'
+
 logger = rgt_logger_factory.create_rgt_logger(logger_name='rgt_archive_test_utility',
                 fh_filepath=args.logfile, logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+                fh_threshold_log_level=fh_log_level, ch_threshold_log_level=args.loglevel)
 
 exit_code = validate_args()
 if exit_code > 0:
