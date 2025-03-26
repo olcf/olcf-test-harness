@@ -170,7 +170,6 @@ def auto_generated_scripts(harness_config,
             a_logger.doCriticalLogging(message)
         finally:
             jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
-
     #-----------------------------------------------------
     # In this section we run the the binary.             -
     #                                                    -
@@ -182,7 +181,6 @@ def auto_generated_scripts(harness_config,
     job_id = "0"
     submit_exit_value = 0
     if actions['submit'] and (build_exit_value != 0):
-        submit_exit_value = 1
         message = f"No submit action due to prior failed build."
         a_logger.doCriticalLogging(message)
     elif actions['submit'] and (build_exit_value == 0):
