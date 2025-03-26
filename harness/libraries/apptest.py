@@ -543,7 +543,7 @@ class subtest(base_apptest, apptest_layout):
                                                         command_execution_directory=pathtoscripts)
         if exit_status > 0:
             message = ( "The command '{cmd}' has exited with a failure.\n"
-                        "The exit return value is {value}\n.").format(cmd=starttestcomand,value=exit_status)
+                        "The exit return value is {value}.\n").format(cmd=starttestcomand,value=exit_status)
             self.logger.doCriticalLogging(message)
 
 
