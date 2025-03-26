@@ -163,6 +163,10 @@ def should_archive_test(test_path, test_id):
             latest_status_file = status_file_name
             current_event_num = event_number
     
+    if not latest_status_file:
+        logger.doWarningLogging(f"Skipping a test that couldn't find the latest status file for: {status_dir}.")
+        return False
+
     logger.doDebugLogging(f"Using status file {status_dir}/{latest_status_file}")
     event_info = get_status_info_from_file(os.path.join(status_dir, latest_status_file))
     event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
@@ -218,7 +222,11 @@ def archive_test(apptest, test_id):
             # Then get the info from the status file & log it to the database
             latest_status_file = status_file_name
             current_event_num = event_number
-    
+
+    if not latest_status_file:
+        logger.doWarningLogging(f"In archive_test, skipping a test that couldn't find the latest status file for: {status_dir}. This should not be happening.")
+        return False
+
     logger.doDebugLogging(f"Using status file {test_status}/{latest_status_file}")
     # status file used for exit codes and build_directory and workdir paths
     test_info = get_status_info_from_file(os.path.join(test_status, latest_status_file))
