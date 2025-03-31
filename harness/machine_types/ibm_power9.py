@@ -19,28 +19,24 @@ class IBMpower9(BaseMachine):
     def __init__(self,
                  name='IBM Power9',
                  scheduler=None,
-                 jobLauncher=None,
                  numNodes=1,
                  numSocketsPerNode=2,
                  numCoresPerSocket=21,
-                 rgt_test_input_file=None,
-                 apptest=None):
+                 apptest=None,
+                 separate_build_stdio=False):
 
         BaseMachine.__init__(self,
                              name=name,
                              scheduler_type=scheduler,
-                             jobLauncher_type=jobLauncher,
                              numNodes = numNodes,
                              numSockets = numSocketsPerNode,
                              numCoresPerSocket = numCoresPerSocket,
-                             apptest=apptest)
+                             apptest=apptest,
+                             separate_build_stdio=separate_build_stdio)
 
         # process test input file. The subtest knows the path to the 
         # the test input file.
-        if rgt_test_input_file == None:
-            path_to_test_input_file = apptest.path_of_test_input_file
-        else:
-            path_to_test_input_file = rgt_test_input_file
+        path_to_test_input_file = apptest.path_of_test_input_file
         self._rgt_test = RgtTest(path_to_test_input_file,logger=self.logger)
         self._rgt_test.read_input_file()
 

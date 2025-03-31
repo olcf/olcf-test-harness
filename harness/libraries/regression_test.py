@@ -4,6 +4,8 @@
 
 import collections
 import concurrent.futures
+import datetime
+import getpass
 import os
 import time
 
@@ -43,7 +45,8 @@ class Harness:
                  rgt_input_file,
                  log_level,
                  stdout_stderr,
-                 use_fireworks):
+                 use_fireworks,
+                 separate_build_stdio):
         self.__config = config
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
@@ -51,28 +54,47 @@ class Harness:
         self.__apptests_dict = collections.OrderedDict()
         self.__app_subtests = []
         self.__log_level = log_level
-        self.__myLogger = None
         self.__stdout_stderr = stdout_stderr
         self.__num_workers = 1
         self.__use_fireworks = use_fireworks
+        self.__separate_build_stdio = separate_build_stdio
         self.__formAppTests()
 
         currenttime = time.localtime()
-        time_stamp = time.strftime("%Y%m%d_%H%M%S",currenttime)
+        time_stamp = time.strftime("%Y%m%d_%H%M%S", currenttime)
         self.__timestamp = time_stamp
+
+        # Generate common launch id
+        now_str = datetime.datetime.now().isoformat()
+        if len(now_str) == 26: # now_str includes microseconds
+            time_str = now_str[0:-4] # strip off last four characters
+        else:
+            time_str = now_str
+        user_str = getpass.getuser()
+        testshot_key = 'system_log_tag'
+        testshot_str = 'notag'
+        testshot_cfg = self.__config.get_testshot_config()
+        if testshot_key in testshot_cfg.keys():
+            testshot_str = testshot_cfg[testshot_key]
+        self.__launch_id = f'{testshot_str}/{user_str}@{time_str}'
+        self.__launched_tests = 0
+        self.__failed_tests = 0
+        self.__failed_test_list = []
 
         # Define a logger that streams to file.
         logger_name=Harness.LOGGER_NAME
         fh_filepath="./harness_log_files" + "." + self.__timestamp + "/" + Harness.LOGGER_NAME + "." + self.__timestamp + ".txt"
-        logger_threshold = self.__log_level
-        fh_threshold_log_level = "INFO"
-        ch_threshold_log_level = "CRITICAL"
+        logger_threshold = "DEBUG"
+        # Log file always has a consistent log level. Console log level changes
+        fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
+        ch_threshold_log_level = self.__log_level
         self.__myLogger = rgt_logger_factory.create_rgt_logger(
                                      logger_name=logger_name,
                                      fh_filepath=fh_filepath,
                                      logger_threshold_log_level=logger_threshold,
                                      fh_threshold_log_level=fh_threshold_log_level,
                                      ch_threshold_log_level=ch_threshold_log_level)
+
     def __str__(self):
         message = ( "\n Local path to tests: " + self.__local_path_to_tests  + "\n"
                     "Tests: " + str(self.__tests) + "\n"
@@ -216,9 +238,10 @@ class Harness:
 
                 logger_name = appname + "." + testname + "." + self.__timestamp
                 fh_filepath = "harness_log_files" + "." + self.__timestamp + "/" + appname + "/" + appname + "__" + testname +  ".logfile.txt"
-                logger_threshold = self.__log_level
-                fh_threshold_log_level = "INFO"
-                ch_threshold_log_level = "CRITICAL"
+                logger_threshold = "DEBUG"
+                # Log file always has a consistent log level. Console log level changes
+                fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
+                ch_threshold_log_level = self.__log_level
                 a_logger = rgt_logger_factory.create_rgt_logger(logger_name=logger_name,
                                       fh_filepath=fh_filepath,
                                       logger_threshold_log_level=logger_threshold,
@@ -232,7 +255,6 @@ class Harness:
                                                       tag=self.__timestamp)
 
                 app_subtests[appname].append(subtest)
-
         return app_subtests
 
     def __run_subtests_asynchronously(self):
@@ -242,9 +264,11 @@ class Harness:
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.__num_workers) as executor:
             for appname in self.__app_subtests.keys():
                 future = executor.submit(apptest.do_application_tasks,
+                                         self.__launch_id,
                                          self.__app_subtests[appname],
                                          self.__tasks,
-                                         self.__stdout_stderr)
+                                         self.__stdout_stderr,
+                                         self.__separate_build_stdio)
                 future_to_appname[future] = appname
 
             # Log when all job tasks are initiated.
@@ -254,14 +278,25 @@ class Harness:
                 # Check if an exception has been raised
                 my_future_exception = my_future.exception()
                 if my_future_exception:
-                    message = "Application {} future exception:\n{}".format(appname, my_future_exception)
+                    message = "Application {} exception encountered:\n{}".format(appname, my_future_exception)
                     self.__myLogger.doCriticalLogging(message)
                 else:
-                    message = "Application {} future is completed.".format(appname)
+                    message = "Application {} is launched.".format(appname)
                     self.__myLogger.doInfoLogging(message)
 
-            message = "All applications completed futures. Yahoo!!"
+                subtest_result = my_future.result()
+                self.__launched_tests += subtest_result[0]
+                self.__failed_tests += subtest_result[1]
+                if self.__failed_tests:
+                    self.__failed_test_list.extend(subtest_result[2])
+
+            message = "All applications are launched. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
+            self.__myLogger.doCriticalLogging(f"Launched {self.__launched_tests} tests, failed to launch {self.__failed_tests} tests.")
+            if self.__failed_tests:
+                self.__myLogger.doErrorLogging("Failed tests:")
+                for t in self.__failed_test_list:
+                    self.__myLogger.doErrorLogging(f"\t{t}")
 
         return
 
@@ -270,6 +305,7 @@ class Harness:
 
         # set up the LaunchPad
         launchpad = LaunchPad()
+        launchid = self.__launch_id
 
         cfg_file = self.__config.get_config_file()
 
@@ -297,7 +333,10 @@ class Harness:
 
                 # create build FireWork
                 taskname = f'OTH-BLD.{machine_name}.{task_suffix}'
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --scriptsdir {scripts_dir} --uniqueid {uid}'
+                if self.__separate_build_stdio:
+                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --separate-build-stdio --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
+                else:
+                    driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwbuild.log'
                 build_task = ScriptTask(script=script_cmd,
                                         store_stdout=True, store_stderr=True)
@@ -307,7 +346,7 @@ class Harness:
 
                 # create batch run FireWork
                 taskname = f'OTH-RUN.{machine_name}.{task_suffix}'
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --run --scriptsdir {scripts_dir} --uniqueid {uid}'
+                driver_cmd = f'test_harness_driver.py -C {cfg_file} --run --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwrun.log'
                 run_task = ScriptTask(script=script_cmd,
                                       store_stdout=True, store_stderr=True)
@@ -329,7 +368,7 @@ class Harness:
 
                 # create check FireWork
                 taskname = f'OTH-CHK.{machine_name}.{task_suffix}'
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --check --scriptsdir {scripts_dir} --uniqueid {uid}'
+                driver_cmd = f'test_harness_driver.py -C {cfg_file} --check --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
                 script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwcheck.log'
                 check_task = ScriptTask(script=script_cmd,
                                         store_stdout=True, store_stderr=True)

@@ -116,17 +116,6 @@ def get_main_logger():
 # to make the values immutable.                      -
 #-----------------------------------------------------
 
-DEFAULT_CONFIGURE_FILE = rgt_config_file.getDefaultConfigFile()
-"""
-The default configuration filename.
-
-The configuration file contains the machine settings, number of CPUs
-per node, etc., for the machine the harness is being run on. Each machine
-has a default configuration file that will be used unless another
-configuration is specified by the command line or input file.
-
-"""
-
 # This section pertains to the harness tasks option.
 
 USE_HARNESS_TASKS_IN_RGT_INPUT_FILE="use_harness_tasks_in_rgt_input_file"
@@ -145,7 +134,7 @@ default harness task will we default to the tasks in the runtests.py input file.
 
 """
 
-PERMITTED_HARNESS_TASKS=(USE_HARNESS_TASKS_IN_RGT_INPUT_FILE,'checkout','start','stop','status')
+PERMITTED_HARNESS_TASKS=('checkout','start','stop','status')
 """
 A tuple of the permitted harness tasks.
 
@@ -190,12 +179,12 @@ Specifying an unsupported loglevel will result in the harness aborting with an
 error.
 """
 
-DEFAULT_LOG_LEVEL=PERMITTED_LOG_LEVELS[0]
+DEFAULT_LOG_LEVEL="WARNING"
 """
 str: The default log level.
 
 If no loglevel option is specified on the command line, then default loglevel
-will be set to NOTSET.
+will be set to WARNING.
 """
 
 # This section pertains to the concurrency option. It
@@ -254,7 +243,7 @@ str: The default output option.
 #                                                    -
 #-----------------------------------------------------
 
-def create_parser():
+def create_parser(logger=None):
     """
     Returns an ArgumentParser object.
 
@@ -283,7 +272,7 @@ def create_parser():
 
     parser.add_argument('-c', '--configfile',
                         required=False,
-                        default=DEFAULT_CONFIGURE_FILE,
+                        default=rgt_config_file.getDefaultConfigFile(logger=logger),
                         type=str,
                         help="Configuration file name (default: %(default)s)")
 
@@ -304,24 +293,29 @@ def create_parser():
                         help=out_help)
 
     mode_help = ("Harness task:\n"
-                 "  'checkout' - checkout application tests listed in input file\n"
-                 "  'start'    - start application tests listed in input file\n"
-                 "  'stop'     - stop application tests listed in input file\n"
-                 "  'status'   - check status of application tests listed in input file\n")
+                 "  'checkout'   - checkout application tests listed in input file\n"
+                 "  'start'      - start application tests listed in input file\n"
+                 "  'stop'       - stop application tests listed in input file\n"
+                 "  'status'     - check status of application tests listed in input file\n")
     parser.add_argument('-m', '--mode',
                         required=False,
                         help=mode_help,
-                        default=[DEFAULT_HARNESS_TASK],
-                        nargs='*',
+                        nargs='+',
                         choices=PERMITTED_HARNESS_TASKS)
 
     parser.add_argument("--fireworks",
                         action='store_true',
                         help="Use FireWorks to run harness tasks")
 
+    parser.add_argument("-sb", "--separate-build-stdio",
+                        action='store_true',
+                        required=False,
+                        default=False,
+                        help="Separate output from build into build_out.stderr.txt and build_out.stdout.txt")
+
     return parser
 
-def parse_commandline_argv(argv):
+def parse_commandline_argv(argv, logger):
     """
     Returns a object of type HarnessParsedArguments.
 
@@ -333,6 +327,9 @@ def parse_commandline_argv(argv):
         argv : list
             Holds the command line arguments
 
+        logger : Python logging object
+            Handles logging commands
+
     Returns
     -------
     HarnessParsedArguments
@@ -342,14 +339,15 @@ def parse_commandline_argv(argv):
 
     """
 
-    parser = create_parser()
+    parser = create_parser(logger=logger)
     Vargs = parser.parse_args(argv)
     harness_parsed_args = command_line.HarnessParsedArguments(inputfile=Vargs.inputfile,
                                                               loglevel=Vargs.loglevel,
                                                               configfile=Vargs.configfile,
                                                               stdout_stderr=Vargs.output,
                                                               runmode=Vargs.mode,
-                                                              use_fireworks=Vargs.fireworks)
+                                                              use_fireworks=Vargs.fireworks,
+                                                              separate_build_stdio=Vargs.separate_build_stdio)
     return harness_parsed_args
 
 def runtests(my_arg_string=None):
@@ -380,7 +378,7 @@ def runtests(my_arg_string=None):
 
     main_logger.info("Parsing the command line arguments.")
 
-    harness_arguments = parse_commandline_argv(argv)
+    harness_arguments = parse_commandline_argv(argv, main_logger)
 
     # Print the effective command line to stdout.
     effective_command_line = harness_arguments.effective_command_line
@@ -391,18 +389,29 @@ def runtests(my_arg_string=None):
     # Read the input and master config
     main_logger.info("Reading the harness input file.")
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
-                                       runmodecmd=harness_arguments.runmode)
+                                       runmodecmd=harness_arguments.runmode,
+                                       logger=main_logger)
     main_logger.info("Completed reading the harness input file.")
+
+    # Check if there were any tests found:
+    if len(ifile.get_tests()) == 0:
+        main_logger.error("No tests found in input file. Aborting.")
+        return
     
     main_logger.info("Reading the harness config file.")
-    config = rgt_config_file(configfilename=harness_arguments.configfile)
+    try:
+        config = rgt_config_file(configfilename=harness_arguments.configfile, logger=main_logger)
+    except NameError as e:
+        main_logger.critical(f"Could not find Harness config file: {harness_arguments.configfile}.")
+        exit(1)
     main_logger.info("Completed reading the harness config file.")
 
     # Create and run the harness
     rgt = regression_test.Harness(config, ifile,
                                   harness_arguments.loglevel,
                                   harness_arguments.stdout_stderr,
-                                  harness_arguments.use_fireworks)
+                                  harness_arguments.use_fireworks,
+                                  harness_arguments.separate_build_stdio)
 
     main_logger.info("Created an instance of the harness.")
     main_logger.info("Harness: " + str(rgt))

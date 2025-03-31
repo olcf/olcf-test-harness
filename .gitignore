@@ -3,7 +3,7 @@
 **/__pycache__
 
 #Ignore all html files.
-*.html
+#*.html
 
 # Ignore all *.doctree files. These files are
 # generated when sphinx-doc creates python documentation.

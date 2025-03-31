@@ -70,7 +70,6 @@ def make_batch_script_for_linux(a_machine):
     function_name = inspect.getframeinfo(frame).function
 
     # Log that our execution location.
-    messloc = "In function {functionname}:".format(functionname=function_name ) 
     message = "Making batch script for {} using file {}.".format(a_machine.machine_name,a_machine.get_scheduler_template_file_name())
     a_machine.logger.doInfoLogging(message)
 
@@ -81,7 +80,7 @@ def make_batch_script_for_linux(a_machine):
     batch_file_path = os.path.join(a_machine.apptest.get_path_to_runarchive(),
                                    a_machine.test_config.get_batch_file())
 
-    message = f"{messloc} The batch scheduler template file is {batch_template_file}."
+    message = f"The batch scheduler template file is {batch_template_file}."
     a_machine.logger.doInfoLogging(message)
     
     # Get batch job template lines
@@ -90,12 +89,12 @@ def make_batch_script_for_linux(a_machine):
             templatelines = templatefileobj.readlines()
     except OSError as err:
         bstatus = False
-        message = ( f"{messloc} Error opening bath template file '{batch_template_file}' for reading."
+        message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
                     f"Handling error: {err}\n" )
         a_machine.logger.doCriticalLogging(message)
     
     if bstatus:
-        message = f"{messloc} Completed reading lines of the batch template file {batch_template_file}."
+        message = f"Completed reading lines of the batch template file {batch_template_file}."
         a_machine.logger.doInfoLogging(message)
 
         # Create test batch job script in run archive directory
@@ -111,11 +110,11 @@ def make_batch_script_for_linux(a_machine):
                     batch_job.write(record)
         except OSError as err:
             bstatus = False
-            message = ( f"{messloc} Error opening bath template file '{batch_file_path}' for writing.\n"
+            message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
                         f"Handling error: {err}\n" )
             a_machine.logger.doCriticalLogging(message)
 
-        message = f"{messloc} Completed regex substitutions."
+        message = f"Completed regex substitutions."
         a_machine.logger.doInfoLogging(message)
 
     return bstatus
@@ -139,13 +138,11 @@ def check_executable(a_machine,new_env):
     my_current_frame = inspect.currentframe()
     my_current_frame_info = inspect.getframeinfo(my_current_frame)
     my_functioname = my_current_frame_info.function
-    messloc = "In function {functionname}:".format(functionname=my_functioname ) 
-
     checkcmd = a_machine.check_command
     path_to_checkscript = a_machine.apptest.get_path_to_scripts()
     check_command_line = _form_proper_command_line(path_to_checkscript,checkcmd)
 
-    message = f"{messloc} The check command line is {check_command_line}."
+    message = f"The check command line is {check_command_line}."
     a_machine.logger.doInfoLogging(message)
 
     check_outfile = "output_check.txt"
@@ -161,7 +158,7 @@ def check_executable(a_machine,new_env):
 
     check_exit_status = p.returncode
 
-    message = f"{messloc} The check command return code {check_exit_status}."
+    message = f"The check command return code {check_exit_status}."
     a_machine.logger.doInfoLogging(message)
 
     return check_exit_status
@@ -385,24 +382,41 @@ def build_executable(a_machine, new_env):
     # Get the name of the current function.
     frame = inspect.currentframe()
     function_name = inspect.getframeinfo(frame).function
-    messloc = "In function {functionname}:".format(functionname=function_name ) 
-    
+
+    # Update the build environment
+    env_vars = a_machine.test_config.test_environment
+    message = ""
+    for e in env_vars:
+        v = env_vars[e]
+        eu = e.upper()
+        #print("Setting env var", eu, "=", v)
+        os.putenv(eu, v)
+        message += f"Set build environment variable {eu}={v}\n"
+    if new_env:
+        for e in new_env:
+            v = new_env[e]
+            eu = e.upper()
+            os.putenv(eu, v)
+            message += f"Set build environment variable {eu}={v}\n"
+    a_machine.logger.doInfoLogging(message)
+
     # We get the command for bulding the binary.
     buildcmd = a_machine.test_config.get_build_command()
-    build_std_out = "output_build.stdout.txt"
-    build_std_err = "output_build.stderr.txt"
-    message = f"{messloc} The build command: {buildcmd}"
+    message = f"The build command: {buildcmd}"
     a_machine.logger.doInfoLogging(message)
-    with open(build_std_out,"w") as build_std_out :
-        with open(build_std_err,"w") as build_std_err :
-            if new_env is not None:
-                message = f"{messloc} Setting new environment for build."
-                p = subprocess.Popen(buildcmd,shell=True,env=new_env,stdout=build_std_out,stderr=build_std_err)
-                a_machine.logger.doInfoLogging(message)
-            else:
-                message = f"{messloc} Using old environment for build."
-                p = subprocess.Popen(buildcmd,shell=True,stdout=build_std_out,stderr=build_std_err)
-                a_machine.logger.doInfoLogging(message)
+
+    if a_machine.separate_build_stdio:
+        build_std_out = "output_build.stdout.txt"
+        build_std_err = "output_build.stderr.txt"
+        with open(build_std_out,"w") as build_std_out :
+            with open(build_std_err,"w") as build_std_err :
+                p = subprocess.Popen(buildcmd, shell=True, stdout=build_std_out, stderr=build_std_err)
+                p.wait()
+                build_exit_status = p.returncode
+    else:
+        build_out = "output_build.txt"
+        with open(build_out,"w") as build_out :
+            p = subprocess.Popen(buildcmd, shell=True, stdout=build_out, stderr=subprocess.STDOUT)
             p.wait()
             build_exit_status = p.returncode
 
@@ -412,26 +426,29 @@ def submit_batch_script(a_machine, new_env):
     # Get the name of the current function.
     frame = inspect.currentframe()
     function_name = inspect.getframeinfo(frame).function
-    messloc = "In function {functionname}:".format(functionname=function_name) 
 
+    # Update the batch submission environment
     env_vars = a_machine.test_config.test_environment
     message = ""
     for e in env_vars:
         v = env_vars[e]
-        print("Setting env var", e, "=", v)
-        os.putenv(e.upper(), v)
-        message += f"Set environmental variable {e}={v}\n"
-    if new_env is not None:
+        eu = e.upper()
+        #print("Setting env var", eu, "=", v)
+        os.putenv(eu, v)
+        message += f"Set batch environment variable {eu}={v}\n"
+    if new_env:
         for e in new_env:
             v = new_env[e]
-            os.putenv(e.upper(), v)
-            message += f"Set environmental variable {e}={v}\n"
+            eu = e.upper()
+            os.putenv(eu, v)
+            message += f"Set batch environment variable {eu}={v}\n"
     a_machine.logger.doInfoLogging(message)
 
+    # Submit the test's batch script
     batch_script = a_machine.test_config.get_batch_file()
     submit_exit_value = a_machine.submit_to_scheduler(batch_script)
 
-    message = f"{messloc} Submitted batch script {batch_script} with exit status of {submit_exit_value}."
+    message = f"Submitted batch script {batch_script} with exit status of {submit_exit_value}."
     return submit_exit_value
 
 #-----------------------------------------------------

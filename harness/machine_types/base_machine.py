@@ -12,11 +12,11 @@ import os
 import shutil
 import subprocess
 import shlex
+import sys
 
 # Harness imports
 from libraries.apptest import subtest
 from .scheduler_factory import SchedulerFactory
-from .jobLauncher_factory import JobLauncherFactory
 from machine_types import linux_utilities
 
 class BaseMachine(metaclass=ABCMeta):
@@ -27,13 +27,11 @@ class BaseMachine(metaclass=ABCMeta):
     Attributes:
         name: string representing the system's name
         scheduler: an object of the BaseScheduler class
-        jobLauncher: an object of the BaseJobLauncher class
 
     Methods:
         get_machine_name:
         print_machine_info:
         print_scheduler_info:
-        print_jobLauncher_info:
         set_numNodes:
     """
 
@@ -44,21 +42,21 @@ class BaseMachine(metaclass=ABCMeta):
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # The constructor of class base_machine.
-    def __init__(self, name, scheduler_type, jobLauncher_type,
+    def __init__(self, name, scheduler_type,
                  numNodes, numSockets, numCoresPerSocket,
-                 apptest):
+                 apptest, separate_build_stdio=False):
 
         self.__name = name
 
-        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type)
+        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger)
         """An object of type BaseScheduler : This object is the job resource scheduler. See the
            classs SchedulerFactory for more details."""
 
-        self.__jobLauncher = JobLauncherFactory.create_jobLauncher(jobLauncher_type)
         self.__numNodes = numNodes
         self.__numSockets = numSockets
         self.__numCoresPerSocket = numCoresPerSocket
         self.__apptest = apptest
+        self.__separate_build_stdio = separate_build_stdio
 
         runarchive_dir = self.apptest.get_path_to_runarchive()
         log_filepath = os.path.join(runarchive_dir,self.__class__.__module__)
@@ -92,6 +90,11 @@ class BaseMachine(metaclass=ABCMeta):
     def machine_name(self):
         """str: The name of the machine."""
         return self.__name
+
+    @property
+    def separate_build_stdio(self):
+        """bool: If true, separate build into stdout and stderr"""
+        return self.__separate_build_stdio
 
     @property
     def check_command(self):
@@ -152,8 +155,6 @@ class BaseMachine(metaclass=ABCMeta):
         """ Print information about the machine"""
         print("Machine name:\n"+self.get_machine_name())
         self.scheduler.print_scheduler_info()
-        print("Job Launcher info: ")
-        self.print_jobLauncher_info()
 
     def get_machine_name(self):
         """ Return a string with the system's name."""
@@ -167,17 +168,6 @@ class BaseMachine(metaclass=ABCMeta):
         """ Return a string with the name of the scheduler's template file."""
         return self.scheduler.get_scheduler_template_file_name()
 
-    def get_jobLauncher_command(self):
-        message = "Building jobLauncher command for machine {}.".format(self.machine_name)
-        print(message)
-        jobLauncher_command = self._build_jobLauncher_command(self.test_config.test_parameters)
-        return jobLauncher_command
-
-    def print_jobLauncher_info(self):
-        """ Print information about the machine's job launcher."""
-        print("Job Launcher Information")
-        print(str(self.__jobLauncher))
-
     def set_numNodes(self,numNodes):
         self.__numNodes = numNodes
 
@@ -190,9 +180,7 @@ class BaseMachine(metaclass=ABCMeta):
             The exit status of submitting the batch script to the scheduler. An
             exit_status of 0 indicates success, other wise failure. 
         """
-        messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
-
-        message = f"{messloc} Submitting a batch script."
+        message = f"Submitting a batch script."
         self.logger.doInfoLogging(message)
 
         currentdir = os.getcwd()
@@ -205,20 +193,20 @@ class BaseMachine(metaclass=ABCMeta):
 
         try:
             if filename != "":
-                message = f"{messloc} The submit runtime environmental file is {filename}."
+                message = f"The submit runtime environmental file is {filename}."
                 self.logger.doInfoLogging(message)
                 new_env = linux_utilities.get_new_environment(self,filename)
         except SetBuildRTEError as error: 
-            message = f"{messloc} Unable to set the submit runtime environment."
+            message = f"Unable to set the submit runtime environment."
             self.logger.doCriticalLogging(message)
 
         exit_status = linux_utilities.submit_batch_script(self,new_env)
 
         if exit_status != 0:
-            message = f"{messloc} Unsuccessful batch script submission with exit status of {exit_status}."
+            message = f"Unsuccessful batch script submission with exit status of {exit_status}."
             self.logger.doCriticalLogging(message)
         else:
-            message = f"{messloc} Successful batch script submission with exit status of {exit_status}."
+            message = f"Successful batch script submission with exit status of {exit_status}."
             self.logger.doInfoLogging(message)
 
         return exit_status
@@ -283,9 +271,7 @@ class BaseMachine(metaclass=ABCMeta):
             The exit status of the build command.
 
         """
-        messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
-
-        message = f"{messloc} Start of buiding executable.\n"
+        message = f"Start of buiding executable.\n"
         self.logger.doInfoLogging(message)
 
         currentdir = os.getcwd()
@@ -297,9 +283,12 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doInfoLogging(message)
 
         # Copy the source to the build directory.
-        self._copy_source_to_build_directory()
+        copy_rc = self._copy_source_to_build_directory()
+        # short-circuit if the copy failed
+        if not copy_rc == 0:
+            return copy_rc
 
-        message = f"{messloc} Copied source to build directory.\n"
+        message = f"Copied source to build directory.\n"
         self.logger.doInfoLogging(message)
 
         # Get the environment using the build runtime environment file.
@@ -307,23 +296,23 @@ class BaseMachine(metaclass=ABCMeta):
         filename = self.build_runtime_environment_command_file
 
         if filename != "":
-            message = f"{messloc} The build runtime environmental file is {filename}."
+            message = f"The build runtime environmental file is {filename}."
             self.logger.doInfoLogging(message)
             new_env = linux_utilities.get_new_environment(self,filename)
-            message = f"{messloc} The new build environment is as follows:\n"
+            message = f"The new build environment is as follows:\n"
             message += str(new_env)
             self.logger.doInfoLogging(message)
 
         # We now change directories to the build directory.
         os.chdir(path_to_build_directory)
 
-        message = f"{messloc} Changed to  build directory {path_to_build_directory}. Commencing build ..."
+        message = f"Changed to  build directory {path_to_build_directory}. Commencing build ..."
         self.logger.doInfoLogging(message)
 
         # We run the build command.
         exit_status = self._build_executable(new_env)
 
-        message = f"{messloc} The build exit status is {exit_status}."
+        message = f"The build exit status is {exit_status}."
         if exit_status == 0:
             self.logger.doInfoLogging(message)
         else:
@@ -332,10 +321,10 @@ class BaseMachine(metaclass=ABCMeta):
         # We now change back to starting directory.
         os.chdir(currentdir)
 
-        message = f"{messloc} Changed back to Scripts directory {currentdir}."
+        message = f"Changed back to Scripts directory {currentdir}."
         self.logger.doInfoLogging(message)
 
-        message = f"{messloc} End of buiding executable."
+        message = f"End of buiding executable."
         self.logger.doInfoLogging(message)
 
         return exit_status
@@ -348,9 +337,6 @@ class BaseMachine(metaclass=ABCMeta):
         int :
             The exist status of the check command.
         """
-
-        messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
-
         currentdir = os.getcwd()
         runarchive_dir = self.apptest.get_path_to_runarchive()
 
@@ -359,16 +345,16 @@ class BaseMachine(metaclass=ABCMeta):
         filename = self.check_runtime_environment_command_file
         try:
             if filename != "":
-                message = f"{messloc} The check runtime environmental file is {filename}."
+                message = f"The check runtime environmental file is {filename}."
                 new_env = linux_utilities.get_new_environment(self,filename)
         except SetBuildRTEError as error: 
-            message = f"{messloc} Unable to set the check runtime environment."
+            message = f"Unable to set the check runtime environment."
             self.logger.doCriticalLogging(message)
 
         # We now change to the runarchive directory.
         os.chdir(runarchive_dir)
 
-        message = f"{messloc} The current working directory is {runarchive_dir} "
+        message = f"The current working directory is {runarchive_dir} "
         self.logger.doInfoLogging(message)
 
         # We now run the check command.
@@ -379,7 +365,7 @@ class BaseMachine(metaclass=ABCMeta):
         # We now change back to starting directory.
         os.chdir(currentdir)
 
-        message = f"{messloc} The current working directory is {currentdir} "
+        message = f"The current working directory is {currentdir} "
         self.logger.doInfoLogging(message)
 
         return check_status
@@ -393,13 +379,27 @@ class BaseMachine(metaclass=ABCMeta):
         """
         report_command_str = self.test_config.get_report_command()
 
-        messloc = "In function {functionname}: ".format(functionname=self._name_of_current_function()) 
-        message = f"{messloc} Running report executable script report script {report_command_str }."
+        message = f"Running report executable script report script {report_command_str }."
 
         print(message)
         self.logger.doInfoLogging(message)
         
         exit_status = self._start_report_script(self.test_config.get_report_command())
+        return exit_status
+
+    def log_to_db(self):
+        """
+        Logs the results to enabled database backends if able
+        
+        Return
+        ------
+        bool: Success (True), otherwise, not logged to Databases
+        """
+        message = f"Attempting to log to Databases."
+
+        self.logger.doInfoLogging(message)
+        
+        exit_status = self._log_to_db()
         return exit_status
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -427,28 +427,44 @@ class BaseMachine(metaclass=ABCMeta):
         return exit_status
     
     def _copy_source_to_build_directory(self):
-        messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
-
         path_to_source = self.apptest.get_path_to_source()
-        message = f"{messloc} Path to Source: {path_to_source}"
-        print("Path to Source:", path_to_source)
-        self.logger.doInfoLogging(message)
+        path_to_test_source = self.apptest.get_path_to_test_source()
+        # Use Error threshold to show this message all the time
+        self.logger.doErrorLogging(f"Path to Source: {path_to_source}")
 
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
-        message = f"{messloc} Path to build directory: {path_to_build_directory}"
-        self.logger.doInfoLogging(message)
-        print("Path to Build Dir:", path_to_build_directory)
+        # Use Error threshold to show this message all the time
+        self.logger.doErrorLogging(f"Path to Build: {path_to_build_directory}")
+
+        path_to_runarchive_directory = self.apptest.get_path_to_runarchive()
+        # Use Error threshold to show this message all the time
+        self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
         shutil.copytree(src=path_to_source,
-                        dst=path_to_build_directory)
+                        dst=path_to_build_directory,
+                        symlinks=True)
+
+        # If a Source directory exists inside test, overlay that over source directory
+        if os.path.exists(path_to_test_source):
+            # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
+            # Prior to that, it's easier to use shell commands to do what we want
+            if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
+                shutil.copytree(src=path_to_test_source,
+                    dst=path_to_build_directory,
+                    symlinks=False, dirs_exist_ok=True)
+            else:
+                proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
+                if not proc.returncode == 0:
+                    self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
+                    return proc.returncode
+        return 0
 
     def _write_check_exit_status(self, cstatus):
         """ Write the status of checking results to the status directory."""
-        messloc = "In function {functionname}:".format(functionname=self._name_of_current_function()) 
 
         status_file = self.apptest.get_path_to_job_status_file()
         with open(status_file, "w")  as file_obj:
-            message = f"{messloc}  Writing check_exit_status {cstatus} into {status_file}"
+            message = f"Writing check_exit_status {cstatus} into {status_file}"
             self.logger.doInfoLogging(message)
             file_obj.write(str(cstatus))
         return
@@ -480,9 +496,8 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(currentdir)
         return report_exit_status
 
-    def _build_jobLauncher_command(self,template_dict):
-        """ Return the jobLauncher command."""
-        return self.__jobLauncher.build_job_command(template_dict)
+    def _log_to_db(self):
+        return self.apptest._run_db_extensions()
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

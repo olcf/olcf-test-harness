@@ -26,7 +26,6 @@ class apptest_layout:
     # Define specific file names
     app_info_filename = 'application_info.txt'
     test_info_filename = 'test_info.txt'
-    test_input_txt_filename = 'rgt_test_input.txt'
     test_input_ini_filename = 'rgt_test_input.ini'
     test_kill_filename = '.kill_test'
     test_rc_filename = '.testrc'
@@ -52,6 +51,7 @@ class apptest_layout:
     test_run_archive_dirname = 'Run_Archive'
     test_scripts_dirname = 'Scripts'
     test_status_dirname = 'Status'
+    test_source_dirname = 'Source'
     test_performance_dirname = 'Performance'
     test_logfile_dirname = 'LogFiles'
 
@@ -67,12 +67,12 @@ class apptest_layout:
         'test'            : os.path.join("${pdir}", "${app}", "${test}"),
         'test_info'       : os.path.join("${pdir}", "${app}", "${test}", test_info_filename),
         'test_rc'         : os.path.join("${pdir}", "${app}", "${test}", test_rc_filename),
+        'test_source'     : os.path.join("${pdir}", "${app}", "${test}", test_source_dirname),
         'test_correct'    : os.path.join("${pdir}", "${app}", "${test}", test_correct_results_dirname),
         'test_perf'       : os.path.join("${pdir}", "${app}", "${test}", test_performance_dirname),
         'runarchive_dir'  : os.path.join("${pdir}", "${app}", "${test}", test_run_archive_dirname, "${id}"),
         'scripts_dir'     : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname),
         'test_input_ini'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_ini_filename),
-        'test_input_txt'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_txt_filename),
         'kill_file'       : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_kill_filename),
         'status_dir'      : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}"),
         'job_id_file'     : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}", job_id_filename),
@@ -90,10 +90,12 @@ class apptest_layout:
                  applications_rootdir,
                  name_of_application,
                  name_of_subtest,
+                 logger=None,
                  harness_id=None):
         self.__applications_root = applications_rootdir
         self.__appname = name_of_application
         self.__testname = name_of_subtest
+        self.__logger = logger
         self.__workspace = None
 
         if harness_id == None:
@@ -103,6 +105,31 @@ class apptest_layout:
         # Set the application and test layout
         self.__apptest_layout = copy.deepcopy(apptest_layout.directory_structure_template)
         self.__setApplicationTestLayout()
+
+    # Check that the required paths to source and scripts exist
+    def check_paths(self):
+        """ Returns False if the Source dir, Scripts dir, or test input ini files don't exist """
+        # Check that the Application dir exists
+        if not os.path.exists(self.__apptest_layout['app']):
+            self.__logger.doErrorLogging(f"Could not find the Application root directory for App={self.__appname}, Test={self.__testname}.")
+            return False
+        # Check that the Application's Source dir exists
+        if not os.path.exists(self.get_path_to_source()):
+            self.__logger.doErrorLogging(f"Could not find the Source directory for App={self.__appname}, Test={self.__testname}.")
+            return False
+        # Check that the Test dir exists
+        if not os.path.exists(self.__apptest_layout['test']):
+            self.__logger.doErrorLogging(f"Could not find the test directory for App={self.__appname}, Test={self.__testname}.")
+            return False
+        # Check that the Scripts directory exists
+        if not os.path.exists(self.get_path_to_scripts()):
+            self.__logger.doErrorLogging(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
+            return False
+        # Check that the an rgt_test_ini.ini file exists 
+        if not (os.path.exists(self.__apptest_layout['test_input_ini'])):
+            self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
+            return False
+        return True
 
     # Return the harness id for the test (may be None)
     def get_harness_id(self):
@@ -128,13 +155,13 @@ class apptest_layout:
     # Debug function.
     #
     def debug_layout(self):
-        print ("\n\n")
-        print ("================================================================")
-        print ("Debugging local layout " + self.__appname + self.__testname)
-        print ("================================================================")
+        self.__logger.doDebugLogging ("\n\n")
+        self.__logger.doDebugLogging ("================================================================")
+        self.__logger.doDebugLogging ("Debugging local layout " + self.__appname + self.__testname)
+        self.__logger.doDebugLogging ("================================================================")
         for key in self.__apptest_layout.keys():
-            print ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
-        print ("================================================================\n\n")
+            self.__logger.doDebugLogging ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
+        self.__logger.doDebugLogging ("================================================================\n\n")
 
     #
     # Returns the path to the application directory.
@@ -147,6 +174,12 @@ class apptest_layout:
     #
     def get_path_to_source(self):
         return self.__apptest_layout['app_source']
+
+    #
+    # Returns the path to the test's source directory.
+    #
+    def get_path_to_test_source(self):
+        return self.__apptest_layout['test_source']
 
     #
     # Returns the path to the test directory.
@@ -182,7 +215,7 @@ class apptest_layout:
     # Returns the path to the test workspace build directory.
     #
     def get_path_to_workspace_build(self):
-        if self.__workspace is None:
+        if not self.__workspace:
             return None
         return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
 
@@ -190,7 +223,7 @@ class apptest_layout:
     # Returns the path to the test workspace run directory.
     #
     def get_path_to_workspace_run(self):
-        if self.__workspace is None:
+        if not self.__workspace:
             return None
         return os.path.join(self.__workspace, apptest_layout.test_run_dirname)
 
@@ -211,8 +244,11 @@ class apptest_layout:
         #
         apptest_dir = self.get_path_to_test()
         latest_lnk = os.path.join(apptest_dir, apptest_layout.test_status_dirname, 'latest')
-        if os.path.exists(latest_lnk):
+        try:
+            # Not guarded by a conditional, so that it removes broken links
             os.unlink(latest_lnk)
+        except FileNotFoundError as e:
+            self.__logger.doWarningLogging("Could not remove 'latest' link in Status.")
         try_symlink(spath, latest_lnk)
 
         return spath
@@ -235,8 +271,11 @@ class apptest_layout:
         #
         apptest_dir = self.get_path_to_test()
         latest_lnk = os.path.join(apptest_dir, apptest_layout.test_run_archive_dirname, 'latest')
-        if os.path.exists(latest_lnk):
+        try:
+            # Not guarded by a conditional, so that it removes broken links
             os.unlink(latest_lnk)
+        except FileNotFoundError as e:
+            self.__logger.doWarningLogging("Could not remove 'latest' link in Run_Archive.")
         try_symlink(rpath, latest_lnk)
 
         return rpath

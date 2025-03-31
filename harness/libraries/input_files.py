@@ -4,6 +4,7 @@
 import string
 import os
 import configparser
+import logging
 
 # My harness package imports
 from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
@@ -26,19 +27,36 @@ class rgt_input_file:
 
     def __init__(self,
                  inputfilename="rgt.input",
-                 runmodecmd=None):
+                 runmodecmd=None,
+                 logger=None):
         self.__tests = []
         self.__harness_task = []
         self.__path_to_tests = ""
         self.__inputFileName = inputfilename
+        self.__logger = logger
 
-        # Read the input file.
-        self.__read_file()
+        if not logger:
+            self.__logger = logging.getLogger('rgt_input_file_logger')
+            self.__logger.setLevel('DEBUG')
+            ch = logging.StreamHandler()
+            ch.setLevel('DEBUG')
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            ch.setFormatter(formatter)
+            self.__logger.addHandler(ch)
+            self.__logger.info("Created a logger in rgt_input_file, since one was not provided.")
+
+        # Read the input file. Returns True upon successful read.
+        # If read_file fails, self.__tests is emptied and False is returned
+        err = self.__read_file()
+        if not err:
+            self.__logger.critical("ERROR: Failed to parse input file.")
+            # Short-circuit upon failure
+            return
 
         # If a CLI task was input use that instead
         if USE_HARNESS_TASKS_IN_RGT_INPUT_FILE not in runmodecmd :
-            print("Overriding tasks in inputfile since CLI mode was provided")
-            print("runmodecmd = ", runmodecmd)
+            self.__logger.info("Overriding tasks in inputfile since CLI mode was provided")
+            self.__logger.debug(f"runmodecmd = {runmodecmd}")
             self.__harness_task = []
             for modetask in runmodecmd:
                 if modetask == "checkout":
@@ -51,18 +69,18 @@ class rgt_input_file:
                     runmodetask = ["display_tests",None,None]
                 else:
                     runmodetask = None
-                    print("Found invalid task in the command line: ", modetask)
+                    self.__logger.warning(f"Found invalid task in the command line: {modetask}")
 
                 # Append task to this harness instance
                 if runmodetask != None:
                     self.__harness_task.append(runmodetask)
-                    print("self.__harness_task: ", self.__harness_task)
+                    self.__logger.debug(f"self.__harness_task: {self.__harness_task}")
 
                 # Clear mode to avoid duplicate
                 runmodetask = None
 
         if self.__harness_task == []:
-            print("ERROR: No valid tasks found in the inputfile or the CLI")
+            self.__logger.critical("ERROR: No valid tasks found in the inputfile or the CLI")
 
     def __read_file(self):
         ifile_obj = open(self.__inputFileName,"r")
@@ -71,7 +89,7 @@ class rgt_input_file:
 
         for tmpline in lines:
 
-            #If this is a comment line, the continue to next line.
+            #If this is a comment line, then continue to next line.
             if self.__is_comment_line(tmpline):
                 continue
 
@@ -84,28 +102,55 @@ class rgt_input_file:
             #Convert the first word to lower case.
             firstword = str.lower(words[0])
 
+
             # Parse the line,depending upon what type of entry it is.
             if firstword == rgt_input_file.test_entry:
-                # Determine the number of words. If the number of words is 3
+                # Check that there are at either 4 or 5 items in the line
+                if not (len(words) == 4 or len(words) == 5):
+                    log_message = "Invalid number of words in test line: " + tmpline
+                    self.__logger.critical(log_message)
+                    # Clear all tests -- invalid line in input file
+                    self.__tests = []
+                    return False
+                # Determine the number of words. If the number of words is 4
                 # The we run an indefinite number of times. If the number
-                # of words is 4, the we run a definite number of times dictated
-                # by the third word.
+                # of words is 5, the we run a definite number of times dictated
+                # by the last word.
                 app = words[2]
                 subtest = words[3]
-                nm_iters = -1
+
+                # Check that no slashes are in app or subtest name
+                if '/' in app:
+                    self.__logger.error(f"Invalid application name contains slashes in line: {tmpline}. Skipping.")
+                    continue
+                if '/' in subtest:
+                    self.__logger.error(f"Invalid test name contains slashes in line: {tmpline}. Skipping.")
+                    continue
                 if len(words) == 5:
                     nm_iters = int(words[4])
-                elif len(words) > 5:
-                    log_message = "Invalid number of words in test line: " + tmpline
-                    print(log_message)
-                self.__tests.append([app,subtest,nm_iters])
+                    # Add nm_iters parallel copies of the same test
+                    for i in range(0, nm_iters):
+                        self.__tests.append([app,subtest])
+                else:
+                    self.__tests.append([app,subtest])
 
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
-                    self.__path_to_tests = words[2]
-                elif len(words) > 3:
+                    # Validate Path_to_tests here:
+                    test_path = os.path.expanduser(words[2]) 
+                    test_path = os.path.expandvars(test_path)
+                    self.__logger.debug(f"Validating if {test_path} (set via Path_to_tests) exists.")
+                    if os.path.exists(test_path):
+                        self.__path_to_tests = test_path
+                    else:
+                        self.__logger.critical("Invalid path_to_test")
+                        self.__tests = []
+                        return False
+                else:
                     log_message = "Invalid number of words in path line: " + tmpline
-                    print(log_message)
+                    self.__logger.critical(log_message)
+                    self.__tests = []
+                    return False
 
             elif firstword == rgt_input_file.harness_task_entry:
                 if (len(words) == 3):
@@ -114,10 +159,15 @@ class rgt_input_file:
                     self.__harness_task.append([words[2],words[3],words[4]])
                 else:
                     log_message = "Invalid number of words in task line: " + tmpline
-                    print(log_message)
+                    self.__logger.critical(log_message)
+                    self.__tests = []
+                    return False
             else:
                 log_message = "Invalid line: " + tmpline
-                print(log_message)
+                self.__logger.critical(log_message)
+                self.__tests = []
+                return False
+        return True
 
     def __is_comment_line(self,word):
         if word[0] == rgt_input_file.comment_line_entry:

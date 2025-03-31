@@ -10,13 +10,18 @@ Copyright (C) 2015 Oak Ridge National Laboratory, UT-Battelle, LLC.
 """
 
 import os
+import sys
 import datetime
 import re
 import socket
 import pprint
 import abc
+import urllib
+import dateutil.parser
+import subprocess
 
 from libraries.layout_of_apps_directory import apptest_layout
+from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""
@@ -25,21 +30,40 @@ class StatusFile:
     # Class variables #
     ###################
 
-    __LINE_FORMAT = "%-30s %-21s %-20s %-15s %-15s %-15s\n"
-
-    #---TODO: upcase/underscore these as needed.
 
     # Header lines for status.
-    header1 = __LINE_FORMAT % (' ', ' ', ' ', ' ', ' ', ' ')
-    header2 = str.replace(header1, ' ', '#')
-    header3 = __LINE_FORMAT % ('#Start Time', 'Unique ID', 'Batch ID',
-                               'Build Status', 'Submit Status',
-                               'Correct Results')
-    header = header2
-    header += header1
-    header += header3
-    header += header1
-    header += header2
+    STATUS_COLUMN_START  = 'Start Time'
+    STATUS_COLUMN_LAUNCH = 'Launch ID'
+    STATUS_COLUMN_UNIQUE = 'Unique ID'
+    STATUS_COLUMN_COUNT  = 'Run Count'
+    STATUS_COLUMN_BATCH  = 'Batch Job ID'
+    STATUS_COLUMN_BUILD  = 'Build Status'
+    STATUS_COLUMN_SUBMIT = 'Submit Status'
+    STATUS_COLUMN_CHECK  = 'Check Status'
+
+    STATUS_COLUMNS = {
+        STATUS_COLUMN_START  : 0,
+        STATUS_COLUMN_LAUNCH : 1,
+        STATUS_COLUMN_UNIQUE : 2,
+        STATUS_COLUMN_COUNT  : 3,
+        STATUS_COLUMN_BATCH  : 4,
+        STATUS_COLUMN_BUILD  : 5,
+        STATUS_COLUMN_SUBMIT : 6,
+        STATUS_COLUMN_CHECK  : 7
+    }
+
+
+    __LINE_FORMAT = "%-28s %-50s %-20s %-10s %-20s %-15s %-15s %-15s\n"
+    spaces_header = __LINE_FORMAT % (' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ')
+    hashes_header = str.replace(spaces_header, ' ', '#')
+    column_header = __LINE_FORMAT % (f'# {STATUS_COLUMN_START}', STATUS_COLUMN_LAUNCH,
+                                     STATUS_COLUMN_UNIQUE, STATUS_COLUMN_COUNT, STATUS_COLUMN_BATCH,
+                                     STATUS_COLUMN_BUILD, STATUS_COLUMN_SUBMIT, STATUS_COLUMN_CHECK)
+    header =  hashes_header
+    header += spaces_header
+    header += column_header
+    header += spaces_header
+    header += hashes_header
 
     # Name of the input file.
     FILENAME = apptest_layout.test_status_filename
@@ -104,6 +128,7 @@ class StatusFile:
         'hostname',
         'job_account_id',
         'rgt_path_to_sspace',
+        'machine',
         'path_to_rgt_package',
         'build_directory',
         'workdir',
@@ -123,7 +148,8 @@ class StatusFile:
         'event_name',
         'event_type',
         'event_subtype',
-        'event_value']
+        'event_value',
+        'check_alias']
 
     FIELDS_SPLUNK_SPECIAL = ['job_status', 'event_value']
 
@@ -162,7 +188,7 @@ class StatusFile:
     #                                                    -
     #                                                    -
     #-----------------------------------------------------
-   
+
     #-----------------------------------------------------
     #                                                    -
     # Values for the build results in the status file.   -
@@ -198,11 +224,11 @@ class StatusFile:
     # Values for the correct results in the status file. -
     #                                                    -
     #-----------------------------------------------------
-    CORRECT_RESULTS = {"Pending" : PENDING,
-                       "In progress" : 17,
-                       "Pass" : PASS,
-                       "Failure" : FAIL,
-                       "Performance failure" : 5}
+    CHECK_RESULTS = {"Pending" : PENDING,
+                     "In progress" : 17,
+                     "Pass" : PASS,
+                     "Failure" : FAIL,
+                     "Performance failure" : 5}
     #-----------------------------------------------------
     #                                                    -
     # End of section for values for the correct results  -
@@ -237,13 +263,13 @@ class StatusFile:
         elif mode == cls.MODE_OLD:
             pass
         else:
-            raise 
+            raise
 
     ###################
     # Special methods #
     ###################
 
-    def __init__(self,logger,path_to_status_file):
+    def __init__(self,logger,path_to_status_file,test_id=None):
         """Constructor.
 
         Parameters
@@ -253,8 +279,8 @@ class StatusFile:
 
         """
         self.__logger = logger
-        self.__job_id = None
-        self.__test_id = None
+        self.__test_id = test_id
+        self.__db_logger = create_rgt_db_logger(logger=logger)
 
         # The first task is set the path to status file.
         self.__status_file_path = path_to_status_file
@@ -270,7 +296,7 @@ class StatusFile:
     def status_file_path(self):
         return self.__status_file_path
 
-    def initialize_subtest(self,unique_id):
+    def initialize_subtest(self, launch_id, unique_id):
         """Initializes a new entry to the status file.
 
         Parameters
@@ -279,20 +305,19 @@ class StatusFile:
             The unique is for the subtest.
         """
 
-
         self.__test_id = unique_id
         if self._subtest_already_initialized(unique_id):
             pass
         else:
             event_time = self.log_event(StatusFile.EVENT_LOGGING_START)
-            self.__status_file_add_test_instance(event_time,unique_id)
+            self.__status_file_add_test_instance(event_time, launch_id, unique_id)
         return
 
     def getLastHarnessID(self):
         """Returns the last harness ID of the subtest status file.
-       
-       If there are no entries, then None is returned. If the
-       status file doesn\'t exist then an error is raised.
+
+        If there are no entries, then None is returned. If the
+        status file doesn\'t exist then an error is raised.
 
         Returns
         -------
@@ -304,15 +329,17 @@ class StatusFile:
 
         line = records[-1]
         words = line.rstrip().split()
-        if len(words) > 2:
-            subtest_harness_id = words[1]
+        unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
+        if len(words) > unique_col:
+            subtest_harness_id = words[unique_col]
         else:
             subtest_harness_id = None
         return subtest_harness_id
 
     def log_event(self, event_id, event_value=NO_VALUE):
-        """Log the occurrence of a harness event.
-           This version logs a predefined event specified in the EVENT_DICT dictionary.
+        """
+            Log the occurrence of a harness event.
+            This version logs a predefined event specified in the EVENT_DICT dictionary.
         """
 
         if event_id in StatusFile.EVENT_DICT:
@@ -320,14 +347,13 @@ class StatusFile:
             event_type = StatusFile.EVENT_DICT[event_id][1]
             event_subtype = StatusFile.EVENT_DICT[event_id][2]
         else:
-            print('Warning: event not recognized. ' + event_id)
+            self.__logger.doWarningLogging('Warning: event not recognized. ' + event_id)
             event_filename = 'Event__UNKNOWN_EVENT_ENCOUNTERED_'
             event_type = ''
             event_subtype = ''
 
         return self.__log_event(event_id, event_filename,
                                 event_type, event_subtype, str(event_value))
-
 
     def log_custom_event(self, event_type, event_subtype, event_value=NO_VALUE):
         """Log the occurrence of a harness event.
@@ -355,7 +381,7 @@ class StatusFile:
 
         Returns
         -------
-        bool 
+        bool
             If the subtest with subtest_harness_id is complete, then True is
             returned, otherwise False is returned.
         """
@@ -368,18 +394,23 @@ class StatusFile:
         else:
             # Strip line/record of all leading and trailing whitespace.
             record = record.strip()
-      
-            # If words[2], words[3], words[4], or words[5] equals StatusFile.PLACE_HOLDER
+
+            # If batch column, build column, submit column, or check column equals StatusFile.PLACE_HOLDER
             # then we are not finished. The test is still in progress.
             words = record.split()
-            tmp_words = words[2:] 
-            if tmp_words.count(self.PLACE_HOLDER) > 1:
+            batch_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BATCH]
+            tmp_words = words[batch_col:]
+            if tmp_words.count(StatusFile.PLACE_HOLDER) >= 1:
                 test_finished = False
-            # The last word must indicate that the test is no longer pending and not in progress. 
-            elif (int(words[5]) > int(self.CORRECT_RESULTS["Pending"])) and (int(words[5]) != int(self.CORRECT_RESULTS["In progress"])) :
-                test_finished = True
             else:
-                test_finished = False
+                # The check column must indicate that the test is no longer pending and not in progress.
+                check_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+                check_val = int(words[check_col])
+                if (check_val  > int(StatusFile.CHECK_RESULTS["Pending"]) and
+                    check_val != int(StatusFile.CHECK_RESULTS["In progress"])):
+                    test_finished = True
+                else:
+                    test_finished = False
 
         return test_finished
 
@@ -390,36 +421,39 @@ class StatusFile:
         -------
         bool
             A True value is returned when all tests have passed. Explicitly stated, this
-            means all tests have 0's for build, sumbit, and correct results. Otherwise a 
+            means all tests have 0's for build, submit, and correct results. Otherwise a
             False value is returned.
         """
         ret_value = True
 
         with open(self.__status_file_path, 'r') as status_file_obj:
             records = status_file_obj.readlines()
-        
-        verify_test_passed = lambda a_list : True if a_list.count(self.PASS) == 3 else False 
+
+        verify_test_passed = lambda a_list : True if a_list.count(StatusFile.PASS) == 3 else False
+
+        build_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BUILD]
 
         for index, line in enumerate(records):
             if self.ignore_line(line):
                 continue
 
             words = line.rstrip().split()
-
-            tmp_words = words[2:] 
+            tmp_words = words[build_col:]
 
             ret_value = ret_value and verify_test_passed(tmp_words)
-                
+
         return ret_value
 
     ###################
     # Private methods #
     ###################
-    def _subtest_already_initialized(self,unique_id):
+    def _subtest_already_initialized(self, unique_id):
         found_instance = False
 
         with open(self.__status_file_path, 'r') as status_file_obj:
             records = status_file_obj.readlines()
+
+        unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
 
         for index, line in enumerate(records):
             words = line.rstrip().split()
@@ -427,59 +461,74 @@ class StatusFile:
             if self.ignore_line(line):
                 continue
 
-            if len(words) > 1:
-                test_id = words[1]
+            if len(words) > unique_col:
+                test_id = words[unique_col]
                 if test_id == unique_id:
                     found_instance = True
                     break
 
         return found_instance
 
-    def __get_harness_id_record(self,harness_id):
+    def __get_harness_id_record(self, harness_id):
         record = None
         with open(self.__status_file_path, 'r') as status_file_obj:
             records = status_file_obj.readlines()
+
+        unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
 
         for index, line in enumerate(records):
             if self.ignore_line(line):
                 continue
             words = line.rstrip().split()
-            if len(words) > 1:
-                test_id = words[1]
+            if len(words) > unique_col:
+                test_id = words[unique_col]
                 if test_id == harness_id:
                     record = line
                     break
+
         return record
 
     def __get_all_harness_id(self):
         with open(self.__status_file_path, 'r') as status_file_obj:
             records = status_file_obj.readlines()
-        
+
+        unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
+
         harness_ids = []
         for index, line in enumerate(records):
             if self.ignore_line(line):
                 continue
             words = line.rstrip().split()
-            if len(words) > 1:
-                harness_ids.append(words[1])
+            if len(words) > unique_col:
+                test_id = words[unique_col]
+                harness_ids.append(test_id)
 
         return harness_ids
 
     def __log_event(self, event_id, event_filename, event_type, event_subtype,
-                    event_value):
+                    event_value, event_time = None):
         """Official function to log the occurrence of a harness event.
         """
+        if event_time == None:
+            event_time = datetime.datetime.now()
+        self.__logger.doInfoLogging(f"Starting __log_event with event {event_id} at {event_time.isoformat()}")
 
         # THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
-        event_time = datetime.datetime.now().isoformat()
+        # The timestamp can be overridden by event_time=<datetime>
+        event_time_unix = event_time.timestamp()
+        event_time = event_time.isoformat()
+
 
         # THE FOLLOWING FORMS THE OFFICIAL TEXT DESCRIBING THE EVENT.
         status_info = get_status_info(self.__test_id, event_type,
                                       event_subtype, event_value,
                                       event_time, event_filename)
         event_record_string = event_time + '\t' + event_value
+        status_info_dict = {}
         for key_value in status_info:
             event_record_string += '\t' + key_value[0] + '=' + key_value[1]
+            # Remap into an easier to use format
+            status_info_dict[key_value[0]] = key_value[1]
         event_record_string += '\n'
 
         # Write a temporary file with the event info, then
@@ -490,7 +539,7 @@ class StatusFile:
         file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
                                  event_filename)
         if os.path.exists(file_path):
-            print('Warning: event log file already exists. ' + file_path)
+            self.__logger.doWarningLogging('Warning: event log file already exists. ' + file_path)
 
         file_path_partial = os.path.join(dir_head, apptest_layout.test_status_dirname,
                                          str(self.__test_id),
@@ -511,6 +560,8 @@ class StatusFile:
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
             self.__status_file_add_result(event_value, mode="Add_Build_Result")
+        elif event_id == StatusFile.EVENT_SUBMIT_START:
+            self.__status_file_add_result(event_value, mode="Add_Run_Count")
         elif event_id == StatusFile.EVENT_SUBMIT_END:
             self.__status_file_add_result(event_value, mode="Add_Submit_Result")
         elif event_id == StatusFile.EVENT_JOB_QUEUED:
@@ -521,6 +572,8 @@ class StatusFile:
                                           mode="Add_Binary_Running")
         elif event_id == StatusFile.EVENT_CHECK_END:
             self.__status_file_add_result(event_value, mode="Add_Run_Result")
+
+        self.__db_logger.log_event(status_info_dict)
 
         return event_time
 
@@ -534,7 +587,7 @@ class StatusFile:
 
     #----------
 
-    def __status_file_add_result(self, exit_value, mode):
+    def __status_file_add_result(self, event_value, mode):
         """Update the status file to reflect a new event."""
 
         #---Read the status file.
@@ -549,30 +602,39 @@ class StatusFile:
 
             words = line.rstrip().split()
 
-            if len(words) < 6:
+            if len(words) < len(StatusFile.STATUS_COLUMNS):
                 continue
 
-            test_id = words[1]
+            test_id = words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]]
 
             if test_id != self.__test_id:
                 continue
 
             if mode == 'Add_Job_ID':
-                words[2] = exit_value
+                batch_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BATCH]
+                words[batch_col] = event_value
 
             if mode == 'Add_Build_Result':
-                words[3] = exit_value
+                build_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BUILD]
+                words[build_col] = event_value
+
+            if mode == 'Add_Run_Count':
+                count_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_COUNT]
+                words[count_col] = event_value
 
             if mode == 'Add_Submit_Result':
-                words[4] = exit_value
+                submit_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_SUBMIT]
+                words[submit_col] = event_value
 
             if mode == 'Add_Run_Result':
-                words[5] = exit_value
+                check_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+                words[check_col] = event_value
 
             if mode == 'Add_Binary_Running':
-                binary_running_value = exit_value
+                binary_running_value = event_value
 
-                words[5] = binary_running_value
+                check_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+                words[check_col] = binary_running_value
 
                 dir_head = os.path.split(os.getcwd())[0]
                 path2 = os.path.join(dir_head, apptest_layout.test_status_dirname, test_id,
@@ -582,8 +644,9 @@ class StatusFile:
                 file_obj2.close()
 
             if mode == 'Add_Run_Aborning':
-                aborning_run_value = exit_value
-                words[5] = aborning_run_value
+                aborning_run_value = event_value
+                check_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+                words[check_col] = aborning_run_value
 
                 dir_head = os.path.split(os.getcwd())[0]
                 path2 = os.path.join(dir_head, apptest_layout.test_status_dirname, test_id,
@@ -593,7 +656,14 @@ class StatusFile:
                 file_obj2.close()
 
             records[index] = StatusFile.__LINE_FORMAT % (
-                (words[0], words[1], words[2], words[3], words[4], words[5]))
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_START]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_LAUNCH]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_COUNT]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BATCH]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BUILD]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_SUBMIT]],
+                words[StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]])
 
         #---Update the status file.
         status_file = open(self.__status_file_path, 'w')
@@ -602,12 +672,14 @@ class StatusFile:
 
     #----------
 
-    def __status_file_add_test_instance(self, event_time,unique_id):
+    def __status_file_add_test_instance(self, event_time, launch_id, unique_id):
         """Start new line in master status file for app/test."""
 
         with open(self.__status_file_path, "a") as file_obj:
             format_ = StatusFile.__LINE_FORMAT % (
-                (event_time, unique_id, "***", "***", "***", "***"))
+                event_time, launch_id, unique_id, StatusFile.PLACE_HOLDER,
+                StatusFile.PLACE_HOLDER, StatusFile.PLACE_HOLDER,
+                StatusFile.PLACE_HOLDER, StatusFile.PLACE_HOLDER)
             file_obj.write(format_)
 
 #------------------------------------------------------------------------------
@@ -655,6 +727,8 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_build_dirname)
 
+    test_instance_info['machine'] = os.environ['RGT_MACHINE_NAME'] if 'RGT_MACHINE_NAME' in os.environ else no_value
+
     test_instance_info['workdir'] = os.path.join(
         test_instance_info['rgt_path_to_sspace'],
         test_instance_info['app'],
@@ -684,9 +758,18 @@ def get_status_info(test_id, event_type, event_subtype,
     event_info['event_time'] = event_time
     event_info['event_filename'] = event_filename
     event_info['event_value'] = (
-        str(event_value) if event_value is not None else no_value)
+        str(event_value) if event_value else no_value)
 
     event_info['runtag'] = test_instance_info['rgt_system_log_tag']
+
+    file_check_alias = os.path.join(run_archive_all, test_id, 'check_alias.txt')
+    if os.path.exists(file_check_alias):
+        file_ = open(file_check_alias, 'r')
+        check_alias_ = file_.read()
+        file_.close()
+        event_info['check_alias'] = check_alias_.split('\n')[0]
+    else:
+        event_info['check_alias'] = no_value
 
     file_job_id = os.path.join(dir_status_this_test, apptest_layout.job_id_filename)
     if os.path.exists(file_job_id):
@@ -727,6 +810,29 @@ def get_status_info(test_id, event_type, event_subtype,
                             event_info[field]])
 
     return status_info
+
+def get_status_info_from_file(event_filename):
+    """
+    Return a Dictionary of the status info contained in event_filename
+    """
+
+    event_info = {}
+
+    if not os.path.exists(event_filename):
+        event_info['text'] = f'Could not find file {event_filename}'
+        return event_info
+    file_ = open(event_filename, 'r')
+    status_info_line = file_.readline().strip().split()
+    file_.close()
+
+    # Skips event_time and event_value at the beginning, since those are also
+    # present in the key=value section
+    for i in range(2, len(status_info_line)-2):
+        item = status_info_line[i].split('=')
+        event_info[item[0]] = item[1]
+
+    return event_info
+
 
 #------------------------------------------------------------------------------
 
@@ -810,56 +916,40 @@ def parse_status_file(path_to_status_file, startdate, enddate,
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
+    start_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_START]
+    batch_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BATCH]
+    build_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BUILD]
+    submit_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_SUBMIT]
+    check_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+
     print("parsing status file: " + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
-        if  not StatusFile.ignore_line(tmpline):
-            number_of_tests = number_of_tests + 1
+        if not StatusFile.ignore_line(tmpline):
+            number_of_tests += 1
             words = tmpline.split()
 
-            #Get the pbs id.
-            pbsid1 = words[2]
-            pbsid2 = pbsid1.split(".")
-            pbsid = pbsid2[0]
-
             #Get the creation time.
-            creationtime = words[0]
+            creationtime = words[start_col]
+
+            #Get the job id.
+            jobid1 = words[batch_col]
+            jobid2 = jobid1.split(".")
+            jobid = jobid2[0]
 
             # Get the number of passed tests.
             #Conservative check
-            if (mycomputer_with_events_record.
-                    in_time_range(pbsid, creationtime, startdate, enddate) and
-                    words[3].isdigit() and words[4].isdigit() and
-                    words[5].isdigit()):
-                if int(words[5]) == 0:
-                    number_of_passed_tests = number_of_passed_tests + 1
-
-                if int(words[5]) == 1:
-                    number_of_failed_tests = number_of_failed_tests + 1
-
-                if int(words[5]) >= 2:
-                    number_of_inconclusive_tests = (
-                        number_of_inconclusive_tests + 1)
+            if (mycomputer_with_events_record.in_time_range(jobid, creationtime, startdate, enddate) and
+                words[build_col].isdigit() and words[submit_col].isdigit() and words[check_col].isdigit()):
+                check_val = int(words[check_col])
+                if check_val == 0:
+                    number_of_passed_tests += 1
+                elif check_val == 1:
+                    number_of_failed_tests += 1
+                elif check_val >= 2:
+                    number_of_inconclusive_tests += 1
             else:
-                number_of_tests = number_of_tests - 1
-
-            #Agressive check
-            #if (words[2].find('.nid') >= 0):
-            #    if words[5].isdigit():
-            #        if int(words[5]) == 0:
-            #            number_of_passed_tests = number_of_passed_tests + 1
-
-            #    if words[5].isdigit():
-            #        if (int(words[5])==1 or words[3].find('***') >= 0 or
-            #          words[4].find('***') >= 0 or words[5].find('***') >= 0):
-            #            number_of_failed_tests = number_of_failed_tests + 1
-            #    elif words[5].find('***') >= 0:
-            #        if (words[3].find('***') >= 0 or
-            #    words[4].find('***') >= 0 or words[5].find('***') >= 0):
-            #            number_of_failed_tests = number_of_failed_tests + 1
-            #else:
-            #    number_of_tests = number_of_tests - 1
-
+                number_of_tests -= 1
 
     shash = {"number_of_tests": number_of_tests,
              "number_of_passed_tests": number_of_passed_tests,
@@ -893,44 +983,29 @@ def parse_status_file2(path_to_status_file):
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
 
+    build_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BUILD]
+    submit_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_SUBMIT]
+    check_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+
     print('Parsing status file ' + path_to_status_file)
     for line in sfile_lines:
         tmpline = line.lstrip()
         if not StatusFile.ignore_line(tmpline):
-            number_of_tests = number_of_tests + 1
+            number_of_tests += 1
             words = tmpline.split()
 
             # Get the number of passed tests.
             # Conservative check
-            if words[3].isdigit() and words[4].isdigit() and words[5].isdigit():
-                if int(words[5]) == 0:
-                    number_of_passed_tests = number_of_passed_tests + 1
-
-                if int(words[5]) == 1:
-                    number_of_failed_tests = number_of_failed_tests + 1
-
-                if int(words[5]) >= 2:
-                    number_of_inconclusive_tests = (
-                        number_of_inconclusive_tests + 1)
+            if words[build_col].isdigit() and words[submit_col].isdigit() and words[check_col].isdigit():
+                check_val = int(words[check_col])
+                if check_val == 0:
+                    number_of_passed_tests += 1
+                elif check_val == 1:
+                    number_of_failed_tests += 1
+                elif check_val >= 2:
+                    number_of_inconclusive_tests += 1
             else:
-                number_of_tests = number_of_tests - 1
-
-            #Agressive check
-            #if (words[2].find('.nid') >= 0):
-            #    if words[5].isdigit():
-            #        if int(words[5]) == 0:
-            #            number_of_passed_tests = number_of_passed_tests + 1
-            #    if words[5].isdigit():
-            #        if (int(words[5])==1 or (words[3].find('***') >= 0) or
-            #     (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
-            #            number_of_failed_tests = number_of_failed_tests + 1
-            #    elif words[5].find('***') >= 0:
-            #        if ((words[3].find('***') >= 0) or
-            #  (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
-            #            number_of_failed_tests = number_of_failed_tests + 1
-            #else:
-            #    number_of_tests = number_of_tests - 1
-
+                number_of_tests -= 1
 
     shash = {'number_of_tests': number_of_tests,
              'number_of_passed_tests': number_of_passed_tests,
@@ -958,6 +1033,13 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
     number_of_failed_tests = 0
     number_of_inconclusive_tests = 0
 
+    start_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_START]
+    unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
+    batch_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BATCH]
+    build_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_BUILD]
+    submit_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_SUBMIT]
+    check_col  = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
+
     flist = []
     ilist = []
     print("parsing status file: " + path_to_status_file)
@@ -966,17 +1048,17 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
         if len(tmpline) > 0 and tmpline[0] != StatusFile.COMMENT_LINE_INDICATOR:
             words = tmpline.split()
 
-            #Get the pbs id.
-            pbsid1 = words[2]
-            pbsid2 = pbsid1.split(".")
-            pbsid = pbsid2[0]
+            #Get the job id.
+            jobid1 = words[batch_col]
+            jobid2 = jobid1.split(".")
+            jobid = jobid2[0]
 
             print("====")
             print("Test instance: " + tmpline)
-            print("pbs job id: " + pbsid)
+            print("job id: " + jobid)
 
             #Get the creation time.
-            creationtime = words[0]
+            creationtime = words[start_col]
             #(creationtime1, creationtime2) = creationtime.split("T")
             creationtime1 = creationtime.split("T")[0]
             (year, month, day) = creationtime1.split("-")
@@ -984,60 +1066,45 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
             #(hour, min, sec) = time1.split(":")
             creationdate = datetime.datetime(int(year), int(month), int(day))
 
+            testid = words[unique_col]
+
             # Get the number of passed tests.
             #Conservative check
-            if (mycomputer_with_events_record.
-                    in_time_range(pbsid, creationtime, startdate, enddate)):
+            if (mycomputer_with_events_record.in_time_range(jobid, creationtime, startdate, enddate)):
                 print("In range")
 
-                number_of_tests = number_of_tests + 1
+                number_of_tests += 1
 
-                if (words[2].isdigit() and words[3].isdigit() and
-                        words[4].isdigit() and words[5].isdigit()):
-                    if int(words[5]) == 0:
-                        number_of_passed_tests = number_of_passed_tests + 1
+                if (words[build_col].isdigit() and
+                    words[submit_col].isdigit() and
+                    words[check_col].isdigit()):
+                    check_val = int(words[check_col])
+                    if check_val == 0:
+                        number_of_passed_tests += 1
+                    elif check_val >= 1:
+                        number_of_failed_tests += 1
+                        flist = flist + [testid]
+                    elif check_val == -1:
+                        number_of_inconclusive_tests += 1
+                        ilist = ilist + [testid]
 
-                    if int(words[5]) >= 1:
-                        number_of_failed_tests = number_of_failed_tests + 1
-                        flist = flist + [words[1]]
+                elif (words[build_col] == StatusFile.PLACE_HOLDER or
+                      words[submit_col] == StatusFile.PLACE_HOLDER or
+                      words[check_col] == StatusFile.PLACE_HOLDER):
+                    number_of_inconclusive_tests += 1
 
-                    if int(words[5]) == -1:
-                        number_of_inconclusive_tests = (
-                            number_of_inconclusive_tests + 1)
-                        ilist = ilist + [words[1]]
-
-                elif (words[3] == "***" or words[4] == "***" or
-                      words[5] == "***"):
-                    number_of_inconclusive_tests = (
-                        number_of_inconclusive_tests + 1)
-
-            elif (startdate <= creationdate and creationdate <= enddate and
-                  pbsid == "***"):
+            elif (startdate <= creationdate and
+                  creationdate <= enddate and
+                  jobid == StatusFile.PLACE_HOLDER):
                 print("In range")
-                number_of_tests = number_of_tests + 1
-                number_of_inconclusive_tests = number_of_inconclusive_tests + 1
-                ilist = ilist + [words[1]]
+                number_of_tests += 1
+                number_of_inconclusive_tests += 1
+                ilist = ilist + [testid]
 
-            print("number of  tests = " + number_of_tests)
+            print(f"number of tests = {number_of_tests}")
             print("====")
             print()
             print()
-
-            #Agressive check
-            #if (words[2].find('.nid') >= 0):
-            #    if words[5].isdigit():
-            #        if int(words[5]) == 0:
-            #            number_of_passed_tests = number_of_passed_tests + 1
-            #    if words[5].isdigit():
-            #        if ((int(words[5])==1) or (words[3].find('***') >= 0) or
-            #  (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
-            #            number_of_failed_tests = number_of_failed_tests + 1
-            #    elif words[5].find('***') >= 0:
-            #        if ((words[3].find('***') >= 0) or
-            #      (words[4].find('***') >= 0) or ( words[5].find('***') >= 0)):
-            #            number_of_failed_tests = number_of_failed_tests + 1
-            #else:
-            #    number_of_tests = number_of_tests - 1
 
     shash = {"number_of_tests": number_of_tests,
              "number_of_passed_tests": number_of_passed_tests,
@@ -1077,7 +1144,7 @@ class IncompatibleStatusFileModeError(StatusFileError):
             The error message for this exception.
         """
         self._message = message
-    
+
     @property
     def message(self):
         """str: The error message."""
@@ -1094,7 +1161,7 @@ class InvalidStatusFileModeError(StatusFileError):
             The error message for this exception.
         """
         self._message = message
-    
+
     @property
     def message(self):
         """str: The error message."""
@@ -1111,7 +1178,7 @@ class StatusFileMissingError(StatusFileError):
             The error message for this exception.
         """
         self._message = message
-    
+
     @property
     def message(self):
         """str: The error message."""

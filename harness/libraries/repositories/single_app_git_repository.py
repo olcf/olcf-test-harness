@@ -28,13 +28,13 @@ class SingleApplicationGitRepository(BaseRepository):
     @classmethod
     def get_repository_url_of_application(cls,application):
         my_machine = os.getenv("RGT_GIT_MACHINE_NAME")
-        parent_directory = cls.get_application_parent_directory()
+        parent_directory = cls.get_application_parent_directory() + "/" + my_machine
 
         data_transfer_protocol = os.getenv("RGT_GIT_DATA_TRANSFER_PROTOCOL")
 
         if  data_transfer_protocol == "ssh" :
             my_git_server_url=os.getenv("RGT_GIT_SSH_SERVER_URL")
-            path1 = my_git_server_url + ":" + parent_directory + "/" + my_machine + "/"
+            path1 = my_git_server_url + ":" + parent_directory + "/"
             path2 = application + ".git"
             git_url_to_remote_repsitory_application = path1 + path2
         elif data_transfer_protocol == "https":
@@ -69,7 +69,7 @@ class SingleApplicationGitRepository(BaseRepository):
 
     def __init__(self,
                  git_remote_repository_url=None,
-                 my_repository_branch="master") :
+                 my_repository_branch="default") :
 
         
         self.binaryName = "git"
@@ -109,9 +109,13 @@ class SingleApplicationGitRepository(BaseRepository):
                         logger=None):
 
 
-        my_clone_command="{gitbinary} clone --branch {branch} --recurse-submodules {repository}".format(
+        clone_branch = ""
+        if self.repository_branch != "default":
+            clone_branch = f'--branch {self.repository_branch}'
+
+        my_clone_command="{gitbinary} clone {branch} --recurse-submodules {repository}".format(
                   gitbinary=self.binaryName,
-                  branch=self.repository_branch, 
+                  branch=clone_branch,
                   repository=self.remote_repository_URL)
 
         basename = os.path.basename(self.remote_repository_URL)
@@ -129,11 +133,11 @@ class SingleApplicationGitRepository(BaseRepository):
         elif clone_flag == GitCloneFlag.FOUND_EXISTING_REPOSITORY_WITH_CORRECT_ORIGIN:
             message = "The directory {} exists and is already cloned. Therefore we will will skip cloning repository {}.\n".format(pathspec,
                                                                                                                                    self.remote_repository_URL)
-            logger.doInfoLogging(message)
+            logger.doWarningLogging(message)
         elif clone_flag == GitCloneFlag.FOUND_EXISTING_REPOSITORY_WITH_INCORRECT_ORIGIN:
             message = "The directory {} is an existing git repository whose origin is not {}.\n".format(pathspec,
                                                                                                         self.remote_repository_URL)
-            logger.doInfoLogging(message)
+            logger.doCriticalLogging(message)
             raise CloningToDirectoryWithIncorrectOriginError(message)
                 
         return 

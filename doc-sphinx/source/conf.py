@@ -90,6 +90,7 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 # exclude_patterns = ['**/RETIRED_nccs_test_harness_kepler_upgrade']
+exclude_patterns = ['**/developer_guide']
 
 # This value is a list of autodoc directive flags that should be 
 # automatically applied to all autodoc directives. The supported 

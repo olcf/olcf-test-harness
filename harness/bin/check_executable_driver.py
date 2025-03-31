@@ -97,7 +97,7 @@ def main():
 
     logger_threshold = "INFO"
     fh_threshold_log_level = "INFO"
-    ch_threshold_log_level = "CRITICAL"
+    ch_threshold_log_level = "WARNING"
     fh_filepath = get_path_to_logfile_from_runarchivedir(path_to_results)
     a_logger = rgt_logger_factory.create_rgt_logger(
                                          logger_name=get_logger_name(),
@@ -120,10 +120,11 @@ def main():
         os.chdir(scriptsdir)
 
     check_command = "test_harness_driver.py --check -i " + testid
-    check_exit_value = os.system(check_command)
+    check_exit_raw = os.system(check_command)
+    check_exit_value = os.WEXITSTATUS(check_exit_raw)
 
     message = f"The check command return status is {check_exit_value}."
-    apptest.doInfoLogging(message)
+    apptest.logger.doInfoLogging(message)
 
     if currentdir != scriptsdir:
         os.chdir(currentdir)

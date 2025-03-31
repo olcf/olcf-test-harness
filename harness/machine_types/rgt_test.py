@@ -135,19 +135,21 @@ class RgtTest():
 
         # dict of builtin keys - value indicates whether it is required
         self.__builtin_keys = {
-            "batch_filename" : True,
-            "batch_queue" : False,
-            "build_cmd" : True,
-            "check_cmd": True,
-            "executable_path" : False,
-            "job_name" : True,
-            "nodes" : True,
-            "processes_per_node" : False,
-            "project_id" : False,
-            "report_cmd" : True,
-            "resubmit" : False,
-            "total_processes" : False,
-            "walltime" : True
+
+            "batch_filename" :     {"required": True, "type": str },
+            "batch_queue" :        {"required": False, "type": str },
+            "build_cmd" :          {"required": True, "type": str},
+            "check_cmd":           {"required": True, "type": str},
+            "executable_path" :    {"required": False, "type": str},
+            "job_name" :           {"required": True, "type": str},
+            "max_submissions" :    {"required": False, "type": int, "valid": lambda x : True if (int(x) >= 1 or int(x) == -1) else False},
+            "nodes" :              {"required": True, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "processes_per_node" : {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "project_id" :         {"required": False, "type": str},
+            "report_cmd" :         {"required": True, "type": str},
+            "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
+            "total_processes" :    {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "walltime" :           {"required": True, "type": str},
         }
 
     def __str__(self):
@@ -200,10 +202,10 @@ class RgtTest():
         return self.__builtin_params
 
     def print_user_parameters(self):
-        print("RGT Test Parameters - User")
-        print("==========================")
+        self.__logger.doErrorLogging("RGT Test Parameters - User")
+        self.__logger.doErrorLogging("==========================")
         for (k,v) in (self.user_parameters).items():
-            print(k,"=",v)
+            self.__logger.doErrorLogging(f'{k}={v}')
 
     # Methods to manage runtime environment commands
     @property
@@ -319,7 +321,7 @@ class RgtTest():
                 self._harness_params[key] = value 
             else:
                 # TODO: Throw an exception if an invalid key,value is assigned.
-                print("No key found for", key)
+                self.__logger.doCriticalLogging("No key found for", key)
 
     def get_test_replacements(self):
         """Returns a dictionary of key word replacements.
@@ -354,6 +356,15 @@ class RgtTest():
         return replacements
 
     #
+    # Convenience methods for setting specific parameters
+    #
+    def set_launch_id(self, value):
+        self._set_builtin_param("launch_id", value)
+
+    def set_max_submissions(self, value):
+        self._set_builtin_param("max_submissions", value)
+
+    #
     # Convenience methods for retrieving specific parameters
     #
 
@@ -378,6 +389,12 @@ class RgtTest():
     def get_jobname(self):
         return self._get_builtin_param("job_name")
 
+    def get_launch_id(self):
+        return self._get_builtin_param("launch_id")
+
+    def get_max_submissions(self):
+        return self._get_builtin_param("max_submissions")
+
     def get_nodes(self):
         return self._get_builtin_param("nodes")
 
@@ -389,14 +406,14 @@ class RgtTest():
 
     def get_total_processes(self):
         val = self._get_builtin_param("total_processes")
-        if val is None:
+        if not val:
             return str(0)
         else:
             return val
 
     def get_processes_per_node(self):
         val = self._get_builtin_param("processes_per_node")
-        if val is None:
+        if not val:
             return str(0)
         else:
             return val
@@ -415,19 +432,19 @@ class RgtTest():
             if os.path.isfile(self.test_input_filename):
                 self._read_rgt_input_ini()
                 self._reconcile_with_shell_environment_variables()
-                self._check_required_parameters()
+                self._check_parameters()
                 self._print_test_parameters()
             else:
                 error_message = "Test input file {} not found".format(self.test_input_filename)
                 raise ErrorRgtTestInputFileNotFound(error_message)
-        except ErrorRgtParameterReconcile as err:
+        except Exception as err:
             self.__logger.doCriticalLogging(err.message)
-            sys.exit(err.message)
-        except ErrorRgtTestInputFileNotFound as err:
-            self.__logger.doCriticalLogging(err.message)
-            sys.exit(err.message)
+            exit(1)
 
     # Private methods
+
+    def _set_builtin_param(self, key, value):
+        self.builtin_parameters[key] = value
 
     def _get_builtin_param(self, key):
         if key in self.builtin_parameters:
@@ -450,7 +467,7 @@ class RgtTest():
             return True
         else:
             if warn:
-                print("WARNING: Ignoring invalid built-in parameter key {}".format(key))
+                self.__logger.doWarningLogging("WARNING: Ignoring invalid built-in parameter key {}".format(key))
             return False
 
     def _is_rte_param(self,key):
@@ -469,7 +486,7 @@ class RgtTest():
         rgt_test_config.read(self.test_input_filename)
 
         if not 'Replacements' in rgt_test_config:
-            print("ERROR: missing [Replacements] section in test input")
+            self.__logger.doCriticalLogging("Missing [Replacements] section in test input")
             replace = dict()
         else:
             replace = rgt_test_config['Replacements']
@@ -478,11 +495,11 @@ class RgtTest():
         # Update environment if either batch_queue or project_id is set
         env_dict = {}
         bq = self.get_batch_queue()
-        if bq is not None:
-            env_dict = {'submit_queue' : bq}
+        if bq:
+            env_dict['batch_queue'] = bq
         proj = self.get_project()
-        if proj is not None:
-            env_dict = {'project_id' : proj}
+        if proj:
+            env_dict['project_id'] = proj
         rgt_utilities.set_harness_environment(env_dict, override=True)
 
         if 'EnvVars' in rgt_test_config:
@@ -521,7 +538,7 @@ class RgtTest():
                 key_modified = rgt_variable_name_modification(key)
                 tmp_value = os.getenv(key_modified)
                 if tmp_value :
-                    self.__builtin_params[key] = tmp_value
+                    self.__user_params[key] = tmp_value
                 else :
                     error_message = "Unable to reconcile shell environmental variables and self.__user_params[{key}]={value}.".format(key=key,value=value)
                     raise ErrorRgtParameterReconcile(error_message)
@@ -540,23 +557,50 @@ class RgtTest():
                     raise ErrorRgtParameterReconcile(error_message)
         return
 
-    def _check_required_parameters(self):
-        missing = 0
+    def _check_parameters(self):
+        # Check validation parameters for input
+        # Start with the required flag
         error_message = ""
-        for (k,required) in self.__builtin_keys.items():
-            if required and k not in self.builtin_parameters:
-                missing = 1
+        for (k,params) in self.__builtin_keys.items():
+            if 'required' in params and params['required'] and k not in self.builtin_parameters:
                 error_message += "ERROR: required test input parameter {} is not set!\n".format(k)
-        if missing:
+
+        # Check type
+        for (k,params) in self.__builtin_keys.items():
+            valid_type = True
+            if 'type' in params and k in self.builtin_parameters:
+                # All params are strings, so no need to test that
+                # Check int
+                if params['type'] is int and not self.builtin_parameters[k].lstrip("-").isdigit():
+                    valid_type = False # Need to reference in lambda function
+                    error_message += "ERROR: test input parameter {} is not type {}!\n".format(k, str(params['type']))
+
+                # Check file
+                if params['type'] == 'file':
+                    # Check whether it exists
+                    if not os.path.exists(self.builtin_parameters[k]):
+                        error_message += "ERROR: test input parameter {} does not exist {}!\n".format(k, self.builtin_parameters[k])
+
+                    # Check whether is executable
+                    if not os.access(self.builtin_parameters[k], os.X_OK):
+                        error_message += "ERROR: test input parameter {} is not executable {}!\n".format(k, self.builtin_parameters[k])
+
+            if 'valid' in params and k in self.builtin_parameters:
+                # Run our validation function
+                if valid_type == False or not params['valid'](self.builtin_parameters[k]):
+                    error_message += "ERROR: test input parameter {} failed validation!\n".format(k)
+
+
+        # Print and bail if any errors
+        if error_message != "":
             self.__logger.doCriticalLogging(error_message)
-            print(error_message)
             exit(1)
 
     def _print_builtin_parameters(self):
-        print("RGT Test Parameters - Builtin")
-        print("=============================")
+        self.__logger.doErrorLogging("RGT Test Parameters - Builtin")
+        self.__logger.doErrorLogging("=============================")
         for (k,v) in (self.builtin_parameters).items():
-            print(k,"=",v)
+            self.__logger.doErrorLogging(f'{k}={v}')
 
     def _set_user_param(self, key, val):
         self.__user_params[key] = val
