@@ -98,3 +98,10 @@ This is the directory your job launched from, and it is the directory your job s
 When the job completes, you should see all output files in this directory as well as an `output_check.txt`.
 This file contains the output from your check script, which parses your output files to check the result of the test for correctness and performance.
 
+## License
+
+See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details.
+
+https://doi.org/10.11578/dc.20250328.1
+
+ORNL-CODE-153320
