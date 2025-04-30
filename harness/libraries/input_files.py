@@ -49,7 +49,7 @@ class rgt_input_file:
 
         # Read the input file. Returns True upon successful read.
         # If read_file fails, self.__tests is emptied and False is returned
-        err = self.__read_file()
+        err = self.__read_file(self.__inputFileName)
         if not err:
             self.__logger.critical("ERROR: Failed to parse input file.")
             # Short-circuit upon failure
@@ -85,8 +85,8 @@ class rgt_input_file:
         if self.__harness_task == []:
             self.__logger.critical("ERROR: No valid tasks found in the inputfile or the CLI")
 
-    def __read_file(self):
-        ifile_obj = open(self.__inputFileName,"r")
+    def __read_file(self, input_file):
+        ifile_obj = open(input_file,"r")
         lines = ifile_obj.readlines()
         ifile_obj.close()
 
@@ -140,10 +140,12 @@ class rgt_input_file:
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
                     # Validate Path_to_tests here:
-                    test_path = os.path.expanduser(words[2]) 
+                    test_path = os.path.expanduser(words[2])
                     test_path = os.path.expandvars(test_path)
                     self.__logger.debug(f"Validating if {test_path} (set via Path_to_tests) exists.")
-                    if os.path.exists(test_path):
+                    if self.__path_to_tests:
+                        self.__logger.warning(f"Path_to_tests already set, ignoring Path_to_tests = {test_path}.")
+                    elif os.path.exists(test_path):
                         self.__path_to_tests = test_path
                     else:
                         self.__logger.critical("Invalid path_to_test")
@@ -157,17 +159,23 @@ class rgt_input_file:
 
             elif firstword == rgt_input_file.harness_task_entry:
                 if (len(words) == 3):
-                    self.__harness_task.append([words[2],None,None])
-                elif (len(words) == 5):
-                    self.__harness_task.append([words[2],words[3],words[4]])
+                    self.__harness_task.append(words[2])
                 else:
-                    log_message = "Invalid number of words in task line: " + tmpline
-                    self.__logger.critical(log_message)
+                    self.__logger.critical(f"Invalid number of words in task line: {tmpline}")
+                    self.__tests = []
+                    return False
+            elif firstword == rgt_input_file.include_entry:
+                if len(words) == 2:
+                    if not self.__read_file(words[1]):
+                        self.__logger.critical(f"Failed to parse included input file {words[1]}.")
+                        self.__tests = []
+                        return False
+                else:
+                    self.__logger.critical(f"Invalid number of works in include line: {tmpline}")
                     self.__tests = []
                     return False
             else:
-                log_message = "Invalid line: " + tmpline
-                self.__logger.critical(log_message)
+                self.__logger.critical(f"Invalid line in harness input file: {tmpline}.")
                 self.__tests = []
                 return False
         return True
