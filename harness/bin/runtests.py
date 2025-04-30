@@ -81,7 +81,7 @@ MAIN_LOGGER_FILEHANDLER_FILENAME="main.log"
 MAIN_LOGGER_FILEHANDLER_LOGLEVEL=logging.DEBUG
 """The log level for the main log file handler."""
 
-MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL=logging.ERROR
+MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL=logging.WARNING
 """The log level for the main log console handler."""
 
 def get_main_logger():
