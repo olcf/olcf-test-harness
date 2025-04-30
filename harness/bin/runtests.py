@@ -118,7 +118,7 @@ def get_main_logger():
 
 # This section pertains to the harness tasks option.
 
-USE_HARNESS_TASKS_IN_RGT_INPUT_FILE="use_harness_tasks_in_rgt_input_file"
+USE_HARNESS_TASKS_IN_RGT_INPUT_FILE="use_input_file"
 """
 str: A flag for the harness to use the designated input file for runtests.py for the
      the harness tasks.
@@ -141,7 +141,7 @@ A tuple of the permitted harness tasks.
 These tasks are set by means of command line arguments to the runtests.py
 command: --mode | -m <permitted_tasks>. The following tasks are supported.
 
-* use_harness_tasks_in_rgt_input_file - Uses the harness tasks in the runtests.py input file.
+* use_input_file - Uses the harness tasks in the runtests.py input file.
 * checkout - Checks out via a git clone command the harness application-test form the repository.
 * start - Starts the application-test(s).
 * stop - Stops an application-test(s).
@@ -300,6 +300,7 @@ def create_parser(logger=None):
     parser.add_argument('-m', '--mode',
                         required=False,
                         help=mode_help,
+                        default=USE_HARNESS_TASKS_IN_RGT_INPUT_FILE,
                         nargs='+',
                         choices=PERMITTED_HARNESS_TASKS)
 
