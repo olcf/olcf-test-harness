@@ -123,7 +123,6 @@ class subtest(base_apptest, apptest_layout):
 
         if tasks != None:
             tasks = copy.deepcopy(tasks)
-            #tasks = subtest.reorderTaskList(tasks)
 
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
