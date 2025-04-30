@@ -10,6 +10,7 @@ import logging
 from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
 from runtests import get_main_logger
 from libraries import rgt_utilities
+from libraries.harness_internal_config import harness_modes
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -21,6 +22,7 @@ class rgt_input_file:
 
     #These are the entries in the input file.
     test_entry = "test"
+    include_entry = "include"
     path_to_test_entry = "path_to_tests"
     comment_line_entry = "#"
     harness_task_entry = "harness_task"
@@ -55,29 +57,30 @@ class rgt_input_file:
 
         # If a CLI task was input use that instead
         if USE_HARNESS_TASKS_IN_RGT_INPUT_FILE not in runmodecmd :
-            self.__logger.info("Overriding tasks in inputfile since CLI mode was provided")
+            self.__logger.info("Discarding tasks in inputfile since CLI mode was provided")
             self.__logger.debug(f"runmodecmd = {runmodecmd}")
-            self.__harness_task = []
+            unsorted_harness_task = []
             for modetask in runmodecmd:
                 if modetask == "checkout":
-                    runmodetask = ["check_out_tests",None,None]
+                    runmodetask = harness_modes.checkout
                 elif modetask == "start":
-                    runmodetask = ["start_tests",None,None]
+                    runmodetask = harness_modes.starttest
                 elif modetask == "stop":
-                    runmodetask = ["stop_tests",None,None]
+                    runmodetask = harness_modes.stoptest
                 elif modetask == "status":
-                    runmodetask = ["display_tests",None,None]
+                    runmodetask = harness_modes.displaystatus
                 else:
                     runmodetask = None
-                    self.__logger.warning(f"Found invalid task in the command line: {modetask}")
+                    self.__logger.error(f"Found invalid task in the command line: {modetask}")
 
                 # Append task to this harness instance
                 if runmodetask != None:
-                    self.__harness_task.append(runmodetask)
-                    self.__logger.debug(f"self.__harness_task: {self.__harness_task}")
+                    unsorted_harness_task.append(runmodetask)
 
                 # Clear mode to avoid duplicate
                 runmodetask = None
+
+        self.__harness_task = harness_modes.reorderTaskList(unsorted_harness_task)
 
         if self.__harness_task == []:
             self.__logger.critical("ERROR: No valid tasks found in the inputfile or the CLI")

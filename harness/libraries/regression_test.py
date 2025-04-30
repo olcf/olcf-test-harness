@@ -24,13 +24,6 @@ from machine_types.machine_factory import MachineFactory
 
 class Harness:
 
-    # These strings define the tasks that the tests can do.
-    checkout = "check_out_tests"
-    starttest = "start_tests"
-    stoptest = "stop_tests"
-    displaystatus = "display_status"
-    summarize_results = "summarize_results"
-
     # Defines the harness log file name.
     LOGGER_NAME = __name__
 
