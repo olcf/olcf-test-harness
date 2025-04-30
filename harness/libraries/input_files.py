@@ -56,7 +56,7 @@ class rgt_input_file:
             return
 
         # If a CLI task was input use that instead
-        if USE_HARNESS_TASKS_IN_RGT_INPUT_FILE not in runmodecmd :
+        if not USE_HARNESS_TASKS_IN_RGT_INPUT_FILE in runmodecmd :
             self.__logger.info("Discarding tasks in inputfile since CLI mode was provided")
             self.__logger.debug(f"runmodecmd = {runmodecmd}")
             unsorted_harness_task = []
@@ -75,12 +75,13 @@ class rgt_input_file:
 
                 # Append task to this harness instance
                 if runmodetask != None:
-                    unsorted_harness_task.append(runmodetask)
+                    self.__harness_task.append(runmodetask)
 
                 # Clear mode to avoid duplicate
                 runmodetask = None
 
-        self.__harness_task = harness_modes.reorderTaskList(unsorted_harness_task)
+        sorted_tasks = harness_modes.reorderTaskList(self.__harness_task)
+        self.__harness_task = sorted_tasks
 
         if self.__harness_task == []:
             self.__logger.critical("ERROR: No valid tasks found in the inputfile or the CLI")
@@ -104,7 +105,6 @@ class rgt_input_file:
 
             #Convert the first word to lower case.
             firstword = str.lower(words[0])
-
 
             # Parse the line,depending upon what type of entry it is.
             if firstword == rgt_input_file.test_entry:
@@ -136,7 +136,6 @@ class rgt_input_file:
                         self.__tests.append([app,subtest])
                 else:
                     self.__tests.append([app,subtest])
-
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
                     # Validate Path_to_tests here:
@@ -156,10 +155,14 @@ class rgt_input_file:
                     self.__logger.critical(log_message)
                     self.__tests = []
                     return False
-
             elif firstword == rgt_input_file.harness_task_entry:
                 if (len(words) == 3):
-                    self.__harness_task.append(words[2])
+                    if words[2] in harness_modes.valid_modes:
+                        self.__harness_task.append(words[2])
+                    else:
+                        self.__logger.critical(f"Invalid harness task supplied in input file: {tmpline.strip()}. Valid tasks: {','.join(harness_modes.valid_modes)}")
+                        self.__tests = []
+                        return False
                 else:
                     self.__logger.critical(f"Invalid number of words in task line: {tmpline}")
                     self.__tests = []

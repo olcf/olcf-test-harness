@@ -7,6 +7,8 @@ stoptest = "stop_tests"
 displaystatus = "display_status"
 summarize_results = "summarize_results"
 
+valid_modes = [checkout, starttest, stoptest, displaystatus, summarize_results]
+
 def reorderTaskList(tasks):
     task_ordering = {
                       checkout: 1,

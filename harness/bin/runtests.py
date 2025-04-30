@@ -134,7 +134,7 @@ default harness task will we default to the tasks in the runtests.py input file.
 
 """
 
-PERMITTED_HARNESS_TASKS=('checkout','start','stop','status')
+PERMITTED_HARNESS_TASKS=('checkout','start','stop','status', USE_HARNESS_TASKS_IN_RGT_INPUT_FILE)
 """
 A tuple of the permitted harness tasks.
 
