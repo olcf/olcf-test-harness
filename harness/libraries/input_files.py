@@ -171,7 +171,7 @@ class rgt_input_file:
                         self.__tests = []
                         return False
                 else:
-                    self.__logger.critical(f"Invalid number of works in include line: {tmpline}")
+                    self.__logger.critical(f"Invalid number of words in include line: {tmpline}")
                     self.__tests = []
                     return False
             else:
