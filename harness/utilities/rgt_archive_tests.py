@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 03-20-2025
+# Date modified: 05-01-2025
 ################################################################################
 # Purpose:
 #   Locates and archives tests within the OTH directory structure.
@@ -332,7 +332,12 @@ def archive_apptest_common_files(apptest):
 
 # Handle --no-tqdm flag
 if not args.no_tqdm:
-    import tqdm
+    try:
+        import tqdm
+    except ModuleNotFoundError:
+        logger.doWarningLogging("Python module 'tqdm' not found. Turning off TQDM progress bars.")
+        args.no_tqdm = True
+        pass
 
 # Key: apptest name, value: number of tests archived
 archive_counts = {}
