@@ -129,6 +129,8 @@ logger = rgt_logger_factory.create_rgt_logger(logger_name='rgt_archive_test_util
                 fh_filepath=args.logfile, logger_threshold_log_level=fh_log_level,
                 fh_threshold_log_level=fh_log_level, ch_threshold_log_level=args.loglevel)
 
+logger.doCriticalLogging(f"Command-line invocation: {' '.join(sys.argv)}")
+
 exit_code = validate_args()
 if exit_code > 0:
     logger.doCriticalLogging(f"Found {exit_code} total errors. Exiting.")
