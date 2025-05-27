@@ -43,7 +43,7 @@ class KafkaLogger(BaseDBLogger):
                 'test',
                 'runtag',
                 'machine',
-                'jobid',
+                'job_id',
                 'event_time'
     ]
 
@@ -91,6 +91,7 @@ class KafkaLogger(BaseDBLogger):
         # rgt_database_logger, which checks if the logger is not None
         self.__logger = logger
         self.uri = uri
+        self.url = uri
         self.username = username
         self.password = password
         # Gets rid of "None" entries, which will be provided by the default constructor
@@ -209,7 +210,7 @@ class KafkaLogger(BaseDBLogger):
                 event_dict['output_txt'] = self.NO_VALUE
 
         # query_dict is a copy of event_dict, but holding only the information to send
-        query_dict = {k: event_dict[k] for k in self.KAFKA_EVENT_FIELDS}
+        query_dict = {k: event_dict[k] if k in event_dict.keys() else self.NO_VALUE for k in self.KAFKA_EVENT_FIELDS}
         # Send message to Kafka & return the result True/False
         return self._send_message(self.topics['events'], query_dict)
 
@@ -377,17 +378,17 @@ class KafkaLogger(BaseDBLogger):
         """
 
         if self.dryrun:
-            self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
             return True
         elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
             # A Harness utility may set the environment variable after DB init time
             self.dryrun = True
-            self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
             return True
 
-        self.__logger.doDebugLogging(f"Sending message to Kafka: {message}")
+        self.__logger.doDebugLogging(f"Sending message to Kafka topic {topic}: {payload}")
 
-        self.producer.produce(topic, values=json.dumps(payload))
+        self.producer.produce(topic, value=json.dumps(payload))
 
         if synchronous:
             self.producer.flush()
