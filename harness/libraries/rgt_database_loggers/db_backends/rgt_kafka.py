@@ -24,6 +24,8 @@ class KafkaLogger(BaseDBLogger):
         'topic_events': 'RGT_KAFKA_EVENTS_TOPIC',
         'topic_metrics': 'RGT_KAFKA_METRICS_TOPIC',
         'topic_node_health': 'RGT_KAFKA_NODE_HEALTH_TOPIC',
+        'db_type': 'RGT_KAFKA_DB_TYPE',
+        'db_uri': 'RGT_KAFKA_DB_URI',
         'ssl_ca_loc': 'RGT_KAFKA_SSL_CA_LOCATION',
         'ssl_cert_loc': 'RGT_KAFKA_SSL_CERTIFICATE_LOCATION',
         'dryrun': 'RGT_KAFKA_DRY_RUN',
@@ -329,7 +331,7 @@ class KafkaLogger(BaseDBLogger):
         Returns:
             a list of dictionary objects
         """
-        self.__logger.doCriticalLogging("The Kafka db_logger backend does not support the query() method")
+        self.__logger.doCriticalLogging("The Kafka db_logger backend does not support the query() method yet. Support is planned for Druid via the RGT_KAFKA_DB_TYPE=Druid and RGT_KAFKA_DB_URI fields.")
         return []
 
 
