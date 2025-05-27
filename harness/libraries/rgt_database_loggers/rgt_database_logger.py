@@ -329,7 +329,7 @@ class RgtDatabaseLogger:
             from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
             influxdb_loaded = True
         except ImportError as e:
-            self.logger.doErrorLogging(f"Failed to import InfluxDB backend")
+            self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}")
             pass
 
         try:
@@ -337,7 +337,7 @@ class RgtDatabaseLogger:
             from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
             kafka_loaded = True
         except ImportError as e:
-            self.logger.doErrorLogging(f"Failed to import Kafka backend")
+            self.logger.doErrorLogging(f"Failed to import Kafka backend: {e}")
             pass
 
         if influxdb_loaded and not 'influxdb' in self.disabled_backends \
@@ -403,17 +403,17 @@ class RgtDatabaseLogger:
                                                     'metrics': kafka_topic_metrics[i],
                                                     'node_health': kafka_topic_node_healths[i],
                                                 },
-                                                db_type=kafka_db_type,
-                                                db_uri=kafka_db_uri,
-                                                ssl_ca_loc=kafka_ssl_ca_loc,
-                                                ssl_cert_loc=kafka_ssl_cert_locs,
+                                                db_type=kafka_db_type[i],
+                                                db_uri=kafka_db_uri[i],
+                                                ssl_ca_loc=kafka_ssl_ca_loc[i],
+                                                ssl_cert_loc=kafka_ssl_cert_locs[i],
                                                 logger=self.logger)
                     if not only:
                         self.logger.doDebugLogging(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
-                        self.enabled_backends.append(influxdb_backend)
-                    elif influxdb_backend.url == only:
+                        self.enabled_backends.append(kafka_backend)
+                    elif kafka_backend.url == only:
                         self.logger.doDebugLogging(f"Enabling the {kafka_backend.name.name} database logger from URL {kafka_uris[i]}.")
-                        self.enabled_backends.append(influxdb_backend)
+                        self.enabled_backends.append(kafka_backend)
                 except Exception as e:
                     self.logger.doErrorLogging(f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}")
         return

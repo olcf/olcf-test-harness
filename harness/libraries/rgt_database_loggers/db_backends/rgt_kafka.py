@@ -7,7 +7,8 @@ import glob
 import json
 import os
 import re
-from confluent_kafka import Producer, AdminClient, KafkaException
+from confluent_kafka import Producer, KafkaException
+from confluent_kafka.admin import AdminClient
 
 from libraries.rgt_database_loggers.db_backends.base_db import *
 
@@ -117,7 +118,7 @@ class KafkaLogger(BaseDBLogger):
             message = f'The Kafka server at {self.uri} is not alive or does not have all expected topics: {alive_msg}'
             raise DatabaseInitError(message)
 
-        self.producer = Producer(conf)
+        self.producer = Producer(self.conf)
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -319,7 +320,7 @@ class KafkaLogger(BaseDBLogger):
         # requires broker v0.11 or later
         try:
             test_client = AdminClient(self.conf)
-            for topic in self.topics.keys():
+            for t in self.topics.keys():
                 response = test_client.list_topics(topic=self.topics[t], timeout=10)
         except KafkaException as e:
             return f'A Kafka Exception occured while checking if the server is alive: {str(e)}'
