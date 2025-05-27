@@ -100,7 +100,7 @@ for val in args.keys.split(','):
     # Save as a string
     keys_formatted[val_splt[0]] = str(val_splt[1])
 
-number_regex = re.compile('^([0-9]*\.)?[0-9]+(e[+-]?[0-9]+)?$')
+number_regex = re.compile(r'^([0-9]*\.)?[0-9]+(e[+-]?[0-9]+)?$')
 values_formatted = {}
 for val in args.values.split(','):
     # We know it's properly formatted already

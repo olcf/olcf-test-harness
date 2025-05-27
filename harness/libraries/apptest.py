@@ -702,7 +702,7 @@ class subtest(base_apptest, apptest_layout):
             # Return false for empty string
             if len(s) == 0:
                 return False
-            number_regex = re.compile('^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
+            number_regex = re.compile(r'^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
             if number_regex.match(s):
                 return True
             else:

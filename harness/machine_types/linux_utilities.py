@@ -33,7 +33,7 @@ class LinuxEnvRegxp:
     to match the start of a new environmental variable.
     """
 
-    _reg_expression='(?P<key>^[\w_]+|^BASH_FUNC_.*)=(?P<value>[^ \t].*$)'
+    _reg_expression=r'(?P<key>^[\w_]+|^BASH_FUNC_.*)=(?P<value>[^ \t].*$)'
     """string: The regular expression
     
     If the regular expression is matched, we have the start of a new environmental

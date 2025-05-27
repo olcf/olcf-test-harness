@@ -397,16 +397,16 @@ class KafkaLogger(BaseDBLogger):
         """ Converts a time string to Unix timestamp in EST """
 
         # Check for different time formats
-        if re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}$", event_time):
+        if re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}$", event_time):
             # YYYY-MM-DDTHH:MM:SS.UUUUUU -- this is the default harness output
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f")
-        elif re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
+        elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
             # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
-        elif re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
+        elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
             # YYYY-MM-DDTHH:MM:SS
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
-        elif re.search("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", event_time):
+        elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", event_time):
             # YYYY-MM-DDTHH:MM:SSZ
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
         else:
