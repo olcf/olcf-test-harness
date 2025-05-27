@@ -80,8 +80,10 @@ class KafkaLogger(BaseDBLogger):
                  username='',
                  password='',
                  topics={},
-                 ssl_ca_loc=None,
-                 ssl_cert_loc=None,
+                 db_type='',
+                 db_uri='',
+                 ssl_ca_loc='',
+                 ssl_cert_loc='',
                  logger=None):
 
         # This function can't be reached except through the parent
@@ -90,7 +92,10 @@ class KafkaLogger(BaseDBLogger):
         self.uri = uri
         self.username = username
         self.password = password
-        self.topics = topics
+        # Gets rid of "None" entries, which will be provided by the default constructor
+        self.topics = {k: v for k,v in topics.items() if v}
+        self.db_type = db_type
+        self.db_uri = db_uri
         self.ssl_ca_loc = ssl_ca_loc
         self.ssl_cert_loc = ssl_cert_loc
         self.dryrun = False
