@@ -289,7 +289,7 @@ class KafkaLogger(BaseDBLogger):
         # flush the producer to clear all messages
         self.producer.flush()
 
-    def send_external_metrics(self, topic : str, values : dict, log_time : str):
+    def send_external_metrics(self, table : str, tags : dict, values : dict, log_time : str):
         """
             Posts external metrics to Kafka.
         """
@@ -297,10 +297,11 @@ class KafkaLogger(BaseDBLogger):
         self.__logger.doDebugLogging(f"Posting external metrics to Kafka")
 
         # Add time to the query dictionary
-        query_dict = values | {'time': log_time}
+        query_dict = tags | values
+        query_dict['time'] = log_time
 
         # Send message to InfluxDB & return the result True/False
-        return self._send_message(topic, values)
+        return self._send_message(topic, query_dict)
 
     def is_alive(self):
         """
