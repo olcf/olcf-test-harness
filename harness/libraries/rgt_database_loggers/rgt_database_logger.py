@@ -372,32 +372,50 @@ class RgtDatabaseLogger:
             # Fields for multiple Kafka databases can be separated by semicolons
             # the length of kafka_uris is the authoritative source of how many sources are expected
 
-            # required fields:
-            kafka_uris = os.environ[KafkaLogger.kw['uri']].split(';')
-            kafka_usernames = os.environ[KafkaLogger.kw['username']].split(';')
-            kafka_passwords = os.environ[KafkaLogger.kw['password']].split(';')
-
-            # optional fields:
-            kafka_topic_events = os.environ[KafkaLogger.kw['topic_events']].split(';')
-            kafka_topic_metrics = os.environ[KafkaLogger.kw['topic_metrics']].split(';')
-            kafka_topic_node_healths = os.environ[KafkaLogger.kw['topic_node_health']].split(';')
-            kafka_ssl_ca_loc = os.environ[KafkaLogger.kw['ssl_ca_loc']].split(';')
-            kafka_ssl_cert_locs = os.environ[KafkaLogger.kw['ssl_cert_loc']].split(';')
+            try:
+                # required fields:
+                kafka_uris = os.environ[KafkaLogger.kw['uri']].split(';')
+                kafka_usernames = os.environ[KafkaLogger.kw['username']].split(';')
+                kafka_passwords = os.environ[KafkaLogger.kw['password']].split(';')
+                kafka_topic_events = os.environ[KafkaLogger.kw['topic_events']].split(';')
+                # metrics & node health topics are optional
+                kafka_topic_metrics = None
+                kafka_topic_node_healths = None
+                if KafkaLogger.kw['topic_metrics'] in os.environ:
+                    kafka_topic_metrics = os.environ[KafkaLogger.kw['topic_metrics']].split(';')
+                if KafkaLogger.kw['topic_node_health'] in os.environ:
+                    kafka_topic_node_healths = os.environ[KafkaLogger.kw['topic_node_health']].split(';')
+                kafka_db_type = os.environ[KafkaLogger.kw['db_type']].split(';')
+                kafka_db_uri = os.environ[KafkaLogger.kw['db_uri']].split(';')
+                kafka_ssl_ca_loc = os.environ[KafkaLogger.kw['ssl_ca_loc']].split(';')
+                kafka_ssl_cert_locs = os.environ[KafkaLogger.kw['ssl_cert_loc']].split(';')
+            except ValueError as e:
+                self.logger.doErrorLogging(f"Could not find all required environment variables for the Kafka backend: {e}")
 
             for i in range(0,len(kafka_uris)):
                 try:
-                    # If you use multiple InfluxDB instances, you must not use the RGT_INFLUXDB_BUCKET or RGT_INFLUXDB_ORG variables
-                    # unless the same bucket and org name apply to all InfluxDB instances
-                    # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
-                    influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
+                    # Kafka requires way more parameterization than InfluxDB...
+                    kafka_backend = KafkaLogger(uri=kafka_uris[i],
+                                                username=kafka_usernames[i],
+                                                password=kafka_passwords[i],
+                                                topics={
+                                                    'events': kafka_topic_events[i],
+                                                    'metrics': kafka_topic_metrics[i],
+                                                    'node_health': kafka_topic_node_healths[i],
+                                                },
+                                                db_type=kafka_db_type,
+                                                db_uri=kafka_db_uri,
+                                                ssl_ca_loc=kafka_ssl_ca_loc,
+                                                ssl_cert_loc=kafka_ssl_cert_locs,
+                                                logger=self.logger)
                     if not only:
-                        self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                        self.logger.doDebugLogging(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
                         self.enabled_backends.append(influxdb_backend)
                     elif influxdb_backend.url == only:
-                        self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                        self.logger.doDebugLogging(f"Enabling the {kafka_backend.name.name} database logger from URL {kafka_uris[i]}.")
                         self.enabled_backends.append(influxdb_backend)
                 except Exception as e:
-                    self.logger.doErrorLogging(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
+                    self.logger.doErrorLogging(f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}")
         return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
