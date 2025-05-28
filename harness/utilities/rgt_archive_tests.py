@@ -15,6 +15,7 @@ import argparse
 import re
 import shutil
 import tarfile
+import sys
 
 # For directory names
 from libraries.layout_of_apps_directory import apptest_layout
