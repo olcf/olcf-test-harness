@@ -307,7 +307,8 @@ class KafkaLogger(BaseDBLogger):
                 self.__logger.doErrorLogging(f"Kafka message failed to send. Aborting node health logging.")
                 return False
         # flush the producer to clear all messages
-        self.producer.flush()
+        nmsgs = self.producer.flush()
+        return nmsgs == 0
 
     def send_external_metrics(self, table : str, tags : dict, values : dict, log_time : str):
         """
