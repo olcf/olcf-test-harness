@@ -597,12 +597,12 @@ class subtest(base_apptest, apptest_layout):
         if len(metrics) == 0:
             self.logger.doInfoLogging(f"No metrics found to log to influxDB")
         else:
-            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = self._get_build_time()
-            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = self._get_execution_time()
-            if metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] < 0:
+            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = str(self._get_build_time())
+            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = str(self._get_execution_time())
+            if float(metrics[f'{test_info["app"]}-{test_info["test"]}-build_time']) < 0:
                 self.logger.doErrorLogging(f"Invalid build time for jobID {test_info['test_id']}.")
                 do_log_metric = False
-            elif metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] < 0:
+            elif float(metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time']) < 0:
                 self.logger.doErrorLogging(f"Invalid execution time for jobID {test_info['test_id']}.")
                 do_log_metric = False
             elif self.__db_logger.log_metrics(test_info, metrics):
@@ -721,7 +721,7 @@ class subtest(base_apptest, apptest_layout):
                         if len(line_splt[1]) == 0:
                             self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
                             continue
-                        metrics[metric_name] = line_splt[1]
+                        metrics[metric_name] = str(line_splt[1])
                     else:
                         self.logger.doErrorLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
