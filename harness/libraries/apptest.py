@@ -696,18 +696,6 @@ class subtest(base_apptest, apptest_layout):
 
     def _get_metrics(self):
         """ Parse the metrics.txt file for InfluxDB reporting """
-        def is_numeric(s):
-            """ Checks if an entry (RHS) is numeric """
-            # Local function. s is assumed to be a whitespace-stripped string
-            # Return false for empty string
-            if len(s) == 0:
-                return False
-            number_regex = re.compile(r'^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
-            if number_regex.match(s):
-                return True
-            else:
-                return False
-
         metrics = {}
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
@@ -733,13 +721,7 @@ class subtest(base_apptest, apptest_layout):
                         if len(line_splt[1]) == 0:
                             self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
                             continue
-                        # Handle string/integer metrics
-                        if is_numeric(line_splt[1]):
-                            metrics[metric_name] = line_splt[1]
-                        else:
-                            line_splt[1] = line_splt[1].replace(' ', '_')
-                            # Wrap strings in double quotes to send to Influx
-                            metrics[metric_name] = f'"{line_splt[1]}"'
+                        metrics[metric_name] = line_splt[1]
                     else:
                         self.logger.doErrorLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
