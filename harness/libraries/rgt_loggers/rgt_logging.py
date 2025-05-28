@@ -54,6 +54,12 @@ class rgt_logger:
 
         # Instantiate the logger.
         self.__myLogger = logging.getLogger(logger_name)
+
+        # Check for existing logger of the same name
+        if self.__myLogger.hasHandlers():
+            self.doInfoLogging("Found existing handlers for logger name {logger_name}. Not adding more handlers, will using the existing logger.")
+            return
+
         self.__myLogger.setLevel(self.__logger_numeric_threshold_level)
 
         # Add the file handler.
