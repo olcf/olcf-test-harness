@@ -211,6 +211,7 @@ class KafkaLogger(BaseDBLogger):
 
         # query_dict is a copy of event_dict, but holding only the information to send
         query_dict = {k: event_dict[k] if k in event_dict.keys() else self.NO_VALUE for k in self.KAFKA_EVENT_FIELDS}
+        query_dict['timestamp'] = self._event_time_to_timestamp(query_dict['event_time'])
         # Send message to Kafka & return the result True/False
         return self._send_message(self.topics['events'], query_dict)
 
@@ -228,6 +229,7 @@ class KafkaLogger(BaseDBLogger):
         for metric_name in metrics_dict.keys():
             # pull info out of test_info_dict that we need & add metrics info
             query_dict = {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
+            query_dict['timestamp'] = self._event_time_to_timestamp(query_dict['event_time'])
             # For Kafka, we want to un-do the name mangling we do in apptest.py for <app>-<test>-<metric_name>
             query_dict['metric_name'] = metric_name.replace(f'{test_info_dict["app"]}-{test_info_dict["test"]}-', '')
             if self._is_numeric(metrics_dict[metric_name]):
@@ -284,6 +286,7 @@ class KafkaLogger(BaseDBLogger):
             # Node health & test info
             query_dict = node_health_dict[node_name] | {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
             query_dict['node'] = node_name
+            query_dict['timestamp'] = self._event_time_to_timestamp(query_dict['event_time'])
             # Now add location info
             if node_name in node_locations.keys():
                 for loc_id in required_location_identifiers:
@@ -321,6 +324,8 @@ class KafkaLogger(BaseDBLogger):
         # Add time to the query dictionary
         query_dict = tags | values
         query_dict['time'] = log_time
+        # Kafka also wants a timestamp:
+        query_dict['timestamp'] = self._event_time_to_timestamp(log_time)
 
         # Send message to InfluxDB & return the result True/False
         return self._send_message(topic, query_dict)
@@ -407,6 +412,10 @@ class KafkaLogger(BaseDBLogger):
             self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
             return True
 
+        # validate the payload dict to make sure certain fields exist:
+        if not 'timestamp' in payload.keys():
+            raise DatabaseDataError(f"Payload dictionary does not contain a 'timestamp' field when sending to Kafka topic {topic}: {payload}")
+
         self.__logger.doDebugLogging(f"Sending message to Kafka topic {topic}: {payload}")
 
         self.producer.produce(topic, value=json.dumps(payload))
@@ -474,7 +483,5 @@ class KafkaLogger(BaseDBLogger):
         else:
             raise DatabaseDataError(f"Unrecognized time format in string {event_time}.")
 
-        if self.precision == "ms":
-            return round(datetime.timestamp(log_time) * 1000 * 1000)
-        else:
-            return round(datetime.timestamp(log_time) * 1000 * 1000) * 1000
+        # Kafka wants timestamps in seconds, for indexing only (not unique identifiers)
+        return int(datetime.timestamp(log_time))
