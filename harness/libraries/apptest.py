@@ -580,13 +580,23 @@ class subtest(base_apptest, apptest_layout):
         else:
             machine_name = os.environ['RGT_MACHINE_NAME']
 
+        # this chunk of code to grab a job id taken from status_file.py
+        job_id = StatusFile.NO_VALUE
+        file_job_id = os.path.join(dir_status_this_test, apptest_layout.job_id_filename)
+        if os.path.exists(file_job_id):
+            file_ = open(file_job_id, 'r')
+            job_id_ = file_.read()
+            file_.close()
+            event_info['job_id'] = re.sub(' ', '', job_id_.split('\n')[0])
+
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
             'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
             'machine': machine_name,
             'test_id': self.get_harness_id(),
-            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START)
+            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),
+            'job_id': job_id
         }
 
         success_log = 0

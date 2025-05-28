@@ -43,7 +43,8 @@ class KafkaLogger(BaseDBLogger):
                 'test',
                 'runtag',
                 'machine',
-                'event_time'
+                'event_time',
+                'job_id'
     ]
 
     # This list is a subset of what is available, to avoid logging extra columns that don't help
@@ -56,7 +57,6 @@ class KafkaLogger(BaseDBLogger):
                 'check_alias',
                 'hostname',
                 'job_account_id',
-                'job_id',
                 'path_to_rgt_package',
                 'rgt_path_to_sspace',
                 'run_archive',
