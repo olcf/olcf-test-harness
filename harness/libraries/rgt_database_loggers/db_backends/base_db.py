@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod, ABCMeta
 import os
 from datetime import datetime
+import re
 
 class BaseDBLogger(ABC):
 
@@ -85,6 +86,14 @@ class BaseDBLogger(ABC):
     # End of public methods.                                          @
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    def _is_numeric(self, s : str):
+        """ Checks if a string is a recognized numeric format """
+        number_regex = re.compile(r'^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
+        if number_regex.match(s):
+            return True
+        else:
+            return False
 
 # Raised when there is an initialization error
 class DatabaseInitError(Exception):

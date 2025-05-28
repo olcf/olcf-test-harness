@@ -43,7 +43,6 @@ class KafkaLogger(BaseDBLogger):
                 'test',
                 'runtag',
                 'machine',
-                'job_id',
                 'event_time'
     ]
 
@@ -57,6 +56,7 @@ class KafkaLogger(BaseDBLogger):
                 'check_alias',
                 'hostname',
                 'job_account_id',
+                'job_id',
                 'path_to_rgt_package',
                 'rgt_path_to_sspace',
                 'run_archive',
@@ -193,7 +193,7 @@ class KafkaLogger(BaseDBLogger):
                             # Truncate to 1 KB
                             event_dict['output_txt'] = output[-1024:].replace('"', '\\"')
                 if not found_job_file:
-                    event_dict['output_txt'] = f'Output file not found in {file_name}'
+                    event_dict['output_txt'] = f'No binary execute output files found.'
             elif event_dict['event_name'] == "check_end":
                 file_name = os.path.join(event_dict['run_archive'], "output_check.txt")
                 self.__logger.doDebugLogging(f"Using {file_name} for check output for Kafka")
@@ -224,11 +224,22 @@ class KafkaLogger(BaseDBLogger):
 
         self.__logger.doDebugLogging(f"Posting metrics from test id: {test_info_dict['test_id']} to Kafka")
 
-        # pull info out of test_info_dict that we need & add metrics info
-        query_dict = {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS} | metrics_dict
+        # Put metrics into a fixed-column format, where each metric results in a single message to Kafka
+        for metric_name in metrics_dict.keys():
+            # pull info out of test_info_dict that we need & add metrics info
+            query_dict = {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
+            # For Kafka, we want to un-do the name mangling we do in apptest.py for <app>-<test>-<metric_name>
+            query_dict['metric_name'] = metric_name.replace(f'{test_info_dict["app"]}-{test_info_dict["test"]}-', '')
+            if self._is_numeric(metrics_dict[metric_name]):
+                query_dict['metric_value'] = float(metrics_dict[metric_name])
+            else:
+                query_dict['metric_value'] = metrics_dict[metric_name]
+            self._send_message(self.topics['metrics'], query_dict, synchronous=False)
 
+        # flush the producer
+        nmsgs = self.producer.flush()
         # Send message to Kafka & return the result True/False
-        return self._send_message(self.topics['metrics'], query_dict)
+        return nmsgs == 0
 
     def send_node_health_results(self, test_info_dict : dict, node_health_dict : dict):
         """

@@ -236,7 +236,13 @@ class InfluxDBLogger(BaseDBLogger):
             influx_event_record_string += f',{tag_name}={test_info_dict[tag_name]}'
 
         influx_event_record_string += ' '
-        influx_event_record_string += ','.join([f"{k}={v}" for k, v in metrics_dict.items()])
+        metrics_entries = []
+        for k, v in metrics_dict.items():
+            if self._is_numeric(v):
+                metrics_entries.append(f'{k}={v}')
+            else:
+                metrics_entries.append(f'{k}="{v.replace(" ", "_")}"')
+        influx_event_record_string += ','.join(metrics_entries)
         influx_event_record_string += f" {str(self._event_time_to_timestamp(test_info_dict['event_time']))}"
 
         headers = {'Authorization': f'Token {self.token}', 'Content-Type': "text/plain; charset=utf-8", 'Accept': "application/json"}
