@@ -7,7 +7,7 @@ import glob
 import json
 import os
 import re
-from confluent_kafka import Producer, KafkaException
+from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient
 
 from libraries.rgt_database_loggers.db_backends.base_db import *
@@ -318,17 +318,22 @@ class KafkaLogger(BaseDBLogger):
         """
         self.__logger.doDebugLogging(f'Checking for the following topics for Kafka health check and topic verification: {",".join(self.topics.values())} at {self.uri}')
 
+        err_msg = None
         # requires broker v0.11 or later
         try:
             test_client = AdminClient(self.conf)
             for t in self.topics.keys():
                 response = test_client.list_topics(topic=self.topics[t], timeout=10)
+                if response.topics[self.topics[t]].error:
+                    return f"Couldn't find topic {self.topics[t]} in Kafka instance. Error: {response.topics[self.topics[t]].error}"
         except KafkaException as e:
-            return f'A Kafka Exception occured while checking if the server is alive: {str(e)}'
+            err_msg = f'A Kafka Exception occured while checking if the server is alive: {str(e)}'
+            pass
         except Exception as e:
-            return f'An Exception occured while checking if the server is alive: {str(e)}'
+            err_msg = f'An Exception occured while checking if the server is alive: {str(e)}'
+            pass
 
-        return
+        return err_msg
 
     def query(self, query):
         """
@@ -391,7 +396,12 @@ class KafkaLogger(BaseDBLogger):
         self.producer.produce(topic, value=json.dumps(payload))
 
         if synchronous:
-            self.producer.flush()
+            nmsgs = self.producer.flush()
+            if nmsgs == 0:
+                return True
+
+        # if synchronous = False is specified, it's the user's job to flush the producer
+        return True
 
     def _event_time_to_timestamp(self, event_time : str):
         """ Converts a time string to Unix timestamp in EST """
