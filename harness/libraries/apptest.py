@@ -582,12 +582,12 @@ class subtest(base_apptest, apptest_layout):
 
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
-        file_job_id = os.path.join(dir_status_this_test, apptest_layout.job_id_filename)
+        file_job_id = self.get_path_to_job_id_file()
         if os.path.exists(file_job_id):
             file_ = open(file_job_id, 'r')
             job_id_ = file_.read()
             file_.close()
-            event_info['job_id'] = re.sub(' ', '', job_id_.split('\n')[0])
+            job_id = re.sub(' ', '', job_id_.split('\n')[0])
 
         test_info = {
             'app': self.getNameOfApplication(),
