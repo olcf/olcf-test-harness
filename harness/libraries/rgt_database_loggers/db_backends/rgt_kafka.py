@@ -283,6 +283,7 @@ class KafkaLogger(BaseDBLogger):
         for node_name in node_health_dict.keys():
             # Node health & test info
             query_dict = node_health_dict[node_name] | {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
+            query_dict['node'] = node_name
             # Now add location info
             if node_name in node_locations.keys():
                 for loc_id in required_location_identifiers:
@@ -355,8 +356,11 @@ class KafkaLogger(BaseDBLogger):
         Returns:
             a list of dictionary objects
         """
-        self.__logger.doCriticalLogging("The Kafka db_logger backend does not support the query() method yet. Support is planned for Druid via the RGT_KAFKA_DB_TYPE=Druid and RGT_KAFKA_DB_URI fields.")
-        return []
+        if self.db_type.upper() == 'DRUID':
+            return self._query_druid(query)
+        else:
+            self.__logger.doCriticalLogging("The Kafka db_logger backend does not support the query() method for any database backend except Druid yet. Support is enabled for Druid via the RGT_KAFKA_DB_TYPE=Druid and RGT_KAFKA_DB_URI fields.")
+            return []
 
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -414,6 +418,42 @@ class KafkaLogger(BaseDBLogger):
 
         # if synchronous = False is specified, it's the user's job to flush the producer
         return True
+
+    def _query_druid(self, query):
+        """
+        Parameters:
+            query: a SQL query string
+
+        Returns:
+            a list of dictionary objects
+        """
+        # this is a helper method that queries Druid and returns the result
+        # Druid querying needs the `requests` module, as opposed to Kafka, which does not
+        # so we separate the import into this method
+        import requests
+
+        query_data = {
+            "query": query
+        }
+
+        self.__logger.doInfoLogging(f"Querying Druid database with query: {query}.")
+
+        response = requests.post(
+            f"{self.db_uri}/druid/v2/sql",
+            json=query_data,
+            auth=(self.username,self.password),
+            headers={"Content-Type": "application/json"}
+        )
+
+        try:
+            response.raise_for_status()
+            self.__logger.doDebugLogging(f"Query completed successfully: {query}")
+            self.__logger.doDebugLogging(f"Query response: {response.json()}")
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            self.__logger.doErrorLogging(f"Druid Query failed: {str(e)}.")
+            # continue raising this error to propagate the failure
+            raise e
 
     def _event_time_to_timestamp(self, event_time : str):
         """ Converts a time string to Unix timestamp in EST """
