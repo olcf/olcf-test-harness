@@ -16,6 +16,7 @@ import re
 from types import *
 
 # NCCS Test Harness Package Imports
+from libraries.harness_internal_config import harness_modes
 from libraries.base_apptest import base_apptest
 from libraries.base_apptest import BaseApptestError
 from libraries.layout_of_apps_directory import apptest_layout
@@ -120,11 +121,8 @@ class subtest(base_apptest, apptest_layout):
                                         harness task to be preformed on this app/test
         """
 
-        from libraries.regression_test import Harness
-
         if tasks != None:
             tasks = copy.deepcopy(tasks)
-            tasks = subtest.reorderTaskList(tasks)
 
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
@@ -132,7 +130,7 @@ class subtest(base_apptest, apptest_layout):
         self.logger.doInfoLogging(message)
 
         for harness_task in tasks:
-            if harness_task == Harness.checkout:
+            if harness_task == harness_modes.checkout:
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
@@ -167,7 +165,7 @@ class subtest(base_apptest, apptest_layout):
                     message = "Could not find all required paths on the file system for application {app1}, test {test1}.".format(app1=self.getNameOfApplication(),
                                                                                                                                 test1=self.getNameOfSubtest())
                     return 1
-                if harness_task == Harness.starttest:
+                if harness_task == harness_modes.starttest:
                     message = "Start of starting test."
                     self.logger.doInfoLogging(message)
 
@@ -179,10 +177,10 @@ class subtest(base_apptest, apptest_layout):
                     if exit_code:
                         return 1
 
-                elif harness_task == Harness.stoptest:
+                elif harness_task == harness_modes.stoptest:
                     self._stop_test()
 
-                elif harness_task == Harness.displaystatus:
+                elif harness_task == harness_modes.displaystatus:
                     if test_display_lock:
                         test_display_lock.acquire()
 
@@ -191,7 +189,7 @@ class subtest(base_apptest, apptest_layout):
                     if test_display_lock:
                         test_display_lock.release()
 
-                elif harness_task == Harness.summarize_results:
+                elif harness_task == harness_modes.summarize_results:
                     self.generateReport()
 
     def cloneRepository(self,my_repository,destination):
@@ -398,42 +396,6 @@ class subtest(base_apptest, apptest_layout):
         for tmp_test in self.__apps_test_checked_out:
             print( "%-20s  %-20s %-20s" % (tmp_test[0], tmp_test[1], tmp_test[2]))
         print( "================================================================\n\n")
-
-    @classmethod
-    def reorderTaskList(cls,tasks):
-        from libraries.regression_test import Harness
-        taskwords1 = []
-        for taskwords in tasks:
-            task = None
-            if type(taskwords) == list:
-                task = taskwords[0]
-            else:
-                task = taskwords
-            taskwords1 = taskwords1 + [task]
-
-        app_tasks1 = []
-
-        if (Harness.checkout in taskwords1):
-            app_tasks1.append(Harness.checkout)
-            taskwords1.remove(Harness.checkout)
-
-        if (Harness.starttest in taskwords1) :
-            app_tasks1.append(Harness.starttest)
-            taskwords1.remove(Harness.starttest)
-
-        if (Harness.stoptest in taskwords1):
-            app_tasks1.append(Harness.stoptest)
-            taskwords1.remove(Harness.stoptest)
-
-        if (Harness.displaystatus in taskwords1):
-            app_tasks1.append(Harness.displaystatus)
-            taskwords1.remove(Harness.displaystatus)
-
-        if (Harness.summarize_results in taskwords1):
-            app_tasks1.append(Harness.summarize_results)
-            taskwords1.remove(Harness.summarize_results)
-
-        return app_tasks1
 
     def waitForAllJobsToCompleteQueue(self, harness_config, timeout):
         """Waits for subtest cycle to end.
