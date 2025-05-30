@@ -327,8 +327,8 @@ class KafkaLogger(BaseDBLogger):
         # Kafka also wants a timestamp:
         query_dict['timestamp'] = self._event_time_to_timestamp(log_time)
 
-        # Send message to InfluxDB & return the result True/False
-        return self._send_message(topic, query_dict)
+        # Send message to Kafka & return the result True/False
+        return self._send_message(table, query_dict)
 
     def is_alive(self):
         """
