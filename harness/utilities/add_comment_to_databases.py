@@ -22,6 +22,7 @@ import re
 
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
@@ -196,18 +197,7 @@ def kafka_get_results(db):
         return query
 
     results = db.query(build_query())
-    ret = []
-    # filter out unwanted/incomplete/irrelevant results
-    for r in results:
-        missing_entries = []
-        for e in KafkaLogger.KAFKA_EVENT_FIELDS:
-            if not e in r.keys():
-                missing_entries.append(e)
-        if len(missing_entries) > 0:
-            logger.doDebugLogging(f"Discarding test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
-        else:
-            ret.append(r)
-    return ret
+    return results
 
 for db in db_logger.enabled_backends:
     single_db_logger = create_rgt_db_logger(logger=logger, only=db.url)
