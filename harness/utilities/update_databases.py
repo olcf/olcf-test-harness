@@ -2,10 +2,11 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 09-05-2024
+# Date modified: 05-30-2025
 ################################################################################
 # Purpose:
-#   This script currently only has support for Slurm systems and InfluxDB.
+#   This script currently only has support for Slurm systems and InfluxDB and
+#   Kafka with the Druid database backend.
 #
 #   Queries each enabled backend to find the runs without the complete list of
 #   events, then attempts to re-send each event not found, using the event files.
