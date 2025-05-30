@@ -471,6 +471,9 @@ class KafkaLogger(BaseDBLogger):
         if re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}$", event_time):
             # YYYY-MM-DDTHH:MM:SS.UUUUUU -- this is the default harness output
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f")
+        elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$", event_time):
+            # YYYY-MM-DDTHH:MM:SS.mmmZ
+            log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
         elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
             # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
