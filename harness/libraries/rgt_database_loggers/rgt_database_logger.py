@@ -412,7 +412,7 @@ class RgtDatabaseLogger:
                         self.logger.doDebugLogging(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
                         self.enabled_backends.append(kafka_backend)
                     elif kafka_backend.url == only:
-                        self.logger.doDebugLogging(f"Enabling the {kafka_backend.name.name} database logger from URL {kafka_uris[i]}.")
+                        self.logger.doDebugLogging(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
                         self.enabled_backends.append(kafka_backend)
                 except Exception as e:
                     self.logger.doErrorLogging(f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}")
