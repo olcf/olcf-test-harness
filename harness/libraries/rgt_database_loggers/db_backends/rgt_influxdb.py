@@ -164,8 +164,8 @@ class InfluxDBLogger(BaseDBLogger):
                 if os.path.exists(file_name):
                     with open(file_name, "r") as f:
                         output = f.read()
-                        # Truncate to 64 kb
-                        output = output[-65534:].replace('"', '\\"')
+                        # Truncate to 1 kb
+                        output = output[-1024:].replace('"', '\\"')
                         influx_event_record_string += ",output_txt=\"" + output + "\""
                 else:
                     influx_event_record_string += ",output_txt=\"Output file not found in " + file_name  + "\""
@@ -175,8 +175,8 @@ class InfluxDBLogger(BaseDBLogger):
                 if os.path.exists(file_name):
                     with open(file_name, "r") as f:
                         output = f.read()
-                        # Truncate to 64 kb
-                        output = output[-65534:].replace('"', '\\"')
+                        # Truncate to 1 kb
+                        output = output[-1024:].replace('"', '\\"')
                         influx_event_record_string += ",output_txt=\"" + output + "\""
                 else:
                     influx_event_record_string += ",output_txt=\"Output file not found in " + file_name + "\""
@@ -188,8 +188,8 @@ class InfluxDBLogger(BaseDBLogger):
                         found_job_file = True
                         with open(file_name, "r") as f:
                             output = f.read()
-                            # Truncate to 64 kb
-                            output = output[-65534:].replace('"', '\\"')
+                            # Truncate to 1 kb
+                            output = output[-1024:].replace('"', '\\"')
                             influx_event_record_string += ",output_txt=\"" + output + "\""
                 if not found_job_file:
                     influx_event_record_string += ",output_txt=\"Job output file not found" + "\""
@@ -199,8 +199,8 @@ class InfluxDBLogger(BaseDBLogger):
                 if os.path.exists(file_name):
                     with open(file_name, "r") as f:
                         output = f.read()
-                        # Truncate to 64 kb
-                        output = output[-65534:].replace('"', '\\"')
+                        # Truncate to 1 kb
+                        output = output[-1024:].replace('"', '\\"')
                         influx_event_record_string += ",output_txt=\"" + output + "\""
                 else:
                     # if the update_databases wrapper calls this method, then it will provide an output_txt
