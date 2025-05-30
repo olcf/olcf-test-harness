@@ -13,16 +13,18 @@
 #   POSTs the update back to each backend under 'check_end' status.
 ################################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import glob
 import subprocess
 import argparse
 import csv
 import socket
+import re
 
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
@@ -59,7 +61,14 @@ db_logger = create_rgt_db_logger(logger=logger)
 logger.doInfoLogging(f"Enabled {len(db_logger.enabled_backends)} database backends")
 
 for db in db_logger.enabled_backends:
-    if not db.name == "influxdb":
+    if db.name == "influxdb":
+        continue
+    elif db.name == "kafka":
+        if not 'RGT_KAFKA_EVENTS_TOPIC' in os.environ:
+            self.doErrorLogging(f"The Kafka backend requires RGT_KAFKA_EVENTS_TOPIC to be set in the environment.")
+            exit(1)
+        continue
+    else:
         self.doErrorLogging(f"Unsupported db backend: {db.name}")
         exit(1)
 
@@ -100,6 +109,35 @@ if not (args.time.endswith('d') or args.time.endswith('h')):
     exit(1)
 
 # Helper functions, one per database type ######################################
+def event_time_to_timestamp(event_time : str, precision : str = 's'):
+    """ Converts a time string to Unix timestamp in EST """
+
+    # Check for different time formats
+    if re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.UUUUUU -- this is the default harness output
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
+        # YYYY-MM-DDTHH:MM:SS
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SSZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ")
+    else:
+        raise Exception(f"Unrecognized time format in string {event_time}.")
+
+    # Kafka wants timestamps in seconds, for indexing only (not unique identifiers)
+    if precision == 's':
+        return int(datetime.timestamp(log_time))
+    elif precision == 'ms':
+        return int(datetime.timestamp(log_time) * 1000)
+    elif precision == 'us':
+        return int(datetime.timestamp(log_time) * 1000 * 1000)
+    elif precision == 'ns':
+        return round(datetime.timestamp(log_time) * 1000 * 1000) * 1000
+
 def influxdb_get_results(db):
     """
     Helper function to return a list of dictionary objects from InfluxDB
@@ -152,6 +190,75 @@ def influxdb_get_results(db):
     for r in results:
         missing_entries = []
         for e in InfluxDBLogger.INFLUX_TAGS:
+            if not e in r.keys():
+                missing_entries.append(e)
+        if len(missing_entries) > 0:
+            logger.doDebugLogging(f"Discarding test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
+        elif not r['user'] == args.user:
+            logger.doDebugLogging(f"Discarding test id {r['test_id']} from user {r['user']}")
+        else:
+            ret.append(r)
+    return ret
+
+def kafka_get_results(db):
+    """
+    Helper function to return a list of dictionary objects from Kafka
+
+    Inherits logger and db_logger from the parent scope
+    Parameters:
+        db : an instantiation of base_db class (ie, RgtKafkaLogger)
+    """
+
+    def build_query():
+        """
+        Helper function to build the query for Kafka
+
+        Returns: a SQL query string
+        """
+
+        # build a SQL conditional to check the timestamp
+        filters = []
+        # Build range() line for flux query
+        if args.starttime:
+            # Then we use 'from: <timestamp>'
+            filters.append(f'__time > MILLIS_TO_TIMESTAMP({event_time_to_timestamp(args.starttime, precision="ms")})')
+            if args.endtime:
+                filters.append(f'__time < MILLIS_TO_TIMESTAMP({event_time_to_timestamp(args.endtime, precision="ms")})')
+        else:
+            # Then we use --time
+            if args.time.endswith('d'):
+                # then subtract some number of days from current day
+                dt = datetime.today() - timedelta(days=int(args.time.replace('d', '')))
+            else:
+                # then subtract some number of hours
+                dt = datetime.today() - timedelta(hours=int(args.time.replace('h', '')))
+            filters.append(f'__time > MILLIS_TO_TIMESTAMP({event_time_to_timestamp(dt.strftime("%Y-%m-%dT%H:%M:%SZ"), precision="ms")})')
+        if args.app:
+            filters.append(f'app = \'{args.app}\'')
+        if args.test:
+            filters.append(f'test = \'{args.test}\'')
+        if args.runtag:
+            filters.append(f'runtag = \'{args.runtag}\'')
+        filters.append(f'machine = \'{args.machine}\'')
+
+        groupby_fields = ['test_id', 'machine', 'app', 'test']
+        # user is a SQL keyword, and event_time is swallowed up by Druid as a timestamp
+        fields_sql_kw = ['user', 'event_time']
+        field_selector = f'{",".join(groupby_fields)},{",".join([f"LATEST({e}) as {e}" for e in KafkaLogger.KAFKA_EVENT_FIELDS if not (e in groupby_fields or e in fields_sql_kw)])}'
+        field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
+        unfinished_conditional = 'event_name = \'job_queued\' or (event_name != \'check_end\' and (event_value = \'0\' or event_value = \'[NO_VALUE]\'))'
+
+        #query = f'SELECT * FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} WHERE timestamp = (SELECT MAX(timestamp) FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} AS subq WHERE subq.test_id = test_id) AND {" AND ".join(filters)} GROUP BY test_id,machine,app,test HAVING event_name = "job_queued" or (event_name != "check_end" and (event_value = "0" or event_value = "[NO_VALUE]"))'
+        query = f'SELECT * FROM (SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id,machine,app,test) WHERE {unfinished_conditional}'
+        logger.doDebugLogging(f"SQL query: {query}")
+        return query
+
+    results = db.query(build_query())
+    ret = []
+    # filter out unwanted/incomplete/irrelevant results
+    for r in results:
+        missing_entries = []
+        for e in KafkaLogger.KAFKA_EVENT_FIELDS:
             if not e in r.keys():
                 missing_entries.append(e)
         if len(missing_entries) > 0:
@@ -249,12 +356,13 @@ for db in db_logger.enabled_backends:
     results = []
     if db.name == "influxdb":
         results.extend(influxdb_get_results(db))
+    elif db.name == "kafka":
+        results.extend(kafka_get_results(db))
     # now process results
     # Get all Slurm job IDs
     slurm_job_ids = [ e['job_id'] for e in results if not e['job_id'] == '[NO_VALUE]' ]
     # A job ID will have a field named `node-failed` = True if it survived a node failure via --no-kill
     slurm_data = check_job_status(slurm_job_ids)
-
 
     for entry in results:
         # check to see if this entry should be parsed
