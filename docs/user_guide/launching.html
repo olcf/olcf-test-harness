@@ -330,6 +330,15 @@ Applications not hosted in GitHub/GitLab must be manually placed in <code class=
 <span class="nv">Test</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello_mpi<span class="w"> </span>c_n002
 </pre></div>
 </div>
+<p>For convenience, the <code class="docutils literal notranslate"><span class="pre">Include</span></code> keyword reads in another harness input file, adding the tests, paths, and tasks to the current harness parameters.
+<code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> is set to the first value encountered while parsing the input files.
+For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">Path_to_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/some/path/to/my/applications
+
+Include<span class="w"> </span><span class="m">1</span>-node-tests.inp
+Include<span class="w"> </span><span class="m">2</span>-node-tests.inp
+</pre></div>
+</div>
 <p>Set a scratch area for this specific instance of the harness (a default is set from <em>$OLCF_HARNESS_MACHINE.ini</em>, but this is how to change from the default):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>&lt;some<span class="w"> </span>path<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>file<span class="w"> </span>system&gt;/Scratch
 </pre></div>
@@ -344,12 +353,16 @@ runtests.py<span class="w"> </span>--inputfile<span class="w"> </span>rgt.input.
 </div>
 <p>To launch tasks in the input file instead of the command-line, add lines like the following to <code class="docutils literal notranslate"><span class="pre">rgt.input.summit</span></code>:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span># 1 task per line
-harness_task start
-harness_task stop
+harness_task check_out_tests
+harness_task start_tests
+harness_task stop_tests
+harness_task display_status
 </pre></div>
 </div>
 <p>When using the checkout mode, the application source repository will be cloned to the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;</em> directory for all the tests,
-but no tests will be run.</p>
+but no tests will be run.
+If the repository already exists, no action will be taken.
+Updating the repo via <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code> or <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">fetch</span></code> should be done outside of the test harness.</p>
 <p>After using the start mode, results of the most recent test run can be found in <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/&lt;testid&gt;</em>.
 Results of the most recent test run can be found in the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/latest</em> symbolic link.</p>
 <div class="admonition note">
@@ -372,12 +385,13 @@ This section details the command-line parameters and the next section details av
                 Options: [screen,logfile]
                         &#39;screen&#39;  - print messages to console (default)
                         &#39;logfile&#39; - print messages to log file
--m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: &#39;use_harness_tasks_in_rgt_input_file&#39;)
-                Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status]
-                        &#39;checkout&#39;   - checkout application tests listed in input file
-                        &#39;start&#39;      - start application tests listed in input file
-                        &#39;stop&#39;       - stop application tests listed in input file
-                        &#39;status&#39;     - check status of application tests listed in input file
+-m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: &#39;use_input_file&#39;)
+                Options: [use_input_file,checkout,start,stop,status]
+                        &#39;use_input_file&#39; - use tasks defined in the input file
+                        &#39;checkout&#39;       - checkout application tests listed in input file
+                        &#39;start&#39;          - start application tests listed in input file
+                        &#39;stop&#39;           - stop application tests listed in input file
+                        &#39;status&#39;         - check status of application tests listed in input file
 
 --fireworks                         Use FireWorks to run harness tasks (beta)
 -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
