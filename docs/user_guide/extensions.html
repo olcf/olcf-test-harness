@@ -307,19 +307,18 @@ Event fields logged to InfluxDB are:</p>
 <li><p><strong>rgt_system_log_tag</strong> : log tag defined for this run (mirrors <strong>runtag</strong>, logged for InfluxDB only)</p></li>
 <li><p><strong>user</strong> : username of the user that launched the harness</p></li>
 <li><p><strong>comment</strong> : enables the user to log comments to specific events</p></li>
-<li><p><strong>output_txt</strong> : output of specific events mined from files (last 64 kB for InfluxDB, last 1 kB for Kafka).</p></li>
+<li><p><strong>output_txt</strong> : output of specific events mined from files (last 1 kB only)</p></li>
 <li><p><strong>check_alias</strong> : an optional extension - alpha-numeric supplement to <strong>event_value</strong></p></li>
 </ul>
 </td></tr></table>
 <p>These fields are largely self-explanatory, but additional details for <strong>output_txt</strong> are provided below.
 <strong>output_txt</strong> is constructed for <strong>build_end</strong>, <strong>submit_end</strong>, <strong>binary_execute_end</strong>, and <strong>check_end</strong> events.
 The harness searches for files of a specific naming convention when each of those events is encountered.
-For <strong>build_end</strong>, the OTH reads the last 64 kB from <em>output_build.txt</em>, which is a file automatically created by the harness to store the output of the build process.
+For <strong>build_end</strong>, the OTH reads the last 1 kB from <em>output_build.txt</em>, which is a file automatically created by the harness to store the output of the build process.
 For <strong>submit_end</strong>, the OTH reads the <em>submit.err</em> file, which is also automatically created by the harness during job submission.
-For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <em>.o${job_id}</em>, and reads the last 64 kB from that file.
+For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <em>.o${job_id}</em>, and reads the last 1 kB from that file.
 This file is not automatically created by the harness.
-For <strong>check_end</strong>, the OTH looks for a file named <em>output_check.txt</em>, which is automatically created by the harness to store output from the check script.
-For Kafka, only the last 1 kB of output files is sent, as 64 kB was determined to be larger than necessary.</p>
+For <strong>check_end</strong>, the OTH looks for a file named <em>output_check.txt</em>, which is automatically created by the harness to store output from the check script.</p>
 </div>
 <div class="section" id="logging-application-metrics-to-a-database">
 <h2>Logging application metrics to a database<a class="headerlink" href="#logging-application-metrics-to-a-database" title="Permalink to this heading">¶</a></h2>

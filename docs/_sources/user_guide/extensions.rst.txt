@@ -76,18 +76,17 @@ Event fields logged to InfluxDB are:
     * **rgt_system_log_tag** : log tag defined for this run (mirrors **runtag**, logged for InfluxDB only)
     * **user** : username of the user that launched the harness
     * **comment** : enables the user to log comments to specific events
-    * **output_txt** : output of specific events mined from files (last 64 kB for InfluxDB, last 1 kB for Kafka).
+    * **output_txt** : output of specific events mined from files (last 1 kB only)
     * **check_alias** : an optional extension - alpha-numeric supplement to **event_value**
 
 These fields are largely self-explanatory, but additional details for **output_txt** are provided below.
 **output_txt** is constructed for **build_end**, **submit_end**, **binary_execute_end**, and **check_end** events.
 The harness searches for files of a specific naming convention when each of those events is encountered.
-For **build_end**, the OTH reads the last 64 kB from *output_build.txt*, which is a file automatically created by the harness to store the output of the build process.
+For **build_end**, the OTH reads the last 1 kB from *output_build.txt*, which is a file automatically created by the harness to store the output of the build process.
 For **submit_end**, the OTH reads the *submit.err* file, which is also automatically created by the harness during job submission.
-For **binary_execute_end**, the OTH looks for a file with the extension *.o${job_id}*, and reads the last 64 kB from that file.
+For **binary_execute_end**, the OTH looks for a file with the extension *.o${job_id}*, and reads the last 1 kB from that file.
 This file is not automatically created by the harness.
 For **check_end**, the OTH looks for a file named *output_check.txt*, which is automatically created by the harness to store output from the check script.
-For Kafka, only the last 1 kB of output files is sent, as 64 kB was determined to be larger than necessary.
 
 
 Logging application metrics to a database
