@@ -105,10 +105,11 @@ These are grouped below by extension. The general naming convention is ``RGT_<ex
 
 .. code-block::
 
+    # InfluxDB configuration -- default values indicated where applicable
     RGT_INFLUXDB_DISABLE        When set to '1', explicitly disables InfluxDB logging for the run tests.
                                     Creates a `.disable_influxdb` dot-file in the Run_Archive/<test_id> directory
                                     to prevent any future logging for this test ID.
-    RGT_INFLUXDB_URI            URL's to one or more InfluxDB server, separated by semi-colons. This may either be of format:
+    RGT_INFLUXDB_URI            URLs to one or more InfluxDB server, separated by semi-colons. This may either be of format:
                                     https://my.influxdb.server:<port>/api/v2/write?org=myorg&bucket=mybucket
                                     OR
                                     https://my.influxdb.server:<port>
@@ -125,6 +126,26 @@ These are grouped below by extension. The general naming convention is ``RGT_<ex
                                     If >1 InfluxDB instance, use URL encoding to specify the precision if not the same.
     RGT_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it to the database.
 
+    # Kafka configuration -- no default values. If multiple servers, all RGT_KAFKA_* envvars must be the same length
+    RGT_KAFKA_DISABLE           When set to '1', explicitly disables Kafka logging for the run tests.
+                                    Creates a `.disable_kafka` dot-file in the Run_Archive/<test_id> directory
+                                    to prevent any future logging for this test ID.
+    RGT_KAFKA_URI               URLs to one or more Kafka servers, separated by semicolons.
+                                    Typical format is my.kafka.server:<port>.
+    RGT_KAFKA_USERNAME          Usernames to one or more Kafka servers, separated by semicolons.
+    RGT_KAFKA_PASSWORD          Passwords to one or more Kafka servers, separated by semicolons.
+    RGT_KAFKA_EVENTS_TOPIC      Names of the topic to log events to, separated by semicolons.
+    RGT_KAFKA_METRICS_TOPIC     Names of the topic to log metrics to, separated by semicolons.
+    RGT_KAFKA_NODE_HEALTH_TOPIC Names of the topic to log node health data to, separated by semicolons.
+    RGT_KAFKA_DB_TYPE           The type of database behind Kafka (used by harness utilities for read queries).
+                                    Currently, only Druid is supported.
+    RGT_KAFKA_DB_URI            The URI for the database behind Kafka.
+    RGT_KAFKA_SSL_CA_LOCATION   The absolute path to the SSL Certificate Authority file for your remote Kafka server.
+    RGT_KAFKA_SSL_CERTIFICATE_LOCATION
+                                The absolute path to the SSL Certificate file for your remote Kafka server.
+    RGT_KAFKA_DRY_RUN           Print the json package to be sent to Kafka, but do not send it to the database.
+
+    # Common configuration required for extensions
     RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
                                 database logging extension. Set to "none" (not case-sensitive) to disable.
 

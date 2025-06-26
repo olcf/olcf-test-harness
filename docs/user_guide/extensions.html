@@ -165,8 +165,8 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Extensions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#influxdb-event-logging">InfluxDB Event Logging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#database-event-logging">Database Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logging-application-metrics-to-a-database">Logging application metrics to a database</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#check-alias">Check Alias</a></li>
 </ul>
@@ -257,19 +257,38 @@
 </div>
 <p>Optional extensions have been developed for use with the OLCF Test Harness (OTH).
 Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.</p>
+<<<<<<< nick-add-kafka-issue-165
+<div class="section" id="database-event-logging">
+<h2>Database Event Logging<a class="headerlink" href="#database-event-logging" title="Permalink to this heading">¶</a></h2>
+<p>The OTH leaves behind status files containing event metadata like timestamp, filesystem paths for work, scratch and archive directories, test name, error code, etc.
+This information can additionally be logged to a supported database.
+The OTH currently provides support for InfluxDB and Kafka (with Druid database backend).
+To enable InfluxDB, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
+=======
 <div class="section" id="influxdb-event-logging">
 <span id="id1"></span><h2>InfluxDB Event Logging<a class="headerlink" href="#influxdb-event-logging" title="Permalink to this heading">¶</a></h2>
 <p>The OTH leaves behind event information in files on the file system, with data like timestamp, filesystem paths for work, scratch and archive directories, test name, etc.
 This information can additionally be logged to an InfluxDB time-series database.
 To enable this extension, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
+>>>>>>> devel
 <table class="hlist"><tr><td><ul class="simple">
 <li><p>RGT_INFLUXDB_URI : the URL for your InfluxDB instance (ie, <code class="docutils literal notranslate"><span class="pre">https://my-influxdb.domain.com/api/v2/write?org=my-org&amp;bucket=my-bucket&amp;precision=ns</span></code>)</p></li>
 <li><p>RGT_INFLUXDB_TOKEN : the token for your InfluxDB instance</p></li>
 </ul>
 </td></tr></table>
+<p>To enable Kafka, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p>RGT_KAFKA_URI : the URL for your Kafka instance (ie, <code class="docutils literal notranslate"><span class="pre">https://my-kafka.domain.com:22222</span></code>)</p></li>
+<li><p>RGT_KAFKA_USERNAME : the username for your Kafka account</p></li>
+<li><p>RGT_KAFKA_PASSWORD : the password for your Kafka account</p></li>
+<li><p>RGT_KAFKA_EVENTS_TOPIC : the name of the topic to use for Events logging</p></li>
+<li><p>RGT_KAFKA_SSL_CA_LOCATION : absolute path to the certificate authority file for the Kafka instance.</p></li>
+<li><p>RGT_KAFKA_SSL_CERTIFICATE_LOCATION : absolute path to the certificate file for the Kafka instance.</p></li>
+</ul>
+</td></tr></table>
 <p>Note that this is a minimal configuration.
-Multiple InfluxDB instances can be logged to by supplying a semicolon-separated list of URIs and tokens.
-Please see <a class="reference internal" href="envvars.html#env-vars-ext"><span class="std std-ref">Extension-specific Variables</span></a> for the full list of InfluxDB-related environment variables.</p>
+Multiple InfluxDB or Kafka instances can be logged to by supplying a semicolon-separated list to each of the variables.
+Please see <a class="reference internal" href="envvars.html#env-vars-ext"><span class="std std-ref">Extension-specific Variables</span></a> for the full list of database-related environment variables.</p>
 <p>Events are logged using the following data as tags in the InfluxDB measurement:</p>
 <table class="hlist"><tr><td><ul class="simple">
 <li><p><strong>time</strong></p></li>
@@ -282,6 +301,7 @@ Please see <a class="reference internal" href="envvars.html#env-vars-ext"><span 
 </td></tr></table>
 <p>Tags are a set of unique identifiers used by InfluxDB to index records.
 If you write 2 records to InfluxDB using the same set of tags, only the most recent will be kept.
+Kafka logs these data as well, but does not have the concept of a tag.
 Each set of tags is associated with a set of fields.
 Event fields logged to InfluxDB are:</p>
 <table class="hlist"><tr><td><ul class="simple">
@@ -299,31 +319,33 @@ Event fields logged to InfluxDB are:</p>
 <li><p><strong>job_account_id</strong> : account ID used to submit the job to the scheduler</p></li>
 <li><p><strong>job_id</strong> : JobID referenced by the scheduler</p></li>
 <li><p><strong>path_to_rgt_package</strong> : path to the harness source code used</p></li>
-<li><p><strong>rgt_system_log_tag</strong> : log tag defined for this run (mirrors <strong>runtag</strong>)</p></li>
+<li><p><strong>rgt_system_log_tag</strong> : log tag defined for this run (mirrors <strong>runtag</strong>, logged for InfluxDB only)</p></li>
 <li><p><strong>user</strong> : username of the user that launched the harness</p></li>
 <li><p><strong>comment</strong> : enables the user to log comments to specific events</p></li>
-<li><p><strong>reason</strong> : used by some harness utility scripts to log explanations to InfluxDB, such as node failure messages</p></li>
-<li><p><strong>output_txt</strong> : output of specific events mined from files (last 64 kB only).</p></li>
+<li><p><strong>output_txt</strong> : output of specific events mined from files (last 1 kB only)</p></li>
 <li><p><strong>check_alias</strong> : an optional extension - alpha-numeric supplement to <strong>event_value</strong></p></li>
 </ul>
 </td></tr></table>
 <p>These fields are largely self-explanatory, but additional details for <strong>output_txt</strong> are provided below.
 <strong>output_txt</strong> is constructed for <strong>build_end</strong>, <strong>submit_end</strong>, <strong>binary_execute_end</strong>, and <strong>check_end</strong> events.
 The harness searches for files of a specific naming convention when each of those events is encountered.
-For <strong>build_end</strong>, the OTH reads the last 64 kB from <strong>output_build.txt</strong>, which is a file automatically created by the harness to store the output of the build process.
-For <strong>submit_end</strong>, the OTH reads the <strong>submit.err</strong> file, which is also automatically created by the harness during job submission.
-For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <strong>.o${job_id}</strong>, and reads the last 64 kB from that file.
+For <strong>build_end</strong>, the OTH reads the last 1 kB from <em>output_build.txt</em>, which is a file automatically created by the harness to store the output of the build process.
+For <strong>submit_end</strong>, the OTH reads the <em>submit.err</em> file, which is also automatically created by the harness during job submission.
+For <strong>binary_execute_end</strong>, the OTH looks for a file with the extension <em>.o${job_id}</em>, and reads the last 1 kB from that file.
 This file is not automatically created by the harness.
-For <strong>check_end</strong>, the OTH looks for a file named <strong>output_check.txt</strong>, which is automatically created by the harness to store output from the check script.</p>
+For <strong>check_end</strong>, the OTH looks for a file named <em>output_check.txt</em>, which is automatically created by the harness to store output from the check script.</p>
 </div>
-<div class="section" id="logging-application-metrics-to-influxdb">
-<h2>Logging application metrics to InfluxDB<a class="headerlink" href="#logging-application-metrics-to-influxdb" title="Permalink to this heading">¶</a></h2>
-<p>The OTH provides capability to log metrics from each test to InfluxDB.
+<div class="section" id="logging-application-metrics-to-a-database">
+<h2>Logging application metrics to a database<a class="headerlink" href="#logging-application-metrics-to-a-database" title="Permalink to this heading">¶</a></h2>
+<p>The OTH provides capability to log metrics from each test to InfluxDB and/or Kafka.
 This extension is a great way to visualize performance of a certain test over time.
-This requires that InfluxDB event logging is enabled.</p>
+This requires that the database’s event logging described above is enabled.</p>
 <p>To enable this extension, simply create a file named <em>metrics.txt</em> in the Run_Archive directory of a test launch (ie, <em>/Path/to/Tests/$app/$test/Run_Archive/$test_id/metrics.txt</em>).
-This file must exist by the end of the <em>report_cmd</em> execution.
-A common place to create <em>metrics.txt</em> is in the check script, <em>check_cmd</em>.
+For InfluxDB, no further steps are required to enable metrics logging.
+For Kafka, you must also set the environment variable <code class="docutils literal notranslate"><span class="pre">RGT_KAFKA_METRICS_TOPIC</span></code> (or set <strong>kafka_metrics_topic</strong> in the <em>machine.ini</em> file).
+This environment variable provides the Kafka topic for the harness to send metrics to.</p>
+<p>The <em>metrics.txt</em> file must exist by the end of the <strong>report_cmd</strong> execution (<strong>report_cmd</strong> is defined in the test’s <em>rgt_test_input.ini</em> file).
+A common place to create <em>metrics.txt</em> is in the check script, <strong>check_cmd</strong>.
 Each line of this file must conform to one of the following formats:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comment lines begin with hashtags</span>
 <span class="n">metric_name_1</span><span class="o">=</span><span class="n">value_1</span>
@@ -333,7 +355,8 @@ Each line of this file must conform to one of the following formats:</p>
 <span class="n">metric_name_3</span>\<span class="n">t</span><span class="o">=</span>\<span class="n">tvalue_3</span>
 </pre></div>
 </div>
-<p>The OTH will log metric names to the InfluxDB database using the same tags as InfluxDB event logging uses.
+<p>The OTH will log metric names to InfluxDB databases using the same tags as InfluxDB event logging uses.
+Kafka does not have tags, but uses a fixed-column format to log the <strong>test_id</strong>, <strong>app</strong>, <strong>test</strong>, <strong>runtag</strong>, <strong>machine</strong>, <strong>event_time</strong>, <strong>job_id</strong>, <strong>metric_name</strong>, and <strong>metric_value</strong>, which requires one message per metric.
 When at least 1 metric is defined, the OTH also automatically calculates the time between <strong>build_start</strong> and <strong>build_end</strong> events, and <strong>binary_execute_start</strong> and <strong>binary_execute_end</strong>.
 These events are logged as <strong>build_time</strong> and <strong>execution_time</strong>, respectively.
 If you’re interested only in <strong>build_time</strong> and <strong>execution_time</strong>, have your check script create a dummy <em>metrics.txt</em> file with a line like <code class="docutils literal notranslate"><span class="pre">dummy=1</span></code>.
@@ -343,8 +366,9 @@ since <strong>execution_time</strong> is the difference in time between the two 
 <div class="section" id="monitoring-the-health-of-individual-nodes">
 <h2>Monitoring the health of individual nodes<a class="headerlink" href="#monitoring-the-health-of-individual-nodes" title="Permalink to this heading">¶</a></h2>
 <p>In many-node systems, it can be very difficult to monitor the health of each node.
-To address this, the OTH supports node-centric monitoring.
-Similar to metrics logging, this extension requires that InfluxDB event logging is enabled, and this extension is triggered by the presence of a <em>nodecheck.txt</em> file in the Run_Archive directory of a test launch.
+To address this, the OTH supports sending the status of each node to a database.
+Similar to metrics logging, this extension requires that database’s event logging is enabled, and this extension is triggered by the presence of a <em>nodecheck.txt</em> file in the Run_Archive directory of a test launch.
+For Kafka, similar to metrics, the environment variable <code class="docutils literal notranslate"><span class="pre">RGT_KAFKA_NODE_HEALTH_TOPIC</span></code> is required (or set <strong>kafka_node_health_topic</strong> in the <em>machine.ini</em> file).
 This extension also requires geospatial information about the node, by default.
 This is discussed later in this section.
 Each line of <em>nodecheck.txt</em> must have the following format:</p>
@@ -369,27 +393,31 @@ These values are:</p>
 <code class="docutils literal notranslate"><span class="pre">FAILED</span></code>, <code class="docutils literal notranslate"><span class="pre">SUCCESS</span></code>, and <code class="docutils literal notranslate"><span class="pre">PERF-FAIL</span></code> are self-explanatory.
 <code class="docutils literal notranslate"><span class="pre">HW-FAIL</span></code> is intended to be a status associated with a hardware failure (ie, bus errors, power fault, network failure).</p>
 <p>This extension logs results to the <strong>node_health</strong> measurement (table) of InfluxDB using <strong>machine</strong>, <strong>node</strong>, and <strong>test</strong> as tags.
+Kafka logs the same test information that it does for metrics: <strong>test_id</strong>, <strong>app</strong>, <strong>test</strong>, <strong>runtag</strong>, <strong>machine</strong>, <strong>event_time</strong>, and <strong>job_id</strong>.
 By default, this extension also requires geospatial information about each node (ie, cabinet number, board number, row number).
-This information is used as an InfluxDB tag to correlate failures by location.
+For Kafka, due to fixed-column formatting requirements, the only acceptable/required geospatial metadata is <strong>xname</strong>, which typically encodes the cabinet, board, and row numbers in a single string, e.g. <code class="docutils literal notranslate"><span class="pre">a36n21</span></code>.
+InfluxDB allows for flexible-column formatting, so any number of geospatial metadata may be provided.
 To bypass this feature (common for single-cabinet systems), set the <strong>RGT_NODE_LOCATION_FILE</strong> environment variable to <code class="docutils literal notranslate"><span class="pre">none</span></code> (not case-sensitive).
 To utilize this feature, provide the absolute path to a JSON file containing the desired information by using the <strong>RGT_NODE_LOCATION_FILE</strong> environment variable.
 An example portion from this file may look like:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;node001&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;cabinet&quot;</span><span class="p">:</span> <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;switch&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;slot&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span>
+        <span class="s2">&quot;cabinet&quot;</span><span class="p">:</span> <span class="s2">&quot;x0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;switch&quot;</span><span class="p">:</span> <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;slot&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;xname&quot;</span><span class="p">:</span> <span class="s2">&quot;x0c0s0&quot;</span>
     <span class="p">},</span>
     <span class="s2">&quot;node002&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;cabinet&quot;</span><span class="p">:</span> <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;switch&quot;</span><span class="p">:</span> <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cabinet&quot;</span><span class="p">:</span> <span class="s2">&quot;x0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;switch&quot;</span><span class="p">:</span> <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
         <span class="s2">&quot;slot&quot;</span><span class="p">:</span> <span class="s2">&quot;s1&quot;</span>
+        <span class="s2">&quot;xname&quot;</span><span class="p">:</span> <span class="s2">&quot;x0c0s1&quot;</span>
     <span class="p">},</span>
     <span class="o">...</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Then, when querying InfluxDB in this example, you may use <strong>cabinet</strong>, <strong>switch</strong>, and <strong>slot</strong> to filter records.</p>
+<p>This information is then available when querying the database.</p>
 </div>
 <div class="section" id="check-alias">
 <h2>Check Alias<a class="headerlink" href="#check-alias" title="Permalink to this heading">¶</a></h2>
@@ -400,7 +428,7 @@ This simply supplies an alphabetic dimension to categorizing failures.</p>
 <p>To enable this extension, create a file named <em>check_alias.txt</em> in the Run_Archive directory of a test launch (ie, <em>/Path/to/Tests/$app/$test/Run_Archive/$test_id/check_alias.txt</em>).
 <strong>check_alias</strong> is set to the content of the first line of this file.
 This <strong>check_alias</strong> field is set in each event file, so InfluxDB is not required for this extension.
-<strong>check_alias</strong> is sent to InfluxDB alongside the standard event metadata, if InfluxDB is enabled.</p>
+<strong>check_alias</strong> is sent to databases alongside the standard event metadata, if any databases are enabled.</p>
 </div>
 </div>
 

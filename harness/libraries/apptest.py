@@ -542,13 +542,23 @@ class subtest(base_apptest, apptest_layout):
         else:
             machine_name = os.environ['RGT_MACHINE_NAME']
 
+        # this chunk of code to grab a job id taken from status_file.py
+        job_id = StatusFile.NO_VALUE
+        file_job_id = self.get_path_to_job_id_file()
+        if os.path.exists(file_job_id):
+            file_ = open(file_job_id, 'r')
+            job_id_ = file_.read()
+            file_.close()
+            job_id = re.sub(' ', '', job_id_.split('\n')[0])
+
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
             'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
             'machine': machine_name,
             'test_id': self.get_harness_id(),
-            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START)
+            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),
+            'job_id': job_id
         }
 
         success_log = 0
@@ -559,12 +569,12 @@ class subtest(base_apptest, apptest_layout):
         if len(metrics) == 0:
             self.logger.doInfoLogging(f"No metrics found to log to influxDB")
         else:
-            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = self._get_build_time()
-            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = self._get_execution_time()
-            if metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] < 0:
+            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = str(self._get_build_time())
+            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = str(self._get_execution_time())
+            if float(metrics[f'{test_info["app"]}-{test_info["test"]}-build_time']) < 0:
                 self.logger.doErrorLogging(f"Invalid build time for jobID {test_info['test_id']}.")
                 do_log_metric = False
-            elif metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] < 0:
+            elif float(metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time']) < 0:
                 self.logger.doErrorLogging(f"Invalid execution time for jobID {test_info['test_id']}.")
                 do_log_metric = False
             elif self.__db_logger.log_metrics(test_info, metrics):
@@ -658,18 +668,6 @@ class subtest(base_apptest, apptest_layout):
 
     def _get_metrics(self):
         """ Parse the metrics.txt file for InfluxDB reporting """
-        def is_numeric(s):
-            """ Checks if an entry (RHS) is numeric """
-            # Local function. s is assumed to be a whitespace-stripped string
-            # Return false for empty string
-            if len(s) == 0:
-                return False
-            number_regex = re.compile('^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
-            if number_regex.match(s):
-                return True
-            else:
-                return False
-
         metrics = {}
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
@@ -695,13 +693,7 @@ class subtest(base_apptest, apptest_layout):
                         if len(line_splt[1]) == 0:
                             self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
                             continue
-                        # Handle string/integer metrics
-                        if is_numeric(line_splt[1]):
-                            metrics[metric_name] = line_splt[1]
-                        else:
-                            line_splt[1] = line_splt[1].replace(' ', '_')
-                            # Wrap strings in double quotes to send to Influx
-                            metrics[metric_name] = f'"{line_splt[1]}"'
+                        metrics[metric_name] = str(line_splt[1])
                     else:
                         self.logger.doErrorLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics

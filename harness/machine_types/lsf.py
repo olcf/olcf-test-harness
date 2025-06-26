@@ -73,7 +73,7 @@ class LSF(BaseScheduler):
         submit_stdout.close()
 
         if p.returncode == 0:
-            jobid_pattern = re.compile('\d+')
+            jobid_pattern = re.compile(r'\d+')
             jobid = jobid_pattern.findall(records[0])[0]
             self.set_job_id(jobid)
             self.__logger.doErrorLogging(f"LSF jobID = {self.get_job_id()}")

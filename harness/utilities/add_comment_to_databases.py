@@ -2,27 +2,27 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 09-05-2024
+# Date modified: 2025-05-30
 ################################################################################
 # Purpose:
-#   This script currently only has support for Slurm systems and InfluxDB.
+#   This script currently only has support for Slurm systems and InfluxDB and
+#   Kafka with the Druid database backend.
 #
-#   Queries each enabled backend to find the runs without the complete list of
-#   events, then attempts to re-send each event not found, using the event files.
-#   If event files aren't found, queries SLURM to find out if the job crashed.
-#   POSTs the update back to each backend under 'check_end' status.
+#   Adds a comment field to an existing test in the database.
 ################################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import glob
 import subprocess
 import argparse
 import csv
 import socket
+import re
 
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
@@ -56,7 +56,11 @@ db_logger = create_rgt_db_logger(logger=logger)
 logger.doInfoLogging(f"Enabled {len(db_logger.enabled_backends)} database backends")
 
 for db in db_logger.enabled_backends:
-    if not db.name == "influxdb":
+    if db.name == "influxdb":
+        continue
+    elif db.name == "kafka":
+        continue
+    else:
         self.doErrorLogging(f"Unsupported db backend for add_comment_to_databases.py: {db.name}")
         exit(1)
 
@@ -71,6 +75,38 @@ if not (args.time.endswith('d') or args.time.endswith('h')):
     exit(1)
 
 # Helper functions, one per database type ######################################
+def event_time_to_timestamp(event_time : str, precision : str = 's'):
+    """ Converts a time string to Unix timestamp in EST """
+
+    # Check for different time formats
+    if re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.UUUUUU -- this is the default harness output
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
+        # YYYY-MM-DDTHH:MM:SS
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SSZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.mmmZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    else:
+        raise Exception(f"Unrecognized time format in string {event_time}.")
+
+    # Kafka wants timestamps in seconds, for indexing only (not unique identifiers)
+    if precision == 's':
+        return int(datetime.timestamp(log_time))
+    elif precision == 'ms':
+        return int(datetime.timestamp(log_time) * 1000)
+    elif precision == 'us':
+        return int(datetime.timestamp(log_time) * 1000 * 1000)
+    elif precision == 'ns':
+        return round(datetime.timestamp(log_time) * 1000 * 1000) * 1000
+
 def influxdb_get_results(db):
     """
     Helper function to return a list of dictionary objects from InfluxDB
@@ -120,88 +156,58 @@ def influxdb_get_results(db):
             ret.append(r)
     return ret
 
-def check_job_status(slurm_jobid_lst):
+def kafka_get_results(db):
     """
-        Checks if a Slurm job is running by querying sacct
-        Returns [False] (list length=1) or
-            [JobID, Elapsed, Start, End, State, ExitCode, Reason, Comment]
+    Helper function to return a list of dictionary objects from Kafka
+
+    Inherits logger and db_logger from the parent scope
+    Parameters:
+        db : an instantiation of base_db class (ie, RgtKafkaLogger)
     """
-    result = {}  # a dictionary of dictionaries
-    low_limit = 0
-    high_limit = 0
-    batch_size = 100
-    node_failed_jobids = []
-    # Batched into batches of 100
-    while low_limit < len(slurm_jobid_lst):
-        high_limit = min(low_limit + batch_size, len(slurm_jobid_lst))
-        sacct_format = 'JobID,Elapsed,Start,End,State%40,ExitCode,Reason%100,Comment%100'
-        cmd=f"sacct -j {','.join(slurm_jobid_lst[low_limit:high_limit])} --format {sacct_format} -X"
-        os.system(f'{cmd} 2>&1 > slurm.jobs.tmp.txt')
-        with open(f'slurm.jobs.tmp.txt', 'r') as f:
-            line = f.readline()
-            labels = line.split()
-            comment_line = f.readline()   # line of dashes
-            # use the spaces in the comment line to split the next line properly
-            for line in f:
-                fields = {}
-                search_pos = -1
-                for i in range(0, len(labels)):
-                    next_space = comment_line.find(' ', search_pos + 1)
-                    # No more spaces found, and it's the last label
-                    if next_space < 0 and i == len(labels) - 1:
-                        next_space = len(line)
-                    elif next_space < 0:
-                        logger.doErrorLogging(f"Sacct parse error: Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
-                    cur_field = line[search_pos+1:next_space].strip()
-                    search_pos = next_space
-                    fields[labels[i].lower()] = cur_field
-                if not 'jobid' in fields:
-                    logger.doErrorLogging(f"Couldn't find JobID in sacct record. Skipping")
-                    continue
-                elif fields['state'] == 'RESIZING':
-                    logger.doInfoLogging(f"Detected RESIZING for job {fields['jobid']}. RESIZING is from node failure + SLURM '--no-kill'. There should be another record in sacct for this job. Skipping")
-                    # Add a field to this job that shows it had/survived a node failure
-                    node_failed_jobids.append(fields['jobid'])
-                    continue
-                elif fields['jobid'] in node_failed_jobids:
-                    # Check if a previous step had come in with RESIZING
-                    logger.doDebugLogging(f"Found jobid in node failure list: {fields['jobid']}")
-                    fields['node-failed'] = True
-                result[fields['jobid']] = fields
-        os.remove(f"slurm.jobs.tmp.txt")
-        low_limit = high_limit  # prepare for next iteration
-    return result
 
-def get_user_from_id(user_id):
-    """ Given a user ID, return the username """
-    # replace parenthesis with commas to make splitting easier
-    os.system(f"id {user_id} 2>&1 | tr '()' '??' | cut -d'?' -f2 > tmp.user.txt")
-    with open(f'tmp.user.txt', 'r') as f:
-        user_name = f.readline().strip()
-    if len(user_name) == 0:
-        logger.doErrorLogging(f"Couldn't find user name for {user_id}. Returning 'unknown'")
-        user_name = 'unknown'
-    os.remove(f"tmp.user.txt")
-    return user_name
+    def build_query():
+        """
+        Helper function to build the query for Kafka
 
-def slurm_time_to_harness_time(timecode):
-    """
-    Converts the time format from Slurm into the time format for the harness (YYYY-MM-DDTHH:MM:SS.6f)
-    """
-    return f'{timecode}.000000'
+        Returns: a SQL query string
+        """
 
+        # build a SQL conditional to check the timestamp
+        filters = []
+        if args.time.endswith('d'):
+            # then subtract some number of days from current day
+            dt = datetime.today() - timedelta(days=int(args.time.replace('d', '')))
+        else:
+            # then subtract some number of hours
+            dt = datetime.today() - timedelta(hours=int(args.time.replace('h', '')))
+        filters.append(f'__time > MILLIS_TO_TIMESTAMP({event_time_to_timestamp(dt.strftime("%Y-%m-%dT%H:%M:%SZ"), precision="ms")})')
+        filters.append(f'test_id = \'{args.testid}\'')
 
-skipped = 0
-sent = 0
+        if args.event:
+            filters.append(f'event_name = \'{args.event}\'')
+
+        groupby_fields = ['test_id']
+        # user is a SQL keyword, and event_time is swallowed up by Druid as a timestamp
+        fields_sql_kw = ['user', 'event_time']
+        field_selector = f'{",".join(groupby_fields)},{",".join([f"LATEST({e}) as {e}" for e in KafkaLogger.KAFKA_EVENT_FIELDS if not (e in groupby_fields or e in fields_sql_kw)])}'
+        field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
+
+        query = f'SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id'
+        logger.doDebugLogging(f"SQL query: {query}")
+        return query
+
+    results = db.query(build_query())
+    return results
 
 for db in db_logger.enabled_backends:
     single_db_logger = create_rgt_db_logger(logger=logger, only=db.url)
     results = []
     if db.name == "influxdb":
         results.extend(influxdb_get_results(db))
+    elif db.name == "kafka":
+        results.extend(kafka_get_results(db))
 
     if not len(results) == 1:
-        logger.doInfoLogging("No results returned from database query.")
         logger.doErrorLogging(f"{len(results)} results returned from database query, expected 1. Skipping adding a comment.")
     else:
         entry = results[0]
