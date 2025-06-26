@@ -29,7 +29,7 @@ from libraries.config_file import rgt_config_file
 from libraries.rgt_loggers import rgt_logger_factory
 
 # Initialize argparse ##########################################################
-parser = argparse.ArgumentParser(description="Updates harness runs in database backends using event and Slurm data")
+parser = argparse.ArgumentParser(description="Add a comment to a specific test ID in the events database")
 parser.add_argument('--time', default='90d', type=str, action='store', help="How far back to look for jobs relative to now (ex: 1h, 2d).")
 parser.add_argument('--testid', type=str, action='store', required=True, help="Specifies the harness test id to update jobs for.")
 parser.add_argument('--loglevel', default='INFO', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
