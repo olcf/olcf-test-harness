@@ -5,7 +5,6 @@ import shlex
 import argparse
 import os
 import sys
-import logging
 
 # My harness package imports
 from libraries import input_files
@@ -29,16 +28,16 @@ from libraries.rgt_loggers import rgt_logger_factory
 MAIN_LOGGER_NAME='main_logger'
 """str: The name of the main logger."""
 
-MAIN_LOGGER_LEVEL=logging.DEBUG
+MAIN_LOGGER_LEVEL='DEBUG'
 """The log level of the main logger."""
 
 MAIN_LOGGER_FILEHANDLER_FILENAME="main.log"
 """str: The file name for the main logger fileHandler."""
 
-MAIN_LOGGER_FILEHANDLER_LOGLEVEL=logging.DEBUG
+MAIN_LOGGER_FILEHANDLER_LOGLEVEL='DEBUG'
 """The log level for the main log file handler."""
 
-MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL=logging.WARNING
+MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL='WARNING'
 """The log level for the main log console handler."""
 
 def get_main_logger():
@@ -377,6 +376,8 @@ def runtests(my_arg_string=None):
     return rgt
 
 if __name__ == "__main__":
+
+    my_main_logger = get_main_logger()
 
     my_main_logger.doInfoLogging("Start of harness")
 

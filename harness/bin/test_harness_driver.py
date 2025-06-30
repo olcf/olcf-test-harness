@@ -421,7 +421,6 @@ def test_harness_driver(argv=None):
             message += "Stopping test cycle."
             apptest.logger.doCriticalLogging(message)
             runarchive_dir = apptest.get_path_to_runarchive()
-            logging.shutdown()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
             return
 
