@@ -3,7 +3,8 @@ import os
 import configparser
 import logging
 
-from rgt_utilities import set_harness_environment
+from libraries.rgt_utilities import set_harness_environment
+from libraries.rgt_loggers import rgt_logger_factory
 
 class rgt_config_file:
 
@@ -102,6 +103,6 @@ class rgt_config_file:
         if not logger:
             print(f'Using machine config: {configfile}')
         else:
-            logger.info(f'Using machine config: {configfile}')
+            logger.doInfoLogging(f'Using machine config: {configfile}')
         return configfile
 

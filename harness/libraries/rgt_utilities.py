@@ -76,7 +76,7 @@ def set_harness_environment(env_vars, override=False, logger=None):
             if not logger:
                 print(envk + " is already set. Skipping.")
             else:
-                logger.info(envk + " is already set. Skipping.")
+                logger.doInfoLogging(envk + " is already set. Skipping.")
         else:
             os.environ[envk] = v
 
