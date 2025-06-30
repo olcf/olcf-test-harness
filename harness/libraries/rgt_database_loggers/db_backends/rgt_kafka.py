@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import csv
+import copy
 from datetime import datetime
 import glob
 # for json.dumps, used to send json object to kafka
@@ -284,7 +285,14 @@ class KafkaLogger(BaseDBLogger):
         # for each node found in the nodecheck.txt
         for node_name in node_health_dict.keys():
             # Node health & test info
-            query_dict = node_health_dict[node_name] | {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
+            # Version 9 has the nice and clean pipe operator to merge 2 dictionaries
+            if sys.version_info[0] == 3 and sys.version_info[1] >= 9:
+                query_dict = node_health_dict[node_name] | {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
+            else:
+                query_dict = copy.deepcopy(node_health_dict[node_name])
+                for k in self.KAFKA_COMMON_TEST_FIELDS:
+                    query_dict[k] = test_info_dict[k]
+
             query_dict['node'] = node_name
             query_dict['timestamp'] = self._event_time_to_timestamp(query_dict['event_time'])
             # Now add location info
