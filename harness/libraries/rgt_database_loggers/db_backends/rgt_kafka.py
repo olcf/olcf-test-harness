@@ -8,6 +8,7 @@ import glob
 import json
 import os
 import re
+import sys
 from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient
 
