@@ -48,12 +48,14 @@ parser.add_argument('--build-timeout', type=float, default=6.0, action='store', 
 # Parse command-line arguments #################################################
 args = parser.parse_args()
 
-# Read in the <machine>.ini configuration file #################################
-# uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
-config = rgt_config_file()
+# Create rgt_logger
 logger = rgt_logger_factory.create_rgt_logger(logger_name='update_db',
                 fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
                 fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+
+# Read in the <machine>.ini configuration file #################################
+# uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
+config = rgt_config_file(logger=logger)
 
 db_logger = create_rgt_db_logger(logger=logger)
 
@@ -519,4 +521,8 @@ for db in db_logger.enabled_backends:
             logger.doWarningLogging(f"Unrecognized job state: {slurm_data[entry['job_id']]['state']}. No action is being taken for job {entry['job_id']}.")
             skipped += 1
 
-logger.doCriticalLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
+if sent > 0:
+    # Log at critical level if sent > 0, else at error level
+    logger.doCriticalLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
+else:
+    logger.doErrorLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
