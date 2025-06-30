@@ -48,9 +48,10 @@ class rgt_logger:
         self.__ch_numeric_threshold_level = getattr(logging, ch_threshold_log_level.upper(), None)
         self.__filepath = fh_filepath
 
-        # We now create the parent directories for the file handler logger.
-        dirname = os.path.dirname(fh_filepath) 
-        os.makedirs(dirname,exist_ok=True)
+        if self.__filepath:
+            # We now create the parent directories for the file handler logger.
+            dirname = os.path.dirname(fh_filepath) 
+            os.makedirs(dirname,exist_ok=True)
 
         # Instantiate the logger.
         self.__myLogger = logging.getLogger(logger_name)
@@ -105,6 +106,10 @@ class rgt_logger:
 
     # Private methods
     def _add_file_handler(self):
+        # if no file path provided, skip
+        if not self.__filepath:
+            return
+
         # Define a file handler and set to fh threshold level.
         fh = logging.FileHandler(self.__filepath)
         fh.setLevel(self.__fh_numeric_threshold_level)
