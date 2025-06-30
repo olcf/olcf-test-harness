@@ -5,13 +5,13 @@ import shlex
 import argparse
 import os
 import sys
-import logging
 
 # My harness package imports
 from libraries import input_files
 from libraries import regression_test
 from libraries import command_line
 from libraries.config_file import rgt_config_file
+from libraries.rgt_loggers import rgt_logger_factory
 
 #
 # Authors: Arnold Tharrington, Wayne Joubert, Veronica Vergera, Mark Berrill, and Mike Brim
@@ -25,63 +25,19 @@ from libraries.config_file import rgt_config_file
 #                                                    -
 #-----------------------------------------------------
 
-def _create_main_logger(logger_name,
-                        logger_level,
-                        logger_filehandler_filename,
-                        logger_filehandler_loglevel,
-                        logger_consolehandler_loglevel):
-    """Returns the main logging object.
-    
-    Parameters
-    ----------
-    logger_name : A string
-        The name of the logger object
-
-    logger_level : A numeric integer
-        The log level of the returned logger object.
-
-    logger_filehandler_filename : A string
-        The name of the logging file handler.
-
-    logger_filehandler_loglevel : A numeric integer
-        The log level of the file handler of the returned logger object.
-
-    logger_consolehandler_loglevel : A numeric integer
-        The log level of the console handler of the returned logger object.
-
-    Returns
-    -------
-    Logger
-        A logger object
-
-    """
-    my_logger = logging.getLogger(logger_name)
-    my_logger.setLevel(logger_level)
-    fh = logging.FileHandler(logger_filehandler_filename,mode="a")
-    fh.setLevel(logger_filehandler_loglevel)
-    ch = logging.StreamHandler()
-    ch.setLevel(logger_consolehandler_loglevel)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
-    my_logger.addHandler(fh)
-    my_logger.addHandler(ch)
-    my_logger.info("Created the main logger.")
-    return my_logger
-
 MAIN_LOGGER_NAME='main_logger'
 """str: The name of the main logger."""
 
-MAIN_LOGGER_LEVEL=logging.DEBUG
+MAIN_LOGGER_LEVEL='DEBUG'
 """The log level of the main logger."""
 
 MAIN_LOGGER_FILEHANDLER_FILENAME="main.log"
 """str: The file name for the main logger fileHandler."""
 
-MAIN_LOGGER_FILEHANDLER_LOGLEVEL=logging.DEBUG
+MAIN_LOGGER_FILEHANDLER_LOGLEVEL='DEBUG'
 """The log level for the main log file handler."""
 
-MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL=logging.WARNING
+MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL='WARNING'
 """The log level for the main log console handler."""
 
 def get_main_logger():
@@ -91,15 +47,12 @@ def get_main_logger():
     -------
     Logger
     """
-    if MAIN_LOGGER_NAME in logging.Logger.manager.loggerDict:
-        my_main_logger = logging.getLogger(MAIN_LOGGER_NAME)
-    else:
-        my_main_logger = _create_main_logger(MAIN_LOGGER_NAME,
-                                             MAIN_LOGGER_LEVEL,
-                                             MAIN_LOGGER_FILEHANDLER_FILENAME,
-                                             MAIN_LOGGER_FILEHANDLER_LOGLEVEL,
-                                             MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL)
-    return my_main_logger
+    return rgt_logger_factory.create_rgt_logger(
+                        logger_name=MAIN_LOGGER_NAME,
+                        fh_filepath=MAIN_LOGGER_FILEHANDLER_FILENAME,
+                        logger_threshold_log_level=MAIN_LOGGER_LEVEL,
+                        fh_threshold_log_level=MAIN_LOGGER_FILEHANDLER_LOGLEVEL,
+                        ch_threshold_log_level=MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL)
 
 #-----------------------------------------------------
 # End of section we define the main logger and its   -
@@ -377,35 +330,35 @@ def runtests(my_arg_string=None):
     else:
         argv = shlex.split(my_arg_string)
 
-    main_logger.info("Parsing the command line arguments.")
+    main_logger.doInfoLogging("Parsing the command line arguments.")
 
     harness_arguments = parse_commandline_argv(argv, main_logger)
 
     # Print the effective command line to stdout.
     effective_command_line = harness_arguments.effective_command_line
-    main_logger.info(effective_command_line)
+    main_logger.doInfoLogging(effective_command_line)
 
-    main_logger.info("Completed parsing command line arguments.")
+    main_logger.doInfoLogging("Completed parsing command line arguments.")
 
     # Read the input and master config
-    main_logger.info("Reading the harness input file.")
+    main_logger.doInfoLogging("Reading the harness input file.")
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
                                        runmodecmd=harness_arguments.runmode,
                                        logger=main_logger)
-    main_logger.info("Completed reading the harness input file.")
+    main_logger.doInfoLogging("Completed reading the harness input file.")
 
     # Check if there were any tests found:
     if len(ifile.get_tests()) == 0:
-        main_logger.error("No tests found in input file. Aborting.")
+        main_logger.doErrorLogging("No tests found in input file. Aborting.")
         return
     
-    main_logger.info("Reading the harness config file.")
+    main_logger.doInfoLogging("Reading the harness config file.")
     try:
         config = rgt_config_file(configfilename=harness_arguments.configfile, logger=main_logger)
     except NameError as e:
-        main_logger.critical(f"Could not find Harness config file: {harness_arguments.configfile}.")
+        main_logger.doCriticalLogging(f"Could not find Harness config file: {harness_arguments.configfile}.")
         exit(1)
-    main_logger.info("Completed reading the harness config file.")
+    main_logger.doInfoLogging("Completed reading the harness config file.")
 
     # Create and run the harness
     rgt = regression_test.Harness(config, ifile,
@@ -414,26 +367,22 @@ def runtests(my_arg_string=None):
                                   harness_arguments.use_fireworks,
                                   harness_arguments.separate_build_stdio)
 
-    main_logger.info("Created an instance of the harness.")
-    main_logger.info("Harness: " + str(rgt))
-    main_logger.info("Running the harness tasks.")
+    main_logger.doInfoLogging("Created an instance of the harness.")
+    main_logger.doInfoLogging("Harness: " + str(rgt))
+    main_logger.doInfoLogging("Running the harness tasks.")
     rgt.run_me(my_effective_command_line=effective_command_line)
-    main_logger.info("Completed running the harness tasks.")
+    main_logger.doInfoLogging("Completed running the harness tasks.")
 
     return rgt
 
 if __name__ == "__main__":
 
-    my_main_logger = _create_main_logger(MAIN_LOGGER_NAME,
-                                         MAIN_LOGGER_LEVEL,
-                                         MAIN_LOGGER_FILEHANDLER_FILENAME,
-                                         MAIN_LOGGER_FILEHANDLER_LOGLEVEL,
-                                         MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL)
+    my_main_logger = get_main_logger()
 
-    my_main_logger.info("Start of harness")
+    my_main_logger.doInfoLogging("Start of harness")
 
     rgt = runtests()
 
-    my_main_logger.info("End of harness.")
+    my_main_logger.doInfoLogging("End of harness.")
 
 
