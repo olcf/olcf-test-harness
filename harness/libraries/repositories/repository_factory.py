@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 import shutil
-import sys
 import os
 import subprocess
 import logging
@@ -59,7 +58,7 @@ class RepositoryFactory:
             msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
             msg += "to a repository type not supported by this test harness.\n\n"
             repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
-            sys.exit(1)
+            exit(1)
 
         return my_repository
     
@@ -80,7 +79,7 @@ class RepositoryFactory:
             msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
             msg += "to a repository type not supported by this test harness.\n\n"
             repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
-            sys.exit(1)
+            exit(1)
         return pathspec
 
     @classmethod
@@ -100,7 +99,7 @@ class RepositoryFactory:
             msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
             msg += "to a repository type not supported by this test harness.\n\n"
             repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
-            sys.exit(1)
+            exit(1)
         return pathspec
 
     @classmethod
