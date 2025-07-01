@@ -285,7 +285,7 @@ class Harness:
                     self.__launched_tests += 1
                 else:
                     self.__failed_tests += 1
-                    self.__failed_test_list.extend(appname)
+                    self.__failed_test_list.append(appname)
 
             message = "All tests are launched. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
