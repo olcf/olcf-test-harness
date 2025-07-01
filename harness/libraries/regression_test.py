@@ -277,8 +277,8 @@ class Harness:
                     message = "Test {} exception encountered:\n{}".format(appname, my_future_exception)
                     self.__myLogger.doCriticalLogging(message)
                 else:
-                    message = "Test {} is launched.".format(appname)
-                    self.__myLogger.doInfoLogging(message)
+                    message = "Test {} is launched.\n\n".format(appname)
+                    self.__myLogger.doErrorLogging(message)
 
                 subtest_result = my_future.result()
                 if subtest_result:
