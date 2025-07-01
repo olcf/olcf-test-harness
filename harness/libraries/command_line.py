@@ -43,6 +43,10 @@ class HarnessParsedArguments:
         return self.__inputfile
 
     @property
+    def shuffle(self):
+        return self.__shuffle
+
+    @property
     def loglevel(self):
         return self.__loglevel
 

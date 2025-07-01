@@ -268,6 +268,7 @@ class Harness:
 
             # Log when all job tasks are initiated.
             for my_future in concurrent.futures.as_completed(future_to_appname):
+                # appname is appname.testname, as set above
                 appname = future_to_appname[my_future]
 
                 # Check if an exception has been raised
@@ -280,10 +281,11 @@ class Harness:
                     self.__myLogger.doInfoLogging(message)
 
                 subtest_result = my_future.result()
-                self.__launched_tests += subtest_result[0]
-                self.__failed_tests += subtest_result[1]
-                if self.__failed_tests:
-                    self.__failed_test_list.extend(subtest_result[2])
+                if subtest_result:
+                    self.__launched_tests += 1
+                else:
+                    self.__failed_tests += 1
+                    self.__failed_test_list.extend(appname)
 
             message = "All tests are launched. Yahoo!!"
             self.__myLogger.doInfoLogging(message)
