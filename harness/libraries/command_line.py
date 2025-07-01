@@ -10,6 +10,7 @@
 # A class that will store the parsed command line arguments.
 class HarnessParsedArguments:
     def __init__(self, inputfile=None,
+                       shuffle=False,
                        loglevel=None,
                        configfile=None,
                        runmode=None,
@@ -18,6 +19,7 @@ class HarnessParsedArguments:
                        separate_build_stdio=False):
 
         self.__inputfile = inputfile
+        self.__shuffle = shuffle
         self.__loglevel = loglevel
         self.__configfile = configfile
         self.__mode = runmode
@@ -39,6 +41,10 @@ class HarnessParsedArguments:
     @property
     def inputfile(self):
         return self.__inputfile
+
+    @property
+    def shuffle(self):
+        return self.__shuffle
 
     @property
     def loglevel(self):

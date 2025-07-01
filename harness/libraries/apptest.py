@@ -770,24 +770,18 @@ class ApptestImproperInstantiationError(BaseApptestError):
         return self.__message
 
 def do_application_tasks(launch_id,
-                         app_test_list,
+                         app_test,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False):
-    # Returns [#Passed,#Failed]
-    ret = [0, 0, []]
-    for app_test in app_test_list:
-        app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
-        # Non-zero exit status is failure
-        if app_test.doTasks(launchid=launch_id,
-                         tasks=tasks,
-                         stdout_stderr=stdout_stderr,
-                         separate_build_stdio=separate_build_stdio):
-            ret[1] += 1
-            ret[2].append(f"{app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
-        else:
-            ret[0] += 1
-    return ret
+    app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+    # Non-zero exit status is failure
+    if app_test.doTasks(launchid=launch_id,
+                        tasks=tasks,
+                        stdout_stderr=stdout_stderr,
+                        separate_build_stdio=separate_build_stdio):
+        return False
+    return True
 
 def wait_for_jobs_to_complete_in_queue(harness_config,
                                        app_test_list,
