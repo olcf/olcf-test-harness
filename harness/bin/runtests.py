@@ -223,6 +223,10 @@ def create_parser(logger=None):
                         default=DEFAULT_INPUT_FILE,
                         help="Input file name (default: %(default)s)")
 
+    parser.add_argument('--shuffle',
+                        action='store_true',
+                        help="Shuffle the order of tests before launching.")
+
     parser.add_argument('-c', '--configfile',
                         required=False,
                         default=rgt_config_file.getDefaultConfigFile(logger=logger),
@@ -296,6 +300,7 @@ def parse_commandline_argv(argv, logger):
     parser = create_parser(logger=logger)
     Vargs = parser.parse_args(argv)
     harness_parsed_args = command_line.HarnessParsedArguments(inputfile=Vargs.inputfile,
+                                                              shuffle=Vargs.shuffle,
                                                               loglevel=Vargs.loglevel,
                                                               configfile=Vargs.configfile,
                                                               stdout_stderr=Vargs.output,
@@ -365,7 +370,8 @@ def runtests(my_arg_string=None):
                                   harness_arguments.loglevel,
                                   harness_arguments.stdout_stderr,
                                   harness_arguments.use_fireworks,
-                                  harness_arguments.separate_build_stdio)
+                                  harness_arguments.separate_build_stdio,
+                                  shuffle=harness_arguments.shuffle)
 
     main_logger.doInfoLogging("Created an instance of the harness.")
     main_logger.doInfoLogging("Harness: " + str(rgt))
