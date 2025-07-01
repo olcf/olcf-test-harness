@@ -308,7 +308,7 @@ def check_job_status(slurm_jobid_lst):
                     search_pos = next_space
                     fields[labels[i].lower()] = cur_field
                 if not 'jobid' in fields:
-                    logger.doErrorLogging(f"Couldn't find JobID in sacct record. Skipping")
+                    logger.doWarningLogging(f"Couldn't find JobID in sacct record. Skipping")
                     continue
                 elif fields['state'] == 'RESIZING':
                     logger.doDebugLogging(f"Detected RESIZING for job {fields['jobid']}. RESIZING is from node failure + SLURM '--no-kill'. There should be another record in sacct for this job. Skipping")
@@ -394,10 +394,10 @@ for db in db_logger.enabled_backends:
             entry['user'] = os.environ['USER']
             sent += 1
             entry['output_txt'] = f"Build timed out after {timediff_hours:.1f} hours."
-            logger.doInfoLogging(f"Logging build timeout for test {entry['test_id']} to {db.url}.")
+            logger.doErrorLogging(f"Logging build timeout for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif not entry['job_id'] in slurm_data.keys():
-            logger.doErrorLogging(f"Couldn't find job id {entry['job_id']} in Slurm data. It's possible the job has not finished yet.")
+            logger.doWarningLogging(f"Couldn't find job id {entry['job_id']} in Slurm data. It's possible the job has not finished yet.")
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['pending']:
             # Then this job is still running/waiting in queue, we can skip
             logger.doDebugLogging(f"Job {entry['job_id']} is in state {slurm_data[entry['job_id']]['state']}. Skipping.")
@@ -430,7 +430,7 @@ for db in db_logger.enabled_backends:
                 entry['output_txt'] += f" at {slurm_data[entry['job_id']]['end']}"
             entry['output_txt'] += f", after running for {slurm_data[entry['job_id']]['elapsed']}."
             entry['output_txt'] += f" Exit code: {slurm_data[entry['job_id']]['exitcode']}, reason: {slurm_data[entry['job_id']]['reason']}."
-            logger.doInfoLogging(f"Logging cancelled job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.doErrorLogging(f"Logging cancelled job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['node_fail']:
             logger.doDebugLogging(f"Found node failure from: {entry['job_id']}")
@@ -444,7 +444,7 @@ for db in db_logger.enabled_backends:
             entry['hostname'] = socket.gethostname()
             entry['user'] = os.environ['USER']
             entry['output_txt'] = f"Node failure detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
-            logger.doInfoLogging(f"Logging NODE_FAIL'd job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.doErrorLogging(f"Logging NODE_FAIL'd job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['timeout']:
             sent += 1
@@ -463,7 +463,7 @@ for db in db_logger.enabled_backends:
             entry['event_filename'] = StatusFile.NO_VALUE
             entry['hostname'] = socket.gethostname()
             entry['user'] = os.environ['USER']
-            logger.doInfoLogging(f"Logging timed-out job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.doErrorLogging(f"Logging timed-out job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['success'] or \
              slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['fail']:
@@ -477,7 +477,7 @@ for db in db_logger.enabled_backends:
             if not (os.path.exists(status_file_path) and os.path.exists(entry['run_archive'])):
                 logger.doDebugLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
                 continue
-            logger.doInfoLogging(f"Logging test that completed the Slurm job but did not log to the database, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.doErrorLogging(f"Logging test that completed the Slurm job but did not log to the database, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             sent += 1
             os.chdir(status_file_path)
             found_checkend = False
@@ -487,7 +487,7 @@ for db in db_logger.enabled_backends:
                     # Then get the info from the status file & log it to the database
                     event_info = get_status_info_from_file(status_file_name)
                     # This is a global call for all enabled databases -- re-posting an event to InfluxDB doesn't hurt
-                    logger.doInfoLogging(f"Logging event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+                    logger.doErrorLogging(f"Logging event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
                     single_db_logger.log_event(event_info)
                 if status_file_name == StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]:
                     found_checkend = True
@@ -501,7 +501,7 @@ for db in db_logger.enabled_backends:
                     logger.doDebugLogging(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']} to {db.url}.")
                     # This is also effectively a global call for all enabled databases
                     if not subtest.run_db_extensions():
-                        logger.doWarningLogging(f"Logging metric & node health data to databases failed for test_id {entry['test_id']} (job {entry['job_id']})")
+                        logger.doErrorLogging(f"Logging metric & node health data to databases failed for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']}")
             if not found_checkend:
                 # If the test didn't log a check_end event, we simulate one here
                 logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
@@ -514,7 +514,7 @@ for db in db_logger.enabled_backends:
                 entry['event_value'] = state_to_value['fail']
                 entry['hostname'] = socket.gethostname()
                 entry['user'] = os.environ['USER']
-                logger.doInfoLogging(f"Logging failure exit code for job that exited without logging the check_end event, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+                logger.doErrorLogging(f"Logging failure exit code for job that exited without logging the check_end event, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
                 single_db_logger.log_event(entry)
             os.chdir(cur_dir)
         else:
@@ -525,4 +525,4 @@ if sent > 0:
     # Log at critical level if sent > 0, else at error level
     logger.doCriticalLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
 else:
-    logger.doErrorLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
+    logger.doWarningLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
