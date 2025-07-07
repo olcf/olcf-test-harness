@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 2025-05-30
+# Date modified: 2025-07-07
 ################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
@@ -44,6 +44,7 @@ parser.add_argument('--runtag', type=str, action='store', help="Specifies the ru
 parser.add_argument('--loglevel', default='INFO', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
 parser.add_argument('--dry-run', action='store_true', help="When set, prints messages to send to databases, but does not send them.")
 parser.add_argument('--build-timeout', type=float, default=6.0, action='store', help="Number of hours after a build_start event before logging a failed build_end event.")
+parser.add_argument('--kafka-grace-period', type=int, default=1200, action='store', help="Number of seconds that Druid can be out-of-sync with local files due to Kafka buffering before re-logging existing events. Only applies to Kafka")
 
 # Parse command-line arguments #################################################
 args = parser.parse_args()
@@ -481,28 +482,38 @@ for db in db_logger.enabled_backends:
             sent += 1
             os.chdir(status_file_path)
             found_checkend = False
+            kafka_grace_period_invoked = False
             for status_file_name in glob.glob("Event_*.txt"):
                 event_number = int(status_file_name.split('_')[1]) # used to sort if this is a newer event than current
                 if event_number > current_event_num:
                     # Then get the info from the status file & log it to the database
                     event_info = get_status_info_from_file(status_file_name)
+
+                    if db.name == "kafka":
+                        # get time between this event and now, check kafka_grace_period
+                        diff_s = int(datetime.now().timestamp()) - event_time_to_timestamp(event_info['event_time'], precision='s')
+                        if diff_s < args.kafka_grace_period:
+                            logger.doDebugLogging(f"Skipping event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}, since kafka_grace_period has not passed: {diff_s} (actual) < {args.kafka_grace_period} (threshold).")
+                            kafka_grace_period_invoked = True
+                            continue
+
+
                     # This is a global call for all enabled databases -- re-posting an event to InfluxDB doesn't hurt
                     logger.doErrorLogging(f"Logging event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
                     single_db_logger.log_event(event_info)
-                if status_file_name == StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]:
-                    found_checkend = True
-                    # Then we initialize a subtest object to go look for metrics & node health results
-                    subtest = SubtestFactory.make_subtest(name_of_application=entry['app'],
-                                                          name_of_subtest=entry['test'],
-                                                          local_path_to_tests=os.path.join(entry['run_archive'], '../../../..'),
-                                                          logger=logger,
-                                                          tag=entry['test_id'],
-                                                          db_logger=single_db_logger)
-                    logger.doDebugLogging(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']} to {db.url}.")
-                    # This is also effectively a global call for all enabled databases
-                    if not subtest.run_db_extensions():
-                        logger.doErrorLogging(f"Logging metric & node health data to databases failed for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']}")
-            if not found_checkend:
+                    if status_file_name == StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]:
+                        found_checkend = True
+                        # Then we initialize a subtest object to go look for metrics & node health results
+                        subtest = SubtestFactory.make_subtest(name_of_application=entry['app'],
+                                                              name_of_subtest=entry['test'],
+                                                              local_path_to_tests=os.path.join(entry['run_archive'], '../../../..'),
+                                                              logger=logger,
+                                                              tag=entry['test_id'],
+                                                              db_logger=single_db_logger)
+                        logger.doDebugLogging(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']} to {db.url}.")
+                        if not subtest.run_db_extensions():
+                            logger.doErrorLogging(f"Logging metric & node health data to databases failed for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            if (not found_checkend) and (not kafka_grace_period_invoked):
                 # If the test didn't log a check_end event, we simulate one here
                 logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
                 entry['output_txt'] = f"Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
