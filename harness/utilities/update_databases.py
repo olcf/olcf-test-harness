@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 2025-07-07
+# Date modified: 2025-07-17
 ################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
@@ -24,8 +24,18 @@ import socket
 import re
 
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
-from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+
+# Silently wrapped in try/except so errors are handled by rgt_db_logger class
+try:
+    from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+except ImportError as e:
+    pass
+
+try:
+    from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+except ImportError as e:
+    pass
+
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
@@ -44,7 +54,7 @@ parser.add_argument('--runtag', type=str, action='store', help="Specifies the ru
 parser.add_argument('--loglevel', default='INFO', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
 parser.add_argument('--dry-run', action='store_true', help="When set, prints messages to send to databases, but does not send them.")
 parser.add_argument('--build-timeout', type=float, default=6.0, action='store', help="Number of hours after a build_start event before logging a failed build_end event.")
-parser.add_argument('--kafka-grace-period', type=int, default=1200, action='store', help="Number of seconds that Druid can be out-of-sync with local files due to Kafka buffering before re-logging existing events. Only applies to Kafka")
+parser.add_argument('--kafka-grace-period', type=int, default=1800, action='store', help="Number of seconds that Druid can be out-of-sync with local files due to Kafka buffering before re-logging existing events. Only applies to Kafka")
 
 # Parse command-line arguments #################################################
 args = parser.parse_args()
@@ -493,7 +503,7 @@ for db in db_logger.enabled_backends:
                         # get time between this event and now, check kafka_grace_period
                         diff_s = int(datetime.now().timestamp()) - event_time_to_timestamp(event_info['event_time'], precision='s')
                         if diff_s < args.kafka_grace_period:
-                            logger.doDebugLogging(f"Skipping event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}, since kafka_grace_period has not passed: {diff_s} (actual) < {args.kafka_grace_period} (threshold).")
+                            logger.doWarningLogging(f"Skipping event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}, since kafka_grace_period has not passed: {diff_s} (actual) < {args.kafka_grace_period} (threshold).")
                             kafka_grace_period_invoked = True
                             continue
 
