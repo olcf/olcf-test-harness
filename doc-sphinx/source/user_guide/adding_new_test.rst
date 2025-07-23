@@ -50,6 +50,7 @@ This directory contains templates and input files for the test -- a test must no
 Second, the application's source code and required build script should reside within the *Source* directory of the repository.
 Optionally, a test may add or override files from the application's *Source* tree by providing a *Source* directory within the test directory.
 This directory will be overlayed over the application *Source* directory, so it may use the same internal directory structure.
+Please note that unlike in the application *Source* directory, symbolic links are not preserved, so any broken symbolic links will cause the harness to fail.
 
 Example Repository Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
