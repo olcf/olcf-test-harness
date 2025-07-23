@@ -114,6 +114,7 @@ The following is a sample input for the single node test of the *hello_mpi* appl
     
     # The following are user-defined and used for Key-Value replacements 
     # ie, nodes replaces __nodes__ in the job script template
+    # NOTE: capital letters in variable names are not supported
     nodes = 1
     total_processes = 16
     processes_per_node = 16
