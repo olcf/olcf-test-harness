@@ -100,34 +100,52 @@ This script requires the same environment variables as the core harness requires
 .. code-block::
 
     usage: update_databases.py [-h] [--time TIME] [--starttime STARTTIME]
-                           [--endtime ENDTIME] [--user USER] --machine MACHINE
-                           [--app APP] [--test TEST] [--runtag RUNTAG]
-                           [--loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-                           [--dry-run] [--build-timeout BUILD_TIMEOUT]
-
+                               [--endtime ENDTIME] [--user USER] --machine MACHINE
+                               [--app APP] [--test TEST] [--runtag RUNTAG]
+                               [--loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                               [--dry-run] [--build-timeout BUILD_TIMEOUT]
+                               [--kafka-grace-period KAFKA_GRACE_PERIOD]
+    
     Updates harness runs in database backends using event and Slurm data
-
+    
     optional arguments:
-    -h, --help            show this help message and exit
-    --time TIME, -t TIME  How far back to look for jobs relative to now (ex: 1h, 2d).
-    --starttime STARTTIME
-                          Absolute start time. Format: YYYY-MM-DDTHH:MM:SSZ.
-                          Overrides --time
-    --endtime ENDTIME     Absolute end time. Format: YYYY-MM-DDTHH:MM:SSZ.
-                          Should only be used with --starttime.
-    --user USER, -u USER  Specifies the UNIX user to update jobs for.
-    --machine MACHINE, -m MACHINE
-                          Specifies the machine to look for jobs for. Setting a
-                          wrong machine may lead to SLURM job IDs not being found.
-    --app APP             Specifies the app to update jobs for.
-    --test TEST           Specifies the test to update jobs for.
-    --runtag RUNTAG       Specifies the runtag to update jobs for.
-    --loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                          Specify verbosity
-    --dry-run             When set, prints messages to send to databases, but does not send them.
-    --build-timeout BUILD_TIMEOUT
-                          Number of hours after a build_start event before
-                          logging a failed build_end event.
+      -h, --help            show this help message and exit
+      --time TIME, -t TIME  How far back to look for jobs relative to now (ex: 1h,
+                            2d).
+      --starttime STARTTIME
+                            Absolute start time. Format: YYYY-MM-DDTHH:MM:SSZ.
+                            Overrides --time
+      --endtime ENDTIME     Absolute end time. Format: YYYY-MM-DDTHH:MM:SSZ.
+                            Should only be used with --starttime.
+      --user USER, -u USER  Specifies the UNIX user to update jobs for.
+      --machine MACHINE, -m MACHINE
+                            Specifies the machine to look for jobs for. Setting a
+                            wrong machine may lead to SLURM job IDs not being
+                            found.
+      --app APP             Specifies the app to update jobs for.
+      --test TEST           Specifies the test to update jobs for.
+      --runtag RUNTAG       Specifies the runtag to update jobs for.
+      --loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                            Specify verbosity
+      --dry-run             When set, prints messages to send to databases, but
+                            does not send them.
+      --build-timeout BUILD_TIMEOUT
+                            Number of hours after a build_start event before
+                            logging a failed build_end event.
+      --kafka-grace-period KAFKA_GRACE_PERIOD
+                            Number of seconds that Druid can be out-of-sync with
+                            local files due to Kafka buffering before re-logging
+                            existing events. Only applies to Kafka
+
+
+For the Kafka backend only, the default grace period is 30 minutes before re-logging any messages not present in the Druid database.
+For InfluxDB, such a grace period does not exist, since data is synchronously written.
+
+This script was written with Cron usage in mind, so the following list of ``--loglevel`` options may be useful, if you use this in a Cron job:
+
+* CRITICAL: prints a 1-line summary only if >0 jobs are logged
+* ERROR: prints 1 line per logged job, plus the 1-line summary if >0 jobs updated
+* WARNING: prints non-fatal messages/output, plus the single-line summary regardless of the number of jobs updated
 
 
 ``add_comment_to_databases.py``

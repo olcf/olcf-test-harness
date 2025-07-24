@@ -301,7 +301,6 @@ RGT_PROJECT_ID                  Which project ID to use when submitting to the s
 RGT_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
 RGT_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
 RGT_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
-RGT_NCCS_TEST_HARNESS_MODULE    Name of the OLCF Harness module
 
 RGT_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be &#39;git&#39; currently.
 RGT_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.
@@ -320,8 +319,8 @@ RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch.
 </div>
 <div class="section" id="run-time-variables">
 <span id="env-vars-run"></span><h2>Run-Time Variables<a class="headerlink" href="#run-time-variables" title="Permalink to this heading">¶</a></h2>
-<p>The OLCF Test Harness also SETS many variables while inside of a test.
-These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>.
+<p>The OLCF Test Harness also SETS many variables in the scheduler job.
+These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>, since they are not set until job launch.
 These variables are detailed below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PATH_TO_RGT_PACKAGE</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">OLCF</span> <span class="n">Test</span> <span class="n">Harness</span> <span class="n">code</span><span class="o">.</span>
 <span class="n">RGT_APP_SOURCE_DIR</span>          <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="s1">&#39;Source&#39;</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">current</span> <span class="n">application</span><span class="o">.</span>

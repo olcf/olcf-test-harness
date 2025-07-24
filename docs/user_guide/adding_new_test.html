@@ -287,7 +287,8 @@ and other required scripts (see <a class="reference internal" href="#required-ap
 This directory contains templates and input files for the test – a test must not modify files in this directory.</p>
 <p>Second, the application’s source code and required build script should reside within the <em>Source</em> directory of the repository.
 Optionally, a test may add or override files from the application’s <em>Source</em> tree by providing a <em>Source</em> directory within the test directory.
-This directory will be overlayed over the application <em>Source</em> directory, so it may use the same internal directory structure.</p>
+This directory will be overlayed over the application <em>Source</em> directory, so it may use the same internal directory structure.
+Please note that unlike in the application <em>Source</em> directory, symbolic links are not preserved, so any broken symbolic links will cause the harness to fail.</p>
 </div>
 <div class="section" id="example-repository-structure">
 <h3>Example Repository Structure<a class="headerlink" href="#example-repository-structure" title="Permalink to this heading">¶</a></h3>
@@ -320,10 +321,13 @@ See <a class="reference internal" href="#best-practices"><span class="std std-re
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>DEFAULT<span class="o">]</span>
 <span class="c1"># This is a comment</span>
 <span class="c1"># The DEFAULT section defines variables that can be re-used in Replacements or EnvVars</span>
+<span class="c1"># These variables are not automatically used as replacements</span>
 <span class="nv">my_custom_variable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>abc
 
 <span class="o">[</span>Replacements<span class="o">]</span>
-<span class="c1"># The following variables are required</span>
+<span class="c1">#### The following variables are called &quot;built-in&quot;, variables the harness knows to look for</span>
+<span class="c1"># These are required for every test:</span>
+<span class="nv">nodes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
 <span class="nv">job_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello_mpi_c
 <span class="nv">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
 <span class="c1"># %(&lt;variablename&gt;)s is the notation to use the value of a previously-defined variable</span>
@@ -331,17 +335,24 @@ See <a class="reference internal" href="#best-practices"><span class="std std-re
 <span class="nv">build_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./build_hello_mpi_c.sh
 <span class="nv">check_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./check_hello_mpi_c.sh
 <span class="nv">report_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./report_hello_mpi_c.sh
-<span class="c1"># The following variables are optional</span>
+
+<span class="c1">#### Optional built-in replacements:</span>
+<span class="c1"># Useful for controlling relative path inside $BUILD_DIR</span>
 <span class="nv">executable_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello
+<span class="c1"># Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``</span>
 <span class="nv">resubmit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
-<span class="c1"># Optional: used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)</span>
+<span class="nv">processes_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">8</span>
+<span class="nv">total_processes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">8</span>
+<span class="c1"># Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)</span>
 <span class="c1"># Set to 0 (or don&#39;t define) for indefinite resubmissions</span>
 <span class="nv">max_submissions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span>
 
+<span class="c1"># project_id and batch_queue should only be used if a specific partition or account is always required</span>
+<span class="c1">#project_id = abc123</span>
+<span class="c1">#batch_queue = my_special_partition</span>
 
-<span class="c1"># The following are user-defined and used for Key-Value replacements</span>
-<span class="c1"># ie, nodes replaces __nodes__ in the job script template</span>
-<span class="nv">nodes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
+<span class="c1">#### The following are user-defined and used for Key-Value replacements in the job template</span>
+<span class="c1"># NOTE: capital letters in variable names are not supported</span>
 <span class="nv">total_processes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span>
 <span class="nv">processes_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span>
 
@@ -352,7 +363,7 @@ See <a class="reference internal" href="#best-practices"><span class="std std-re
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Setting a variable in the Replacements section to <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code> pulls in the value set by an environment variable.
-For example, if you set <code class="docutils literal notranslate"><span class="pre">nodes</span> <span class="pre">=</span> <span class="pre">&lt;obtain_from_environment&gt;</span></code> and set <em>RGT_NODES=4</em> in your environment, then <em>__nodes__</em> will be replaced with 4.</p>
+For example, if you set <code class="docutils literal notranslate"><span class="pre">nodes</span> <span class="pre">=</span> <span class="pre">&lt;obtain_from_environment&gt;</span></code> and set <em>RGT_NODES=4</em> in your environment prior to running <code class="docutils literal notranslate"><span class="pre">runtests.py</span></code>, then <em>__nodes__</em> will be replaced with 4.</p>
 </div>
 </div>
 <div class="section" id="required-application-test-scripts">
@@ -387,7 +398,16 @@ This means the build script should be written as if it were executed from <em>So
 <div class="section" id="job-script-template">
 <span id="id4"></span><h3>Job Script Template<a class="headerlink" href="#job-script-template" title="Permalink to this heading">¶</a></h3>
 <p>The OTH will generate the batch job script from the job script template by replacing keywords
-of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> with the values specified in the test input <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section.</p>
+of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> with the values specified in the test input <code class="docutils literal notranslate"><span class="pre">[Replacements]</span></code> section.
+Additionally, the OTH automatically provides several replacement keywords for the job script to use, described below:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">results_dir</span></code>: absolute path to the test’s <em>Run_Archive</em> directory, which is where the job is launched from, and where it typically copies results to</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">working_dir</span></code>: absolute path to the test’s <em>workdir</em> directory, which is where the test executable should be launched from</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build_dir</span></code>: absolute path to the test’s <em>build_directory</em> directory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scripts_dir</span></code>: absolute path to the test’s <em>Scripts</em> directory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">harness_id</span></code>: the test’s unique ID, derived from the timestamp that the test is launched at</p></li>
+</ul>
+<p>Generally, these should be used to set environment variables, as shown in the template below.</p>
 <p>The job script template must be named appropriately to match the specific scheduler of the target machine.
 For SLURM systems, use <em>slurm.template.x</em> as the name.
 For LSF systems, use <em>lsf.template.x</em>.

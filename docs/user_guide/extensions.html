@@ -257,20 +257,12 @@
 </div>
 <p>Optional extensions have been developed for use with the OLCF Test Harness (OTH).
 Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.</p>
-<<<<<<< nick-add-kafka-issue-165
 <div class="section" id="database-event-logging">
 <h2>Database Event Logging<a class="headerlink" href="#database-event-logging" title="Permalink to this heading">¶</a></h2>
 <p>The OTH leaves behind status files containing event metadata like timestamp, filesystem paths for work, scratch and archive directories, test name, error code, etc.
 This information can additionally be logged to a supported database.
 The OTH currently provides support for InfluxDB and Kafka (with Druid database backend).
 To enable InfluxDB, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
-=======
-<div class="section" id="influxdb-event-logging">
-<span id="id1"></span><h2>InfluxDB Event Logging<a class="headerlink" href="#influxdb-event-logging" title="Permalink to this heading">¶</a></h2>
-<p>The OTH leaves behind event information in files on the file system, with data like timestamp, filesystem paths for work, scratch and archive directories, test name, etc.
-This information can additionally be logged to an InfluxDB time-series database.
-To enable this extension, add the following variables to your environment (ie, <strong>export</strong> in <strong>bash</strong>):</p>
->>>>>>> devel
 <table class="hlist"><tr><td><ul class="simple">
 <li><p>RGT_INFLUXDB_URI : the URL for your InfluxDB instance (ie, <code class="docutils literal notranslate"><span class="pre">https://my-influxdb.domain.com/api/v2/write?org=my-org&amp;bucket=my-bucket&amp;precision=ns</span></code>)</p></li>
 <li><p>RGT_INFLUXDB_TOKEN : the token for your InfluxDB instance</p></li>
