@@ -98,6 +98,7 @@ The ``--help`` message for the ``update_databases.py`` script is provided below.
 This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`_influxdb_event_logging`.
 
 .. code-block::
+
     usage: update_databases.py [-h] [--time TIME] [--starttime STARTTIME]
                                [--endtime ENDTIME] [--user USER] --machine MACHINE
                                [--app APP] [--test TEST] [--runtag RUNTAG]

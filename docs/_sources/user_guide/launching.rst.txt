@@ -184,6 +184,7 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
 
     --fireworks                         Use FireWorks to run harness tasks (beta)
     -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
+    --shuffle                           Shuffle the order of tests before launching
 
 .. note::
 
