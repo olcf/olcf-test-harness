@@ -93,10 +93,13 @@ The following is a sample input for the single node test of the *hello_mpi* appl
     [DEFAULT]
     # This is a comment
     # The DEFAULT section defines variables that can be re-used in Replacements or EnvVars
+    # These variables are not automatically used as replacements
     my_custom_variable = abc
 
     [Replacements]
-    # The following variables are required
+    #### The following variables are called "built-in", variables the harness knows to look for
+    # These are required for every test:
+    nodes = 1
     job_name = hello_mpi_c
     walltime = 10
     # %(<variablename>)s is the notation to use the value of a previously-defined variable
@@ -104,18 +107,24 @@ The following is a sample input for the single node test of the *hello_mpi* appl
     build_cmd = ./build_hello_mpi_c.sh
     check_cmd = ./check_hello_mpi_c.sh 
     report_cmd = ./report_hello_mpi_c.sh
-    # The following variables are optional
+
+    #### Optional built-in replacements:
+    # Useful for controlling relative path inside $BUILD_DIR
     executable_path = hello
+    # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
     resubmit = 0
-    # Optional: used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
+    processes_per_node = 8
+    total_processes = 8
+    # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
     # Set to 0 (or don't define) for indefinite resubmissions
     max_submissions = 3 
 
-    
-    # The following are user-defined and used for Key-Value replacements 
-    # ie, nodes replaces __nodes__ in the job script template
+    # project_id and batch_queue should only be used if a specific partition or account is always required
+    #project_id = abc123
+    #batch_queue = my_special_partition
+
+    #### The following are user-defined and used for Key-Value replacements in the job template
     # NOTE: capital letters in variable names are not supported
-    nodes = 1
     total_processes = 16
     processes_per_node = 16
     
@@ -125,7 +134,8 @@ The following is a sample input for the single node test of the *hello_mpi* appl
 .. note::
 
     Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
-    For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment, then *__nodes__* will be replaced with 4.
+    For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``runtests.py``, then *__nodes__* will be replaced with 4.
+
 
 .. _required-application-test-scripts:
 
@@ -172,6 +182,15 @@ Job Script Template
 
 The OTH will generate the batch job script from the job script template by replacing keywords
 of the form ``__keyword__`` with the values specified in the test input ``[Replacements]`` section.
+Additionally, the OTH automatically provides several replacement keywords for the job script to use, described below:
+
+* ``results_dir``: absolute path to the test's *Run_Archive* directory, which is where the job is launched from, and where it typically copies results to
+* ``working_dir``: absolute path to the test's *workdir* directory, which is where the test executable should be launched from
+* ``build_dir``: absolute path to the test's *build_directory* directory
+* ``scripts_dir``: absolute path to the test's *Scripts* directory
+* ``harness_id``: the test's unique ID, derived from the timestamp that the test is launched at
+
+Generally, these should be used to set environment variables, as shown in the template below.
 
 The job script template must be named appropriately to match the specific scheduler of the target machine.
 For SLURM systems, use *slurm.template.x* as the name.
