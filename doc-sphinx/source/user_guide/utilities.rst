@@ -140,6 +140,12 @@ This script requires the same environment variables as the core harness requires
 For the Kafka backend only, the default grace period is 30 minutes before re-logging any messages not present in the Druid database.
 For InfluxDB, such a grace period does not exist, since data is synchronously written.
 
+This script was written with Cron usage in mind, so the following list of ``--loglevel`` options may be useful, if you use this in a Cron job:
+
+* CRITICAL: prints a 1-line summary only if >0 jobs are logged
+* ERROR: prints 1 line per logged job, plus the 1-line summary if >0 jobs updated
+* WARNING: prints non-fatal messages/output, plus the single-line summary regardless of the number of jobs updated
+
 
 ``add_comment_to_databases.py``
 ========
