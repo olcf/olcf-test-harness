@@ -245,8 +245,10 @@ class apptest_layout:
         apptest_dir = self.get_path_to_test()
         latest_lnk = os.path.join(apptest_dir, apptest_layout.test_status_dirname, 'latest')
         try:
-            # Not guarded by a conditional, so that it removes broken links
-            os.unlink(latest_lnk)
+            # Checks if link exists, then removes it
+            # Link may be broken, unlink will still work
+            if os.path.islink(latest_lnk):
+                os.unlink(latest_lnk)
         except FileNotFoundError as e:
             self.__logger.doWarningLogging("Could not remove 'latest' link in Status.")
         try_symlink(spath, latest_lnk)
@@ -272,8 +274,10 @@ class apptest_layout:
         apptest_dir = self.get_path_to_test()
         latest_lnk = os.path.join(apptest_dir, apptest_layout.test_run_archive_dirname, 'latest')
         try:
-            # Not guarded by a conditional, so that it removes broken links
-            os.unlink(latest_lnk)
+            # Checks if link exists, then removes it
+            # Link may be broken, unlink will still work
+            if os.path.islink(latest_lnk):
+                os.unlink(latest_lnk)
         except FileNotFoundError as e:
             self.__logger.doWarningLogging("Could not remove 'latest' link in Run_Archive.")
         try_symlink(rpath, latest_lnk)
