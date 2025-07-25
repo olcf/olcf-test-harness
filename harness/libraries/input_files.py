@@ -33,7 +33,7 @@ class rgt_input_file:
                  logger=None):
         self.__tests = []
         self.__harness_task = []
-        self.__path_to_tests = ""
+        self.__path_to_tests = os.environ["RGT_PATH_TO_TESTS"] if "RGT_PATH_TO_TESTS" in os.environ else ""
         self.__inputFileName = inputfilename
         self.__logger = logger
 
@@ -51,6 +51,11 @@ class rgt_input_file:
         err = self.__read_file(self.__inputFileName)
         if not err:
             self.__logger.doCriticalLogging("ERROR: Failed to parse input file.")
+            # Short-circuit upon failure
+            return
+
+        if not self.__path_to_tests:
+            self.__logger.doCriticalLogging("ERROR: Path_to_tests was not set by RGT_PATH_TO_TESTS or Path_to_tests in the input file.")
             # Short-circuit upon failure
             return
 
