@@ -64,6 +64,8 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
     [TestshotDefaults]
     # The default path used for building the application and scratch space used for running. This will generally be overridden at run-time
     path_to_sspace = /default/path/to/scratch/space
+    # Optional: the path to where application repositories are cloned (can be overridden by 'Path_to_tests' in ``runtests.py`` input file)
+    path_to_tests = /some/path/to/my/applications
     # A string that can be used to identify tests run for a specific purpose (ie: 'summit_tshot_cuda11'). This will generally be overridden at run-time
     system_log_tag = frontier_test
     # Default queue/partition to submit jobs to

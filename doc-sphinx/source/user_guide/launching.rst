@@ -79,12 +79,13 @@ Create a directory where you will place input files. No computation will be done
 Prepare an input file of tests (e.g., *rgt.input.summit*).
 In the file, set ``Path_to_tests`` to the location where you would like application source and run files to be kept
 (note that the directory provided must be an existing directory on a file system visible to the current machine).
+Alternatively, set the *RGT_PATH_TO_TESTS* environment variable.
 Next, provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
 In this example for Summit, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
 
 .. note::
 
-    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``.
+    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``/*RGT_PATH_TO_TESTS*.
     The OTH can automatically clone Git repositories from remote servers.
     Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine` or :ref:`env_vars_config`).
     Applications not hosted in GitHub/GitLab must be manually placed in ``Path_to_tests``.
@@ -95,6 +96,7 @@ In this example for Summit, the application **hello_mpi** is used and we specify
     #  Set the path to the top level of the application directory.                 #
     ################################################################################
     
+    # Path_to_tests can also replaced by setting the RGT_PATH_TO_TESTS environment variable
     Path_to_tests = /some/path/to/my/applications
     
     Test = hello_mpi c_n001
@@ -115,7 +117,9 @@ Set a scratch area for this specific instance of the harness (a default is set f
 
 .. code-block:: bash
 
-    export RGT_PATH_TO_SSPACE=<some path in the file system>/Scratch
+    export RGT_PATH_TO_SSPACE=/some/path/to/my/Scratch
+    # optional (in place of Path_to_tests in input file):
+    export RGT_PATH_TO_TESTS=/some/path/to/my/applications
 
 
 The latest version of the harness supports command line tasks as well as input file tasks.

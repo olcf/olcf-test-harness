@@ -70,6 +70,7 @@ For example, ``machine_name = <obtain_from_environment>`` will fetch the value f
     RGT_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
 
     RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work & build spaces).
+    RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of 'Path_to_tests' in ``runtests.py`` input file).
     RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file & database logging.
 
 
