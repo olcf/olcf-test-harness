@@ -311,11 +311,12 @@ For creating a new machine, see <a class="reference internal" href="adding_new_m
 <p>Prepare an input file of tests (e.g., <em>rgt.input.summit</em>).
 In the file, set <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> to the location where you would like application source and run files to be kept
 (note that the directory provided must be an existing directory on a file system visible to the current machine).
+Alternatively, set the <em>RGT_PATH_TO_TESTS</em> environment variable.
 Next, provide one or more tests to run in the format <code class="docutils literal notranslate"><span class="pre">Test</span> <span class="pre">=</span> <span class="pre">&lt;app-name&gt;</span> <span class="pre">&lt;test-name&gt;</span></code>.
 In this example for Summit, the application <strong>hello_mpi</strong> is used and we specify two tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.
+<p>Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>/<em>RGT_PATH_TO_TESTS</em>.
 The OTH can automatically clone Git repositories from remote servers.
 Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a> or <a class="reference internal" href="envvars.html#env-vars-config"><span class="std std-ref">Configuration Variables</span></a>).
 Applications not hosted in GitHub/GitLab must be manually placed in <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.</p>
@@ -324,6 +325,7 @@ Applications not hosted in GitHub/GitLab must be manually placed in <code class=
 <span class="c1">#  Set the path to the top level of the application directory.                 #</span>
 <span class="c1">################################################################################</span>
 
+<span class="c1"># Path_to_tests can also replaced by setting the RGT_PATH_TO_TESTS environment variable</span>
 <span class="nv">Path_to_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/some/path/to/my/applications
 
 <span class="nv">Test</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello_mpi<span class="w"> </span>c_n001
@@ -340,7 +342,9 @@ Include<span class="w"> </span><span class="m">2</span>-node-tests.inp
 </pre></div>
 </div>
 <p>Set a scratch area for this specific instance of the harness (a default is set from <em>$OLCF_HARNESS_MACHINE.ini</em>, but this is how to change from the default):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>&lt;some<span class="w"> </span>path<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>file<span class="w"> </span>system&gt;/Scratch
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>/some/path/to/my/Scratch
+<span class="c1"># optional (in place of Path_to_tests in input file):</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_TESTS</span><span class="o">=</span>/some/path/to/my/applications
 </pre></div>
 </div>
 <p>The latest version of the harness supports command line tasks as well as input file tasks.

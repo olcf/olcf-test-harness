@@ -312,6 +312,8 @@ git_https_server_url = https://www.github.com
 [TestshotDefaults]
 # The default path used for building the application and scratch space used for running. This will generally be overridden at run-time
 path_to_sspace = /default/path/to/scratch/space
+# Optional: the path to where application repositories are cloned (can be overridden by &#39;Path_to_tests&#39; in ``runtests.py`` input file)
+path_to_tests = /some/path/to/my/applications
 # A string that can be used to identify tests run for a specific purpose (ie: &#39;summit_tshot_cuda11&#39;). This will generally be overridden at run-time
 system_log_tag = frontier_test
 # Default queue/partition to submit jobs to
