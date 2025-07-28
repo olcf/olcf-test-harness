@@ -3,7 +3,8 @@ import os
 import configparser
 import logging
 
-from rgt_utilities import set_harness_environment
+from libraries.rgt_utilities import set_harness_environment
+from libraries.rgt_loggers import rgt_logger_factory
 
 class rgt_config_file:
 
@@ -25,14 +26,13 @@ class rgt_config_file:
         self.__logger = logger
 
         if not logger:
-            self.__logger = logging.getLogger('rgt_config_file_logger')
-            self.__logger.setLevel('DEBUG')
-            ch = logging.StreamHandler()
-            ch.setLevel('DEBUG')
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            ch.setFormatter(formatter)
-            self.__logger.addHandler(ch)
-            self.__logger.info("Created a logger in rgt_config_file, since one was not provided.")
+            self.__logger = rgt_logger_factory.create_rgt_logger(
+                                logger_name='rgt_config_file_logger',
+                                fh_filepath=None,
+                                logger_threshold_log_level='DEBUG',
+                                fh_threshold_log_level='DEBUG',
+                                ch_threshold_log_level='DEBUG')
+            self.__logger.doInfoLogging("Created a logger in rgt_config_file, since one was not provided.")
 
         if machinename != None:
             self.__configFileName = machinename + ".ini"
@@ -58,7 +58,7 @@ class rgt_config_file:
 
     def __read_config_file(self):
         if os.path.isfile(self.__configFileName):
-            self.__logger.info(f'reading harness config {self.__configFileName}')
+            self.__logger.doInfoLogging(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)
 
@@ -103,6 +103,6 @@ class rgt_config_file:
         if not logger:
             print(f'Using machine config: {configfile}')
         else:
-            logger.info(f'Using machine config: {configfile}')
+            logger.doInfoLogging(f'Using machine config: {configfile}')
         return configfile
 

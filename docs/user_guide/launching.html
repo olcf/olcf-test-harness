@@ -165,10 +165,17 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="extensions.html#influxdb-event-logging">InfluxDB Event Logging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#database-event-logging">Database Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-a-database">Logging application metrics to a database</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">OTH Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#rgt-archive-utility-py"><code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#update-databases-py"><code class="docutils literal notranslate"><span class="pre">update_databases.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#add-comment-to-databases-py"><code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#report-to-databases-py"><code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
@@ -304,11 +311,12 @@ For creating a new machine, see <a class="reference internal" href="adding_new_m
 <p>Prepare an input file of tests (e.g., <em>rgt.input.summit</em>).
 In the file, set <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> to the location where you would like application source and run files to be kept
 (note that the directory provided must be an existing directory on a file system visible to the current machine).
+Alternatively, set the <em>RGT_PATH_TO_TESTS</em> environment variable.
 Next, provide one or more tests to run in the format <code class="docutils literal notranslate"><span class="pre">Test</span> <span class="pre">=</span> <span class="pre">&lt;app-name&gt;</span> <span class="pre">&lt;test-name&gt;</span></code>.
 In this example for Summit, the application <strong>hello_mpi</strong> is used and we specify two tests: <strong>c_n001</strong> and <strong>c_n002</strong>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.
+<p>Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>/<em>RGT_PATH_TO_TESTS</em>.
 The OTH can automatically clone Git repositories from remote servers.
 Configuration settings for Git repositories are in the <em>$OLCF_HARNESS_MACHINE.ini</em> file (see <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a> or <a class="reference internal" href="envvars.html#env-vars-config"><span class="std std-ref">Configuration Variables</span></a>).
 Applications not hosted in GitHub/GitLab must be manually placed in <code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code>.</p>
@@ -317,14 +325,26 @@ Applications not hosted in GitHub/GitLab must be manually placed in <code class=
 <span class="c1">#  Set the path to the top level of the application directory.                 #</span>
 <span class="c1">################################################################################</span>
 
+<span class="c1"># Path_to_tests can also replaced by setting the RGT_PATH_TO_TESTS environment variable</span>
 <span class="nv">Path_to_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/some/path/to/my/applications
 
 <span class="nv">Test</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello_mpi<span class="w"> </span>c_n001
 <span class="nv">Test</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>hello_mpi<span class="w"> </span>c_n002
 </pre></div>
 </div>
+<p>For convenience, the <code class="docutils literal notranslate"><span class="pre">Include</span></code> keyword reads in another harness input file, adding the tests, paths, and tasks to the current harness parameters.
+<code class="docutils literal notranslate"><span class="pre">Path_to_tests</span></code> is set to the first value encountered while parsing the input files.
+For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">Path_to_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/some/path/to/my/applications
+
+Include<span class="w"> </span><span class="m">1</span>-node-tests.inp
+Include<span class="w"> </span><span class="m">2</span>-node-tests.inp
+</pre></div>
+</div>
 <p>Set a scratch area for this specific instance of the harness (a default is set from <em>$OLCF_HARNESS_MACHINE.ini</em>, but this is how to change from the default):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>&lt;some<span class="w"> </span>path<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>file<span class="w"> </span>system&gt;/Scratch
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_SSPACE</span><span class="o">=</span>/some/path/to/my/Scratch
+<span class="c1"># optional (in place of Path_to_tests in input file):</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RGT_PATH_TO_TESTS</span><span class="o">=</span>/some/path/to/my/applications
 </pre></div>
 </div>
 <p>The latest version of the harness supports command line tasks as well as input file tasks.
@@ -337,12 +357,16 @@ runtests.py<span class="w"> </span>--inputfile<span class="w"> </span>rgt.input.
 </div>
 <p>To launch tasks in the input file instead of the command-line, add lines like the following to <code class="docutils literal notranslate"><span class="pre">rgt.input.summit</span></code>:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span># 1 task per line
-harness_task start
-harness_task stop
+harness_task check_out_tests
+harness_task start_tests
+harness_task stop_tests
+harness_task display_status
 </pre></div>
 </div>
 <p>When using the checkout mode, the application source repository will be cloned to the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;</em> directory for all the tests,
-but no tests will be run.</p>
+but no tests will be run.
+If the repository already exists, no action will be taken.
+Updating the repo via <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code> or <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">fetch</span></code> should be done outside of the test harness.</p>
 <p>After using the start mode, results of the most recent test run can be found in <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/&lt;testid&gt;</em>.
 Results of the most recent test run can be found in the <em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Run_Archive/latest</em> symbolic link.</p>
 <div class="admonition note">
@@ -365,15 +389,17 @@ This section details the command-line parameters and the next section details av
                 Options: [screen,logfile]
                         &#39;screen&#39;  - print messages to console (default)
                         &#39;logfile&#39; - print messages to log file
--m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: &#39;use_harness_tasks_in_rgt_input_file&#39;)
-                Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status]
-                        &#39;checkout&#39;   - checkout application tests listed in input file
-                        &#39;start&#39;      - start application tests listed in input file
-                        &#39;stop&#39;       - stop application tests listed in input file
-                        &#39;status&#39;     - check status of application tests listed in input file
+-m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: &#39;use_input_file&#39;)
+                Options: [use_input_file,checkout,start,stop,status]
+                        &#39;use_input_file&#39; - use tasks defined in the input file
+                        &#39;checkout&#39;       - checkout application tests listed in input file
+                        &#39;start&#39;          - start application tests listed in input file
+                        &#39;stop&#39;           - stop application tests listed in input file
+                        &#39;status&#39;         - check status of application tests listed in input file
 
 --fireworks                         Use FireWorks to run harness tasks (beta)
 -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
+--shuffle                           Shuffle the order of tests before launching
 </pre></div>
 </div>
 <div class="admonition note">

@@ -165,10 +165,17 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="extensions.html">Extensions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="extensions.html#influxdb-event-logging">InfluxDB Event Logging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-influxdb">Logging application metrics to InfluxDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#database-event-logging">Database Event Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extensions.html#logging-application-metrics-to-a-database">Logging application metrics to a database</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#monitoring-the-health-of-individual-nodes">Monitoring the health of individual nodes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extensions.html#check-alias">Check Alias</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">OTH Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#rgt-archive-utility-py"><code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#update-databases-py"><code class="docutils literal notranslate"><span class="pre">update_databases.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#add-comment-to-databases-py"><code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#report-to-databases-py"><code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
@@ -294,7 +301,6 @@ RGT_PROJECT_ID                  Which project ID to use when submitting to the s
 RGT_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
 RGT_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
 RGT_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
-RGT_NCCS_TEST_HARNESS_MODULE    Name of the OLCF Harness module
 
 RGT_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be &#39;git&#39; currently.
 RGT_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.
@@ -307,14 +313,15 @@ RGT_GIT_SSH_SERVER_URL          URL for the SSH Git client
 RGT_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
 
 RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work &amp; build spaces).
+RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of &#39;Path_to_tests&#39; in ``runtests.py`` input file).
 RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file &amp; database logging.
 </pre></div>
 </div>
 </div>
 <div class="section" id="run-time-variables">
 <span id="env-vars-run"></span><h2>Run-Time Variables<a class="headerlink" href="#run-time-variables" title="Permalink to this heading">¶</a></h2>
-<p>The OLCF Test Harness also SETS many variables while inside of a test.
-These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>.
+<p>The OLCF Test Harness also SETS many variables in the scheduler job.
+These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>, since they are not set until job launch.
 These variables are detailed below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PATH_TO_RGT_PACKAGE</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">OLCF</span> <span class="n">Test</span> <span class="n">Harness</span> <span class="n">code</span><span class="o">.</span>
 <span class="n">RGT_APP_SOURCE_DIR</span>          <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="s1">&#39;Source&#39;</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">current</span> <span class="n">application</span><span class="o">.</span>
@@ -331,10 +338,11 @@ These variables are detailed below:</p>
 <span id="env-vars-ext"></span><h2>Extension-specific Variables<a class="headerlink" href="#extension-specific-variables" title="Permalink to this heading">¶</a></h2>
 <p>With the addition of several extensions to the OTH, there are a few more environment variables that configure extension behavior.
 These are grouped below by extension. The general naming convention is <code class="docutils literal notranslate"><span class="pre">RGT_&lt;extension&gt;_&lt;option&gt;</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>RGT_INFLUXDB_DISABLE        When set to &#39;1&#39;, explicitly disables InfluxDB logging for the run tests.
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># InfluxDB configuration -- default values indicated where applicable
+RGT_INFLUXDB_DISABLE        When set to &#39;1&#39;, explicitly disables InfluxDB logging for the run tests.
                                 Creates a `.disable_influxdb` dot-file in the Run_Archive/&lt;test_id&gt; directory
                                 to prevent any future logging for this test ID.
-RGT_INFLUXDB_URI            URL&#39;s to one or more InfluxDB server, separated by semi-colons. This may either be of format:
+RGT_INFLUXDB_URI            URLs to one or more InfluxDB server, separated by semi-colons. This may either be of format:
                                 https://my.influxdb.server:&lt;port&gt;/api/v2/write?org=myorg&amp;bucket=mybucket
                                 OR
                                 https://my.influxdb.server:&lt;port&gt;
@@ -351,6 +359,26 @@ RGT_INFLUXDB_PRECISION      The precision to log with in InfluxDB. Only `ms` (mi
                                 If &gt;1 InfluxDB instance, use URL encoding to specify the precision if not the same.
 RGT_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it to the database.
 
+# Kafka configuration -- no default values. If multiple servers, all RGT_KAFKA_* envvars must be the same length
+RGT_KAFKA_DISABLE           When set to &#39;1&#39;, explicitly disables Kafka logging for the run tests.
+                                Creates a `.disable_kafka` dot-file in the Run_Archive/&lt;test_id&gt; directory
+                                to prevent any future logging for this test ID.
+RGT_KAFKA_URI               URLs to one or more Kafka servers, separated by semicolons.
+                                Typical format is my.kafka.server:&lt;port&gt;.
+RGT_KAFKA_USERNAME          Usernames to one or more Kafka servers, separated by semicolons.
+RGT_KAFKA_PASSWORD          Passwords to one or more Kafka servers, separated by semicolons.
+RGT_KAFKA_EVENTS_TOPIC      Names of the topic to log events to, separated by semicolons.
+RGT_KAFKA_METRICS_TOPIC     Names of the topic to log metrics to, separated by semicolons.
+RGT_KAFKA_NODE_HEALTH_TOPIC Names of the topic to log node health data to, separated by semicolons.
+RGT_KAFKA_DB_TYPE           The type of database behind Kafka (used by harness utilities for read queries).
+                                Currently, only Druid is supported.
+RGT_KAFKA_DB_URI            The URI for the database behind Kafka.
+RGT_KAFKA_SSL_CA_LOCATION   The absolute path to the SSL Certificate Authority file for your remote Kafka server.
+RGT_KAFKA_SSL_CERTIFICATE_LOCATION
+                            The absolute path to the SSL Certificate file for your remote Kafka server.
+RGT_KAFKA_DRY_RUN           Print the json package to be sent to Kafka, but do not send it to the database.
+
+# Common configuration required for extensions
 RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
                             database logging extension. Set to &quot;none&quot; (not case-sensitive) to disable.
 </pre></div>

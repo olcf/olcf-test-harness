@@ -15,7 +15,6 @@
 import argparse
 import datetime
 import getpass
-import logging
 import os
 import shutil
 import stat
@@ -312,13 +311,11 @@ def test_harness_driver(argv=None):
         Vargs = my_parser.parse_args(argv)
 
     # Create a stdout-only logger for test_harness_driver.py
-    driver_logger = logging.getLogger('test_harness_driver_logger')
-    driver_logger.setLevel('DEBUG')
-    ch = logging.StreamHandler()
-    ch.setLevel(Vargs.loglevel)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    driver_logger.addHandler(ch)
+    driver_logger = rgt_logger_factory.create_rgt_logger(
+                        logger_name='test_harness_driver_logger',
+                        logger_threshold_log_level='DEBUG',
+                        fh_threshold_log_level=Vargs.loglevel,
+                        ch_threshold_log_level=Vargs.loglevel)
 
     do_build = Vargs.build
     do_check = Vargs.check
@@ -368,17 +365,17 @@ def test_harness_driver(argv=None):
         if testshot_key in testshot_cfg.keys():
             testshot_str = testshot_cfg[testshot_key]
         launch_id = f'{testshot_str}/{user_str}@{time_str}'
-        driver_logger.info(f'Using launch id: {launch_id}')
+        driver_logger.doInfoLogging(f'Using launch id: {launch_id}')
     else:
-        driver_logger.info(f'Generated launch id: {launch_id}')
+        driver_logger.doInfoLogging(f'Generated launch id: {launch_id}')
 
     # Get the unique id for this test instance.
     unique_id = Vargs.uniqueid
     if unique_id == None:
         unique_id = rgt_utilities.unique_harness_id()
-        driver_logger.info(f'Generated unique id: {unique_id}')
+        driver_logger.doInfoLogging(f'Generated unique id: {unique_id}')
     else:
-        driver_logger.info(f'Using unique id: {unique_id}')
+        driver_logger.doInfoLogging(f'Using unique id: {unique_id}')
 
     # Make sure we are executing in app/test/Scripts
     testscripts = Vargs.scriptsdir
@@ -424,7 +421,6 @@ def test_harness_driver(argv=None):
             message += "Stopping test cycle."
             apptest.logger.doCriticalLogging(message)
             runarchive_dir = apptest.get_path_to_runarchive()
-            logging.shutdown()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
             return
 

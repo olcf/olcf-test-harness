@@ -69,9 +69,7 @@ class RgtTest():
                             "application_test_work_dir" : 'working_dir',
                             "application_test_build_dir" : 'build_dir',
                             "application_test_scripts_dir" : 'scripts_dir',
-                            "application_test_harness_id" : 'harness_id',
-                            "rgt_environmental_file" : "rgtenvironmentalfile",
-                            "nccs_test_harness_module_file" : "nccstestharnessmodule" }
+                            "application_test_harness_id" : 'harness_id'}
     """Valid key values for the Harness parameter dictionary."""
 
 

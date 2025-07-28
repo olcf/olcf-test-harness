@@ -79,12 +79,13 @@ Create a directory where you will place input files. No computation will be done
 Prepare an input file of tests (e.g., *rgt.input.summit*).
 In the file, set ``Path_to_tests`` to the location where you would like application source and run files to be kept
 (note that the directory provided must be an existing directory on a file system visible to the current machine).
+Alternatively, set the *RGT_PATH_TO_TESTS* environment variable.
 Next, provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
 In this example for Summit, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
 
 .. note::
 
-    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``.
+    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``/*RGT_PATH_TO_TESTS*.
     The OTH can automatically clone Git repositories from remote servers.
     Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine` or :ref:`env_vars_config`).
     Applications not hosted in GitHub/GitLab must be manually placed in ``Path_to_tests``.
@@ -95,17 +96,30 @@ In this example for Summit, the application **hello_mpi** is used and we specify
     #  Set the path to the top level of the application directory.                 #
     ################################################################################
     
+    # Path_to_tests can also replaced by setting the RGT_PATH_TO_TESTS environment variable
     Path_to_tests = /some/path/to/my/applications
     
     Test = hello_mpi c_n001
     Test = hello_mpi c_n002
 
+For convenience, the ``Include`` keyword reads in another harness input file, adding the tests, paths, and tasks to the current harness parameters.
+``Path_to_tests`` is set to the first value encountered while parsing the input files.
+For example:
+
+.. code-block:: bash
+
+    Path_to_tests = /some/path/to/my/applications
+
+    Include 1-node-tests.inp
+    Include 2-node-tests.inp
 
 Set a scratch area for this specific instance of the harness (a default is set from *$OLCF_HARNESS_MACHINE.ini*, but this is how to change from the default):
 
 .. code-block:: bash
 
-    export RGT_PATH_TO_SSPACE=<some path in the file system>/Scratch
+    export RGT_PATH_TO_SSPACE=/some/path/to/my/Scratch
+    # optional (in place of Path_to_tests in input file):
+    export RGT_PATH_TO_TESTS=/some/path/to/my/applications
 
 
 The latest version of the harness supports command line tasks as well as input file tasks.
@@ -123,12 +137,16 @@ To launch tasks in the input file instead of the command-line, add lines like th
 .. code-block:: text
 
     # 1 task per line
-    harness_task start
-    harness_task stop
+    harness_task check_out_tests
+    harness_task start_tests
+    harness_task stop_tests
+    harness_task display_status
 
 
 When using the checkout mode, the application source repository will be cloned to the *<Path_to_tests>/<app-name>* directory for all the tests,
 but no tests will be run.
+If the repository already exists, no action will be taken.
+Updating the repo via ``git pull`` or ``git fetch`` should be done outside of the test harness.
 
 After using the start mode, results of the most recent test run can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/<testid>*.
 Results of the most recent test run can be found in the *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/latest* symbolic link.
@@ -160,15 +178,17 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
                     Options: [screen,logfile]
                             'screen'  - print messages to console (default)
                             'logfile' - print messages to log file
-    -m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: 'use_harness_tasks_in_rgt_input_file')
-                    Options: [use_harness_tasks_in_rgt_input_file,checkout,start,stop,status]
-                            'checkout'   - checkout application tests listed in input file
-                            'start'      - start application tests listed in input file
-                            'stop'       - stop application tests listed in input file
-                            'status'     - check status of application tests listed in input file
+    -m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: 'use_input_file')
+                    Options: [use_input_file,checkout,start,stop,status]
+                            'use_input_file' - use tasks defined in the input file
+                            'checkout'       - checkout application tests listed in input file
+                            'start'          - start application tests listed in input file
+                            'stop'           - stop application tests listed in input file
+                            'status'         - check status of application tests listed in input file
 
     --fireworks                         Use FireWorks to run harness tasks (beta)
     -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
+    --shuffle                           Shuffle the order of tests before launching
 
 .. note::
 

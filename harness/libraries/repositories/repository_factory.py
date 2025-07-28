@@ -1,13 +1,12 @@
 #! /usr/bin/env python3
 import shutil
-import sys
 import os
 import subprocess
-import logging
 
 # NCCS Test Harness package imports
 from libraries.repositories.single_app_git_repository import SingleApplicationGitRepository 
 from libraries.repositories.repository_factory_exceptions import TypeOfRepositoryError
+from libraries.rgt_loggers import rgt_logger_factory
 
 class RepositoryFactory:
     """ This class is a factory that creates repository objects.
@@ -42,7 +41,11 @@ class RepositoryFactory:
         # Check if the repository string value in type_of_repository 
         # matches one of the supported types.  
         my_repository = None
-        repository_factory_log = logging.getLogger(__name__)
+        repository_factory_log = rgt_logger_factory.create_rgt_logger(
+                                        logger_name=__name__,
+                                        logger_threshold_log_level='ERROR',
+                                        fh_threshold_log_level='ERROR',
+                                        ch_threshold_log_level='ERROR')
         try:
             if type_of_repository == "git":
                 my_repository = SingleApplicationGitRepository(repository_URL,
@@ -59,7 +62,7 @@ class RepositoryFactory:
             msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
             msg += "to a repository type not supported by this test harness.\n\n"
             repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
-            sys.exit(1)
+            exit(1)
 
         return my_repository
     
@@ -80,7 +83,7 @@ class RepositoryFactory:
             msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
             msg += "to a repository type not supported by this test harness.\n\n"
             repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
-            sys.exit(1)
+            exit(1)
         return pathspec
 
     @classmethod
@@ -100,7 +103,7 @@ class RepositoryFactory:
             msg += "environmental variable 'RGT_TYPE_OF_REPOSITORY' not being defined or defined\n"
             msg += "to a repository type not supported by this test harness.\n\n"
             repository_factory_log.exception(msg,"None",exc_info=True,stack_info=True)
-            sys.exit(1)
+            exit(1)
         return pathspec
 
     @classmethod

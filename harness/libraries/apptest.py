@@ -16,6 +16,7 @@ import re
 from types import *
 
 # NCCS Test Harness Package Imports
+from libraries.harness_internal_config import harness_modes
 from libraries.base_apptest import base_apptest
 from libraries.base_apptest import BaseApptestError
 from libraries.layout_of_apps_directory import apptest_layout
@@ -120,11 +121,8 @@ class subtest(base_apptest, apptest_layout):
                                         harness task to be preformed on this app/test
         """
 
-        from libraries.regression_test import Harness
-
         if tasks != None:
             tasks = copy.deepcopy(tasks)
-            tasks = subtest.reorderTaskList(tasks)
 
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
@@ -132,7 +130,7 @@ class subtest(base_apptest, apptest_layout):
         self.logger.doInfoLogging(message)
 
         for harness_task in tasks:
-            if harness_task == Harness.checkout:
+            if harness_task == harness_modes.checkout:
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
@@ -167,7 +165,7 @@ class subtest(base_apptest, apptest_layout):
                     message = "Could not find all required paths on the file system for application {app1}, test {test1}.".format(app1=self.getNameOfApplication(),
                                                                                                                                 test1=self.getNameOfSubtest())
                     return 1
-                if harness_task == Harness.starttest:
+                if harness_task == harness_modes.starttest:
                     message = "Start of starting test."
                     self.logger.doInfoLogging(message)
 
@@ -179,10 +177,10 @@ class subtest(base_apptest, apptest_layout):
                     if exit_code:
                         return 1
 
-                elif harness_task == Harness.stoptest:
+                elif harness_task == harness_modes.stoptest:
                     self._stop_test()
 
-                elif harness_task == Harness.displaystatus:
+                elif harness_task == harness_modes.displaystatus:
                     if test_display_lock:
                         test_display_lock.acquire()
 
@@ -191,7 +189,7 @@ class subtest(base_apptest, apptest_layout):
                     if test_display_lock:
                         test_display_lock.release()
 
-                elif harness_task == Harness.summarize_results:
+                elif harness_task == harness_modes.summarize_results:
                     self.generateReport()
 
     def cloneRepository(self,my_repository,destination):
@@ -399,42 +397,6 @@ class subtest(base_apptest, apptest_layout):
             print( "%-20s  %-20s %-20s" % (tmp_test[0], tmp_test[1], tmp_test[2]))
         print( "================================================================\n\n")
 
-    @classmethod
-    def reorderTaskList(cls,tasks):
-        from libraries.regression_test import Harness
-        taskwords1 = []
-        for taskwords in tasks:
-            task = None
-            if type(taskwords) == list:
-                task = taskwords[0]
-            else:
-                task = taskwords
-            taskwords1 = taskwords1 + [task]
-
-        app_tasks1 = []
-
-        if (Harness.checkout in taskwords1):
-            app_tasks1.append(Harness.checkout)
-            taskwords1.remove(Harness.checkout)
-
-        if (Harness.starttest in taskwords1) :
-            app_tasks1.append(Harness.starttest)
-            taskwords1.remove(Harness.starttest)
-
-        if (Harness.stoptest in taskwords1):
-            app_tasks1.append(Harness.stoptest)
-            taskwords1.remove(Harness.stoptest)
-
-        if (Harness.displaystatus in taskwords1):
-            app_tasks1.append(Harness.displaystatus)
-            taskwords1.remove(Harness.displaystatus)
-
-        if (Harness.summarize_results in taskwords1):
-            app_tasks1.append(Harness.summarize_results)
-            taskwords1.remove(Harness.summarize_results)
-
-        return app_tasks1
-
     def waitForAllJobsToCompleteQueue(self, harness_config, timeout):
         """Waits for subtest cycle to end.
 
@@ -580,13 +542,23 @@ class subtest(base_apptest, apptest_layout):
         else:
             machine_name = os.environ['RGT_MACHINE_NAME']
 
+        # this chunk of code to grab a job id taken from status_file.py
+        job_id = StatusFile.NO_VALUE
+        file_job_id = self.get_path_to_job_id_file()
+        if os.path.exists(file_job_id):
+            file_ = open(file_job_id, 'r')
+            job_id_ = file_.read()
+            file_.close()
+            job_id = re.sub(' ', '', job_id_.split('\n')[0])
+
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
             'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
             'machine': machine_name,
             'test_id': self.get_harness_id(),
-            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START)
+            'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),
+            'job_id': job_id
         }
 
         success_log = 0
@@ -597,12 +569,12 @@ class subtest(base_apptest, apptest_layout):
         if len(metrics) == 0:
             self.logger.doInfoLogging(f"No metrics found to log to influxDB")
         else:
-            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = self._get_build_time()
-            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = self._get_execution_time()
-            if metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] < 0:
+            metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = str(self._get_build_time())
+            metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = str(self._get_execution_time())
+            if float(metrics[f'{test_info["app"]}-{test_info["test"]}-build_time']) < 0:
                 self.logger.doErrorLogging(f"Invalid build time for jobID {test_info['test_id']}.")
                 do_log_metric = False
-            elif metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] < 0:
+            elif float(metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time']) < 0:
                 self.logger.doErrorLogging(f"Invalid execution time for jobID {test_info['test_id']}.")
                 do_log_metric = False
             elif self.__db_logger.log_metrics(test_info, metrics):
@@ -696,18 +668,6 @@ class subtest(base_apptest, apptest_layout):
 
     def _get_metrics(self):
         """ Parse the metrics.txt file for InfluxDB reporting """
-        def is_numeric(s):
-            """ Checks if an entry (RHS) is numeric """
-            # Local function. s is assumed to be a whitespace-stripped string
-            # Return false for empty string
-            if len(s) == 0:
-                return False
-            number_regex = re.compile('^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
-            if number_regex.match(s):
-                return True
-            else:
-                return False
-
         metrics = {}
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
@@ -733,13 +693,7 @@ class subtest(base_apptest, apptest_layout):
                         if len(line_splt[1]) == 0:
                             self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
                             continue
-                        # Handle string/integer metrics
-                        if is_numeric(line_splt[1]):
-                            metrics[metric_name] = line_splt[1]
-                        else:
-                            line_splt[1] = line_splt[1].replace(' ', '_')
-                            # Wrap strings in double quotes to send to Influx
-                            metrics[metric_name] = f'"{line_splt[1]}"'
+                        metrics[metric_name] = str(line_splt[1])
                     else:
                         self.logger.doErrorLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
@@ -816,24 +770,18 @@ class ApptestImproperInstantiationError(BaseApptestError):
         return self.__message
 
 def do_application_tasks(launch_id,
-                         app_test_list,
+                         app_test,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False):
-    # Returns [#Passed,#Failed]
-    ret = [0, 0, []]
-    for app_test in app_test_list:
-        app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
-        # Non-zero exit status is failure
-        if app_test.doTasks(launchid=launch_id,
-                         tasks=tasks,
-                         stdout_stderr=stdout_stderr,
-                         separate_build_stdio=separate_build_stdio):
-            ret[1] += 1
-            ret[2].append(f"{app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}")
-        else:
-            ret[0] += 1
-    return ret
+    app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+    # Non-zero exit status is failure
+    if app_test.doTasks(launchid=launch_id,
+                        tasks=tasks,
+                        stdout_stderr=stdout_stderr,
+                        separate_build_stdio=separate_build_stdio):
+        return False
+    return True
 
 def wait_for_jobs_to_complete_in_queue(harness_config,
                                        app_test_list,

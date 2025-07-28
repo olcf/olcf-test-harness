@@ -2,10 +2,10 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 09-05-2024
+# Date modified: 2025-05-30
 ################################################################################
 # Purpose:
-#   Send metrics from outside of the harness to the InfluxDB database.
+#   Send metrics from outside of the harness to the InfluxDB or Kafka database.
 #   For example, MTBF.
 ################################################################################
 
@@ -16,8 +16,6 @@ import re
 
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-from libraries.subtest_factory import SubtestFactory
-from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
 from libraries.rgt_loggers import rgt_logger_factory
 
@@ -26,8 +24,8 @@ parser = argparse.ArgumentParser(description="Post a custom metric to Databases"
 parser.add_argument('--time', '-t', type=str, action='store', help="Timestamp to post record as. Format: YYYY-MM-DDTHH:MM:SS[.MS][Z]")
 parser.add_argument('--keys', '-k', required=True, type=str, action='store', help="A set of comma-separated keys to identify your metric by. Ex: machine=frontier")
 parser.add_argument('--values', '-v', required=True, type=str, action='store', help="A set of comma-separated values to post. Ex: value_a=1,value_b=2. These may or may not be quoted")
+parser.add_argument('--table_name', required=True, type=str, action='store', help="Specifies the name of the table/measurement/topic to post data to.")
 parser.add_argument('--loglevel', default='INFO', choices=["NOTSET","DEBUG","INFO","WARNING", "ERROR", "CRITICAL"], type=str, action='store', help="Specify verbosity")
-parser.add_argument('--table_name', default='non_harness_metrics', type=str, action='store', help="Specifies the name of the table (measurement) to post to.")
 parser.add_argument('--dry-run', action='store_true', help="When set, print the message to the databases, but do not send.")
 
 # Parse command-line arguments #################################################
@@ -100,7 +98,7 @@ for val in args.keys.split(','):
     # Save as a string
     keys_formatted[val_splt[0]] = str(val_splt[1])
 
-number_regex = re.compile('^([0-9]*\.)?[0-9]+(e[+-]?[0-9]+)?$')
+number_regex = re.compile(r'^([0-9]*\.)?[0-9]+(e[+-]?[0-9]+)?$')
 values_formatted = {}
 for val in args.values.split(','):
     # We know it's properly formatted already
