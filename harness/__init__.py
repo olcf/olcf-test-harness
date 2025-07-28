@@ -6,4 +6,4 @@ __all__ = [
             "machine_types"
           ]
 
-version = 3.0
+version = 3.1
