@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 2025-07-17
+# Date modified: 2025-08-12
 ################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
@@ -389,7 +389,11 @@ for db in db_logger.enabled_backends:
             if not entry['event_name'] == f"{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][1]}_{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][2]}":
                 skipped += 1
                 continue
-            timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            # InfluxDB & Kafka report event_time in different formats
+            if db.name == "kafka":
+                timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%f")
             timediff_hours = timediff_dt.total_seconds() / (60.0 * 60.0)
             if timediff_hours < args.build_timeout:
                 skipped += 1
