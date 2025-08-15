@@ -305,6 +305,7 @@ class apptest_layout:
         # if reusing a build, and the build directory doesn't exist
         # if it does exist, it's probably set to the current test, and we can ignore it
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']) and \
                 not os.path.exists(os.path.join(ws_dir, apptest_layout.test_build_dirname)):
             # If re-using a build, also create a sym-link to the source build in the workspace
             try_symlink(os.environ['RGT_REUSE_BUILD_FROM'], os.path.join(ws_dir, apptest_layout.test_build_dirname))
