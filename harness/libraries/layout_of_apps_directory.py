@@ -217,7 +217,12 @@ class apptest_layout:
     def get_path_to_workspace_build(self):
         if not self.__workspace:
             return None
-        return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
+        # Redirect path to build if reusing from a existing test directory
+        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+            return os.environ['RGT_REUSE_BUILD_FROM']
+        else:
+            return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
 
     #
     # Returns the path to the test workspace run directory.
@@ -297,6 +302,12 @@ class apptest_layout:
 
         try_symlink(st_dir, os.path.join(ws_dir, apptest_layout.test_status_dirname))
         try_symlink(ra_dir, os.path.join(ws_dir, apptest_layout.test_run_archive_dirname))
+        # if reusing a build, and the build directory doesn't exist
+        # if it does exist, it's probably set to the current test, and we can ignore it
+        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                not os.path.exists(os.path.join(ws_dir, apptest_layout.test_build_dirname)):
+            # If re-using a build, also create a sym-link to the source build in the workspace
+            try_symlink(os.environ['RGT_REUSE_BUILD_FROM'], os.path.join(ws_dir, apptest_layout.test_build_dirname))
         try_symlink(build_dir, os.path.join(ra_dir, apptest_layout.test_build_dirname))
         try_symlink(run_dir, os.path.join(ra_dir, apptest_layout.test_run_dirname))
 

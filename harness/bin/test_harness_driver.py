@@ -429,15 +429,25 @@ def test_harness_driver(argv=None):
     status_dir = apptest.create_test_status()
     ra_dir = apptest.create_test_runarchive()
 
-    # Create the temporary workspace path for this test instance
+    # Create the temporary workspace path for this test instance -- does not create build_dir
     workspace = rgt_utilities.harness_work_space()
     apptest.create_test_workspace(workspace)
+
+    # Implement the RGT_REUSE_BUILD_FROM environment variable
+    # Requires implementation in base_machine.py and layout_of_apps_directory.py
+    # Environment variable set by user or by runtests.py
+    build_dir = apptest.get_path_to_workspace_build()
+    if 'RGT_REUSE_BUILD_FROM' in os.environ and os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+        build_dir = os.environ['RGT_REUSE_BUILD_FROM']
+    elif 'RGT_REUSE_BUILD_FROM' in os.environ:
+        # otherwise, update this envvar to the current build directory
+        os.environ['RGT_REUSE_BUILD_FROM'] = build_dir
 
     # Update environment with the paths to test directories
     apptest_env_vars = {
         'APP_SOURCE_DIR'      : apptest.get_path_to_source(),
         'TEST_SCRIPTS_DIR'    : testscripts,
-        'TEST_BUILD_DIR'      : apptest.get_path_to_workspace_build(),
+        'TEST_BUILD_DIR'      : build_dir,
         'TEST_WORK_DIR'       : apptest.get_path_to_workspace_run(),
         'TEST_SOURCE_DIR'     : apptest.get_path_to_test_source(),
         'TEST_STATUS_DIR'     : status_dir,

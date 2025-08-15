@@ -440,23 +440,24 @@ class BaseMachine(metaclass=ABCMeta):
         # Use Error threshold to show this message all the time
         self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
-        shutil.copytree(src=path_to_source,
+        if not ('RGT_REUSE_BUILD_FROM' in os.environ and \
+                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM'])):
+            shutil.copytree(src=path_to_source,
+                            dst=path_to_build_directory,
+                            symlinks=True)
+            # If a Source directory exists inside test, overlay that over source directory
+            if os.path.exists(path_to_test_source):
+                # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
+                # Prior to that, it's easier to use shell commands to do what we want
+                if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
+                    shutil.copytree(src=path_to_test_source,
                         dst=path_to_build_directory,
-                        symlinks=True)
-
-        # If a Source directory exists inside test, overlay that over source directory
-        if os.path.exists(path_to_test_source):
-            # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
-            # Prior to that, it's easier to use shell commands to do what we want
-            if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
-                shutil.copytree(src=path_to_test_source,
-                    dst=path_to_build_directory,
-                    symlinks=False, dirs_exist_ok=True)
-            else:
-                proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
-                if not proc.returncode == 0:
-                    self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
-                    return proc.returncode
+                        symlinks=False, dirs_exist_ok=True)
+                else:
+                    proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
+                    if not proc.returncode == 0:
+                        self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
+                        return proc.returncode
         return 0
 
     def _write_check_exit_status(self, cstatus):
