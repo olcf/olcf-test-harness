@@ -172,10 +172,10 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">OTH Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#rgt-archive-utility-py"><code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#update-databases-py"><code class="docutils literal notranslate"><span class="pre">update_databases.py</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#add-comment-to-databases-py"><code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#report-to-databases-py"><code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rgt-archive-utility-py">rgt_archive_utility.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#update-databases-py">update_databases.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#add-comment-to-databases-py">add_comment_to_databases.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#report-to-databases-py">report_to_databases.py</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
@@ -259,11 +259,16 @@
 For example, many of these scripts handle keeping the remote database up-to-date with current runs, in the event of job timeouts, connectivity issues, or data loss.
 These scripts are documented below.</p>
 <div class="section" id="rgt-archive-utility-py">
-<h2><code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code><a class="headerlink" href="#rgt-archive-utility-py" title="Permalink to this heading">¶</a></h2>
+<h2>rgt_archive_utility.py<a class="headerlink" href="#rgt-archive-utility-py" title="Permalink to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code> script allows you to “archive” a test.
 What “archive” actually means is it allows you to select when to keep or discard a test’s build and work directories, and will copy the test into a single location on the file system, without needing sym-links between the Run_Archive and scratch areas.
 This is useful for taking all tests older than 6 months and manipulating the directories so that the test is in a single directory, ready to be tarred and archived (if desired).
 The <code class="docutils literal notranslate"><span class="pre">--help</span></code> message for the <code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code> script is provided below.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--delete-scratch-dir</span></code> and <code class="docutils literal notranslate"><span class="pre">--delete-run-dir</span></code> flags are available for automatically cleaning up existing directories, but these flags are NOT recommended if any tests used the <code class="docutils literal notranslate"><span class="pre">--reuse-first-build</span></code> option, as the single build directory for a chain of resubmitted tests may be removed before all tests are archived.
+In this case, it is preferred to run without deleting any directories first, then re-run the utility with the deletion flags enabled.</p>
+</div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">rgt_archive_tests</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">path</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">tests</span> <span class="n">PATH_TO_TESTS</span>
                         <span class="o">--</span><span class="n">path</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">archive</span> <span class="n">PATH_TO_ARCHIVE</span>
                         <span class="p">[</span><span class="o">--</span><span class="n">starttime</span> <span class="n">STARTTIME</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">endtime</span> <span class="n">ENDTIME</span><span class="p">]</span>
@@ -335,7 +340,7 @@ The <code class="docutils literal notranslate"><span class="pre">--help</span></
 </div>
 </div>
 <div class="section" id="update-databases-py">
-<h2><code class="docutils literal notranslate"><span class="pre">update_databases.py</span></code><a class="headerlink" href="#update-databases-py" title="Permalink to this heading">¶</a></h2>
+<h2>update_databases.py<a class="headerlink" href="#update-databases-py" title="Permalink to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">update_databases.py</span></code> script retrieves all incomplete tests from the remote database (ie, an InfluxDB instance), and tries to determine if that test has completed, but did not log its completion message.
 This script has support for the Slurm job scheduler, and will look for the job ID of the given test, to see if it completed.
 If the job failed, this script will log a completion message to the database with information about how long the job ran, if it timed out, if it hit a node failure, etc..
@@ -390,7 +395,7 @@ For InfluxDB, such a grace period does not exist, since data is synchronously wr
 </ul>
 </div>
 <div class="section" id="add-comment-to-databases-py">
-<h2><code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code><a class="headerlink" href="#add-comment-to-databases-py" title="Permalink to this heading">¶</a></h2>
+<h2>add_comment_to_databases.py<a class="headerlink" href="#add-comment-to-databases-py" title="Permalink to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code> script adds a comment to a specific test instance in the remote database (ie, an InfluxDB instance).
 The <code class="docutils literal notranslate"><span class="pre">--help</span></code> message for the <code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code> script is provided below.
 This script requires the same environment variables as the core harness requires to enable the database backend, as described in <span class="xref std std-ref">_influxdb_event_logging</span>.</p>
@@ -416,7 +421,7 @@ This script requires the same environment variables as the core harness requires
 </div>
 </div>
 <div class="section" id="report-to-databases-py">
-<h2><code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code><a class="headerlink" href="#report-to-databases-py" title="Permalink to this heading">¶</a></h2>
+<h2>report_to_databases.py<a class="headerlink" href="#report-to-databases-py" title="Permalink to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code> script enables you to further utilize a remote database to store custom, non-harness metrics.
 The <code class="docutils literal notranslate"><span class="pre">--help</span></code> message for the <code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code> script is provided below.
 This script requires the same environment variables as the core harness requires to enable the database backend, as described in <span class="xref std std-ref">_influxdb_event_logging</span>.</p>

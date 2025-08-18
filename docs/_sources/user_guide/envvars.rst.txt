@@ -72,6 +72,9 @@ For example, ``machine_name = <obtain_from_environment>`` will fetch the value f
     RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work & build spaces).
     RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of 'Path_to_tests' in ``runtests.py`` input file).
     RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file & database logging.
+    RGT_REUSE_BUILD_FROM            Path to a pre-existing build compatible with the currently-launching tests.
+                                        Preferred usage is to use the `--reuse-first-build` flag of `runtests.py`, which
+                                        will internally set this variable to reuse the first build for resubmitted tests.
 
 
 .. _env_vars_run:
@@ -93,6 +96,8 @@ These variables are detailed below:
     RGT_TEST_SCRIPTS_DIR        Path to the scripts directory of the currently-running test.
     RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
     RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
+    RGT_REUSE_BUILD_FROM        If `--reuse-first-build` set in `runtests.py`, path to the first build of the currently-running test,
+                                to be used if a test is resubmitted.
 
 
 .. _env_vars_ext:
