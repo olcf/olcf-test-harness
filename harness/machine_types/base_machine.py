@@ -437,7 +437,6 @@ class BaseMachine(metaclass=ABCMeta):
         path_to_source = self.apptest.get_path_to_source()
         path_to_test_source = self.apptest.get_path_to_test_source()
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
-        path_to_runarchive_directory = self.apptest.get_path_to_runarchive()
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
                 os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
