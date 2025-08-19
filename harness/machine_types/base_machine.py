@@ -271,21 +271,25 @@ class BaseMachine(metaclass=ABCMeta):
             The exit status of the build command.
 
         """
-        message = f"Start of buiding executable.\n"
-        self.logger.doInfoLogging(message)
+        self.logger.doInfoLogging("Start of buiding executable.")
+
+        currentdir = os.getcwd()
+        self.logger.doInfoLogging(f"The initial directory is {currentdir}")
+
+        path_to_source = self.apptest.get_path_to_source()
+        path_to_test_source = self.apptest.get_path_to_test_source()
+        path_to_build_directory = self.apptest.get_path_to_workspace_build()
+        path_to_runarchive_directory = self.apptest.get_path_to_runarchive()
+
+        # Use Error threshold to show these messages all the time
+        self.logger.doErrorLogging(f"Path to Source: {path_to_source}")
+        self.logger.doErrorLogging(f"Path to Build: {path_to_build_directory}")
+        self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
                 os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
             self.logger.doInfoLogging(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
             return 0
-
-        currentdir = os.getcwd()
-        message = f"The initial directory is {currentdir}"
-        self.logger.doInfoLogging(message)
-
-        path_to_build_directory = self.apptest.get_path_to_workspace_build()
-        message = f"The build directory is {path_to_build_directory}"
-        self.logger.doInfoLogging(message)
 
         # Copy the source to the build directory.
         copy_rc = self._copy_source_to_build_directory()
@@ -293,16 +297,14 @@ class BaseMachine(metaclass=ABCMeta):
         if not copy_rc == 0:
             return copy_rc
 
-        message = f"Copied source to build directory.\n"
-        self.logger.doInfoLogging(message)
+        self.logger.doInfoLogging(f"Copied source to build directory.")
 
         # Get the environment using the build runtime environment file.
         new_env = None
         filename = self.build_runtime_environment_command_file
 
         if filename != "":
-            message = f"The build runtime environmental file is {filename}."
-            self.logger.doInfoLogging(message)
+            self.logger.doInfoLogging(f"The build runtime environmental file is {filename}.")
             new_env = linux_utilities.get_new_environment(self,filename)
             message = f"The new build environment is as follows:\n"
             message += str(new_env)
@@ -434,35 +436,30 @@ class BaseMachine(metaclass=ABCMeta):
     def _copy_source_to_build_directory(self):
         path_to_source = self.apptest.get_path_to_source()
         path_to_test_source = self.apptest.get_path_to_test_source()
-        # Use Error threshold to show this message all the time
-        self.logger.doErrorLogging(f"Path to Source: {path_to_source}")
-
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
-        # Use Error threshold to show this message all the time
-        self.logger.doErrorLogging(f"Path to Build: {path_to_build_directory}")
-
         path_to_runarchive_directory = self.apptest.get_path_to_runarchive()
-        # Use Error threshold to show this message all the time
-        self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
-        if not ('RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM'])):
-            shutil.copytree(src=path_to_source,
-                            dst=path_to_build_directory,
-                            symlinks=True)
-            # If a Source directory exists inside test, overlay that over source directory
-            if os.path.exists(path_to_test_source):
-                # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
-                # Prior to that, it's easier to use shell commands to do what we want
-                if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
-                    shutil.copytree(src=path_to_test_source,
+        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+            self.logger.doInfoLogging("RGT_REUSE_BUILD_FROM set, skipping copying Source.")
+            return 0
+
+        shutil.copytree(src=path_to_source,
                         dst=path_to_build_directory,
-                        symlinks=False, dirs_exist_ok=True)
-                else:
-                    proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
-                    if not proc.returncode == 0:
-                        self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
-                        return proc.returncode
+                        symlinks=True)
+        # If a Source directory exists inside test, overlay that over source directory
+        if os.path.exists(path_to_test_source):
+            # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
+            # Prior to that, it's easier to use shell commands to do what we want
+            if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
+                shutil.copytree(src=path_to_test_source,
+                    dst=path_to_build_directory,
+                    symlinks=False, dirs_exist_ok=True)
+            else:
+                proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
+                if not proc.returncode == 0:
+                    self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
+                    return proc.returncode
         return 0
 
     def _write_check_exit_status(self, cstatus):
