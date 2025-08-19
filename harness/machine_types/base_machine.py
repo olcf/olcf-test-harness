@@ -274,6 +274,11 @@ class BaseMachine(metaclass=ABCMeta):
         message = f"Start of buiding executable.\n"
         self.logger.doInfoLogging(message)
 
+        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+            self.logger.doInfoLogging(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
+            return 0
+
         currentdir = os.getcwd()
         message = f"The initial directory is {currentdir}"
         self.logger.doInfoLogging(message)
