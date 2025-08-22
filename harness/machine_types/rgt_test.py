@@ -200,10 +200,10 @@ class RgtTest():
         return self.__builtin_params
 
     def print_user_parameters(self):
-        self.__logger.doWarningLogging("RGT Test Parameters - User")
-        self.__logger.doWarningLogging("==========================")
+        self.__logger.doInfoLogging("RGT Test Parameters - User")
+        self.__logger.doInfoLogging("==========================")
         for (k,v) in (self.user_parameters).items():
-            self.__logger.doWarningLogging(f'{k}={v}')
+            self.__logger.doInfoLogging(f'{k}={v}')
 
     # Methods to manage runtime environment commands
     @property
@@ -356,9 +356,6 @@ class RgtTest():
     #
     # Convenience methods for setting specific parameters
     #
-    def set_launch_id(self, value):
-        self._set_builtin_param("launch_id", value)
-
     def set_max_submissions(self, value):
         self._set_builtin_param("max_submissions", value)
 
@@ -386,9 +383,6 @@ class RgtTest():
 
     def get_jobname(self):
         return self._get_builtin_param("job_name")
-
-    def get_launch_id(self):
-        return self._get_builtin_param("launch_id")
 
     def get_max_submissions(self):
         return self._get_builtin_param("max_submissions")
@@ -595,10 +589,10 @@ class RgtTest():
             exit(1)
 
     def _print_builtin_parameters(self):
-        self.__logger.doWarningLogging("RGT Test Parameters - Builtin")
-        self.__logger.doWarningLogging("=============================")
+        self.__logger.doInfoLogging("RGT Test Parameters - Builtin")
+        self.__logger.doInfoLogging("=============================")
         for (k,v) in (self.builtin_parameters).items():
-            self.__logger.doWarningLogging(f'{k}={v}')
+            self.__logger.doInfoLogging(f'{k}={v}')
 
     def _set_user_param(self, key, val):
         self.__user_params[key] = val
