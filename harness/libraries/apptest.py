@@ -774,7 +774,8 @@ def do_application_tasks(launch_id,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False):
-    app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+    # this is the only print statement above INFO that identifies the app/test name
+    app_test.logger.doErrorLogging(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
     # Non-zero exit status is failure
     if app_test.doTasks(launchid=launch_id,
                         tasks=tasks,
