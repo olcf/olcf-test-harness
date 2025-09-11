@@ -114,7 +114,8 @@ class subtest(base_apptest, apptest_layout):
                 test_checkout_lock=None,
                 test_display_lock=None,
                 stdout_stderr=None,
-                separate_build_stdio=False):
+                separate_build_stdio=False,
+                reuse_first_build=False):
         """
         :param list_of_string my_tasks: A list of the strings
                                         where each element is an application
@@ -169,7 +170,7 @@ class subtest(base_apptest, apptest_layout):
                     message = "Start of starting test."
                     self.logger.doInfoLogging(message)
 
-                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
+                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio, reuse_first_build=reuse_first_build)
 
                     message = "End of starting test"
                     self.logger.doInfoLogging(message)
@@ -481,7 +482,8 @@ class subtest(base_apptest, apptest_layout):
     def _start_test(self,
                     launchid,
                     stdout_stderr,
-                    separate_build_stdio=False):
+                    separate_build_stdio=False,
+                    reuse_first_build=False):
 
         # If the file kill file exits then remove it.
         pathtokillfile = self.get_path_to_kill_file()
@@ -492,6 +494,12 @@ class subtest(base_apptest, apptest_layout):
         starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.get_ch_threshold_level()}"
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
+ 
+        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        if reuse_first_build:
+            if not 'RGT_REUSE_BUILD_FROM' in os.environ:
+                # Set a dummy value so that test_harness_driver.py knows to update the value
+                os.environ['RGT_REUSE_BUILD_FROM'] = 'SETME'
 
         pathtoscripts = self.get_path_to_scripts()
 
@@ -773,14 +781,17 @@ def do_application_tasks(launch_id,
                          app_test,
                          tasks,
                          stdout_stderr,
-                         separate_build_stdio=False):
+                         separate_build_stdio=False,
+                         reuse_first_build):
     # this is the only print statement above INFO that identifies the app/test name
     app_test.logger.doErrorLogging(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+
     # Non-zero exit status is failure
     if app_test.doTasks(launchid=launch_id,
                         tasks=tasks,
                         stdout_stderr=stdout_stderr,
-                        separate_build_stdio=separate_build_stdio):
+                        separate_build_stdio=separate_build_stdio,
+                        reuse_first_build=reuse_first_build):
         return False
     return True
 
