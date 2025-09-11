@@ -173,10 +173,6 @@ def auto_generated_scripts(harness_config,
     # In this section we run the the binary.             -
     #                                                    -
     #-----------------------------------------------------
-
-    # set launch id
-    mymachine.test_config.set_launch_id(launch_id)
-
     job_id = "0"
     submit_exit_value = 0
     if actions['submit'] and (build_exit_value != 0):
