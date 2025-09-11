@@ -172,6 +172,10 @@ def should_archive_test(test_path, test_id):
 
     logger.doDebugLogging(f"Using status file {status_dir}/{latest_status_file}")
     event_info = get_status_info_from_file(os.path.join(status_dir, latest_status_file))
+    if len(event_info) == 0:
+        logger.doErrorLogging(f"Status file {status_dir}/{latest_status_file} appears to be empty. Skipping.")
+        return False
+
     event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
 
     # Verify time conditions are met
