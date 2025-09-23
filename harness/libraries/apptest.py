@@ -782,7 +782,7 @@ def do_application_tasks(launch_id,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False,
-                         reuse_first_build):
+                         reuse_first_build=False):
     # this is the only print statement above INFO that identifies the app/test name
     app_test.logger.doErrorLogging(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
 
