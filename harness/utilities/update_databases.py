@@ -133,6 +133,9 @@ def event_time_to_timestamp(event_time : str, precision : str = 's'):
     elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
         # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
         log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.UUUZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
     elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
         # YYYY-MM-DDTHH:MM:SS
         log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
@@ -353,6 +356,21 @@ def slurm_time_to_harness_time(timecode):
     """
     return f'{timecode}.000000'
 
+def get_latest_time(t_new, t_ref):
+    """
+    Helper method to compare 2 time strings (via event_time_to_timestamp) and return the latest
+    """
+    if event_time_to_timestamp(t_new, precision='us') > event_time_to_timestamp(t_ref, precision='us'):
+        return t_new
+    else:
+        new_timestamp = event_time_to_timestamp(t_ref, precision='us')
+        # normalize to be in seconds
+        new_timestamp /= (1000 * 1000)
+        # add 1 second
+        new_timestamp += 1.0
+        # return in standard harness time format
+        new_dt = datetime.fromtimestamp(new_timestamp)
+        return datetime.strftime(new_dt, "%Y-%m-%dT%H:%M:%S.%f")
 
 skipped = 0
 sent = 0
@@ -429,7 +447,7 @@ for db in db_logger.enabled_backends:
                 entry['output_txt'] = 'Job canceled'
                 entry['event_value'] = state_to_value['fail']
             # Update fields in entry
-            entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+            entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
@@ -450,7 +468,7 @@ for db in db_logger.enabled_backends:
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['node_fail']:
             logger.doDebugLogging(f"Found node failure from: {entry['job_id']}")
             sent += 1
-            entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+            entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
@@ -471,7 +489,7 @@ for db in db_logger.enabled_backends:
                 logger.doDebugLogging(f"Found timed out job: {entry['job_id']}")
                 entry['output_txt'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
                 entry['event_value'] = state_to_value['timeout']
-            entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+            entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
@@ -531,7 +549,7 @@ for db in db_logger.enabled_backends:
                 # If the test didn't log a check_end event, we simulate one here
                 logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
                 entry['output_txt'] = f"Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
-                entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+                entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
                 entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
                 entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
                 entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
