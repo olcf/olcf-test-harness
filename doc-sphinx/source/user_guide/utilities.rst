@@ -18,7 +18,7 @@ This is useful for taking all tests older than 6 months and manipulating the dir
 The ``--help`` message for the ``rgt_archive_utility.py`` script is provided below.
 
 .. note::
-    The ``--delete-scratch-dir`` and ``--delete-run-dir`` flags are available for automatically cleaning up existing directories, but these flags are NOT recommended if any tests used the ``--reuse-first-build`` option, as the single build directory for a chain of resubmitted tests may be removed before all tests are archived.
+    The ``--delete-scratch-dir`` and ``--delete-run-dir`` flags are available for automatically cleaning up existing directories, but these flags are NOT recommended if any tests used the ``--reuse-first-build`` or ``--reuse-build-from-id`` options, as the base build directory which these tests sym-link to may be removed before all tests are archived.
     In this case, it is preferred to run without deleting any directories first, then re-run the utility with the deletion flags enabled.
 
 
