@@ -75,6 +75,8 @@ For example, ``machine_name = <obtain_from_environment>`` will fetch the value f
     RGT_REUSE_BUILD_FROM            Path to a pre-existing build compatible with the currently-launching tests.
                                         Preferred usage is to use the `--reuse-first-build` flag of `runtests.py`, which
                                         will internally set this variable to reuse the first build for resubmitted tests.
+                                        The `--reuse-build-from-id` flag is also available to specify a test ID to use
+                                        the build from.
 
 
 .. _env_vars_run:
@@ -97,7 +99,8 @@ These variables are detailed below:
     RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
     RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
     RGT_REUSE_BUILD_FROM        If `--reuse-first-build` set in `runtests.py`, path to the first build of the currently-running test,
-                                to be used if a test is resubmitted.
+                                to be used if a test is resubmitted. Or if `--reuse-build-from-id` is set in `runtests.py`, the path
+                                to the build of the test with a test ID matching that flag's value.
 
 
 .. _env_vars_ext:

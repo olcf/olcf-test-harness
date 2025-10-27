@@ -277,6 +277,12 @@ def create_parser(logger=None):
                         default=False,
                         help="If running a test that can resubmit, re-use the first instance of the build for all tests in that chain.")
 
+    parser.add_argument("--reuse-build-from-id",
+                        action='store',
+                        required=False,
+                        default='',
+                        help="Re-use the build from the specified test ID.")
+
     return parser
 
 def parse_commandline_argv(argv, logger):
@@ -313,7 +319,8 @@ def parse_commandline_argv(argv, logger):
                                                               runmode=Vargs.mode,
                                                               use_fireworks=Vargs.fireworks,
                                                               separate_build_stdio=Vargs.separate_build_stdio,
-                                                              reuse_first_build=Vargs.reuse_first_build)
+                                                              reuse_first_build=Vargs.reuse_first_build,
+                                                              reuse_build_from_id=Vargs.reuse_build_from_id)
     return harness_parsed_args
 
 def runtests(my_arg_string=None):
@@ -379,6 +386,7 @@ def runtests(my_arg_string=None):
                                   harness_arguments.use_fireworks,
                                   harness_arguments.separate_build_stdio,
                                   harness_arguments.reuse_first_build,
+                                  harness_arguments.reuse_build_from_id,
                                   shuffle=harness_arguments.shuffle)
 
     main_logger.doInfoLogging("Created an instance of the harness.")
