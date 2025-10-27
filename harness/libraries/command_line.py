@@ -17,7 +17,8 @@ class HarnessParsedArguments:
                        stdout_stderr=None,
                        use_fireworks=False,
                        separate_build_stdio=False,
-                       reuse_first_build=False):
+                       reuse_first_build=False,
+                       reuse_build_from_id=None):
 
         self.__inputfile = inputfile
         self.__shuffle = shuffle
@@ -28,6 +29,7 @@ class HarnessParsedArguments:
         self.__use_fireworks = use_fireworks
         self.__separate_build_stdio = separate_build_stdio
         self.__reuse_first_build = reuse_first_build
+        self.__reuse_build_from_id = reuse_build_from_id
 
         self.__verify_attributes()
 
@@ -79,6 +81,10 @@ class HarnessParsedArguments:
     @property
     def reuse_first_build(self):
         return self.__reuse_first_build
+
+    @property
+    def reuse_build_from_id(self):
+        return self.__reuse_build_from_id
 
     @property
     def effective_command_line(self):

@@ -42,6 +42,7 @@ class Harness:
                  use_fireworks,
                  separate_build_stdio,
                  reuse_first_build,
+                 reuse_build_from_id,
                  shuffle=False):
         self.__config = config
         self.__tests = rgt_input_file.get_tests()
@@ -55,6 +56,7 @@ class Harness:
         self.__use_fireworks = use_fireworks
         self.__separate_build_stdio = separate_build_stdio
         self.__reuse_first_build = reuse_first_build
+        self.__reuse_build_from_id = reuse_build_from_id
         self.__shuffle = shuffle
         self.__formAppTests()
 
@@ -266,7 +268,8 @@ class Harness:
                                          self.__tasks,
                                          self.__stdout_stderr,
                                          self.__separate_build_stdio,
-                                         self.__reuse_first_build)
+                                         self.__reuse_first_build,
+                                         self.__reuse_build_from_id)
                 future_to_appname[future] = f'{subtest.getNameOfApplication()}.{subtest.getNameOfSubtest()}'
 
             # Log when all job tasks are initiated.

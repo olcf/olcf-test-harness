@@ -115,7 +115,8 @@ class subtest(base_apptest, apptest_layout):
                 test_display_lock=None,
                 stdout_stderr=None,
                 separate_build_stdio=False,
-                reuse_first_build=False):
+                reuse_first_build=False,
+                reuse_build_from_id=None):
         """
         :param list_of_string my_tasks: A list of the strings
                                         where each element is an application
@@ -170,7 +171,7 @@ class subtest(base_apptest, apptest_layout):
                     message = "Start of starting test."
                     self.logger.doInfoLogging(message)
 
-                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio, reuse_first_build=reuse_first_build)
+                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio, reuse_first_build=reuse_first_build, reuse_build_from_id=reuse_build_from_id)
 
                     message = "End of starting test"
                     self.logger.doInfoLogging(message)
@@ -483,7 +484,8 @@ class subtest(base_apptest, apptest_layout):
                     launchid,
                     stdout_stderr,
                     separate_build_stdio=False,
-                    reuse_first_build=False):
+                    reuse_first_build=False,
+                    reuse_build_from_id=None):
 
         # If the file kill file exits then remove it.
         pathtokillfile = self.get_path_to_kill_file()
@@ -500,6 +502,22 @@ class subtest(base_apptest, apptest_layout):
             if not 'RGT_REUSE_BUILD_FROM' in os.environ:
                 # Set a dummy value so that test_harness_driver.py knows to update the value
                 os.environ['RGT_REUSE_BUILD_FROM'] = 'SETME'
+
+        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        if reuse_build_from_id:
+            # Check if test_id exists in Run_Archive
+            target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
+            if not os.path.exists(target_build_runarchive_path):
+                self.logger.doCriticalLogging(f"Could not find test_id {reuse_build_from_id} in {target_build_runarchive_path}.")
+                return 1
+            # Check if build_directory from test_id still exists
+            target_builddir_path = os.path.realpath(os.path.join(target_build_runarchive_path, self.test_build_dirname))
+            if not os.path.exists(target_builddir_path):
+                self.logger.doCriticalLogging(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
+                return 1
+            # if all checks pass, we're good to set it
+            os.environ['RGT_REUSE_BUILD_FROM'] = target_builddir_path
+            self.logger.doInfoLogging(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
 
         pathtoscripts = self.get_path_to_scripts()
 
@@ -782,7 +800,8 @@ def do_application_tasks(launch_id,
                          tasks,
                          stdout_stderr,
                          separate_build_stdio=False,
-                         reuse_first_build=False):
+                         reuse_first_build=False,
+                         reuse_build_from_id=None):
     # this is the only print statement above INFO that identifies the app/test name
     app_test.logger.doErrorLogging(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
 
@@ -791,7 +810,8 @@ def do_application_tasks(launch_id,
                         tasks=tasks,
                         stdout_stderr=stdout_stderr,
                         separate_build_stdio=separate_build_stdio,
-                        reuse_first_build=reuse_first_build):
+                        reuse_first_build=reuse_first_build,
+                        reuse_build_from_id=reuse_build_from_id):
         return False
     return True
 
