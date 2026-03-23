@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from pathlib import Path
 from sys import stderr
+from typing import Union
 
 
 class LogLevel(IntEnum):
@@ -17,7 +18,7 @@ class OTHLogger(ABC):
     def __init__(
         self,
         name: str,
-        log_file_path: str | None,
+        log_file_path: Union[str, None],
         log_level: str,
         console_log_level: str,
         file_log_level: str,
@@ -71,7 +72,7 @@ class DefaultLogger(OTHLogger):
     def __init__(
         self,
         name: str,
-        log_file_path: str | None,
+        log_file_path: Union[str, None],
         log_level: str,
         console_log_level: str,
         file_log_level: str,
@@ -134,7 +135,7 @@ class LoguruLogger(OTHLogger):
     def __init__(
         self,
         name: str,
-        log_file_path: str | None,
+        log_file_path: Union[str, None],
         log_level: str,
         console_log_level: str,
         file_log_level: str,

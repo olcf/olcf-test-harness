@@ -1,17 +1,18 @@
 from os import getenv
+from typing import Union
 
 from .backends import OTHLogger, DefaultLogger, LoguruLogger
 
 
 def create_oth_logger(
     name: str,
-    log_file_path: str | None = None,
+    log_file_path: Union[str, None] = None,
     log_level: str = "CRITICAL",
     console_log_level: str = "CRITICAL",
     file_log_level: str = "CRITICAL",
 ) -> OTHLogger:
     backend: str = getenv("OTH_LOGGER_BACKEND")
-    logger: OTHLogger | None = None
+    logger: Union[OTHLogger, None] = None
 
     if backend == "loguru":
         try:
