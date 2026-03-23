@@ -10,7 +10,7 @@ from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
 from runtests import get_main_logger
 from libraries import rgt_utilities
 from libraries.harness_internal_config import harness_modes
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
@@ -38,12 +38,12 @@ class rgt_input_file:
         self.__logger = logger
 
         if not logger:
-            self.__logger = rgt_logger_factory.create_rgt_logger(
-                                logger_name='rgt_input_file_logger',
-                                fh_filepath=None,
-                                logger_threshold_log_level='DEBUG',
-                                fh_threshold_log_level='DEBUG',
-                                ch_threshold_log_level='DEBUG')
+            self.__logger = create_oth_logger(
+                "rgt_input_file_logger",
+                log_level="DEBUG",
+                console_log_level="DEBUG",
+                file_log_level="DEBUG"
+            )
             self.__logger.doInfoLogging("Created a logger in rgt_input_file, since one was not provided.")
 
         # Read the input file. Returns True upon successful read.

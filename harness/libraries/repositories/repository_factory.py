@@ -6,7 +6,7 @@ import subprocess
 # NCCS Test Harness package imports
 from libraries.repositories.single_app_git_repository import SingleApplicationGitRepository 
 from libraries.repositories.repository_factory_exceptions import TypeOfRepositoryError
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 class RepositoryFactory:
     """ This class is a factory that creates repository objects.
@@ -41,11 +41,12 @@ class RepositoryFactory:
         # Check if the repository string value in type_of_repository 
         # matches one of the supported types.  
         my_repository = None
-        repository_factory_log = rgt_logger_factory.create_rgt_logger(
-                                        logger_name=__name__,
-                                        logger_threshold_log_level='ERROR',
-                                        fh_threshold_log_level='ERROR',
-                                        ch_threshold_log_level='ERROR')
+        repository_factory_log = create_oth_logger(
+            __name__,
+            log_level="ERROR",
+            console_log_level="ERROR",
+            file_log_level="ERROR"
+        )
         try:
             if type_of_repository == "git":
                 my_repository = SingleApplicationGitRepository(repository_URL,

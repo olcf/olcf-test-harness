@@ -33,7 +33,7 @@ from libraries import rgt_utilities
 from libraries.config_file import rgt_config_file
 from libraries.status_file_factory import StatusFileFactory
 from libraries import status_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 from machine_types.machine_factory import MachineFactory
 from machine_types.base_machine import SetBuildRTEError
 
@@ -307,11 +307,12 @@ def test_harness_driver(argv=None):
         Vargs = my_parser.parse_args(argv)
 
     # Create a stdout-only logger for test_harness_driver.py
-    driver_logger = rgt_logger_factory.create_rgt_logger(
-                        logger_name='test_harness_driver_logger',
-                        logger_threshold_log_level='DEBUG',
-                        fh_threshold_log_level=Vargs.loglevel,
-                        ch_threshold_log_level=Vargs.loglevel)
+    driver_logger = create_oth_logger(
+        'test_harness_driver_logger',
+        log_level="DEBUG",
+        console_log_level=Vargs.loglevel,
+        file_log_level=Vargs.loglevel
+    )
 
     do_build = Vargs.build
     do_check = Vargs.check
@@ -391,12 +392,13 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    a_logger = rgt_logger_factory.create_rgt_logger(
-                                         logger_name=logger_name,
-                                         fh_filepath=fh_filepath,
-                                         logger_threshold_log_level=logger_threshold,
-                                         fh_threshold_log_level=fh_threshold_log_level,
-                                         ch_threshold_log_level=ch_threshold_log_level)
+    a_logger = create_oth_logger(
+        logger_name,
+        log_file_path=fh_filepath,
+        log_level=logger_threshold,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level
+    )
 
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,
@@ -463,12 +465,13 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    sfile_logger = rgt_logger_factory.create_rgt_logger(
-                                         logger_name=logger_name,
-                                         fh_filepath=fh_filepath,
-                                         logger_threshold_log_level=logger_threshold,
-                                         fh_threshold_log_level=fh_threshold_log_level,
-                                         ch_threshold_log_level=ch_threshold_log_level)
+    sfile_logger = create_oth_logger(
+        logger_name,
+        log_file_path=fh_filepath,
+        log_level=logger_threshold,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level
+    )
     path_to_status_file = apptest.get_path_to_status_file()
     jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file,
                                        logger=sfile_logger)

@@ -26,7 +26,7 @@ from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Add a comment to a specific test ID in the events database")
@@ -45,9 +45,12 @@ args = parser.parse_args()
 # Read in the <machine>.ini configuration file #################################
 # uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
 config = rgt_config_file()
-logger = rgt_logger_factory.create_rgt_logger(logger_name='add_comment_db',
-                fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+logger = create_oth_logger(
+    "add_comment_db",
+    log_level=args.loglevel,
+    console_log_level=args.loglevel,
+    file_log_level=args.loglevel
+)
 
 db_logger = create_rgt_db_logger(logger=logger)
 
@@ -61,7 +64,7 @@ for db in db_logger.enabled_backends:
     elif db.name == "kafka":
         continue
     else:
-        self.doErrorLogging(f"Unsupported db backend for add_comment_to_databases.py: {db.name}")
+        logger.doErrorLogging(f"Unsupported db backend for add_comment_to_databases.py: {db.name}")
         exit(1)
 
 if args.dry_run:

@@ -14,7 +14,7 @@ import random # for shuffle
 from libraries import apptest
 from libraries.subtest_factory import SubtestFactory
 from fundamental_types.rgt_state import RgtState
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 from machine_types.machine_factory import MachineFactory
 
 #
@@ -88,12 +88,13 @@ class Harness:
         # Log file always has a consistent log level. Console log level changes
         fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
         ch_threshold_log_level = self.__log_level
-        self.__myLogger = rgt_logger_factory.create_rgt_logger(
-                                     logger_name=logger_name,
-                                     fh_filepath=fh_filepath,
-                                     logger_threshold_log_level=logger_threshold,
-                                     fh_threshold_log_level=fh_threshold_log_level,
-                                     ch_threshold_log_level=ch_threshold_log_level)
+        self.__myLogger = create_oth_logger(
+            logger_name,
+            log_file_path=fh_filepath,
+            log_level=logger_threshold,
+            console_log_level=ch_threshold_log_level,
+            file_log_level=fh_threshold_log_level
+        )
 
     def __str__(self):
         message = ( "\n Local path to tests: " + self.__local_path_to_tests  + "\n"
@@ -239,11 +240,13 @@ class Harness:
                 # Log file always has a consistent log level. Console log level changes
                 fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
                 ch_threshold_log_level = self.__log_level
-                a_logger = rgt_logger_factory.create_rgt_logger(logger_name=logger_name,
-                                      fh_filepath=fh_filepath,
-                                      logger_threshold_log_level=logger_threshold,
-                                      fh_threshold_log_level=fh_threshold_log_level,
-                                      ch_threshold_log_level=ch_threshold_log_level)
+                a_logger = create_oth_logger(
+                    logger_name,
+                    log_file_path=fh_filepath,
+                    log_level=logger_threshold,
+                    console_log_level=ch_threshold_log_level,
+                    file_log_level=fh_threshold_log_level
+                )
 
                 subtest = SubtestFactory.make_subtest(name_of_application=appname,
                                                       name_of_subtest=testname,

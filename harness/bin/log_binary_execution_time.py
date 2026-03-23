@@ -8,7 +8,7 @@ from libraries.subtest_factory import SubtestFactory
 from libraries.status_file_factory import StatusFileFactory
 from libraries.status_file import StatusFile
 from libraries.layout_of_apps_directory import get_layout_from_scriptdir, get_path_to_logfile_from_scriptdir
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
 """str : The logging level for this module. """
@@ -77,12 +77,13 @@ def main():
     fh_threshold_log_level = "INFO"
     ch_threshold_log_level = "WARNING"
     fh_filepath = get_path_to_logfile_from_scriptdir(scriptsdir, unique_id)
-    a_logger = rgt_logger_factory.create_rgt_logger(
-                                         logger_name=get_logger_name(),
-                                         fh_filepath=fh_filepath,
-                                         logger_threshold_log_level=logger_threshold,
-                                         fh_threshold_log_level=fh_threshold_log_level,
-                                         ch_threshold_log_level=ch_threshold_log_level)
+    a_logger = create_oth_logger(
+        get_logger_name(),
+        log_file_path=fh_filepath,
+        log_level=logger_threshold,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level
+    )
     # Get status file
     (apps_root, app, test) = get_layout_from_scriptdir(scriptsdir)
     apptest = SubtestFactory.make_subtest(name_of_application=app,

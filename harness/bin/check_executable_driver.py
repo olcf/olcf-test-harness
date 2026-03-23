@@ -12,7 +12,7 @@ from libraries.apptest import subtest
 from libraries.subtest_factory import SubtestFactory 
 from libraries.layout_of_apps_directory import get_layout_from_runarchivedir
 from libraries.layout_of_apps_directory import get_path_to_logfile_from_runarchivedir
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 #
 # Author: Arnold Tharrington, Scientific Computing Group
@@ -99,12 +99,13 @@ def main():
     fh_threshold_log_level = "INFO"
     ch_threshold_log_level = "WARNING"
     fh_filepath = get_path_to_logfile_from_runarchivedir(path_to_results)
-    a_logger = rgt_logger_factory.create_rgt_logger(
-                                         logger_name=get_logger_name(),
-                                         fh_filepath=fh_filepath,
-                                         logger_threshold_log_level=logger_threshold,
-                                         fh_threshold_log_level=fh_threshold_log_level,
-                                         ch_threshold_log_level=ch_threshold_log_level)
+    a_logger = create_oth_logger(
+        get_logger_name(),
+        log_file_path=fh_filepath,
+        log_level=logger_threshold,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level
+    )
 
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,

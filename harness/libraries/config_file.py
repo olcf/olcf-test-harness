@@ -4,7 +4,7 @@ import configparser
 import logging
 
 from libraries.rgt_utilities import set_harness_environment
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 class rgt_config_file:
 
@@ -26,12 +26,12 @@ class rgt_config_file:
         self.__logger = logger
 
         if not logger:
-            self.__logger = rgt_logger_factory.create_rgt_logger(
-                                logger_name='rgt_config_file_logger',
-                                fh_filepath=None,
-                                logger_threshold_log_level='DEBUG',
-                                fh_threshold_log_level='DEBUG',
-                                ch_threshold_log_level='DEBUG')
+            self.__logger = create_oth_logger(
+                "rgt_config_file_logger",
+                log_level="DEBUG",
+                console_log_level="DEBUG",
+                file_log_level="DEBUG"
+            )
             self.__logger.doInfoLogging("Created a logger in rgt_config_file, since one was not provided.")
 
         if machinename != None:

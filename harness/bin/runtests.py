@@ -11,7 +11,7 @@ from libraries import input_files
 from libraries import regression_test
 from libraries import command_line
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 #
 # Authors: Arnold Tharrington, Wayne Joubert, Veronica Vergera, Mark Berrill, and Mike Brim
@@ -47,12 +47,13 @@ def get_main_logger():
     -------
     Logger
     """
-    return rgt_logger_factory.create_rgt_logger(
-                        logger_name=MAIN_LOGGER_NAME,
-                        fh_filepath=MAIN_LOGGER_FILEHANDLER_FILENAME,
-                        logger_threshold_log_level=MAIN_LOGGER_LEVEL,
-                        fh_threshold_log_level=MAIN_LOGGER_FILEHANDLER_LOGLEVEL,
-                        ch_threshold_log_level=MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL)
+    return create_oth_logger(
+        MAIN_LOGGER_NAME,
+        log_file_path=MAIN_LOGGER_FILEHANDLER_FILENAME,
+        log_level=MAIN_LOGGER_LEVEL,
+        console_log_level=MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL,
+        file_log_level=MAIN_LOGGER_FILEHANDLER_LOGLEVEL
+    )
 
 #-----------------------------------------------------
 # End of section we define the main logger and its   -

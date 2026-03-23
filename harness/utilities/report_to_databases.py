@@ -17,7 +17,7 @@ import re
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Post a custom metric to Databases")
@@ -34,9 +34,12 @@ args = parser.parse_args()
 # Read in the <machine>.ini configuration file #################################
 # uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
 config = rgt_config_file()
-logger = rgt_logger_factory.create_rgt_logger(logger_name='report_to_db',
-                fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+logger = create_oth_logger(
+    "report_to_db",
+    log_level=args.loglevel,
+    console_log_level=args.loglevel,
+    file_log_level=args.loglevel
+)
 
 db_logger = create_rgt_db_logger(logger=logger)
 

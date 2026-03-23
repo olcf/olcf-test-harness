@@ -22,7 +22,7 @@ from libraries.layout_of_apps_directory import apptest_layout
 # For interpreting status files
 from libraries.status_file import StatusFile, get_status_info_from_file
 # For logging
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 # define some constants
 KW_ALWAYS = 'ALWAYS'
@@ -126,9 +126,13 @@ args = parser.parse_args()
 
 fh_log_level = 'DEBUG' if args.loglevel == 'DEBUG' else 'INFO'
 
-logger = rgt_logger_factory.create_rgt_logger(logger_name='rgt_archive_test_utility',
-                fh_filepath=args.logfile, logger_threshold_log_level=fh_log_level,
-                fh_threshold_log_level=fh_log_level, ch_threshold_log_level=args.loglevel)
+logger = create_oth_logger(
+    "rgt_archive_test_utility",
+    log_file_path=args.logfile,
+    log_level=fh_log_level,
+    console_log_level=args.loglevel,
+    file_log_level=fh_log_level
+)
 
 logger.doCriticalLogging(f"Command-line invocation: {' '.join(sys.argv)}")
 

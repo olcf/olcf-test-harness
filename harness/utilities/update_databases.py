@@ -39,7 +39,7 @@ except ImportError as e:
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.oth_loggers import create_oth_logger
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness runs in database backends using event and Slurm data")
@@ -60,9 +60,12 @@ parser.add_argument('--kafka-grace-period', type=int, default=1800, action='stor
 args = parser.parse_args()
 
 # Create rgt_logger
-logger = rgt_logger_factory.create_rgt_logger(logger_name='update_db',
-                fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+logger = create_oth_logger(
+    "update_db",
+    log_level=args.loglevel,
+    console_log_level=args.loglevel,
+    file_log_level=args.loglevel
+)
 
 # Read in the <machine>.ini configuration file #################################
 # uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
