@@ -33,7 +33,7 @@ class OTHLogger(ABC):
         # create the log file's parent directory
         if log_file_path:
             self._log_file_path: Path = Path(log_file_path)
-            self._log_file_path.parent.mkdir(exist_ok=True)
+            self._log_file_path.parent.mkdir(parents=True, exist_ok=True)
 
     @property
     def log_level(self) -> str:
