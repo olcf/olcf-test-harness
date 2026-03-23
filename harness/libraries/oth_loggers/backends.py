@@ -40,7 +40,7 @@ class OTHLogger(ABC):
         return self._log_level
 
     @property
-    def consolee_log_level(self) -> str:
+    def console_log_level(self) -> str:
         return self._console_log_level
 
     @property

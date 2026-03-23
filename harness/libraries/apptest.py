@@ -493,7 +493,7 @@ class subtest(base_apptest, apptest_layout):
             os.remove(pathtokillfile)
 
         # This will automatically build & submit
-        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.get_ch_threshold_level()}"
+        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.console_log_level}"
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
  
