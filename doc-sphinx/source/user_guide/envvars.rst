@@ -157,3 +157,6 @@ These are grouped below by extension. The general naming convention is ``RGT_<ex
     RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
                                 database logging extension. Set to "none" (not case-sensitive) to disable.
 
+    # Logging variables
+    OTH_LOGGING_BACKEND         If set to "loguru" will enable the loguru logging backend. All other values will default
+                                to the Python logging module.
