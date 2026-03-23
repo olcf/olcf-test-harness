@@ -32,7 +32,7 @@ def create_oth_logger(
                 file_log_level,
             )
             logger.doWarningLogging(
-                "The 'loguru' Python module is missing. Falling back to the default Python logger."
+                "Failed to import 'loguru'. Falling back to the default Python logger."
             )
 
     else:
