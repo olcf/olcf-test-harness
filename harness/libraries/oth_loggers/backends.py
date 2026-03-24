@@ -164,9 +164,11 @@ class LoguruLogger(OTHLogger):
             self.__class__.current_loggers[self._name] = self._log_level
 
             # console handler
+            ch_fmt_str = "<level>{message}</level>"
             self._logger.add(
                 stderr,
                 level=self._console_log_level,
+                format=ch_fmt_str,
                 filter=self._should_log,
             )
 
