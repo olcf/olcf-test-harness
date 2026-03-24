@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from pathlib import Path
 from sys import stderr
-from typing import Union
+from typing import Dict, Union
 
 
 class LogLevel(IntEnum):
@@ -130,7 +130,7 @@ class DefaultLogger(OTHLogger):
 
 class LoguruLogger(OTHLogger):
     # the dict[name, log_level]
-    current_loggers: dict[str, str] = dict()
+    current_loggers: Dict[str, str] = dict()
 
     def __init__(
         self,
