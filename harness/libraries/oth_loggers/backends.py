@@ -164,30 +164,17 @@ class LoguruLogger(OTHLogger):
             self.__class__.current_loggers[self._name] = self._log_level
 
             # console handler
-            ch_fmt_str = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>"
-            ch_fmt_str += " | <level>{level: <8}</level>"
-            ch_fmt_str += " | <cyan>{extra[name]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan>"
-            ch_fmt_str += " - <level>{message}</level>"
             self._logger.add(
                 stderr,
                 level=self._console_log_level,
-                format=ch_fmt_str,
                 filter=self._should_log,
             )
 
             # file handler
             if log_file_path:
-                fh_fmt_str = "-----\n"
-                fh_fmt_str += "Time: {time:YYYY-MM-DD HH:mm:ss,SSS}\n"
-                fh_fmt_str += "Logger: {extra[name]}\n"
-                fh_fmt_str += "Loglevel: {level}\n"
-                fh_fmt_str += "Message:\n"
-                fh_fmt_str += "{message}\n"
-                fh_fmt_str += "-----\n"
                 self._logger.add(
                     self._log_file_path,
                     level=self._file_log_level,
-                    format=fh_fmt_str,
                     filter=self._should_log,
                 )
 
