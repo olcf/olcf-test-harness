@@ -324,21 +324,24 @@ class RgtDatabaseLogger:
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         kafka_loaded = False
-        try:
-            # Can fail for a number of reasons. Mostly if `requests` module is not installed
-            from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-            influxdb_loaded = True
-        except ImportError as e:
-            self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}")
-            pass
 
-        try:
-            # Can fail for a number of reasons. Mostly if `requests` module is not installed
-            from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
-            kafka_loaded = True
-        except ImportError as e:
-            self.logger.doErrorLogging(f"Failed to import Kafka backend: {e}")
-            pass
+        if any(k.startswith('RGT_INFLUX') for k in os.environ):
+            try:
+                # Can fail for a number of reasons. Mostly if `requests` module is not installed
+                from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+                influxdb_loaded = True
+            except ImportError as e:
+                self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}")
+                pass
+
+        if any(k.startswith('RGT_KAFKA') for k in os.environ):
+            try:
+                # Can fail for a number of reasons. Mostly if `requests` module is not installed
+                from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+                kafka_loaded = True
+            except ImportError as e:
+                self.logger.doErrorLogging(f"Failed to import Kafka backend: {e}")
+                pass
 
         if influxdb_loaded and not 'influxdb' in self.disabled_backends \
                 and ( InfluxDBLogger.kw['uri'] in os.environ and InfluxDBLogger.kw['token'] in os.environ ):
