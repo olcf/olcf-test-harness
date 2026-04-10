@@ -71,7 +71,7 @@ def make_batch_script_for_linux(a_machine):
 
     if str(a_machine.test_config.get_use_batch_template()) == '0':
         a_machine.logger.doInfoLogging(f"use_batch_template = 0 is set in test configuration file, skipping batch script generation.")
-        return
+        return True
 
     # Log that our execution location.
     message = "Making batch script for {} using file {}.".format(a_machine.machine_name,a_machine.get_scheduler_template_file_name())
