@@ -147,6 +147,7 @@ class RgtTest():
             "report_cmd" :         {"required": True, "type": str},
             "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
             "total_processes" :    {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
+            "use_batch_template":  {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
             "walltime" :           {"required": True, "type": str},
         }
 
@@ -392,6 +393,9 @@ class RgtTest():
 
     def get_project(self):
         return self._get_builtin_param("project_id")
+
+    def get_use_batch_template(self):
+        return self._get_builtin_param("use_batch_template")
 
     def get_walltime(self):
         return self._get_builtin_param("walltime")
