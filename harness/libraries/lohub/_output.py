@@ -11,14 +11,16 @@ class OutputLevel(str, Enum):
 
 
 class Output(ABC):
-    def __init__(self, *args, output_level: str = "", colorize: bool = False, **kwargs):
+    def __init__(
+        self, *args, output_level: str = "", colorize_output: bool = False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         try:
             self._output_level: OutputLevel = OutputLevel(output_level.upper())
         except ValueError:
             raise ValueError(f"'{output_level}' is not a valid output level")
-        self._colorize: bool = colorize
+        self._colorize_output: bool = colorize_output
 
     @property
     def output_level(self) -> str:
@@ -43,7 +45,7 @@ class Output(ABC):
 
 class DefaultOutput(Output):
     def _colorize_message(self, message: str) -> str:
-        return f"\033[1;34m{message}\033[0m" if self._colorize else message
+        return f"\033[1;34m{message}\033[0m" if self._colorize_output else message
 
     def print(self, message: str) -> None:
         print(self._colorize_message(message))
