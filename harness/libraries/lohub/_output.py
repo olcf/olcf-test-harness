@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
-from enum import StrEnum
+from enum import Enum
 
 
-class OutputLevel(StrEnum):
+# no StrEnum in Python 3.6
+class OutputLevel(str, Enum):
     NOTSET = ""
-    V = "v"
-    VV = "vv"
-    VVV = "vvv"
+    V = "V"
+    VV = "VV"
+    VVV = "VVV"
 
 
 class Output(ABC):
@@ -14,7 +15,7 @@ class Output(ABC):
         super().__init__(*args, **kwargs)
 
         try:
-            self._output_level: OutputLevel = OutputLevel(output_level)
+            self._output_level: OutputLevel = OutputLevel(output_level.upper())
         except ValueError:
             raise ValueError(f"'{output_level}' is not a valid output level")
         self._colorize: bool = colorize
