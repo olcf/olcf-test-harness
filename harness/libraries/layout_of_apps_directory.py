@@ -311,6 +311,7 @@ class apptest_layout:
             try_symlink(os.environ['RGT_REUSE_BUILD_FROM'], os.path.join(ws_dir, apptest_layout.test_build_dirname))
         try_symlink(build_dir, os.path.join(ra_dir, apptest_layout.test_build_dirname))
         try_symlink(run_dir, os.path.join(ra_dir, apptest_layout.test_run_dirname))
+        try_symlink(st_dir, os.path.join(ra_dir, apptest_layout.test_status_dirname))
 
     def create_test_workspace(self, path_to_workspace):
         """
