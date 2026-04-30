@@ -29,16 +29,6 @@ are used for replacements of patterns in template files.
 The [EnvVars] section is optional
 The section contains keys-value pairs for setting environmental varibles.
 
-The [RuntimeEnvironmentCommands] section optional. This section contains
-key-value entries for where the values ar commands to be run that set the 
-runtime environment for each harness task. 
-The only permmited keys are 
-
-    * "build_rte_cmd" - key for the command to set the rte for the build task.
-    * "submit_rte_cmd" - key for the command to set the rte for the submit task.
-    * "check_rte_cmd" - key for the command to set the rte for the check task.
-    * "report_rte_cmd" - key for the command to set the rte for the report task.
-    * "all_rte_cmd" - key for the command to set the rte for the all tasks.
 """
 
 #
@@ -66,13 +56,6 @@ from libraries import rgt_utilities
 class RgtTest():
     """This class is the abstraction of regression test input file."""
 
-    RUNTIME_ENVIRONMENT_SECTION_KEYS = {"build" : 'build_rte_cmd',
-                                        "submit" : 'submit_rte_cmd',
-                                        "check" : 'check_rte_cmd',
-                                        "report" : 'report_rte_cmd',
-                                        "all"    : 'all_rte_cmd'}
-    """Valid key values for the runtime environment section in the rgt_test_input.ini file."""
-
     HARNESS_SECTION_KEYS = {"application_test_results_dir" : 'results_dir',
                             "application_test_work_dir" : 'working_dir',
                             "application_test_build_dir" : 'build_dir',
@@ -82,7 +65,7 @@ class RgtTest():
 
 
     OBTAIN_FROM_ENVIRONMENT="<obtain_from_environment>"
-    """str: The string value for an INI entry that indicates to get the value from the shell environment."""
+    """str: The string value for an entry that indicates to get the value from the shell environment."""
 
     def __init__(self, filename,logger=None):
         """ The constructor of the RgtTest class.
@@ -121,17 +104,6 @@ class RgtTest():
         input file.
         """
 
-        self._runtime_environment_params = {}
-        """ A dictionary: A dictionary of commands to set the runtime environment.
-            
-            The keys of the dictionary are strings, and the corrsponding values
-            specify a command. See the class variable RUNTIME_ENVIRONMENT_KEYS 
-            for valid keys.
-
-            For example, self._runtime_environment_params['build_rte_cmd'] is
-            the command to set the runtime environment for building the binary.
-         """
-
         self._harness_params = {}
         """A dictionary: A dictionary of keys and values needed by the harness
 
@@ -145,16 +117,12 @@ class RgtTest():
             "batch_queue" :        {"required": False, "type": str },
             "build_cmd" :          {"required": True, "type": str},
             "check_cmd":           {"required": True, "type": str},
-            "executable_path" :    {"required": False, "type": str},
             "job_name" :           {"required": True, "type": str},
             "max_submissions" :    {"required": False, "type": int, "valid": lambda x : True if (int(x) >= 1 or int(x) == -1) else False},
             "nodes" :              {"required": True, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
-            "processes_per_node" : {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
             "project_id" :         {"required": False, "type": str},
             "report_cmd" :         {"required": True, "type": str},
-            "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
-            "total_processes" :    {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
-            "walltime" :           {"required": True, "type": str},
+            "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False}
         }
 
     def __str__(self):
