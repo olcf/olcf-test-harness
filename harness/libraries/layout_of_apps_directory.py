@@ -27,6 +27,7 @@ class apptest_layout:
     app_info_filename = 'application_info.txt'
     test_info_filename = 'test_info.txt'
     test_input_ini_filename = 'rgt_test_input.ini'
+    test_input_yaml_filename = 'rgt_test_input.yaml'
     test_kill_filename = '.kill_test'
     test_rc_filename = '.testrc'
     test_status_filename = 'rgt_status.txt'
@@ -73,6 +74,7 @@ class apptest_layout:
         'runarchive_dir'  : os.path.join("${pdir}", "${app}", "${test}", test_run_archive_dirname, "${id}"),
         'scripts_dir'     : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname),
         'test_input_ini'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_ini_filename),
+        'test_input_yaml'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_yaml_filename),
         'kill_file'       : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_kill_filename),
         'status_dir'      : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}"),
         'job_id_file'     : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}", job_id_filename),
@@ -126,7 +128,8 @@ class apptest_layout:
             self.__logger.doErrorLogging(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the an rgt_test_ini.ini file exists 
-        if not (os.path.exists(self.__apptest_layout['test_input_ini'])):
+        if not (os.path.exists(self.__apptest_layout['test_input_ini']) or \
+                os.path.exists(self.__apptest_layout['test_input_yaml'])):
             self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
             return False
         return True
@@ -136,10 +139,14 @@ class apptest_layout:
         return self.__testid
 
     @property
-    def path_of_test_input_file(self):
-        """Returns the path to the subtest INI input file. """
+    def path_of_test_input_file_ini(self):
+        """Returns the path to the subtest input file. """
         return self.__apptest_layout['test_input_ini']
 
+    @property
+    def path_of_test_input_file_yaml(self):
+        """Returns the path to the subtest input file. """
+        return self.__apptest_layout['test_input_yaml']
 
     @property
     def path_to_logfile(self) :

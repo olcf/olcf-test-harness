@@ -25,6 +25,16 @@ class Linux_x86_64(BaseMachine):
                  apptest=None,
                  separate_build_stdio=False):
 
+        # process test input file. The subtest knows the path to the
+        # the test input file.
+        path_to_test_input_file = apptest.path_of_test_input_file_ini
+        using_yaml = False
+        # if ini does not exist, try yaml
+        if not os.path.isfile(path_to_test_input_file):
+            path_to_test_input_file = apptest.path_of_test_input_file_yaml
+            using_yaml = True
+
+        # Now tell the base machine if it needs a jinja template or not
         BaseMachine.__init__(self,
                              name=name,
                              scheduler_type=scheduler,
@@ -32,11 +42,9 @@ class Linux_x86_64(BaseMachine):
                              numSockets=numSocketsPerNode,
                              numCoresPerSocket=numCoresPerSocket,
                              apptest=apptest,
-                             separate_build_stdio=separate_build_stdio)
+                             separate_build_stdio=separate_build_stdio,
+                             use_jinja2=using_yaml)
 
-        # process test input file. The subtest knows the path to the
-        # the test input file.
-        path_to_test_input_file = apptest.path_of_test_input_file
         self._rgt_test = RgtTest(path_to_test_input_file,logger=self.logger)
         self._rgt_test.read_input_file()
 

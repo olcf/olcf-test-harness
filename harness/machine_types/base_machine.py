@@ -7,6 +7,7 @@
 
 # Python imports
 from abc import abstractmethod, ABCMeta
+from jinja2 import Template
 from pathlib import Path
 import os
 import shutil
@@ -44,11 +45,11 @@ class BaseMachine(metaclass=ABCMeta):
     # The constructor of class base_machine.
     def __init__(self, name, scheduler_type,
                  numNodes, numSockets, numCoresPerSocket,
-                 apptest, separate_build_stdio=False):
+                 apptest, separate_build_stdio=False, use_jinja2=False):
 
         self.__name = name
 
-        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger)
+        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger, use_jinja2=use_jinja2)
         """An object of type BaseScheduler : This object is the job resource scheduler. See the
            classs SchedulerFactory for more details."""
 

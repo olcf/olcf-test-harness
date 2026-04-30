@@ -13,6 +13,10 @@ import subprocess
 import shlex
 import time
 
+from pathlib import Path
+from jinja2 import Template, TemplateError
+
+
 class LinuxEnvRegxp:
     """
     When one does an env | less on Linux, we get results similar to the following:
@@ -83,39 +87,74 @@ def make_batch_script_for_linux(a_machine):
     message = f"The batch scheduler template file is {batch_template_file}."
     a_machine.logger.doInfoLogging(message)
     
-    # Get batch job template lines
-    try :
-        with open(batch_template_file, "r") as templatefileobj:
-            templatelines = templatefileobj.readlines()
-    except OSError as err:
-        bstatus = False
-        message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
-                    f"Handling error: {err}\n" )
-        a_machine.logger.doCriticalLogging(message)
-    
-    if bstatus:
-        message = f"Completed reading lines of the batch template file {batch_template_file}."
-        a_machine.logger.doInfoLogging(message)
-
-        # Create test batch job script in run archive directory
+    if batch_template_file.endswith('ini'):
+        # Get batch job template lines
         try :
-            with open(batch_file_path, "w") as batch_job:
-                # Replace all the wildcards in the batch job template with the values in
-                # the test config
-                test_replacements = a_machine.test_config.get_test_replacements()
-                for record in templatelines:
-                    for (replace_key,val) in test_replacements.items():
-                        re_tmp = re.compile(replace_key)
-                        record = re_tmp.sub(val, record)
-                    batch_job.write(record)
+            with open(batch_template_file, "r") as templatefileobj:
+                templatelines = templatefileobj.readlines()
         except OSError as err:
             bstatus = False
-            message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
+            message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
                         f"Handling error: {err}\n" )
             a_machine.logger.doCriticalLogging(message)
+    
+        if bstatus:
+            message = f"Completed reading lines of the batch template file {batch_template_file}."
+            a_machine.logger.doInfoLogging(message)
+
+            # Create test batch job script in run archive directory
+            try :
+                with open(batch_file_path, "w") as batch_job:
+                    # Replace all the wildcards in the batch job template with the values in
+                    # the test config
+                    test_replacements = a_machine.test_config.get_test_replacements()
+                    for record in templatelines:
+                        for (replace_key,val) in test_replacements.items():
+                            re_tmp = re.compile(replace_key)
+                            record = re_tmp.sub(val, record)
+                        batch_job.write(record)
+            except OSError as err:
+                bstatus = False
+                message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
+                            f"Handling error: {err}\n" )
+                a_machine.logger.doCriticalLogging(message)
+
+            message = f"Completed regex substitutions."
+            a_machine.logger.doInfoLogging(message)
+    elif batch_template_file.endswith('j2'):
+        try:
+            tpl_text = Path(batch_template_file).read_text(encoding="utf-8")
+            repl_dict = a_machine.test_config.get_test_replacements()
+            rendered = Template(tpl_text).render(**repl_dict)
+            Path(batch_file_path).write_text(rendered, encoding="utf-8")
+            bstatus = True
+        except FileNotFoundError as e:
+            a_machine.logger.doCriticalLogging(f"Error: template file not found: {e.filename}")
+            bstatus = False
+            pass
+        except PermissionError as e:
+            a_machine.logger.doCriticalLogging(f"Error: permission denied accessing '{e.filename}'")
+            bstatus = False
+            pass
+        except TemplateError as e:
+            a_machine.logger.doCriticalLogging(f"Error: Jinja2 template/rendering failed: {e}")
+            bstatus = False
+            pass
+        except OSError as e:
+            a_machine.logger.doCriticalLogging(f"Error: I/O error while reading/writing files: {e}")
+            bstatus = False
+            pass
+        except Exception as e:
+            a_machine.logger.doCriticalLogging(f"Error: unexpected failure: {e}")
+            bstatus = False
+            pass
+    
 
         message = f"Completed regex substitutions."
         a_machine.logger.doInfoLogging(message)
+    else:
+        bstatus = False
+        a_machine.logger.doCriticalLogging(f"Batch template file has unknown extension: {batch_template_file}.")
 
     return bstatus
 

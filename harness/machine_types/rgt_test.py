@@ -49,6 +49,14 @@ The only permmited keys are
 import configparser
 import os
 import sys
+try:
+    # YAML & Jinja2 must be used together
+    import yaml
+    from jinja2 import Template
+    yaml_disabled = False
+except ModuleNotFoundError:
+    yaml_disabled = True
+    pass
 
 # Harness imports
 from libraries.rgt_utilities import rgt_variable_name_modification
@@ -133,7 +141,6 @@ class RgtTest():
 
         # dict of builtin keys - value indicates whether it is required
         self.__builtin_keys = {
-
             "batch_filename" :     {"required": True, "type": str },
             "batch_queue" :        {"required": False, "type": str },
             "build_cmd" :          {"required": True, "type": str},
@@ -338,18 +345,19 @@ class RgtTest():
                 key found in the Replacements section of application-test input file
                 rgt_test_input.ini.
         """
+        def name_mangle(yaml_origin, name):
+            return name if yaml_origin else f'__{name}__'
+
         replacements = {}
+        is_yaml = self.__inputfile.endswith('yaml')
         for (k,v) in (self.builtin_parameters).items():
-            replace_key = '__' + k + '__'
-            replacements[replace_key] = v
+            replacements[name_mangle(is_yaml, k)] = v
 
         for (k,v) in (self.user_parameters).items():
-            replace_key = '__' + k + '__'
-            replacements[replace_key] = v
+            replacements[name_mangle(is_yaml, k)] = v
 
         for (k,v) in (self.harness_parameters).items():
-            replace_key = '__' + k + '__'
-            replacements[replace_key] = v
+            replacements[name_mangle(is_yaml, k)] = v
 
         return replacements
 
@@ -422,7 +430,16 @@ class RgtTest():
         """
         try:
             if os.path.isfile(self.test_input_filename):
-                self._read_rgt_input_ini()
+                if self.test_input_filename.endswith('ini'):
+                    self._read_rgt_input_ini()
+                elif self.test_input_filename.endswith('yaml'):
+                    if yaml_disabled:
+                        self.__logger.doCriticalLogging("import yaml failed, YAML test input file cannot be loaded. Please pip install pyyaml in the current Python environment.")
+                        exit(1)
+                    self._read_rgt_input_yaml()
+                else:
+                    error_message = "File type of input file {} not supported (expected yaml or ini).".format(self.test_input_filename)
+                    raise ErrorRgtTestInputFileNotFound(error_message)
                 self._reconcile_with_shell_environment_variables()
                 self._check_parameters()
                 self._print_test_parameters()
@@ -506,6 +523,26 @@ class RgtTest():
             runtime_env_commands = dict() 
         self.runtime_environment_params = runtime_env_commands 
 
+    def _read_rgt_input_yaml(self):
+        with open(self.test_input_filename, 'r') as file:
+            rgt_test_config = yaml.safe_load(file)
+
+        self._update_replacement_parameters(rgt_test_config.items())
+
+        # Update environment if either batch_queue or project_id is set
+        env_dict = {}
+        bq = self.get_batch_queue()
+        if bq:
+            env_dict['batch_queue'] = bq
+        proj = self.get_project()
+        if proj:
+            env_dict['project_id'] = proj
+        rgt_utilities.set_harness_environment(env_dict, override=True)
+
+        # EnvVars and RuntimeEnvironmentParams are not supported in YAML format
+        self.test_environment = dict()
+        self.runtime_environment_params = dict()
+
     def _print_test_parameters(self):
         self._print_builtin_parameters()
         self.print_user_parameters()
@@ -563,7 +600,8 @@ class RgtTest():
             if 'type' in params and k in self.builtin_parameters:
                 # All params are strings, so no need to test that
                 # Check int
-                if params['type'] is int and not self.builtin_parameters[k].lstrip("-").isdigit():
+                if params['type'] is int and not (isinstance(self.builtin_parameters[k],int) or \
+                        self.builtin_parameters[k].lstrip("-").isdigit()):
                     valid_type = False # Need to reference in lambda function
                     error_message += "ERROR: test input parameter {} is not type {}!\n".format(k, str(params['type']))
 
