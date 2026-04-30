@@ -533,9 +533,6 @@ class subtest(base_apptest, apptest_layout):
             message = ( "The command '{cmd}' has exited with a failure.\n"
                         "The exit return value is {value}.\n").format(cmd=starttestcomand,value=exit_status)
             self.logger.doCriticalLogging(message)
-
-
-            string1 = "Command failed: " + starttestcomand
             return 1
         else:
             message =  "'{cmd}' has executed sucessfully.\n".format(cmd=starttestcomand)

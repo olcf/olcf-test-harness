@@ -164,14 +164,22 @@ def auto_generated_scripts(harness_config,
     build_exit_value = 0
     if actions['build']:
         # Build the executable for this test on the specified machine
+        scripts_dir = os.getcwd()
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
         try:
             build_exit_value = mymachine.build_executable()
         except KeyboardInterrupt:
-            a_logger.doCriticalLogging(f"Detected CTRL+C, logging build_end.")
-            jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, 21)
-        finally:
-            jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+            a_logger.doCriticalLogging(f"Detected CTRL+C, aborting build.")
+            os.chdir(scripts_dir)
+            build_exit_value = 21
+            pass
+        except Exception:
+            a_logger.doCriticalLogging(f"Exception generated during build, aborting test launch.")
+            os.chdir(scripts_dir)
+            build_exit_value = 1
+            pass
+
+        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
     #-----------------------------------------------------
     # In this section we run the the binary.             -
     #                                                    -
