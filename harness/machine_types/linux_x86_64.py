@@ -58,18 +58,6 @@ class Linux_x86_64(BaseMachine):
         self._rgt_test.harness_parameters.update(harness_parameters)
 
     @property
-    def build_runtime_environment_command_file(self):
-        return self.test_config.build_runtime_environment_command_file
-
-    @property
-    def submit_runtime_environment_command_file(self):
-        return self.test_config.submit_runtime_environment_command_file
-
-    @property
-    def check_runtime_environment_command_file(self):
-        return self.test_config.check_runtime_environment_command_file
-
-    @property
     def test_config(self):
         return self._rgt_test
 

@@ -105,21 +105,6 @@ class BaseMachine(metaclass=ABCMeta):
     def test_config(self):
         return
 
-    @property
-    @abstractmethod
-    def build_runtime_environment_command_file(self):
-        return
-
-    @property
-    @abstractmethod
-    def submit_runtime_environment_command_file(self):
-        return
-
-    @property
-    @abstractmethod
-    def check_runtime_environment_command_file(self):
-        return
-
     def isTestCycleComplete(self,stest):
         """Checks if the subtest has completed its cycle.
         Parameters
@@ -186,19 +171,7 @@ class BaseMachine(metaclass=ABCMeta):
         message = f"The initial directory is {currentdir}"
         self.logger.doInfoLogging(message)
 
-        # Get the environment using the submit runtime environment file.
         new_env = None
-        filename = self.submit_runtime_environment_command_file
-
-        try:
-            if filename != "":
-                message = f"The submit runtime environmental file is {filename}."
-                self.logger.doInfoLogging(message)
-                new_env = linux_utilities.get_new_environment(self,filename)
-        except SetBuildRTEError as error: 
-            message = f"Unable to set the submit runtime environment."
-            self.logger.doCriticalLogging(message)
-
         exit_status = linux_utilities.submit_batch_script(self,new_env)
 
         if exit_status != 0:
@@ -298,17 +271,6 @@ class BaseMachine(metaclass=ABCMeta):
 
         self.logger.doInfoLogging(f"Copied source to build directory.")
 
-        # Get the environment using the build runtime environment file.
-        new_env = None
-        filename = self.build_runtime_environment_command_file
-
-        if filename != "":
-            self.logger.doInfoLogging(f"The build runtime environmental file is {filename}.")
-            new_env = linux_utilities.get_new_environment(self,filename)
-            message = f"The new build environment is as follows:\n"
-            message += str(new_env)
-            self.logger.doInfoLogging(message)
-
         # We now change directories to the build directory.
         os.chdir(path_to_build_directory)
 
@@ -316,6 +278,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doInfoLogging(message)
 
         # We run the build command.
+        new_env = None
         exit_status = self._build_executable(new_env)
 
         message = f"The build exit status is {exit_status}."
@@ -346,17 +309,6 @@ class BaseMachine(metaclass=ABCMeta):
         currentdir = os.getcwd()
         runarchive_dir = self.apptest.get_path_to_runarchive()
 
-        # Get the environment using the check runtime environment file.
-        new_env = None
-        filename = self.check_runtime_environment_command_file
-        try:
-            if filename != "":
-                message = f"The check runtime environmental file is {filename}."
-                new_env = linux_utilities.get_new_environment(self,filename)
-        except SetBuildRTEError as error: 
-            message = f"Unable to set the check runtime environment."
-            self.logger.doCriticalLogging(message)
-
         # We now change to the runarchive directory.
         os.chdir(runarchive_dir)
 
@@ -364,6 +316,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doInfoLogging(message)
 
         # We now run the check command.
+        new_env = None
         check_status = linux_utilities.check_executable(self,new_env)
 
         self._write_check_exit_status(check_status)
@@ -509,23 +462,6 @@ class BaseMachine(metaclass=ABCMeta):
 class BaseMachineError(Exception):
     """Base class for exceptions in this module"""
     pass
-
-class SetBuildRTEError(BaseMachineError):
-    """Exception raised for errors in setting the build runtime environment."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-    
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
 
 if __name__ == "__main__":
     print("This is the BaseMachine class!")

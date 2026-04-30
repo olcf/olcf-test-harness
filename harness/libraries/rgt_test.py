@@ -180,56 +180,6 @@ class RgtTest():
         for (k,v) in (self.user_parameters).items():
             self.__logger.doInfoLogging(f'{k}={v}')
 
-    # Methods to manage runtime environment commands
-    @property
-    def runtime_environment_params(self):
-        """dict: The dictionary of key-values for setting the runtime environment commands."""
-        return self._runtime_environment_params
-
-    @runtime_environment_params.setter
-    def runtime_environment_params(self,params):
-        """Sets the commands for the setting various runtime environment commands.
-
-        Parameters
-        ----------
-        params
-            A dictionary where the keys and values are strings.
-        """
-        for (key,val) in params.items():
-            if key in self.RUNTIME_ENVIRONMENT_SECTION_KEYS.values():
-                self._runtime_environment_params[key] = val
-            else:
-                # To do is throw an exception if an invalid key,value is assigned.
-                pass
-
-    @property
-    def build_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for building the binary."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["build"]
-        command = self._get_rte_param(key)
-        return command
-
-    @property
-    def submit_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for submitting the batch script."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["submit"]
-        command = self._get_rte_param(key)
-        return command
-
-    @property
-    def check_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for checking the test results."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["check"]
-        command = self._get_rte_param(key)
-        return command
-
-    @property
-    def report_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for reporting the test results."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["report"]
-        command = self._get_rte_param(key)
-        return command
-
     #
     # Methods to retrieve full test dictionaries
     #
@@ -354,9 +304,6 @@ class RgtTest():
     def get_report_command(self):
         return self._get_builtin_param("report_cmd")
 
-    def get_executable(self):
-        return self._get_builtin_param("executable_path")
-
     def get_jobname(self):
         return self._get_builtin_param("job_name")
 
@@ -368,23 +315,6 @@ class RgtTest():
 
     def get_project(self):
         return self._get_builtin_param("project_id")
-
-    def get_walltime(self):
-        return self._get_builtin_param("walltime")
-
-    def get_total_processes(self):
-        val = self._get_builtin_param("total_processes")
-        if not val:
-            return str(0)
-        else:
-            return val
-
-    def get_processes_per_node(self):
-        val = self._get_builtin_param("processes_per_node")
-        if not val:
-            return str(0)
-        else:
-            return val
 
     #
     # Input file readers
@@ -432,12 +362,6 @@ class RgtTest():
     def _is_builtin_param(self, key):
         return key in self.__builtin_keys
 
-    def _get_rte_param(self,key):
-        command = ""
-        if key in self.runtime_environment_params:
-            command = self.runtime_environment_params[key]
-        return command
-
     def _set_builtin_param(self, key, val, warn=True):
         if self._is_builtin_param(key):
             self.__builtin_params[key] = val
@@ -446,9 +370,6 @@ class RgtTest():
             if warn:
                 self.__logger.doWarningLogging("WARNING: Ignoring invalid built-in parameter key {}".format(key))
             return False
-
-    def _is_rte_param(self,key):
-        return key in self.RUNTIME_ENVIRONMENT_SECTION_KEYS.values()
 
     def _update_replacement_parameters(self,params_view):
         """Updates the appropiate replacement parameter dictionary as required."""
@@ -482,14 +403,6 @@ class RgtTest():
         if 'EnvVars' in rgt_test_config:
             env_vars = rgt_test_config['EnvVars']
             self.test_environment = env_vars
-
-        # We now extract the runtime environment commands.
-        rte_section = 'RuntimeEnvironmentCommands'
-        if rte_section in rgt_test_config:
-            runtime_env_commands = rgt_test_config[rte_section]
-        else:
-            runtime_env_commands = dict() 
-        self.runtime_environment_params = runtime_env_commands 
 
     def _read_rgt_input_yaml(self):
         with open(self.test_input_filename, 'r') as file:

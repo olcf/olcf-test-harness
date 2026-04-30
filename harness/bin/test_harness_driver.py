@@ -40,7 +40,6 @@ from libraries.status_file_factory import StatusFileFactory
 from libraries import status_file
 from libraries.rgt_loggers import rgt_logger_factory
 from machine_types.machine_factory import MachineFactory
-from machine_types.base_machine import SetBuildRTEError
 
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
 """str : The logging level for this module. """
@@ -168,10 +167,9 @@ def auto_generated_scripts(harness_config,
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
         try:
             build_exit_value = mymachine.build_executable()
-        except SetBuildRTEError as error:
-            message = f"Unable to set the build runtime environnment."
-            message += error.message
-            a_logger.doCriticalLogging(message)
+        except KeyboardInterrupt:
+            a_logger.doCriticalLogging(f"Detected CTRL+C, logging build_end.")
+            jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, 21)
         finally:
             jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
     #-----------------------------------------------------
