@@ -7,8 +7,6 @@
 
 # Python imports
 from abc import abstractmethod, ABCMeta
-from jinja2 import Template
-from pathlib import Path
 import os
 import shutil
 import subprocess
