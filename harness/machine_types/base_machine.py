@@ -17,7 +17,7 @@ import sys
 
 # Harness imports
 from libraries.apptest import subtest
-from .scheduler_factory import SchedulerFactory
+from schedulers.scheduler_factory import SchedulerFactory
 from machine_types import linux_utilities
 
 class BaseMachine(metaclass=ABCMeta):

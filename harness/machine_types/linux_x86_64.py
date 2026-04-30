@@ -12,7 +12,7 @@ import re
 
 # Local imports.
 from machine_types.base_machine import BaseMachine
-from machine_types.rgt_test import RgtTest
+from libraries.rgt_test import RgtTest
 
 class Linux_x86_64(BaseMachine):
 

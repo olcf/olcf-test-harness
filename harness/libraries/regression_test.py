@@ -13,7 +13,7 @@ import random # for shuffle
 # Harness package imports.
 from libraries import apptest
 from libraries.subtest_factory import SubtestFactory
-from fundamental_types.rgt_state import RgtState
+from libraries.rgt_state import RgtState
 from libraries.rgt_loggers import rgt_logger_factory
 from machine_types.machine_factory import MachineFactory
 
