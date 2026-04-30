@@ -4,6 +4,11 @@ import argparse
 import sys
 import os
 
+prefix = os.path.normpath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+)
+sys.path = [prefix] + sys.path
+
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file_factory import StatusFileFactory
 from libraries.status_file import StatusFile

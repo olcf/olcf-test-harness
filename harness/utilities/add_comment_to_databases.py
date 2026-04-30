@@ -20,6 +20,11 @@ import csv
 import socket
 import re
 
+prefix = os.path.normpath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+)
+sys.path = [prefix] + sys.path
+
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
 from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger

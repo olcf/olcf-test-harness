@@ -17,6 +17,11 @@ import shutil
 import tarfile
 import sys
 
+prefix = os.path.normpath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+)
+sys.path = [prefix] + sys.path
+
 # For directory names
 from libraries.layout_of_apps_directory import apptest_layout
 # For interpreting status files

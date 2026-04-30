@@ -7,6 +7,11 @@ import subprocess
 import getopt
 import string
 
+prefix = os.path.normpath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+)
+sys.path = [prefix] + sys.path
+
 # Harness imports
 from libraries.apptest import subtest
 from libraries.subtest_factory import SubtestFactory 

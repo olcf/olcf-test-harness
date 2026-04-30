@@ -6,6 +6,11 @@ import argparse
 import os
 import sys
 
+prefix = os.path.normpath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+)
+sys.path = [prefix] + sys.path
+
 # My harness package imports
 from libraries import input_files
 from libraries import regression_test

@@ -4,6 +4,11 @@ import os
 import sys
 import getopt
 
+prefix = os.path.normpath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+)
+sys.path = [prefix] + sys.path
+
 from libraries.layout_of_apps_directory import apptest_layout
 
 #
