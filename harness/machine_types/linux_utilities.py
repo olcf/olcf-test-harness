@@ -87,7 +87,7 @@ def make_batch_script_for_linux(a_machine):
     message = f"The batch scheduler template file is {batch_template_file}."
     a_machine.logger.doInfoLogging(message)
     
-    if batch_template_file.endswith('ini'):
+    if batch_template_file.endswith('x'):
         # Get batch job template lines
         try :
             with open(batch_template_file, "r") as templatefileobj:
