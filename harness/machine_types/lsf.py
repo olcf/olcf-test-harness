@@ -47,7 +47,12 @@ class LSF(BaseScheduler):
         elif 'RGT_PROJECT_ID' in os.environ:
             qargs += " -P " + os.environ.get('RGT_PROJECT_ID')
 
-        qcommand = self.__submitCmd + " " + qargs + " " + batchfilename
+        qcommand = self.__submitCmd + " " + qargs
+
+        if 'RGT_LSF_SUBMIT_AS_STDIN' in os.environ and \
+                str(os.environ['RGT_LSF_SUBMIT_AS_STDIN']) == '0':
+            qcommand += " " + batchfilename
+
         self.__logger.doInfoLogging(f"{qcommand}")
 
         args = shlex.split(qcommand)
@@ -57,13 +62,14 @@ class LSF(BaseScheduler):
         submit_stdout = open(temp_stdout,"w")
         submit_stderr = open(temp_stderr,"w")
 
-        # We no longer need 'bsub <' since we are using the OLCF bsub
-        #jobfileobj = open(batchfilename,"r")
-        #p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr,stdin=jobfileobj)
-        #jobfileobj.close()
-
-        p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr)
-        p.wait()
+        if 'RGT_LSF_SUBMIT_AS_STDIN' in os.environ and \
+                str(os.environ['RGT_LSF_SUBMIT_AS_STDIN']) == '0':
+            p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr)
+            p.wait()
+        else:
+            with open(batchfilename,"r") as jobfileobj:
+                p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr,stdin=jobfileobj)
+                p.wait()
 
         submit_stdout.close()
         submit_stderr.close()
