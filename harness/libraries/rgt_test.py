@@ -39,6 +39,7 @@ The section contains keys-value pairs for setting environmental varibles.
 import configparser
 import os
 import sys
+from pathlib import Path
 try:
     # YAML & Jinja2 must be used together
     import yaml
@@ -46,12 +47,10 @@ try:
     yaml_disabled = False
 except ModuleNotFoundError:
     yaml_disabled = True
-    pass
 
 # Harness imports
 from libraries.rgt_utilities import rgt_variable_name_modification
 from libraries import rgt_utilities
-
 
 class RgtTest():
     """This class is the abstraction of regression test input file."""
@@ -328,7 +327,7 @@ class RgtTest():
         is not a permitted value.
         """
         try:
-            if os.path.isfile(self.test_input_filename):
+            if Path(self.test_input_filename).is_file():
                 if self.test_input_filename.endswith('ini'):
                     self._read_rgt_input_ini()
                 elif self.test_input_filename.endswith('yaml'):

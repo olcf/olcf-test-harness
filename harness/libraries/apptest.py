@@ -14,6 +14,7 @@ import sys
 import copy
 import re
 from types import *
+from pathlib import Path
 
 # NCCS Test Harness Package Imports
 from libraries.harness_internal_config import harness_modes
@@ -694,7 +695,7 @@ class subtest(base_apptest, apptest_layout):
         metrics = {}
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
-        if not os.path.isfile('metrics.txt'):
+        if not Path('metrics.txt').is_file():
             self.logger.doWarningLogging(f"File metrics.txt not found")
             return metrics
         with open('metrics.txt', 'r') as metric_f:
@@ -728,7 +729,7 @@ class subtest(base_apptest, apptest_layout):
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
 
-        if not os.path.isfile('nodecheck.txt'):
+        if not Path('nodecheck.txt').is_file():
             self.logger.doInfoLogging(f"File nodecheck.txt not found.")
             return node_healths
         self.logger.doDebugLogging("Processing file nodecheck.txt.")

@@ -2,6 +2,7 @@ import string
 import os
 import configparser
 import logging
+from pathlib import Path
 
 from libraries.rgt_utilities import set_harness_environment
 from libraries.rgt_loggers import rgt_logger_factory
@@ -44,20 +45,20 @@ class rgt_config_file:
         base_filename = os.path.basename(self.__configFileName)
         if base_filename == self.__configFileName:
             # Only base file given, resolve full path by searching CWD, then OLCF_HARNESS_DIR/configs
-            working_dir_config = os.path.join(os.getcwd(), self.__configFileName)
-            if os.path.isfile(working_dir_config):
-                self.__configFileName = os.path.abspath(working_dir_config)
+            working_dir_config = Path(os.getcwd(), self.__configFileName)
+            if working_dir_config.is_file():
+                self.__configFileName = str(working_dir_config.resolve())
             elif 'OLCF_HARNESS_DIR' in os.environ:
                 harness_dir = os.environ['OLCF_HARNESS_DIR']
-                harness_dir_config = os.path.join(harness_dir, "configs", self.__configFileName)
-                if os.path.isfile(harness_dir_config):
-                    self.__configFileName = harness_dir_config
+                harness_dir_config = Path(harness_dir, "configs", self.__configFileName)
+                if harness_dir_config.is_file():
+                    self.__configFileName = str(harness_dir_config)
 
         # Read the master config file
         self.__read_config_file()
 
     def __read_config_file(self):
-        if os.path.isfile(self.__configFileName):
+        if Path(self.__configFileName).is_file():
             self.__logger.doInfoLogging(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)

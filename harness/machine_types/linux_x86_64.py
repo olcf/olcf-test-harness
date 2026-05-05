@@ -9,6 +9,7 @@ import shlex
 import subprocess
 import time
 import re
+from pathlib import Path
 
 # Local imports.
 from machine_types.base_machine import BaseMachine
@@ -30,7 +31,7 @@ class Linux_x86_64(BaseMachine):
         path_to_test_input_file = apptest.path_of_test_input_file_ini
         using_yaml = False
         # if ini does not exist, try yaml
-        if not os.path.isfile(path_to_test_input_file):
+        if not Path(path_to_test_input_file).is_file():
             path_to_test_input_file = apptest.path_of_test_input_file_yaml
             using_yaml = True
 
