@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import shlex
 import sys
+from pathlib import Path
 
 # Harness imports
 from libraries.apptest import subtest

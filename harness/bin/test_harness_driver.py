@@ -172,8 +172,8 @@ def auto_generated_scripts(harness_config,
             os.chdir(scripts_dir)
             build_exit_value = 21
             pass
-        except Exception:
-            a_logger.doCriticalLogging(f"Exception generated during build, aborting test launch.")
+        except Exception as e:
+            a_logger.doCriticalLogging(f"Exception generated during build, aborting test launch: {e}.")
             os.chdir(scripts_dir)
             build_exit_value = 1
             pass

@@ -129,7 +129,7 @@ class apptest_layout:
             return False
         # Check that the an rgt_test_ini.ini file exists 
         if not (Path(self.__apptest_layout['test_input_ini']).exists() or \
-                Path(self.__apptest_layout['test_input_yaml'])).exists():
+                Path(self.__apptest_layout['test_input_yaml']).exists()):
             self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
             return False
         return True
