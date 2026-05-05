@@ -73,6 +73,10 @@ def make_batch_script_for_linux(a_machine):
     frame = inspect.currentframe()
     function_name = inspect.getframeinfo(frame).function
 
+    if str(a_machine.test_config.get_use_batch_template()) == '0':
+        a_machine.logger.doInfoLogging(f"use_batch_template = 0 is set in test configuration file, skipping batch script generation.")
+        return True
+
     # Log that our execution location.
     message = "Making batch script for {} using file {}.".format(a_machine.machine_name,a_machine.get_scheduler_template_file_name())
     a_machine.logger.doInfoLogging(message)
@@ -344,7 +348,6 @@ def submit_batch_script(a_machine, new_env):
     for e in env_vars:
         v = env_vars[e]
         eu = e.upper()
-        #print("Setting env var", eu, "=", v)
         os.putenv(eu, v)
         message += f"Set batch environment variable {eu}={v}\n"
     if new_env:

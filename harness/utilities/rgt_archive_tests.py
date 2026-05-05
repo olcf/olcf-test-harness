@@ -265,9 +265,16 @@ def archive_test(apptest, test_id):
 
     # Archive -- use shutil.copytree to copy the current Run_Archive with sym-links for build_directory and workdir
     shutil.copytree(test_run_archive, test_archive_dir, symlinks=True)
+
     # remove build_directory and workdir sym-links in Archive
     os.unlink(os.path.join(test_archive_dir, apptest_layout.test_run_dirname))
     os.unlink(os.path.join(test_archive_dir, apptest_layout.test_build_dirname))
+
+    # if Status sym-link exists, then un-link, will copy later
+    if os.path.exists(os.path.join(test_archive_dir, apptest_layout.test_status_dirname)):
+        os.unlink(os.path.join(test_archive_dir, apptest_layout.test_status_dirname))
+    shutil.copytree(test_status, os.path.join(test_archive_dir, apptest_layout.test_status_dirname), symlinks=True)
+
     # copy the real build_directory and workdir directories if they exist & if flags are right
     test_failed = False
     if (not test_info['event_value'] == '0') and (not test_info['event_name'] == 'job_queued') and (not test_info['event_name'] == 'submit_end'):
