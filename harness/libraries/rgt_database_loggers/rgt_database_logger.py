@@ -79,7 +79,7 @@ class RgtDatabaseLogger:
                         num_failed += 1
                     elif event_dict['event_name'] == 'check_end':
                         # If we just successfully logged check_end, then we add a dot-file to indicate logging completed
-                        if not os.path.exists(backend.successful_file_name):
+                        if not Path(backend.successful_file_name).exists():
                             os.mknod(backend.successful_file_name)
             except Exception as e:
                 self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e}.")
@@ -247,7 +247,7 @@ class RgtDatabaseLogger:
         # Check if the environment variables to disable the backend are set
         if db_logger.name in self.disabled_backends:
             # Create dot-file if it doesn't already exist
-            if not os.path.exists(db_logger.disable_file_name):
+            if not Path(db_logger.disable_file_name).exists():
                 os.mknod(db_logger.disable_file_name)
             return True
 
@@ -255,7 +255,7 @@ class RgtDatabaseLogger:
         # Since the DB backend initialization is NOT done on a per-test basis, it's
         # possible that a test previously had InfluxDB disabled, but was not explicitly
         # disabled in the current environment. We want to enforce the past disabling
-        if os.path.exists(db_logger.disable_file_name):
+        if Path(db_logger.disable_file_name).exists():
             self.logger.doDebugLogging(f'Found {db_logger.disable_file_name} in {os.getcwd()}. Disabling {db_logger.name}.')
             return True
 

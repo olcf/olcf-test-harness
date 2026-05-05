@@ -27,7 +27,7 @@ def get_path_to_application_directory(tag):
     return path_to_dir
 
 def create_application_directory(my_unit_test):
-    if os.path.exists(my_unit_test.pathToApplications) :
+    if Path(my_unit_test.pathToApplications).exists():
         shutil.rmtree(my_unit_test.pathToApplications)
     os.makedirs(my_unit_test.pathToApplications)
     return

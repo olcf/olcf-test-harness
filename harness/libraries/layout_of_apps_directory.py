@@ -112,24 +112,24 @@ class apptest_layout:
     def check_paths(self):
         """ Returns False if the Source dir, Scripts dir, or test input ini files don't exist """
         # Check that the Application dir exists
-        if not os.path.exists(self.__apptest_layout['app']):
+        if not Path(self.__apptest_layout['app']).exists():
             self.__logger.doErrorLogging(f"Could not find the Application root directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Application's Source dir exists
-        if not os.path.exists(self.get_path_to_source()):
+        if not Path(self.get_path_to_source()).exists():
             self.__logger.doErrorLogging(f"Could not find the Source directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Test dir exists
-        if not os.path.exists(self.__apptest_layout['test']):
+        if not Path(self.__apptest_layout['test']).exists():
             self.__logger.doErrorLogging(f"Could not find the test directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Scripts directory exists
-        if not os.path.exists(self.get_path_to_scripts()):
+        if not Path(self.get_path_to_scripts()).exists():
             self.__logger.doErrorLogging(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the an rgt_test_ini.ini file exists 
-        if not (os.path.exists(self.__apptest_layout['test_input_ini']) or \
-                os.path.exists(self.__apptest_layout['test_input_yaml'])):
+        if not (Path(self.__apptest_layout['test_input_ini']).exists() or \
+                Path(self.__apptest_layout['test_input_yaml'])).exists():
             self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
             return False
         return True
@@ -226,7 +226,7 @@ class apptest_layout:
             return None
         # Redirect path to build if reusing from a existing test directory
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
             return os.environ['RGT_REUSE_BUILD_FROM']
         else:
             return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
@@ -312,8 +312,8 @@ class apptest_layout:
         # if reusing a build, and the build directory doesn't exist
         # if it does exist, it's probably set to the current test, and we can ignore it
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']) and \
-                not os.path.exists(os.path.join(ws_dir, apptest_layout.test_build_dirname)):
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists() and \
+                not Path(ws_dir, apptest_layout.test_build_dirname).exists():
             # If re-using a build, also create a sym-link to the source build in the workspace
             try_symlink(os.environ['RGT_REUSE_BUILD_FROM'], os.path.join(ws_dir, apptest_layout.test_build_dirname))
         try_symlink(build_dir, os.path.join(ra_dir, apptest_layout.test_build_dirname))

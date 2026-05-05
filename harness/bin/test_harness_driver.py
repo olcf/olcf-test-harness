@@ -443,7 +443,7 @@ def test_harness_driver(argv=None):
     # Requires implementation in base_machine.py and layout_of_apps_directory.py
     # Environment variable set by user or by runtests.py
     build_dir = apptest.get_path_to_workspace_build()
-    if 'RGT_REUSE_BUILD_FROM' in os.environ and os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+    if 'RGT_REUSE_BUILD_FROM' in os.environ and Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
         build_dir = os.environ['RGT_REUSE_BUILD_FROM']
     elif 'RGT_REUSE_BUILD_FROM' in os.environ:
         # otherwise, update this envvar to the current build directory

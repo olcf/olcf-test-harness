@@ -91,7 +91,7 @@ def validate_args():
             errs += 1
 
     # Check if path to tests exists
-    if not os.path.exists(args.path_to_tests):
+    if not Path(args.path_to_tests).exists():
         logger.doCriticalLogging(f"Path to tests provided by --path-to-tests does not exist: {args.path_to_tests}")
         errs += 1
     ################################################################################
@@ -142,7 +142,7 @@ if exit_code > 0:
     exit(1)
 
 # Make the output directory, if it doesn't exist
-if not os.path.exists(args.path_to_archive):
+if not Path(args.path_to_archive).exists():
     logger.doInfoLogging(f"Creating output directory {args.path_to_archive}")
     os.makedirs(args.path_to_archive)
 
@@ -250,7 +250,7 @@ def archive_test(apptest, test_id):
         else:
             logger.doWarningLogging(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}. --force is set, so removing this directory.")
             shutil.rmtree(test_archive_dir)
-    elif os.path.exists(f'{test_archive_dir}.tar.gz'):
+    elif Path(f'{test_archive_dir}.tar.gz').exists():
         if not args.force:
             logger.doWarningLogging(f"Found a compressed {apptest}/{test_id} in archive already at {test_archive_dir}.tar.gz. Skipping.")
             return False
@@ -270,7 +270,7 @@ def archive_test(apptest, test_id):
     os.unlink(os.path.join(test_archive_dir, apptest_layout.test_build_dirname))
 
     # if Status sym-link exists, then un-link, will copy later
-    if os.path.exists(os.path.join(test_archive_dir, apptest_layout.test_status_dirname)):
+    if Path(test_archive_dir, apptest_layout.test_status_dirname).exists():
         os.unlink(os.path.join(test_archive_dir, apptest_layout.test_status_dirname))
     shutil.copytree(test_status, os.path.join(test_archive_dir, apptest_layout.test_status_dirname), symlinks=True)
 

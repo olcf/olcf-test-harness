@@ -637,7 +637,7 @@ class subtest(base_apptest, apptest_layout):
         check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
         check_status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
-        if not os.path.exists(f"{check_status_file}"):
+        if not Path(f"{check_status_file}").exists():
             self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
             return -1
         with open(f"{check_status_file}", 'r') as check_fstr:
@@ -655,7 +655,7 @@ class subtest(base_apptest, apptest_layout):
         status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
         status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
-        if not os.path.exists(f"{status_file}"):
+        if not Path(f"{status_file}").exists():
             self.logger.doWarningLogging(f"Couldn't find required file event time fetching: {status_file}")
             return -1
         with open(f"{status_file}", 'r') as fstr:
@@ -669,7 +669,7 @@ class subtest(base_apptest, apptest_layout):
 
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:
-            if not os.path.exists(f"{targ}"):
+            if not Path(f"{targ}").exists():
                 self.logger.doWarningLogging(f"Couldn't find required file for time logging: {targ}")
                 return -1
         start_timestamp = ''

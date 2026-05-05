@@ -259,7 +259,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
             self.logger.doInfoLogging(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
             return 0
 
@@ -391,7 +391,7 @@ class BaseMachine(metaclass=ABCMeta):
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
             self.logger.doInfoLogging("RGT_REUSE_BUILD_FROM set, skipping copying Source.")
             return 0
 

@@ -492,7 +492,7 @@ class RgtTest():
                 # Check file
                 if params['type'] == 'file':
                     # Check whether it exists
-                    if not os.path.exists(self.builtin_parameters[k]):
+                    if not Path(self.builtin_parameters[k]).exists():
                         error_message += "ERROR: test input parameter {} does not exist {}!\n".format(k, self.builtin_parameters[k])
 
                     # Check whether is executable

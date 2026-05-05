@@ -281,7 +281,7 @@ class InfluxDBLogger(BaseDBLogger):
             raise DatabaseEnvironmentError("The RGT_NODE_LOCATION_FILE environment variable is required. If you do not want this functionality, please set to \"None\".")
         else:
             # else, we assume it is a path and we look for it
-            if not os.path.exists(os.environ['RGT_NODE_LOCATION_FILE']):
+            if not Path(os.environ['RGT_NODE_LOCATION_FILE']).exists():
                 raise DatabaseEnvironmentError(f"An RGT_NODE_LOCATION_FILE does not exist at {os.environ['RGT_NODE_LOCATION_FILE']}")
 
         node_locations = {}
