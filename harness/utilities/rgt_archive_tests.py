@@ -16,11 +16,10 @@ import re
 import shutil
 import tarfile
 import sys
+from pathlib import Path
 
-prefix = os.path.normpath(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
-)
-sys.path = [prefix] + sys.path
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 # For directory names
 from libraries.layout_of_apps_directory import apptest_layout

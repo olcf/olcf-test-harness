@@ -23,11 +23,10 @@ import subprocess
 import sys
 
 from shlex import split
+from pathlib import Path
 
-prefix = os.path.normpath(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
-)
-sys.path = [prefix] + sys.path
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 # Harness imports
 from libraries.subtest_factory import SubtestFactory
