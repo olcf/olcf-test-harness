@@ -121,14 +121,14 @@ def backup_status_file(test_status_dir):
     #
     # Now copy the status file to the backup file.
     #
-    if os.path.exists(src):
+    if Path(src).exists():
         shutil.copyfile(src, dest)
 
 def read_job_file(test_status_dir):
     """ Read test_status_dir/job_id.txt to get job id """
     job_id = "0"
     fpath = os.path.join(test_status_dir, layout.job_id_filename)
-    if os.path.exists(fpath):
+    if Path(fpath).exists():
         jfile = open(fpath, "r")
         job_line = jfile.readline()
         jfile.close()
@@ -421,7 +421,7 @@ def test_harness_driver(argv=None):
     #
     if do_submit:
         kill_file = apptest.get_path_to_kill_file()
-        if os.path.exists(kill_file):
+        if Path(kill_file).exists():
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."

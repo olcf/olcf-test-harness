@@ -511,7 +511,7 @@ for db in db_logger.enabled_backends:
             status_file_path = os.path.join(entry['run_archive'], '..', '..', 'Status', entry['test_id'])
             current_event_num = int(entry['event_filename'].split('_')[1])
             cur_dir = os.getcwd()
-            if not (os.path.exists(status_file_path) and os.path.exists(entry['run_archive'])):
+            if not (Path(status_file_path).exists() and os.path.exists(entry['run_archive'])):
                 logger.doDebugLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
                 continue
             logger.doErrorLogging(f"Logging test that completed the Slurm job but did not log to the database, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")

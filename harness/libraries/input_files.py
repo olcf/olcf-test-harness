@@ -148,7 +148,7 @@ class rgt_input_file:
                     self.__logger.doDebugLogging(f"Validating if {test_path} (set via Path_to_tests) exists.")
                     if self.__path_to_tests:
                         self.__logger.doWarningLogging(f"Path_to_tests already set, ignoring Path_to_tests = {test_path}.")
-                    elif os.path.exists(test_path):
+                    elif Path(test_path).exists():
                         self.__path_to_tests = test_path
                     else:
                         self.__logger.doCriticalLogging("Invalid path_to_test")

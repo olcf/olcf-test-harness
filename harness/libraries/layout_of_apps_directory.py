@@ -248,7 +248,7 @@ class apptest_layout:
         Create directory if it does not exist.
         """
         spath = self.get_path_to_status()
-        if not os.path.exists(spath):
+        if not Path(spath).exists():
             os.makedirs(spath)
 
         #
@@ -277,7 +277,7 @@ class apptest_layout:
         # This path should be unique.
         #
         rpath = self.get_path_to_runarchive()
-        if not os.path.exists(rpath):
+        if not Path(rpath).exists():
             os.makedirs(rpath)
 
         #
@@ -372,7 +372,7 @@ class apptest_layout:
         tmppath = os.path.join(self.__apptest_layout['status_dir'],
                                "start_binary_execution_timestamp.txt")
 
-        if os.path.exists(tmppath):
+        if Path(tmppath).exists():
            path = tmppath
 
         return path
@@ -386,7 +386,7 @@ class apptest_layout:
         tmppath = os.path.join(self.__apptest_layout['status_dir'],
                                "final_binary_execution_timestamp.txt")
 
-        if os.path.exists(tmppath):
+        if Path(tmppath).exists():
            path = tmppath
 
         return path

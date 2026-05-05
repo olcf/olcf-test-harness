@@ -19,6 +19,7 @@ import abc
 import urllib
 import dateutil.parser
 import subprocess
+from pathlib import Path
 
 from libraries.layout_of_apps_directory import apptest_layout
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
@@ -538,7 +539,7 @@ class StatusFile:
         dir_head = os.path.split(os.getcwd())[0]
         file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
                                  event_filename)
-        if os.path.exists(file_path):
+        if Path(file_path).exists():
             self.__logger.doWarningLogging('Warning: event log file already exists. ' + file_path)
 
         file_path_partial = os.path.join(dir_head, apptest_layout.test_status_dirname,
@@ -581,7 +582,7 @@ class StatusFile:
 
     def __create_status_file(self,path_to_status_file):
         """Create the status file for this app/test if it doesn't exist."""
-        if not os.path.exists(path_to_status_file):
+        if not Path(path_to_status_file).exists():
             with open(self.__status_file_path, "w") as file_obj :
                 file_obj.write(StatusFile.header)
 
@@ -763,7 +764,7 @@ def get_status_info(test_id, event_type, event_subtype,
     event_info['runtag'] = test_instance_info['rgt_system_log_tag']
 
     file_check_alias = os.path.join(run_archive_all, test_id, 'check_alias.txt')
-    if os.path.exists(file_check_alias):
+    if Path(file_check_alias).exists():
         file_ = open(file_check_alias, 'r')
         check_alias_ = file_.read()
         file_.close()
@@ -772,7 +773,7 @@ def get_status_info(test_id, event_type, event_subtype,
         event_info['check_alias'] = no_value
 
     file_job_id = os.path.join(dir_status_this_test, apptest_layout.job_id_filename)
-    if os.path.exists(file_job_id):
+    if Path(file_job_id).exists():
         file_ = open(file_job_id, 'r')
         job_id_ = file_.read()
         file_.close()
@@ -781,7 +782,7 @@ def get_status_info(test_id, event_type, event_subtype,
         event_info['job_id'] = no_value
 
     file_job_status = os.path.join(dir_status_this_test, apptest_layout.job_status_filename)
-    if os.path.exists(file_job_status):
+    if Path(file_job_status).exists():
         file_ = open(file_job_status, 'r')
         job_status_ = file_.read()
         file_.close()
@@ -818,7 +819,7 @@ def get_status_info_from_file(event_filename):
 
     event_info = {}
 
-    if not os.path.exists(event_filename):
+    if not Path(event_filename).exists():
         event_info['text'] = f'Could not find file {event_filename}'
         return event_info
     file_ = open(event_filename, 'r')
@@ -847,7 +848,7 @@ def write_system_log(test_id, status_info):
     is_using_unix_logger = False
     if rgt_system_log_dir == '':
         is_using_unix_logger = True
-    elif not os.path.exists(rgt_system_log_dir):
+    elif not Path(rgt_system_log_dir).exists():
         is_using_unix_logger = True
 
     rgt_system_log_tag = (os.environ['RGT_SYSTEM_LOG_TAG']
@@ -907,7 +908,7 @@ def parse_status_file(path_to_status_file, startdate, enddate,
 
     failed_jobs = []
 
-    if os.path.exists(path_to_status_file):
+    if Path(path_to_status_file).exists():
         pass
     else:
         return shash
@@ -976,7 +977,7 @@ def parse_status_file2(path_to_status_file):
 
     failed_jobs = []
 
-    if not os.path.exists(path_to_status_file):
+    if not Path(path_to_status_file).exists():
         return shash
 
     sfile_obj = open(path_to_status_file, 'r')

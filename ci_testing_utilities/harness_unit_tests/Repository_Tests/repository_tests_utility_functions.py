@@ -3,6 +3,7 @@
 import unittest
 import os
 import shutil
+from pathlib import Path
 
 def get_path_to_sample_directory():
     """ Returns the fully qualified path to the directory 'Sample_Directory_For_Repository_Testing'
@@ -32,7 +33,7 @@ def create_application_directory(my_unit_test):
     return
 
 def creating_root_dir_repo(path_to_repo):
-    if os.path.exists(path_to_repo) :
+    if Path(path_to_repo).exists() :
         shutil.rmtree(path_to_repo)
     os.makedirs(path_to_repo)
     return

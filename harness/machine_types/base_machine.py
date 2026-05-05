@@ -399,7 +399,7 @@ class BaseMachine(metaclass=ABCMeta):
                         dst=path_to_build_directory,
                         symlinks=True)
         # If a Source directory exists inside test, overlay that over source directory
-        if os.path.exists(path_to_test_source):
+        if Path(path_to_test_source).exists():
             # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
             # Prior to that, it's easier to use shell commands to do what we want
             if sys.version_info[0] == 3 and sys.version_info[1] >= 8:

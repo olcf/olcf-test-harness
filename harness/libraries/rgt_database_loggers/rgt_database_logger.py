@@ -6,6 +6,7 @@ This module implements the database logging capability of the harness.
 """
 
 import os
+from pathlib import Path
 
 class RgtDatabaseLogger:
 
@@ -65,7 +66,7 @@ class RgtDatabaseLogger:
         if event_dict['event_name'] == 'logging_start':
             # Make sure that any explicitly-disabled backends create the dot-file
             for dotfile in self.disabled_backends_filenames:
-                if not os.path.exists(dotfile):
+                if not Path(dotfile).exists():
                     os.mknod(dotfile)
 
         num_failed = 0

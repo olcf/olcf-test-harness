@@ -508,12 +508,12 @@ class subtest(base_apptest, apptest_layout):
         if reuse_build_from_id:
             # Check if test_id exists in Run_Archive
             target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
-            if not os.path.exists(target_build_runarchive_path):
+            if not Path(target_build_runarchive_path).exists():
                 self.logger.doCriticalLogging(f"Could not find test_id {reuse_build_from_id} in {target_build_runarchive_path}.")
                 return 1
             # Check if build_directory from test_id still exists
             target_builddir_path = os.path.realpath(os.path.join(target_build_runarchive_path, self.test_build_dirname))
-            if not os.path.exists(target_builddir_path):
+            if not Path(target_builddir_path).exists():
                 self.logger.doCriticalLogging(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
                 return 1
             # if all checks pass, we're good to set it
@@ -569,7 +569,7 @@ class subtest(base_apptest, apptest_layout):
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
         file_job_id = self.get_path_to_job_id_file()
-        if os.path.exists(file_job_id):
+        if Path(file_job_id).exists():
             file_ = open(file_job_id, 'r')
             job_id_ = file_.read()
             file_.close()
