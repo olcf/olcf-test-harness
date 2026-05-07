@@ -1,4 +1,4 @@
-"""Logging and Output Hub"""
+"""Output Hub"""
 
 from ._hub import OutputHub
 
