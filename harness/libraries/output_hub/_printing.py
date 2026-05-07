@@ -3,21 +3,21 @@ from enum import Enum
 
 
 # no StrEnum in Python 3.6
-class OutputLevel(str, Enum):
+class PrintLevel(str, Enum):
     NOTSET = ""
     V = "V"
     VV = "VV"
     VVV = "VVV"
 
 
-class Output(ABC):
+class Printer(ABC):
     def __init__(
         self, *args, output_level: str = "", colorize_output: bool = False, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
         try:
-            self._output_level: OutputLevel = OutputLevel(output_level.upper())
+            self._output_level: PrintLevel = PrintLevel(output_level.upper())
         except ValueError:
             raise ValueError(f"'{output_level}' is not a valid output level")
         self._colorize_output: bool = colorize_output
@@ -43,7 +43,7 @@ class Output(ABC):
         pass
 
 
-class DefaultOutput(Output):
+class DefaultPrinter(Printer):
     def _colorize_message(self, message: str) -> str:
         return f"\033[1;34m{message}\033[0m" if self._colorize_output else message
 
@@ -51,13 +51,13 @@ class DefaultOutput(Output):
         print(self._colorize_message(message))
 
     def print_v(self, message: str) -> None:
-        if self.output_level >= OutputLevel.V:
+        if self.output_level >= PrintLevel.V:
             print(self._colorize_message(message))
 
     def print_vv(self, message: str) -> None:
-        if self.output_level >= OutputLevel.VV:
+        if self.output_level >= PrintLevel.VV:
             print(self._colorize_message(message))
 
     def print_vvv(self, message: str) -> None:
-        if self.output_level == OutputLevel.VVV:
+        if self.output_level == PrintLevel.VVV:
             print(self._colorize_message(message))
