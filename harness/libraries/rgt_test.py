@@ -387,8 +387,7 @@ class RgtTest():
         rgt_test_config.read(self.test_input_filename)
 
         if not 'Replacements' in rgt_test_config:
-            self.__logger.doCriticalLogging("Missing [Replacements] section in test input")
-            replace = dict()
+            raise Exception("Missing [Replacements] section in test input")
         else:
             replace = rgt_test_config['Replacements']
         self._update_replacement_parameters(replace.items())
@@ -409,7 +408,22 @@ class RgtTest():
 
     def _read_rgt_input_yaml(self):
         with open(self.test_input_filename, 'r') as file:
-            rgt_test_config = yaml.safe_load(file)
+            test_yaml_raw = yaml.safe_load(file)
+
+        # Catch a few fatal errors and throw exceptions if encountered
+        if not 'replacements' in test_yaml_raw.keys():
+            raise Exception("Missing Replacements section in YAML test input")
+        elif 'variables' in test_yaml_raw.keys() and not isinstance(test_yaml_raw["variables"], dict):
+            # variables must be a single key-value dict, not a list of dicts
+            raise Exception("Variables are provided in the YAML test input, but is not a dictionary")
+
+        if 'variables' in test_yaml_raw.keys():
+            # then do string formatting only for string data types
+            rgt_test_config = { k: v.format(**test_yaml_raw["variables"]) if isinstance(v, str) else v 
+                                    for k, v in test_yaml_raw["replacements"].items() }
+        else:
+            # then no variable usage, just copy replacements block to test config
+            rgt_test_config = test_yaml_raw["replacements"]
 
         self._update_replacement_parameters(rgt_test_config.items())
 
