@@ -192,10 +192,6 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
     --reuse-first-build                 Reuse the first build in a chain of resubmitting tests for all subsequent submissions, per-test.
     --reuse-build-from-id               Re-use the build from the specified test ID.
 
-.. note::
-
-    The ``--loglevel`` flag currently does not apply to all output from the OTH.
-    This issue is tracked by `Issue 130 <https://github.com/olcf/olcf-test-harness/issues/130>`_.
 
 .. _runtime_configurable_parameters:
 
@@ -208,9 +204,9 @@ For example, *git_reps_branch* is a parameter in *$OLCF_HARNESS_MACHINE.ini* tha
 The *RGT_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
 The general precedence of configuration options from lowest to highest is:
 
-1. *$OLCF_HARNESS_MACHINE.ini*
+1. *$OLCF_HARNESS_MACHINE.ini* (lowest priority)
 2. User-set environment variables (ie, *RGT_GIT_REPS_BRANCH*, *RGT_PROJECT_ID*)
-3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
+3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini* (highest priority)
 
 The specific parameters are defined in :ref:`section_new_test` and :ref:`section_new_machine`.
 
@@ -238,6 +234,8 @@ There are 4 directories referenced in this section:
 - **$WORK_DIR** - equal to **$RGT_PATH_TO_SSPACE/<app>/<test>/<test-id>/workdir**
 - **$RESULTS_DIR** - the directory used to launch the job and store relevant output, equal to **<Path_to_tests>/<app>/<test>/Run_Archive/<test-id>**
 - **$STATUS_DIR** - the directory used to store harness status files, equal to **<Path_to_tests>/<app>/<test>/Status/<test-id>**
+
+**$RESULTS_DIR** should be considered the best starting point, as it contains symbolic links to the other 3 directories.
 
 Build, Submit, and Check Output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

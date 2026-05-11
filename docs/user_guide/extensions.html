@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/theme_overrides.css" type="text/css" />
 
   
@@ -38,6 +39,7 @@
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/design-tabs.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -258,7 +260,7 @@
 <p>Optional extensions have been developed for use with the OLCF Test Harness (OTH).
 Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.</p>
 <div class="section" id="database-event-logging">
-<h2>Database Event Logging<a class="headerlink" href="#database-event-logging" title="Permalink to this heading">¶</a></h2>
+<span id="influxdb-event-logging"></span><h2>Database Event Logging<a class="headerlink" href="#database-event-logging" title="Permalink to this heading">¶</a></h2>
 <p>The OTH leaves behind status files containing event metadata like timestamp, filesystem paths for work, scratch and archive directories, test name, error code, etc.
 This information can additionally be logged to a supported database.
 The OTH currently provides support for InfluxDB and Kafka (with Druid database backend).

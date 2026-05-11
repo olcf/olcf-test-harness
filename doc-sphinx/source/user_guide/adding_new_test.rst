@@ -77,123 +77,126 @@ Each test's *Scripts* directory should contain a test input file named *rgt_test
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
 The *ini* file format follows the Python3 `configparser <https://docs.python.org/3/library/configparser.html>`_ file format, while *yaml* file format is standard YAML.
 
-INI file format
-^^^^^^^^^^^^^^^
+.. tab-set::
 
-The fields in the ``[DEFAULT]`` section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
-All the fields in the ``[Replacements]`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
-Variables in ``[Replacements]`` cannot be referenced from ``[EnvVars]``.
-The fields in the ``[EnvVars]`` section allow you to set environment variables that all stages of your test will be able to use.
-See :ref:`best-practices` section for recommendations on when to use EnvVars vs Replacements.
+    .. tab-item:: INI file format
 
-.. note::
+        The fields in the ``[DEFAULT]`` section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
+        All the fields in the ``[Replacements]`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
+        Variables in ``[Replacements]`` cannot be referenced from ``[EnvVars]``.
+        The fields in the ``[EnvVars]`` section allow you to set environment variables that all stages of your test will be able to use.
+        See :ref:`best-practices` section for recommendations on when to use EnvVars vs Replacements.
 
-    Environment variables cannot be used in the definition of other environment variables -- ie, ``foo = $bar`` (See: `Issue 132 <https://github.com/olcf/olcf-test-harness/issues/132>`_).
+        .. note::
 
-The following is a sample input for the single node test of the *hello_mpi* application mentioned above:
+            Environment variables cannot be used in the definition of other environment variables -- ie, ``foo = $bar`` (See: `Issue 132 <https://github.com/olcf/olcf-test-harness/issues/132>`_).
 
-.. code-block:: bash
+        The following is a sample input for the single node test of the *hello_mpi* application mentioned above:
 
-    [DEFAULT]
-    # This is a comment
-    # The DEFAULT section defines variables that can be re-used in Replacements or EnvVars
-    # These variables are not automatically used as replacements
-    my_custom_variable = abc
+        .. code-block:: bash
 
-    [Replacements]
-    #### The following variables are called "built-in", variables the harness knows to look for
-    # These are required for every test:
-    nodes = 1
-    job_name = hello_mpi_c
-    # %(<variablename>)s is the notation to use the value of a previously-defined variable
-    batch_filename = run_%(job_name)s.sh
-    build_cmd = ./build_hello_mpi_c.sh
-    check_cmd = ./check_hello_mpi_c.sh 
+            [DEFAULT]
+            # This is a comment
+            # The DEFAULT section defines variables that can be re-used in Replacements or EnvVars
+            # These variables are not automatically used as replacements
+            my_custom_variable = abc
 
-    #### Optional built-in replacements:
-    # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
-    resubmit = 0
-    # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
-    # Set to 0 (or don't define) for indefinite resubmissions
-    max_submissions = 3 
+            [Replacements]
+            #### The following variables are called "built-in", variables the harness knows to look for
+            # These are required for every test:
+            nodes = 1
+            job_name = hello_mpi_c
+            # %(<variablename>)s is the notation to use the value of a previously-defined variable
+            batch_filename = run_%(job_name)s.sh
+            build_cmd = ./build_hello_mpi_c.sh
+            check_cmd = ./check_hello_mpi_c.sh 
 
-    # Some build processes will auto-generate a job script, so you can optionally disable the OTH's batch script generation:
-    #use_batch_template = 0
+            #### Optional built-in replacements:
+            # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
+            resubmit = 0
+            # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
+            # Set to 0 (or don't define) for indefinite resubmissions
+            max_submissions = 3 
 
-    # project_id and batch_queue should only be used if a specific partition or account is always required
-    #project_id = abc123
-    #batch_queue = my_special_partition
+            # Some build processes will auto-generate a job script, so you can optionally disable the OTH's batch script generation:
+            #use_batch_template = 0
 
-    #### Variables that used to be required and may be useful, but are no longer required:
-    report_cmd = ./report_hello_mpi_c.sh
-    walltime = 10
-    executable_path = hello
+            # project_id and batch_queue should only be used if a specific partition or account is always required
+            #project_id = abc123
+            #batch_queue = my_special_partition
 
-    #### The following are user-defined and used for Key-Value replacements in the job template
-    # NOTE: capital letters in variable names are not supported
-    total_processes = 16
-    processes_per_node = 16
+            #### Variables that used to be required and may be useful, but are no longer required:
+            report_cmd = ./report_hello_mpi_c.sh
+            walltime = 10
+            executable_path = hello
+
+            #### The following are user-defined and used for Key-Value replacements in the job template
+            # NOTE: capital letters in variable names are not supported
+            total_processes = 16
+            processes_per_node = 16
     
-    [EnvVars]
-    FOO = bar
+            [EnvVars]
+            FOO = bar
 
-.. note::
+        .. note::
 
-    Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
-    For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``runtests.py``, then *__nodes__* will be replaced with 4.
+            Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
+            For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``runtests.py``, then *__nodes__* will be replaced with 4.
 
-YAML file format
-^^^^^^^^^^^^^^^^
+    .. tab-item:: YAML file format
 
-The *yaml* file format was added to the OTH in 2026, and allows for more powerful templating with Jinja2 template support.
-There are slight changes to the *yaml* section and variable names relative to the *ini* file format.
-The fields in the ``variables`` section can be used in the ``replacements`` section of the configuration file by writing a Python format string, as seen below.
-All the fields in the ``replacements`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
-Unlike *ini* file format, the *yaml* file does not support ``[EnvVars]``, as using this feature is not good practice.
-See :ref:`best-practices` section for other test input file recommendations.
-The following is a sample input for the single node test of the *hello_mpi* application mentioned above:
+        The *yaml* file format was added to the OTH in 2026, and allows for more powerful templating with Jinja2 template support.
+        There are slight changes to the *yaml* section and variable names relative to the *ini* file format.
+        The fields in the ``variables`` section can be used in the ``replacements`` section of the configuration file by writing a Python format string, as seen below.
+        All the fields in the ``replacements`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
+        Unlike *ini* file format, the *yaml* file does not support ``[EnvVars]``, as using this feature is not good practice.
+        See :ref:`best-practices` section for other test input file recommendations.
+        The following is a sample input for the single node test of the *hello_mpi* application mentioned above:
 
-.. code-block:: bash
+        .. code-block:: bash
 
-    variables: 
-        # The variables section defines variables that can be re-used in Replacements or EnvVars
-        # These variables are not automatically used as replacements
-        my_job_name: hello_mpi_c
+            variables: 
+                # The variables section defines variables that can be re-used in Replacements or EnvVars
+                # These variables are not automatically used as replacements
+                my_job_name: hello_mpi_c
 
-    replacements:
-        #### The following variables are called "built-in", variables the harness knows to look for
-        # These are required for every test:
-        nodes: 1
-        # Must use quotes (either single or double) when providing Python format strings
-        # Otherwise, YAML thinks you're defining a dictionary
-        job_name: '{my_job_name}'
-        batch_filename: 'run_{my_job_name}.sh'
-        build_cmd: ./build_{my_job_name}.sh
-        check_cmd: ./check_{my_job_name}.sh 
+            replacements:
+                #### The following variables are called "built-in", variables the harness knows to look for
+                # These are required for every test:
+                nodes: 1
+                # Must use quotes (either single or double) when providing Python format strings
+                # Otherwise, YAML thinks you're defining a dictionary
+                job_name: '{my_job_name}'
+                batch_filename: 'run_{my_job_name}.sh'
+                build_cmd: ./build_{my_job_name}.sh
+                check_cmd: ./check_{my_job_name}.sh 
 
-        #### Optional built-in replacements:
-        # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
-        resubmit: 0
-        # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
-        # Set to 0 (or don't define) for indefinite resubmissions
-        max_submissions: 3 
+                #### Optional built-in replacements:
+                # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
+                resubmit: 0
+                # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
+                # Set to 0 (or don't define) for indefinite resubmissions
+                max_submissions: 3 
 
-        # project_id and batch_queue should only be used if a specific partition or account is always required
-        #project_id: abc123
-        #batch_queue: my_special_partition
+                # Some build processes will auto-generate a job script, so you can optionally disable the OTH's batch script generation:
+                #use_batch_template: 0
 
-        #### Variables that used to be required and may be useful, but are no longer required:
-        report_cmd: './report_{my_job_name}.sh'
-        walltime: 10
-        executable_path: hello
+                # project_id and batch_queue should only be used if a specific partition or account is always required
+                #project_id: abc123
+                #batch_queue: my_special_partition
 
-        #### The following are user-defined and used for Key-Value replacements in the job template
-        total_processes: 16
-        processes_per_node: 16
+                #### Variables that used to be required and may be useful, but are no longer required:
+                report_cmd: './report_{my_job_name}.sh'
+                walltime: 10
+                executable_path: hello
+
+                #### The following are user-defined and used for Key-Value replacements in the job template
+                total_processes: 16
+                processes_per_node: 16
 
 
-As with *ini*, *yaml* file format supports the ``<obtain_from_environment>`` option.
-Unlike *ini*, *yaml* file format does not support using the value of one replacement to define another, it only supports using ``variables`` in the definition of a ``replacement``.
+        As with *ini*, *yaml* file format supports the ``<obtain_from_environment>`` option.
+        Unlike *ini*, *yaml* file format does not support using the value of one replacement to define another, it only supports using ``variables`` in the definition of a ``replacement``.
 
 
 .. _required-application-test-scripts:

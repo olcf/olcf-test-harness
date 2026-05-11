@@ -10,7 +10,7 @@ For example, many of these scripts handle keeping the remote database up-to-date
 These scripts are documented below.
 
 rgt_archive_utility.py
-========
+======================
 
 The ``rgt_archive_utility.py`` script allows you to "archive" a test.
 What "archive" actually means is it allows you to select when to keep or discard a test's build and work directories, and will copy the test into a single location on the file system, without needing sym-links between the Run_Archive and scratch areas.
@@ -94,7 +94,7 @@ The ``--help`` message for the ``rgt_archive_utility.py`` script is provided bel
 
 
 update_databases.py
-========
+===================
 
 The ``update_databases.py`` script retrieves all incomplete tests from the remote database (ie, an InfluxDB instance), and tries to determine if that test has completed, but did not log its completion message.
 This script has support for the Slurm job scheduler, and will look for the job ID of the given test, to see if it completed.
@@ -154,7 +154,7 @@ This script was written with Cron usage in mind, so the following list of ``--lo
 
 
 add_comment_to_databases.py
-========
+===========================
 
 The ``add_comment_to_databases.py`` script adds a comment to a specific test instance in the remote database (ie, an InfluxDB instance).
 The ``--help`` message for the ``add_comment_to_databases.py`` script is provided below.
@@ -182,7 +182,7 @@ This script requires the same environment variables as the core harness requires
                           Defaults to most recent event.
 
 report_to_databases.py
-========
+======================
 
 The ``report_to_databases.py`` script enables you to further utilize a remote database to store custom, non-harness metrics.
 The ``--help`` message for the ``report_to_databases.py`` script is provided below.

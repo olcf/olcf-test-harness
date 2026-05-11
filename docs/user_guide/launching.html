@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/theme_overrides.css" type="text/css" />
 
   
@@ -38,6 +39,7 @@
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/design-tabs.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -404,11 +406,6 @@ This section details the command-line parameters and the next section details av
 --reuse-build-from-id               Re-use the build from the specified test ID.
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">--loglevel</span></code> flag currently does not apply to all output from the OTH.
-This issue is tracked by <a class="reference external" href="https://github.com/olcf/olcf-test-harness/issues/130">Issue 130</a>.</p>
-</div>
 </div>
 <div class="section" id="run-time-environment-parameters">
 <span id="runtime-configurable-parameters"></span><h3>Run-time environment parameters<a class="headerlink" href="#run-time-environment-parameters" title="Permalink to this heading">¶</a></h3>
@@ -418,9 +415,9 @@ For example, <em>git_reps_branch</em> is a parameter in <em>$OLCF_HARNESS_MACHIN
 The <em>RGT_GIT_REPS_BRANCH</em> environment variable can be used to override this value at launch time.
 The general precedence of configuration options from lowest to highest is:</p>
 <ol class="arabic simple">
-<li><p><em>$OLCF_HARNESS_MACHINE.ini</em></p></li>
+<li><p><em>$OLCF_HARNESS_MACHINE.ini</em> (lowest priority)</p></li>
 <li><p>User-set environment variables (ie, <em>RGT_GIT_REPS_BRANCH</em>, <em>RGT_PROJECT_ID</em>)</p></li>
-<li><p><em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.ini</em></p></li>
+<li><p><em>&lt;Path_to_tests&gt;/&lt;app-name&gt;/&lt;test-name&gt;/Scripts/rgt_test_input.ini</em> (highest priority)</p></li>
 </ol>
 <p>The specific parameters are defined in <a class="reference internal" href="adding_new_test.html#section-new-test"><span class="std std-ref">Adding a New Test</span></a> and <a class="reference internal" href="adding_new_machine.html#section-new-machine"><span class="std std-ref">Adding a New Machine</span></a>.</p>
 <p>The exception to this is setting the batch queue and project ID used for submission.
@@ -445,6 +442,7 @@ There are 4 directories referenced in this section:</p>
 <li><p><strong>$RESULTS_DIR</strong> - the directory used to launch the job and store relevant output, equal to <strong>&lt;Path_to_tests&gt;/&lt;app&gt;/&lt;test&gt;/Run_Archive/&lt;test-id&gt;</strong></p></li>
 <li><p><strong>$STATUS_DIR</strong> - the directory used to store harness status files, equal to <strong>&lt;Path_to_tests&gt;/&lt;app&gt;/&lt;test&gt;/Status/&lt;test-id&gt;</strong></p></li>
 </ul>
+<p><strong>$RESULTS_DIR</strong> should be considered the best starting point, as it contains symbolic links to the other 3 directories.</p>
 <div class="section" id="build-submit-and-check-output">
 <h3>Build, Submit, and Check Output<a class="headerlink" href="#build-submit-and-check-output" title="Permalink to this heading">¶</a></h3>
 <p>Each OTH test run consists of 4 primary stages – build, submit, run, and check, as can be seen in <a class="reference internal" href="overview.html#section-overview"><span class="std std-ref">Overview of the Test Harness</span></a>.
