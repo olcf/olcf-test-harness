@@ -120,7 +120,7 @@ class RgtTest():
             "max_submissions" :    {"required": False, "type": int, "valid": lambda x : True if (int(x) >= 1 or int(x) == -1) else False},
             "nodes" :              {"required": True, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
             "project_id" :         {"required": False, "type": str},
-            "report_cmd" :         {"required": True, "type": str},
+            "report_cmd" :         {"required": False, "type": str},
             "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
             "use_batch_template":  {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False}
         }

@@ -339,6 +339,10 @@ class BaseMachine(metaclass=ABCMeta):
         """
         report_command_str = self.test_config.get_report_command()
 
+        if not report_command_str:
+            self.logger.doInfoLogging("No report command provided, skipping report step.")
+            return 0
+
         message = f"Running report executable script report script {report_command_str }."
 
         print(message)
