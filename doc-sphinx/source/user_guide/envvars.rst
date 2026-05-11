@@ -58,6 +58,7 @@ For example, ``machine_name = <obtain_from_environment>`` will fetch the value f
     RGT_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
     RGT_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
     RGT_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
+    RGT_LSF_SUBMIT_AS_STDIN         Controls whether the harness runs ``bsub script.lsf`` or ``bsub < script.lsf``. When set to 0, calls ``bsub script.lsf``.
 
     RGT_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be 'git' currently.
     RGT_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.

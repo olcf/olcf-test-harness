@@ -73,9 +73,13 @@ Since these tests are going to share the same source and build script, we are no
 Application Test Input
 ----------------------
 
-Each test's *Scripts* directory should contain a test input file named *rgt_test_input.ini*.
+Each test's *Scripts* directory should contain a test input file named *rgt_test_input.ini* or *rgt_test_input.yaml*.
 The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
-The test input file follows the Python3 `configparser <https://docs.python.org/3/library/configparser.html>`_ file format.
+The *ini* file format follows the Python3 `configparser <https://docs.python.org/3/library/configparser.html>`_ file format, while *yaml* file format is standard YAML.
+
+INI file format
+^^^^^^^^^^^^^^^
+
 The fields in the ``[DEFAULT]`` section can be used in the other sections of the configuration file and are useful for defining a variable that is re-used in multiple sections.
 All the fields in the ``[Replacements]`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
 Variables in ``[Replacements]`` cannot be referenced from ``[EnvVars]``.
@@ -101,27 +105,29 @@ The following is a sample input for the single node test of the *hello_mpi* appl
     # These are required for every test:
     nodes = 1
     job_name = hello_mpi_c
-    walltime = 10
     # %(<variablename>)s is the notation to use the value of a previously-defined variable
     batch_filename = run_%(job_name)s.sh
     build_cmd = ./build_hello_mpi_c.sh
     check_cmd = ./check_hello_mpi_c.sh 
-    report_cmd = ./report_hello_mpi_c.sh
 
     #### Optional built-in replacements:
-    # Useful for controlling relative path inside $BUILD_DIR
-    executable_path = hello
     # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
     resubmit = 0
-    processes_per_node = 8
-    total_processes = 8
     # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
     # Set to 0 (or don't define) for indefinite resubmissions
     max_submissions = 3 
 
+    # Some build processes will auto-generate a job script, so you can optionally disable the OTH's batch script generation:
+    #use_batch_template = 0
+
     # project_id and batch_queue should only be used if a specific partition or account is always required
     #project_id = abc123
     #batch_queue = my_special_partition
+
+    #### Variables that used to be required and may be useful, but are no longer required:
+    report_cmd = ./report_hello_mpi_c.sh
+    walltime = 10
+    executable_path = hello
 
     #### The following are user-defined and used for Key-Value replacements in the job template
     # NOTE: capital letters in variable names are not supported
@@ -136,18 +142,69 @@ The following is a sample input for the single node test of the *hello_mpi* appl
     Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
     For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``runtests.py``, then *__nodes__* will be replaced with 4.
 
+YAML file format
+^^^^^^^^^^^^^^^^
+
+The *yaml* file format was added to the OTH in 2026, and allows for more powerful templating with Jinja2 template support.
+There are slight changes to the *yaml* section and variable names relative to the *ini* file format.
+The fields in the ``variables`` section can be used in the ``replacements`` section of the configuration file by writing a Python format string, as seen below.
+All the fields in the ``replacements`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
+Unlike *ini* file format, the *yaml* file does not support ``[EnvVars]``, as using this feature is not good practice.
+See :ref:`best-practices` section for other test input file recommendations.
+The following is a sample input for the single node test of the *hello_mpi* application mentioned above:
+
+.. code-block:: bash
+
+    variables: 
+        # The variables section defines variables that can be re-used in Replacements or EnvVars
+        # These variables are not automatically used as replacements
+        my_job_name: hello_mpi_c
+
+    replacements:
+        #### The following variables are called "built-in", variables the harness knows to look for
+        # These are required for every test:
+        nodes: 1
+        # Must use quotes (either single or double) when providing Python format strings
+        # Otherwise, YAML thinks you're defining a dictionary
+        job_name: '{my_job_name}'
+        batch_filename: 'run_{my_job_name}.sh'
+        build_cmd: ./build_{my_job_name}.sh
+        check_cmd: ./check_{my_job_name}.sh 
+
+        #### Optional built-in replacements:
+        # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
+        resubmit: 0
+        # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
+        # Set to 0 (or don't define) for indefinite resubmissions
+        max_submissions: 3 
+
+        # project_id and batch_queue should only be used if a specific partition or account is always required
+        #project_id: abc123
+        #batch_queue: my_special_partition
+
+        #### Variables that used to be required and may be useful, but are no longer required:
+        report_cmd: './report_{my_job_name}.sh'
+        walltime: 10
+        executable_path: hello
+
+        #### The following are user-defined and used for Key-Value replacements in the job template
+        total_processes: 16
+        processes_per_node: 16
+
+
+As with *ini*, *yaml* file format supports the ``<obtain_from_environment>`` option.
+Unlike *ini*, *yaml* file format does not support using the value of one replacement to define another, it only supports using ``variables`` in the definition of a ``replacement``.
+
 
 .. _required-application-test-scripts:
 
 Required Application Test Scripts
 ---------------------------------
 
-The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script, and (4) a reporting script.
+The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script.
 These scripts should be placed in the locations described in :ref:`repository-structure`.
-The build, check, and reporting scripts may also be set to Linux commands such as ``/usr/bin/echo``.
-This is useful in cases where a script is not needed.
-For example, a test that relies on standard system-provided tools can set the build script to ``/usr/bin/echo`` to remove the need to have an empty build script.
-If the OTH cannot find the scripts specified by the test input file (*rgt_test_input.ini*), it will fail to launch.
+A test that relies on standard system-provided binaries can set the build script to ``/usr/bin/echo`` to remove the need to have an empty build script.
+If the OTH cannot find the scripts specified by the test input file (*rgt_test_input.[yaml,ini]*), it will fail to launch.
 
 Build Script
 ^^^^^^^^^^^^
@@ -163,6 +220,8 @@ contain the following:
 
     #!/bin/bash -l
     
+    set -e # exit on any error
+    
     module load gcc
     module load openmpi
     module list
@@ -171,9 +230,9 @@ contain the following:
     mpicc hello_mpi.c -o bin/hello
 
 The build command be executed from the directory **$BUILD_DIR**, which is a copy of the contents of *Source/*.
-This means the build script should be written as if it were executed from *Source/*, regardless of where it actually is. 
+This means the build script should be written as if it were executed from *Source/*, regardless of where it is located (e.g., *Source/myapp/build_scripts/systems/build_frontier.sh*). 
 
-Likewise, the path to the build script given by *build_cmd* in *rgt_test_input.ini* should be relative to the *Source/* directory. 
+Likewise, the path to the build script given by *build_cmd* in *rgt_test_input.[yaml,ini]* should be relative to the *Source/* directory. 
 
 .. _job-script-template:
 
@@ -181,7 +240,7 @@ Job Script Template
 ^^^^^^^^^^^^^^^^^^^
 
 The OTH will generate the batch job script from the job script template by replacing keywords
-of the form ``__keyword__`` with the values specified in the test input ``[Replacements]`` section.
+of the form ``__keyword__`` with the values specified in the test input file's replacements section.
 Additionally, the OTH automatically provides several replacement keywords for the job script to use, described below:
 
 * ``results_dir``: absolute path to the test's *Run_Archive* directory, which is where the job is launched from, and where it typically copies results to
@@ -192,95 +251,183 @@ Additionally, the OTH automatically provides several replacement keywords for th
 
 Generally, these should be used to set environment variables, as shown in the template below.
 
-The job script template must be named appropriately to match the specific scheduler of the target machine.
-For SLURM systems, use *slurm.template.x* as the name.
-For LSF systems, use *lsf.template.x*.
-An example SLURM template script for the *hello_mpi* application follows:
+The job script template must be named appropriately to match the specific scheduler of the target machine AND *rgt_test_input.[yaml,ini]* file format, as detailed below.
 
-.. code-block:: bash
++---------------+-------------------+-----------------------+
+| Scheduler     | INI test input    | YAML test input       |
++===============+===================+=======================+
+| Slurm         | slurm.template.x  | slurm.template.yaml   |
++---------------+-------------------+-----------------------+
+| LSF           | lsf.template.x    | lsf.template.yaml     |
++---------------+-------------------+-----------------------+
+| PBS           | pbs.template.x    | pbs.template.yaml     |
++---------------+-------------------+-----------------------+
 
-    #!/bin/bash -l
-    #SBATCH -J __job_name__
-    #SBATCH -N __nodes__
-    #SBATCH -t __walltime__
-    #SBATCH -o __job_name__.o%j
-    
-    # Define environment variables needed
-    export EXECUTABLE="__executable_path__"
-    export SCRIPTS_DIR="__scripts_dir__"
-    export WORK_DIR="__working_dir__"
-    export RESULTS_DIR="__results_dir__"
-    export HARNESS_ID="__harness_id__"
-    export BUILD_DIR="__build_dir__"
-    
-    echo "Printing test directory environment variables:"
-    env | fgrep RGT_APP_SOURCE_
-    env | fgrep RGT_TEST_
-    echo
+An example Slurm template script for the *hello_mpi* application for both INI+x and YAML+Jinja2 format is provided below.
+In simple cases, there is little functional difference between the two templating formats, but YAML+Jinja2 has far greater power with handling complex test inputs like arrays.
 
-    # Placing the environment setup script in a shared location reduces code duplication
-    # and ensures you have the same environment in building & running
-    source $BUILD_DIR/Common_Scripts/setup_env.sh
-    
-    # Ensure we are in the starting directory
-    cd $SCRIPTS_DIR
-    
-    # Make the working scratch space directory.
-    if [ ! -e $WORK_DIR ]
-    then
-        mkdir -p $WORK_DIR
-    fi
-    
-    # Change directory to the working directory.
-    cd $WORK_DIR
-    
-    env &> job.environ
-    scontrol show hostnames &> job.nodes
-    ldd $BUILD_DIR/bin/$EXECUTABLE &> ldd.log
-    
-    # Run the executable.
-    log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
-    
-    set -x
-    srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE
-    set +x
-    
-    log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
-    
-    # Ensure we return to the starting directory.
-    cd $SCRIPTS_DIR
-    
-    # Copy the output and results back to the $RESULTS_DIR
-    # Depending on the size of files in $WORK_DIR, you may want to change this
-    cp -rf $WORK_DIR/* $RESULTS_DIR
-    cp $BUILD_DIR/output_build*.txt $RESULTS_DIR
-    
-    # Check the final results.
-    check_executable_driver.py -p $RESULTS_DIR -i $HARNESS_ID
-    
-    # Resubmit if needed:
-    # If you always want tests to resubmit if ``.kill_test`` is not present,
-    # then remove the conditional around calling ``test_harness_driver.py``.
-    case __resubmit__ in
-        0)
-           echo "No resubmit";;
-        1)
-           test_harness_driver.py -r __max_submissions__ ;;
-    esac
+.. tab-set::
+    .. tab-item:: slurm.template.x
 
-Using the job template above, the job will be submitted from the test *Run_Archive/* directory and starts there.
+        .. code-block:: bash
+
+            #!/bin/bash -l
+            #SBATCH -J __job_name__
+            #SBATCH -N __nodes__
+            #SBATCH -t __walltime__
+            #SBATCH -o __job_name__.o%j
+    
+            # Define environment variables needed
+            export SCRIPTS_DIR="__scripts_dir__"
+            export WORK_DIR="__working_dir__"
+            export RESULTS_DIR="__results_dir__"
+            export HARNESS_ID="__harness_id__"
+            export BUILD_DIR="__build_dir__"
+
+            export EXECUTABLE="__executable_path__"
+    
+            echo "Printing test directory environment variables:"
+            env | fgrep RGT_APP_SOURCE_
+            env | fgrep RGT_TEST_
+            echo
+
+            # Placing the environment setup script in a shared location reduces code duplication
+            # and ensures you have the same environment in building & running
+            source $BUILD_DIR/Common_Scripts/setup_env.sh
+    
+            # Ensure we are in the starting directory
+            cd $SCRIPTS_DIR
+    
+            # Make the working scratch space directory.
+            [ -d $WORK_DIR ] && mkdir -p $WORK_DIR
+    
+            # Change directory to the working directory.
+            cd $WORK_DIR
+    
+            env &> job.environ
+            scontrol show hostnames &> job.nodes
+            ldd $BUILD_DIR/bin/$EXECUTABLE &> ldd.log
+    
+            # Run the executable.
+            log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
+    
+            set -x
+            srun -n __total_processes__ -N __nodes__ $BUILD_DIR/bin/$EXECUTABLE
+            # If wanted, save the exit code & use it to exit the job with
+            exit_code=$?
+            set +x
+    
+            log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
+    
+            # Ensure we return to the starting directory.
+            cd $SCRIPTS_DIR
+    
+            # Copy the output and results back to the $RESULTS_DIR
+            # Depending on the size of files in $WORK_DIR, you may want to change this
+            cp -rf $WORK_DIR/* $RESULTS_DIR
+            cp $BUILD_DIR/output_build*.txt $RESULTS_DIR
+    
+            # Check the final results.
+            check_executable_driver.py -p $RESULTS_DIR -i $HARNESS_ID
+    
+            # Resubmit if needed:
+            # If you always want tests to resubmit if ``.kill_test`` is not present,
+            # then remove the conditional around calling ``test_harness_driver.py``.
+            case __resubmit__ in
+                0)
+                echo "No resubmit";;
+                1)
+                test_harness_driver.py -r __max_submissions__ ;;
+            esac
+
+            exit $exit_code
+
+    .. tab-item:: slurm.template.j2
+
+        .. code-block:: bash
+
+            #!/bin/bash -l
+            #SBATCH -J {{job_name}}
+            #SBATCH -N {{nodes}}
+            #SBATCH -t {{walltime}}
+            #SBATCH -o {{job_name}}.o%j
+    
+            # Define environment variables needed
+            export SCRIPTS_DIR="{{scripts_dir}}"
+            export WORK_DIR="{{working_dir}}"
+            export RESULTS_DIR="{{results_dir}}"
+            export HARNESS_ID="{{harness_id}}"
+            export BUILD_DIR="{{build_dir}}"
+
+            export EXECUTABLE="{{executable_path}}"
+    
+            echo "Printing test directory environment variables:"
+            env | fgrep RGT_APP_SOURCE_
+            env | fgrep RGT_TEST_
+            echo
+
+            # Placing the environment setup script in a shared location reduces code duplication
+            # and ensures you have the same environment in building & running
+            source $BUILD_DIR/Common_Scripts/setup_env.sh
+    
+            # Ensure we are in the starting directory
+            cd $SCRIPTS_DIR
+    
+            # Make the working scratch space directory.
+            [ -d $WORK_DIR ] && mkdir -p $WORK_DIR
+    
+            # Change directory to the working directory.
+            cd $WORK_DIR
+    
+            env &> job.environ
+            scontrol show hostnames &> job.nodes
+            ldd $BUILD_DIR/bin/$EXECUTABLE &> ldd.log
+    
+            # Run the executable.
+            log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
+    
+            set -x
+            srun -n {{total_processes}} -N {{nodes}} $BUILD_DIR/bin/$EXECUTABLE
+            # If wanted, save the exit code & use it to exit the job with
+            exit_code=$?
+            set +x
+    
+            log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
+    
+            # Ensure we return to the starting directory.
+            cd $SCRIPTS_DIR
+    
+            # Copy the output and results back to the $RESULTS_DIR
+            # Depending on the size of files in $WORK_DIR, you may want to change this
+            cp -rf $WORK_DIR/* $RESULTS_DIR
+            cp $BUILD_DIR/output_build*.txt $RESULTS_DIR
+    
+            # Check the final results.
+            check_executable_driver.py -p $RESULTS_DIR -i $HARNESS_ID
+    
+            # Resubmit if needed:
+            # If you always want tests to resubmit if ``.kill_test`` is not present,
+            # then remove the conditional around calling ``test_harness_driver.py``.
+            case {{resubmit}} in
+                0)
+                echo "No resubmit";;
+                1)
+                test_harness_driver.py -r {{max_submissions}} ;;
+            esac
+
+            exit $exit_code
+
+Using the job template above, the job will be submitted from the test *Run_Archive/* directory and starts from there.
 This is **$RESULTS_DIR** in the job template.
-The executable should then be run from **$WORK_DIR** directory, which is a scratch workspace derived from **$RGT_PATH_TO_SSPACE**.
+The executable should then be invoked from **$WORK_DIR** directory, which is a scratch workspace derived from **$RGT_PATH_TO_SSPACE**.
 
 One can access or copy any files relative to the *Scripts/* directory using the **$SCRIPT_DIR** environment variable.
 For example, if one stores a *CorrectResults* directory at the same level as *Scripts* and *Run_Archive* for a test case,
-it can be be copied by adding the line
+it can be be copied by adding the following line in the job script:
 
 .. code-block:: bash
 
     cp -a ${SCRIPT_DIR}/../CorrectResults ${WORK_DIR}/
-
-inside the job script.
 
 The environment variable **$EXECUTABLE** is also populated based on ``executable_path`` entry in *rgt_test_input.ini* file.
 The executable may still be inside **$BUILD_DIR** from the previous step,
@@ -291,7 +438,7 @@ Check Script
 ^^^^^^^^^^^^
 
 The check script can be a shell script, Python script, or other executable command.
-This must be an absolute path to a command (ie, ``/usr/bin/echo`` instead of ``echo``).
+The check command is prefixed with **$SCRIPTS_DIR**, so ``check_cmd = check.sh`` is called as ``$SCRIPTS_DIR/check.sh``.
 
 Check scripts are used to verify that application tests ran as expected, and thus use standardized return codes to inform the OTH on the test result.
 Checking performance is optional but recommended for most tests.
@@ -325,16 +472,11 @@ contain the following:
 Report Script
 ^^^^^^^^^^^^^
 
+Optionally, a reporting script may be provided.
 Like the check script, the report script can be a shell script, Python script, or other executable command.
-Report scripts are generally used to compute performance metrics from the run.
+Report scripts are generally used to solely gather performance metrics from the run.
 The exit code of report scripts is not checked by the OTH.
 The report script is launched from **$RESULTS_DIR** and stdout/stderr is captured in **$RESULTS_DIR/output_report.txt**.
-
-.. note::
-
-    In many cases, the check script serves the function of both the check and report script.
-    In that event, report scripts often just ``exit 0``.
-    An alternative to a no-op bash script, you may use ``/usr/bin/echo`` on most Linux systems.
 
 
 Example Test from the Ground Up
@@ -353,16 +495,16 @@ At the completion of this section, we will have created a directory structure th
                     /build.sh
                     /Common_Scripts/
                                    /setup_env.sh
-                                   /slurm.template.x
+                                   /slurm.template.j2
                                    /check_hello_world.sh
              /hello_world_n0001/Scripts/
-                                       /rgt_test_input.ini
-                                       /slurm.template.x -> ../../Source/Common_Scripts/slurm.template.x
+                                       /rgt_test_input.yaml
+                                       /slurm.template.j2 -> ../../Source/Common_Scripts/slurm.template.j2
                                        /check.sh -> ../../Source/Common_Scripts/check_hello_world.sh
                                        /report.sh -> ../../Source/Common_Scripts/check_hello_world.sh
              /hello_world_n0002/Scripts/
-                                       /rgt_test_input.ini
-                                       /slurm.template.x -> ../../Source/Common_Scripts/slurm.template.x
+                                       /rgt_test_input.yaml
+                                       /slurm.template.j2 -> ../../Source/Common_Scripts/slurm.template.j2
                                        /check.sh -> ../../Source/Common_Scripts/check_hello_world.sh
                                        /report.sh -> ../../Source/Common_Scripts/check_hello_world.sh
 
@@ -428,57 +570,58 @@ The environment and build scripts will also be the same for both tests, so we ca
     ' > ./build.sh
 
 Let's give some thought to how we want to construct these tests.
-We'll start by working on the *rgt_test_input.ini* for the single-node *Hello, World!* test.
-Below is a file that can be used for the *rgt_test_input.ini*, with discussion infused as comments.
+We'll start by working on the *rgt_test_input.yaml* for the single-node *Hello, World!* test.
+Below is a file that can be used for the *rgt_test_input.yaml*, with discussion infused as comments.
 
 .. code-block::
 
-    [Replacements]
-    job_name = hello_world_n0001
-    walltime = 5
-    nodes = 1
-    # Since nodes is defined, defining the number of MPI ranks per node (processes per node) might be useful, too
-    ppn = 2
-    # %(<variable>)s uses the value held by that variable
-    batch_filename = run_%(job_name)s.sh
-    # executable is in ${BUILD_DIR}/test_src/hello_world
-    executable_path = test_src/hello_world
-    # build.sh is in Source/build.sh directory
-    build_cmd = ./build.sh
-    # check.sh is in ${SCRIPTS_DIR}/check.sh
-    # I think that providing the total number of expected ranks to the check & report script might be useful in validating
-    # This can always be removed later
-    check_cmd = ./check.sh $((%(nodes)s*%(ppn)s))
-    # report.sh is in ${SCRIPTS_DIR}/check.sh
-    report_cmd = ./report.sh $((%(nodes)s*%(ppn)s))
-    # Don't allow resubmissions currently
-    resubmit = 0
+    variables:
+        nnodes: 1
+    replacements:
+        # when we want to re-use something in the variables section, use a Python format string
+        # Note, it will be .format()'d, so do not use preceeding "f"
+        job_name: 'hello_world_n{nnodes}'
+        walltime: 5
+        nodes: '{nnodes}'
+        # The power of YAML: give a list of processes per node to loop through!
+        ppn_list:
+        - 1
+        - 2
+        - 8
+        batch_filename: 'run_hello_world_n{nnodes}.sh'
+        # executable is in ${BUILD_DIR}/test_src/hello_world
+        executable_path: test_src/hello_world
+        # build.sh is in Source/build.sh directory
+        build_cmd: ./build.sh
+        # check.sh is in ${SCRIPTS_DIR}/check.sh
+        check_cmd: './check.sh {nnodes}'
+        # Don't allow resubmissions currently
+        resubmit: 0
 
-    [EnvVars]
-    # We don't currently have anything here
-
-Notice that the only lines specific to this test are the *job_name* and *nodes*.
+Notice that the only lines specific to this test are up in the ``variables`` section: *nnodes*.
 This should help us re-use as much code as possible.
 Duplicate code will make tests difficult to maintain in the long run.
 
 Next up is the Slurm template.
+Since we're using YAML input file, we have to use the Jinja2 template.
 Moving from 1 to 2 nodes shouldn't change much about the job template, so let's try to develop a generic Slurm job template for *Hello, World!* programs:
 
 .. code-block:: bash
 
     #!/bin/bash
 
-    #SBATCH -J __job_name__
-    #SBATCH -N __nodes__
-    #SBATCH -t __walltime__
+    #SBATCH -J {{job_name}}
+    #SBATCH -N {{nodes}}
+    #SBATCH -t {{walltime}}
     
     # Define environment variables needed
-    export EXECUTABLE="__executable_path__"
-    export SCRIPTS_DIR="__scripts_dir__"
-    export WORK_DIR="__working_dir__"
-    export RESULTS_DIR="__results_dir__"
-    export HARNESS_ID="__harness_id__"
-    export BUILD_DIR="__build_dir__"
+    export SCRIPTS_DIR="{{scripts_dir}}"
+    export WORK_DIR="{{working_dir}}"
+    export RESULTS_DIR="{{results_dir}}"
+    export HARNESS_ID="{{harness_id}}"
+    export BUILD_DIR="{{build_dir}}"
+
+    export EXECUTABLE="{{executable_path}}"
     
     echo "Printing test directory environment variables:"
     env | fgrep RGT_APP_SOURCE_
@@ -512,7 +655,9 @@ Moving from 1 to 2 nodes shouldn't change much about the job template, so let's 
     #   1. for testing purposes, it's good to ensure that SLURM_NNODES is correct, since users will use that
     #   2. if you inadvertently set $RGT_SUBMIT_ARGS, using SLURM_NNODES will adapt to the size of the job
     set -x
-    srun -N ${SLURM_NNODES} -n $((${SLURM_NNODES}*__ppn__)) --ntasks-per-node=__ppn__ $BUILD_DIR/$EXECUTABLE &> stdout.txt
+    {% for ppn in ppn_list %}
+    srun -N ${SLURM_NNODES} -n $((${SLURM_NNODES}*{{ppn}})) --ntasks-per-node={{ppn}} $BUILD_DIR/$EXECUTABLE |& tee -a stdout.txt
+    {% endfor %}
     set +x
     
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
@@ -531,11 +676,11 @@ Moving from 1 to 2 nodes shouldn't change much about the job template, so let's 
     # Resubmit if needed:
     # If you always want tests to resubmit if ``.kill_test`` is not present,
     # then remove the conditional around calling ``test_harness_driver.py``.
-    case __resubmit__ in
+    case {{resubmit}} in
         0)
            echo "No resubmit";;
         1)
-           test_harness_driver.py -r __max_submissions__ ;;
+           test_harness_driver.py -r {{max_submissions}} ;;
     esac
 
 
@@ -547,31 +692,28 @@ Recall that we provided the check script with the total number of tasks to expec
 
     #!/bin/bash
 
-    expected_ranks=$1
+    nnodes=$1
+    # 11 = 1 + 2 + 8
+    expected_ranks=$((nnodes*11))
     nranks=$(grep "Hello, World from rank" ${RESULTS_DIR}/stdout.txt | wc -l)
     if [ ! "${nranks}" == "${expected_ranks}" ]; then
         echo "Found ${nranks}, expected ${expected_ranks}"
         exit 1
     fi
-    echo "Success! Found ${nranks}."
+    echo "Success! Found ${nranks} output lines, which is aligned with the 1, 2, and 8-ppn runs at ${nnodes} nodes."
     exit 0
 
 
 This check script is generic and should be able to be re-used in multiple tests, so let's put it in ``Source/Common_Scripts/check_hello_world.sh``.
 
-The OTH also wants a report script, but there's not much to report here.
-You can either create a script that immediately exits, or just link to your check script.
-Here, we will just link to the check script.
-
-The Slurm template and check and report scripts are required in the *Scripts* directory, so we use symbolic links to achieve this:
+The Slurm template and check scripts are required in the *Scripts* directory, so we use symbolic links to achieve this:
 
 .. code-block:: bash
 
     # from mpi-tests
     cd hello_world_n0001/Scripts
-    ln -s ../../Source/Common_Scripts/slurm.template.x .
+    ln -s ../../Source/Common_Scripts/slurm.template.j2 .
     ln -s ../../Source/Common_Scripts/check_hello_world.sh ./check.sh
-    ln -s ../../Source/Common_Scripts/check_hello_world.sh ./report.sh
 
 
 To expand to a 2-node *Hello, World!* test, we can just copy the *Scripts* directory from the single-node test, then modify the *rgt_test_input.ini* to specify 2 nodes instead of 1.
@@ -591,10 +733,10 @@ With that in mind, this section presents some of the best practices in test desi
 Use a centralized script to set up the environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-During a test run, the environment is independently set up during the build and run stages.
+During a test run, the environment is independently set up during the build and run stages (e.g., the job submission is not done from within the build environment).
 If the build script and job script each contain several ``module load`` statements, there is a chance that those can diverge.
 To centralize where the environment is set to a single file, place a script containing the ``module`` commands and environment modifications in the build directory,
-and ``source`` that script from the build and job scripts.
+and ``source`` that script from both the build and job scripts.
 For the build script, this can be accomplished as simply ``source env.sh``, if the script is in the top level of the Source directory.
 For the job script, this can be accomplished by ``source $BUILD_DIR/env.sh``, if the **$BUILD_DIR** environment variable is defined as in the :ref:`job-script-template` section above.
 
@@ -606,6 +748,7 @@ that you also define a replacement variable in ``[Replacements]`` that is used i
 This helps to create a re-usable job script.
 If the harness is responsible for defining environment variables that are required for the job to run,
 it can be very difficult to understand the resulting job script and to re-run the job script outside of the test harness if needed.
+This is the primary reason why the *yaml* input file format does not support environment variable definition.
 The following is recommended within the test input file:
 
 .. code-block:: bash
