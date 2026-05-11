@@ -19,6 +19,7 @@ import argparse
 import csv
 import socket
 import re
+import sys
 from pathlib import Path
 
 prefix = Path(__file__).resolve().parent.parent
