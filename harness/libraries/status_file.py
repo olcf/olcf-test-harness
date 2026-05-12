@@ -745,7 +745,7 @@ def get_status_info(test_id, event_type, event_subtype,
 
     test_instance_info['path_to_rgt_package'] = (
         os.environ['PATH_TO_RGT_PACKAGE']
-        if 'PATH_TO_RGT_PACKAGE' in os.environ else no_value)
+        if 'PATH_TO_RGT_PACKAGE' in os.environ else str(Path(__file__).resolve().parent.parent))
 
     test_instance_info['rgt_system_log_tag'] = (
         os.environ['RGT_SYSTEM_LOG_TAG']
