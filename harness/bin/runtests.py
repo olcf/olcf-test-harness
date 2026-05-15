@@ -283,6 +283,18 @@ def create_parser(logger=None):
                         default='',
                         help="Re-use the build from the specified test ID.")
 
+    parser.add_argument("--app-filter",
+                        action='store',
+                        required=False,
+                        default='',
+                        help="A comma-separated list of apps used to select specific applications from the provided input file.")
+
+    parser.add_argument("--test-filter",
+                        action='store',
+                        required=False,
+                        default='',
+                        help="A comma-separated list of tests used to select specific tests from the provided input file.")
+
     return parser
 
 def parse_commandline_argv(argv, logger):
@@ -320,7 +332,9 @@ def parse_commandline_argv(argv, logger):
                                                               use_fireworks=Vargs.fireworks,
                                                               separate_build_stdio=Vargs.separate_build_stdio,
                                                               reuse_first_build=Vargs.reuse_first_build,
-                                                              reuse_build_from_id=Vargs.reuse_build_from_id)
+                                                              reuse_build_from_id=Vargs.reuse_build_from_id,
+                                                              app_filter=Vargs.app_filter,
+                                                              test_filter=Vargs.test_filter)
     return harness_parsed_args
 
 def runtests(my_arg_string=None):
@@ -363,6 +377,8 @@ def runtests(my_arg_string=None):
     main_logger.doInfoLogging("Reading the harness input file.")
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
                                        runmodecmd=harness_arguments.runmode,
+                                       app_filter=harness_arguments.app_filter,
+                                       test_filter=harness_arguments.test_filter,
                                        logger=main_logger)
     main_logger.doInfoLogging("Completed reading the harness input file.")
 
