@@ -287,13 +287,13 @@ def create_parser(logger=None):
                         action='store',
                         required=False,
                         default='',
-                        help="A comma-separated list of apps used to select specific applications from the provided input file.")
+                        help="A comma-separated list of regular expressions or strings used to select specific applications from the provided input file.")
 
     parser.add_argument("--test-filter",
                         action='store',
                         required=False,
                         default='',
-                        help="A comma-separated list of tests used to select specific tests from the provided input file.")
+                        help="A comma-separated list of regular expressions or strings used to select specific tests from the provided input file.")
 
     return parser
 
