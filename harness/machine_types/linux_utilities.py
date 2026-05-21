@@ -14,7 +14,11 @@ import shlex
 import time
 
 from pathlib import Path
-from jinja2 import Template, TemplateError
+
+try:
+    from jinja2 import Template, TemplateError
+except ImportError:
+    pass
 
 
 class LinuxEnvRegxp:
