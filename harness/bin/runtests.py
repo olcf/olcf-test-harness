@@ -5,6 +5,10 @@ import shlex
 import argparse
 import os
 import sys
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 # My harness package imports
 from libraries import input_files

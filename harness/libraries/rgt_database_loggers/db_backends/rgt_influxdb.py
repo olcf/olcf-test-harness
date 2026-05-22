@@ -8,6 +8,7 @@ import os
 import re
 import requests
 from urllib.parse import urlparse
+from pathlib import Path
 
 from libraries.rgt_database_loggers.db_backends.base_db import *
 
@@ -161,7 +162,7 @@ class InfluxDBLogger(BaseDBLogger):
             if event_dict['event_name'] == "build_end":
                 file_name = os.path.join(event_dict['build_directory'], "output_build.txt")
                 self.__logger.doDebugLogging(f"Using {file_name} for build output for Influx")
-                if os.path.exists(file_name):
+                if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
                         # Truncate to 1 kb
@@ -172,7 +173,7 @@ class InfluxDBLogger(BaseDBLogger):
             elif event_dict['event_name'] == "submit_end":
                 file_name = os.path.join(event_dict['run_archive'], "submit.err")
                 self.__logger.doDebugLogging(f"Using {file_name} for submit errors for Influx")
-                if os.path.exists(file_name):
+                if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
                         # Truncate to 1 kb
@@ -184,7 +185,7 @@ class InfluxDBLogger(BaseDBLogger):
                 found_job_file = False
                 for file_name in glob.glob(event_dict['run_archive'] + "/*.o" + event_dict['job_id']):
                     self.__logger.doDebugLogging(f"Using {file_name} for job output for Influx")
-                    if os.path.exists(file_name):
+                    if Path(file_name).exists():
                         found_job_file = True
                         with open(file_name, "r") as f:
                             output = f.read()
@@ -196,7 +197,7 @@ class InfluxDBLogger(BaseDBLogger):
             elif event_dict['event_name'] == "check_end":
                 file_name = os.path.join(event_dict['run_archive'], "output_check.txt")
                 self.__logger.doDebugLogging(f"Using {file_name} for check output for Influx")
-                if os.path.exists(file_name):
+                if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
                         # Truncate to 1 kb
@@ -280,7 +281,7 @@ class InfluxDBLogger(BaseDBLogger):
             raise DatabaseEnvironmentError("The RGT_NODE_LOCATION_FILE environment variable is required. If you do not want this functionality, please set to \"None\".")
         else:
             # else, we assume it is a path and we look for it
-            if not os.path.exists(os.environ['RGT_NODE_LOCATION_FILE']):
+            if not Path(os.environ['RGT_NODE_LOCATION_FILE']).exists():
                 raise DatabaseEnvironmentError(f"An RGT_NODE_LOCATION_FILE does not exist at {os.environ['RGT_NODE_LOCATION_FILE']}")
 
         node_locations = {}

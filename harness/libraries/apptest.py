@@ -14,6 +14,7 @@ import sys
 import copy
 import re
 from types import *
+from pathlib import Path
 
 # NCCS Test Harness Package Imports
 from libraries.harness_internal_config import harness_modes
@@ -507,12 +508,12 @@ class subtest(base_apptest, apptest_layout):
         if reuse_build_from_id:
             # Check if test_id exists in Run_Archive
             target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
-            if not os.path.exists(target_build_runarchive_path):
+            if not Path(target_build_runarchive_path).exists():
                 self.logger.doCriticalLogging(f"Could not find test_id {reuse_build_from_id} in {target_build_runarchive_path}.")
                 return 1
             # Check if build_directory from test_id still exists
             target_builddir_path = os.path.realpath(os.path.join(target_build_runarchive_path, self.test_build_dirname))
-            if not os.path.exists(target_builddir_path):
+            if not Path(target_builddir_path).exists():
                 self.logger.doCriticalLogging(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
                 return 1
             # if all checks pass, we're good to set it
@@ -533,9 +534,6 @@ class subtest(base_apptest, apptest_layout):
             message = ( "The command '{cmd}' has exited with a failure.\n"
                         "The exit return value is {value}.\n").format(cmd=starttestcomand,value=exit_status)
             self.logger.doCriticalLogging(message)
-
-
-            string1 = "Command failed: " + starttestcomand
             return 1
         else:
             message =  "'{cmd}' has executed sucessfully.\n".format(cmd=starttestcomand)
@@ -571,7 +569,7 @@ class subtest(base_apptest, apptest_layout):
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
         file_job_id = self.get_path_to_job_id_file()
-        if os.path.exists(file_job_id):
+        if Path(file_job_id).exists():
             file_ = open(file_job_id, 'r')
             job_id_ = file_.read()
             file_.close()
@@ -639,7 +637,7 @@ class subtest(base_apptest, apptest_layout):
         check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
         check_status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
-        if not os.path.exists(f"{check_status_file}"):
+        if not Path(f"{check_status_file}").exists():
             self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
             return -1
         with open(f"{check_status_file}", 'r') as check_fstr:
@@ -657,7 +655,7 @@ class subtest(base_apptest, apptest_layout):
         status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
         status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
-        if not os.path.exists(f"{status_file}"):
+        if not Path(f"{status_file}").exists():
             self.logger.doWarningLogging(f"Couldn't find required file event time fetching: {status_file}")
             return -1
         with open(f"{status_file}", 'r') as fstr:
@@ -671,7 +669,7 @@ class subtest(base_apptest, apptest_layout):
 
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:
-            if not os.path.exists(f"{targ}"):
+            if not Path(f"{targ}").exists():
                 self.logger.doWarningLogging(f"Couldn't find required file for time logging: {targ}")
                 return -1
         start_timestamp = ''
@@ -697,7 +695,7 @@ class subtest(base_apptest, apptest_layout):
         metrics = {}
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
-        if not os.path.isfile('metrics.txt'):
+        if not Path('metrics.txt').is_file():
             self.logger.doWarningLogging(f"File metrics.txt not found")
             return metrics
         with open('metrics.txt', 'r') as metric_f:
@@ -731,7 +729,7 @@ class subtest(base_apptest, apptest_layout):
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
 
-        if not os.path.isfile('nodecheck.txt'):
+        if not Path('nodecheck.txt').is_file():
             self.logger.doInfoLogging(f"File nodecheck.txt not found.")
             return node_healths
         self.logger.doDebugLogging("Processing file nodecheck.txt.")

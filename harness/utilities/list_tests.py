@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
+
 import glob
 import os
+from pathlib import Path
 
 """
 SYNOPSIS
@@ -26,7 +28,7 @@ def main():
         #
         # Ensure the path stored in "HARNESS_APPLICATION_PATH" exists.
         #
-        if not  os.path.exists(HARNESS_APPLICATION_PATH):
+        if not  Path(HARNESS_APPLICATION_PATH).exists():
                 tmp_string = "The path {0} does not exist.".format(HARNESS_APPLICATION_PATH)
                 print tmp_string
 

@@ -13,6 +13,14 @@ import subprocess
 import shlex
 import time
 
+from pathlib import Path
+
+try:
+    from jinja2 import Template, TemplateError
+except ImportError:
+    pass
+
+
 class LinuxEnvRegxp:
     """
     When one does an env | less on Linux, we get results similar to the following:
@@ -87,39 +95,74 @@ def make_batch_script_for_linux(a_machine):
     message = f"The batch scheduler template file is {batch_template_file}."
     a_machine.logger.doInfoLogging(message)
     
-    # Get batch job template lines
-    try :
-        with open(batch_template_file, "r") as templatefileobj:
-            templatelines = templatefileobj.readlines()
-    except OSError as err:
-        bstatus = False
-        message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
-                    f"Handling error: {err}\n" )
-        a_machine.logger.doCriticalLogging(message)
-    
-    if bstatus:
-        message = f"Completed reading lines of the batch template file {batch_template_file}."
-        a_machine.logger.doInfoLogging(message)
-
-        # Create test batch job script in run archive directory
+    if batch_template_file.endswith('x'):
+        # Get batch job template lines
         try :
-            with open(batch_file_path, "w") as batch_job:
-                # Replace all the wildcards in the batch job template with the values in
-                # the test config
-                test_replacements = a_machine.test_config.get_test_replacements()
-                for record in templatelines:
-                    for (replace_key,val) in test_replacements.items():
-                        re_tmp = re.compile(replace_key)
-                        record = re_tmp.sub(val, record)
-                    batch_job.write(record)
+            with open(batch_template_file, "r") as templatefileobj:
+                templatelines = templatefileobj.readlines()
         except OSError as err:
             bstatus = False
-            message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
+            message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
                         f"Handling error: {err}\n" )
             a_machine.logger.doCriticalLogging(message)
+    
+        if bstatus:
+            message = f"Completed reading lines of the batch template file {batch_template_file}."
+            a_machine.logger.doInfoLogging(message)
+
+            # Create test batch job script in run archive directory
+            try :
+                with open(batch_file_path, "w") as batch_job:
+                    # Replace all the wildcards in the batch job template with the values in
+                    # the test config
+                    test_replacements = a_machine.test_config.get_test_replacements()
+                    for record in templatelines:
+                        for (replace_key,val) in test_replacements.items():
+                            re_tmp = re.compile(replace_key)
+                            record = re_tmp.sub(val, record)
+                        batch_job.write(record)
+            except OSError as err:
+                bstatus = False
+                message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
+                            f"Handling error: {err}\n" )
+                a_machine.logger.doCriticalLogging(message)
+
+            message = f"Completed regex substitutions."
+            a_machine.logger.doInfoLogging(message)
+    elif batch_template_file.endswith('j2'):
+        try:
+            tpl_text = Path(batch_template_file).read_text(encoding="utf-8")
+            repl_dict = a_machine.test_config.get_test_replacements()
+            rendered = Template(tpl_text).render(**repl_dict)
+            Path(batch_file_path).write_text(rendered, encoding="utf-8")
+            bstatus = True
+        except FileNotFoundError as e:
+            a_machine.logger.doCriticalLogging(f"Error: template file not found: {e.filename}")
+            bstatus = False
+            pass
+        except PermissionError as e:
+            a_machine.logger.doCriticalLogging(f"Error: permission denied accessing '{e.filename}'")
+            bstatus = False
+            pass
+        except TemplateError as e:
+            a_machine.logger.doCriticalLogging(f"Error: Jinja2 template/rendering failed: {e}")
+            bstatus = False
+            pass
+        except OSError as e:
+            a_machine.logger.doCriticalLogging(f"Error: I/O error while reading/writing files: {e}")
+            bstatus = False
+            pass
+        except Exception as e:
+            a_machine.logger.doCriticalLogging(f"Error: unexpected failure: {e}")
+            bstatus = False
+            pass
+    
 
         message = f"Completed regex substitutions."
         a_machine.logger.doInfoLogging(message)
+    else:
+        bstatus = False
+        a_machine.logger.doCriticalLogging(f"Batch template file has unknown extension: {batch_template_file}.")
 
     return bstatus
 
@@ -239,134 +282,6 @@ def isTestCycleComplete(stest):
         subtest_cyle_complete = True
 
     return subtest_cyle_complete
-
-def get_new_environment(a_machine,filename):
-    """ Returns a dictionary of the environmental variables.
-
-    The method returns a dictionary of the environment of a process that
-    runs the command to set the build runtime environment. The command
-    along with the env command is writen to random file. The random file is
-    executed and the output is captured parsed into a dictionary. 
-
-    Parameters
-    ----------
-    filename : str
-        The name of the file that contains the command to set the environment.
-
-    Returns
-    -------
-    dict
-        A dictionary obj["env_key"] = env_value where env_key is the environmental
-        variable and env_value is its value.
-    """
-    path_to_build_directory = a_machine.apptest.get_path_to_workspace_build()
-    tmp_source_file = os.path.join(path_to_build_directory,"tmp_source_file")
-    std_out_file = os.path.join(path_to_build_directory,"std.env.out.txt")
-    std_err_file = os.path.join(path_to_build_directory,"std.env.err.txt")
-
-    #-----------------------------------------------------
-    # Write the current environmental variables to file. -
-    #                                                    -
-    #-----------------------------------------------------
-    with open(tmp_source_file, 'w') as tmp_src_file:
-        tmp_src_file.write('#!/usr/bin/env bash\n')
-        tmp_src_file.write('source %s\n'%filename)
-        tmp_src_file.write('env\n')
-
-    # Execute the random file with Popen and capture the std output.
-    os.chmod(tmp_source_file,0o755)
-    with open(std_out_file, 'w') as out:
-        with open(std_err_file, 'w') as err:
-            with subprocess.Popen([tmp_source_file],
-                                  shell=False, 
-                                  cwd=path_to_build_directory, 
-                                  stdout=out, stderr=err) as process1:
-                process1.wait()
-
-    if process1.returncode != 0:
-        message = "The return code of the Popen process to set the environment != 0."
-        raise BaseMachine.SetBuildRTEError(message)
-
-    #-----------------------------------------------------
-    # Read the file and store the in list records.       -
-    #                                                    -
-    #-----------------------------------------------------
-    with open(std_out_file, 'r') as infile:
-        records = infile.readlines()
-
-    #-----------------------------------------------------
-    # Now loop over the records and process              -
-    # the environment variables.                         -
-    #                                                    -
-    #-----------------------------------------------------
-    env_dict = {}
-    current_line_nm = 0
-    nm_records = len(records)
-    while current_line_nm < nm_records:
-        # Check that on the current line we have a new environmental
-        # variable entry for this line. If a new environmental variable 
-        # is not  found then proceed to the next line.
-        record_decoded = records[current_line_nm]
-
-        search = LinuxEnvRegxp.env_variable_regxp.search(record_decoded)
-        if search:
-            key=search.group('key')
-            a_machine.logger.doInfoLogging(f"Found new env variable {key} at line: {current_line_nm}")
-        else:
-            message = "Error in finding the next environment variable.\n"
-            message += f"The following line, #{current_line_nm}, had no matches for searches:\n"
-            message += record_decoded + "\n"
-            a_machine.logger.doCriticalLogging(message)
-            raise BaseMachine.SetBuildRTEError(message)
-
-        # We now get the range of entries for this environmental variable.
-        start_line = current_line_nm
-
-        # Set the pending current line number to the current
-        # line number. 
-        pending_current_line_nm = current_line_nm
-
-        if ( start_line == (nm_records-1) ):
-
-            # We are at the last line and the finish
-            # line is the last line.
-            finish_line = nm_records - 1
-
-            pending_current_line_nm += 1
-        else:
-
-            search_range_begin = current_line_nm + 1 # Set the start range for 
-                                                     # searching the next environmental entry
-
-            max_search_range_end = nm_records - 1 # Set the maximum rnage of lines to search.
-                                                  # Offset by 1 because records 
-                                                  # list index starts at 0.
-
-            a_machine.logger.doInfoLogging(f"Search range is {search_range_begin} to {max_search_range_end}.")
-
-            for tmp_line_nm in range(search_range_begin,max_search_range_end+1,1):
-                pending_current_line_nm += 1
-                record_decoded = records[tmp_line_nm]
-                search = LinuxEnvRegxp.env_variable_regxp.search(record_decoded)
-                if search:
-                    # We have found the next environmental variable entry
-                    # so break from for loop.
-                    break
-
-
-            # The finish_line is 1 less than the pending_current_line_nm
-            # due to the prior for loop breaking at the start of the 
-            # next environmental variable.
-            finish_line = pending_current_line_nm - 1
-
-            # We now parse the range of entries for the environmental key and 
-            # value.
-            _parse_env_variable(records[start_line:(finish_line+1)],env_dict)
-
-        # The current line now is now equal to pending_current_line_nm.
-        current_line_nm = pending_current_line_nm
-
-    return env_dict
 
 def build_executable(a_machine, new_env):
     """ Return the status of the build. Runs the build command.

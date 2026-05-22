@@ -29,16 +29,6 @@ are used for replacements of patterns in template files.
 The [EnvVars] section is optional
 The section contains keys-value pairs for setting environmental varibles.
 
-The [RuntimeEnvironmentCommands] section optional. This section contains
-key-value entries for where the values ar commands to be run that set the 
-runtime environment for each harness task. 
-The only permmited keys are 
-
-    * "build_rte_cmd" - key for the command to set the rte for the build task.
-    * "submit_rte_cmd" - key for the command to set the rte for the submit task.
-    * "check_rte_cmd" - key for the command to set the rte for the check task.
-    * "report_rte_cmd" - key for the command to set the rte for the report task.
-    * "all_rte_cmd" - key for the command to set the rte for the all tasks.
 """
 
 #
@@ -49,21 +39,21 @@ The only permmited keys are
 import configparser
 import os
 import sys
+from pathlib import Path
+try:
+    # YAML & Jinja2 must be used together
+    import yaml
+    from jinja2 import Template
+    yaml_disabled = False
+except ModuleNotFoundError:
+    yaml_disabled = True
 
 # Harness imports
 from libraries.rgt_utilities import rgt_variable_name_modification
 from libraries import rgt_utilities
 
-
 class RgtTest():
     """This class is the abstraction of regression test input file."""
-
-    RUNTIME_ENVIRONMENT_SECTION_KEYS = {"build" : 'build_rte_cmd',
-                                        "submit" : 'submit_rte_cmd',
-                                        "check" : 'check_rte_cmd',
-                                        "report" : 'report_rte_cmd',
-                                        "all"    : 'all_rte_cmd'}
-    """Valid key values for the runtime environment section in the rgt_test_input.ini file."""
 
     HARNESS_SECTION_KEYS = {"application_test_results_dir" : 'results_dir',
                             "application_test_work_dir" : 'working_dir',
@@ -74,7 +64,7 @@ class RgtTest():
 
 
     OBTAIN_FROM_ENVIRONMENT="<obtain_from_environment>"
-    """str: The string value for an INI entry that indicates to get the value from the shell environment."""
+    """str: The string value for an entry that indicates to get the value from the shell environment."""
 
     def __init__(self, filename,logger=None):
         """ The constructor of the RgtTest class.
@@ -113,17 +103,6 @@ class RgtTest():
         input file.
         """
 
-        self._runtime_environment_params = {}
-        """ A dictionary: A dictionary of commands to set the runtime environment.
-            
-            The keys of the dictionary are strings, and the corrsponding values
-            specify a command. See the class variable RUNTIME_ENVIRONMENT_KEYS 
-            for valid keys.
-
-            For example, self._runtime_environment_params['build_rte_cmd'] is
-            the command to set the runtime environment for building the binary.
-         """
-
         self._harness_params = {}
         """A dictionary: A dictionary of keys and values needed by the harness
 
@@ -133,22 +112,17 @@ class RgtTest():
 
         # dict of builtin keys - value indicates whether it is required
         self.__builtin_keys = {
-
             "batch_filename" :     {"required": True, "type": str },
             "batch_queue" :        {"required": False, "type": str },
             "build_cmd" :          {"required": True, "type": str},
             "check_cmd":           {"required": True, "type": str},
-            "executable_path" :    {"required": False, "type": str},
             "job_name" :           {"required": True, "type": str},
             "max_submissions" :    {"required": False, "type": int, "valid": lambda x : True if (int(x) >= 1 or int(x) == -1) else False},
             "nodes" :              {"required": True, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
-            "processes_per_node" : {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
             "project_id" :         {"required": False, "type": str},
-            "report_cmd" :         {"required": True, "type": str},
+            "report_cmd" :         {"required": False, "type": str},
             "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
-            "total_processes" :    {"required": False, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
-            "use_batch_template":  {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
-            "walltime" :           {"required": True, "type": str},
+            "use_batch_template":  {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False}
         }
 
     def __str__(self):
@@ -205,56 +179,6 @@ class RgtTest():
         self.__logger.doInfoLogging("==========================")
         for (k,v) in (self.user_parameters).items():
             self.__logger.doInfoLogging(f'{k}={v}')
-
-    # Methods to manage runtime environment commands
-    @property
-    def runtime_environment_params(self):
-        """dict: The dictionary of key-values for setting the runtime environment commands."""
-        return self._runtime_environment_params
-
-    @runtime_environment_params.setter
-    def runtime_environment_params(self,params):
-        """Sets the commands for the setting various runtime environment commands.
-
-        Parameters
-        ----------
-        params
-            A dictionary where the keys and values are strings.
-        """
-        for (key,val) in params.items():
-            if key in self.RUNTIME_ENVIRONMENT_SECTION_KEYS.values():
-                self._runtime_environment_params[key] = val
-            else:
-                # To do is throw an exception if an invalid key,value is assigned.
-                pass
-
-    @property
-    def build_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for building the binary."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["build"]
-        command = self._get_rte_param(key)
-        return command
-
-    @property
-    def submit_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for submitting the batch script."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["submit"]
-        command = self._get_rte_param(key)
-        return command
-
-    @property
-    def check_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for checking the test results."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["check"]
-        command = self._get_rte_param(key)
-        return command
-
-    @property
-    def report_runtime_environment_command_file(self):
-        """str: The command file to set the runtime environment for reporting the test results."""
-        key = self.RUNTIME_ENVIRONMENT_SECTION_KEYS["report"]
-        command = self._get_rte_param(key)
-        return command
 
     #
     # Methods to retrieve full test dictionaries
@@ -339,18 +263,19 @@ class RgtTest():
                 key found in the Replacements section of application-test input file
                 rgt_test_input.ini.
         """
+        def name_mangle(yaml_origin, name):
+            return name if yaml_origin else f'__{name}__'
+
         replacements = {}
+        is_yaml = self.__inputfile.endswith('yaml')
         for (k,v) in (self.builtin_parameters).items():
-            replace_key = '__' + k + '__'
-            replacements[replace_key] = v
+            replacements[name_mangle(is_yaml, k)] = v
 
         for (k,v) in (self.user_parameters).items():
-            replace_key = '__' + k + '__'
-            replacements[replace_key] = v
+            replacements[name_mangle(is_yaml, k)] = v
 
         for (k,v) in (self.harness_parameters).items():
-            replace_key = '__' + k + '__'
-            replacements[replace_key] = v
+            replacements[name_mangle(is_yaml, k)] = v
 
         return replacements
 
@@ -379,40 +304,20 @@ class RgtTest():
     def get_report_command(self):
         return self._get_builtin_param("report_cmd")
 
-    def get_executable(self):
-        return self._get_builtin_param("executable_path")
-
     def get_jobname(self):
         return self._get_builtin_param("job_name")
 
     def get_max_submissions(self):
         return self._get_builtin_param("max_submissions")
 
+    def get_use_batch_template(self):
+        return self._get_builtin_param("use_batch_template")
+
     def get_nodes(self):
         return self._get_builtin_param("nodes")
 
     def get_project(self):
         return self._get_builtin_param("project_id")
-
-    def get_use_batch_template(self):
-        return self._get_builtin_param("use_batch_template")
-
-    def get_walltime(self):
-        return self._get_builtin_param("walltime")
-
-    def get_total_processes(self):
-        val = self._get_builtin_param("total_processes")
-        if not val:
-            return str(0)
-        else:
-            return val
-
-    def get_processes_per_node(self):
-        val = self._get_builtin_param("processes_per_node")
-        if not val:
-            return str(0)
-        else:
-            return val
 
     #
     # Input file readers
@@ -425,8 +330,17 @@ class RgtTest():
         is not a permitted value.
         """
         try:
-            if os.path.isfile(self.test_input_filename):
-                self._read_rgt_input_ini()
+            if Path(self.test_input_filename).is_file():
+                if self.test_input_filename.endswith('ini'):
+                    self._read_rgt_input_ini()
+                elif self.test_input_filename.endswith('yaml'):
+                    if yaml_disabled:
+                        self.__logger.doCriticalLogging("import yaml failed, YAML test input file cannot be loaded. Please pip install pyyaml in the current Python environment.")
+                        exit(1)
+                    self._read_rgt_input_yaml()
+                else:
+                    error_message = "File type of input file {} not supported (expected yaml or ini).".format(self.test_input_filename)
+                    raise ErrorRgtTestInputFileNotFound(error_message)
                 self._reconcile_with_shell_environment_variables()
                 self._check_parameters()
                 self._print_test_parameters()
@@ -451,12 +365,6 @@ class RgtTest():
     def _is_builtin_param(self, key):
         return key in self.__builtin_keys
 
-    def _get_rte_param(self,key):
-        command = ""
-        if key in self.runtime_environment_params:
-            command = self.runtime_environment_params[key]
-        return command
-
     def _set_builtin_param(self, key, val, warn=True):
         if self._is_builtin_param(key):
             self.__builtin_params[key] = val
@@ -465,9 +373,6 @@ class RgtTest():
             if warn:
                 self.__logger.doWarningLogging("WARNING: Ignoring invalid built-in parameter key {}".format(key))
             return False
-
-    def _is_rte_param(self,key):
-        return key in self.RUNTIME_ENVIRONMENT_SECTION_KEYS.values()
 
     def _update_replacement_parameters(self,params_view):
         """Updates the appropiate replacement parameter dictionary as required."""
@@ -482,8 +387,7 @@ class RgtTest():
         rgt_test_config.read(self.test_input_filename)
 
         if not 'Replacements' in rgt_test_config:
-            self.__logger.doCriticalLogging("Missing [Replacements] section in test input")
-            replace = dict()
+            raise Exception("Missing [Replacements] section in test input")
         else:
             replace = rgt_test_config['Replacements']
         self._update_replacement_parameters(replace.items())
@@ -502,13 +406,40 @@ class RgtTest():
             env_vars = rgt_test_config['EnvVars']
             self.test_environment = env_vars
 
-        # We now extract the runtime environment commands.
-        rte_section = 'RuntimeEnvironmentCommands'
-        if rte_section in rgt_test_config:
-            runtime_env_commands = rgt_test_config[rte_section]
+    def _read_rgt_input_yaml(self):
+        with open(self.test_input_filename, 'r') as file:
+            test_yaml_raw = yaml.safe_load(file)
+
+        # Catch a few fatal errors and throw exceptions if encountered
+        if not 'replacements' in test_yaml_raw.keys():
+            raise Exception("Missing Replacements section in YAML test input")
+        elif 'variables' in test_yaml_raw.keys() and not isinstance(test_yaml_raw["variables"], dict):
+            # variables must be a single key-value dict, not a list of dicts
+            raise Exception("Variables are provided in the YAML test input, but is not a dictionary")
+
+        if 'variables' in test_yaml_raw.keys():
+            # then do string formatting only for string data types
+            rgt_test_config = { k: v.format(**test_yaml_raw["variables"]) if isinstance(v, str) else v 
+                                    for k, v in test_yaml_raw["replacements"].items() }
         else:
-            runtime_env_commands = dict() 
-        self.runtime_environment_params = runtime_env_commands 
+            # then no variable usage, just copy replacements block to test config
+            rgt_test_config = test_yaml_raw["replacements"]
+
+        self._update_replacement_parameters(rgt_test_config.items())
+
+        # Update environment if either batch_queue or project_id is set
+        env_dict = {}
+        bq = self.get_batch_queue()
+        if bq:
+            env_dict['batch_queue'] = bq
+        proj = self.get_project()
+        if proj:
+            env_dict['project_id'] = proj
+        rgt_utilities.set_harness_environment(env_dict, override=True)
+
+        # EnvVars and RuntimeEnvironmentParams are not supported in YAML format
+        self.test_environment = dict()
+        self.runtime_environment_params = dict()
 
     def _print_test_parameters(self):
         self._print_builtin_parameters()
@@ -567,14 +498,15 @@ class RgtTest():
             if 'type' in params and k in self.builtin_parameters:
                 # All params are strings, so no need to test that
                 # Check int
-                if params['type'] is int and not self.builtin_parameters[k].lstrip("-").isdigit():
+                if params['type'] is int and not (isinstance(self.builtin_parameters[k],int) or \
+                        self.builtin_parameters[k].lstrip("-").isdigit()):
                     valid_type = False # Need to reference in lambda function
                     error_message += "ERROR: test input parameter {} is not type {}!\n".format(k, str(params['type']))
 
                 # Check file
                 if params['type'] == 'file':
                     # Check whether it exists
-                    if not os.path.exists(self.builtin_parameters[k]):
+                    if not Path(self.builtin_parameters[k]).exists():
                         error_message += "ERROR: test input parameter {} does not exist {}!\n".format(k, self.builtin_parameters[k])
 
                     # Check whether is executable

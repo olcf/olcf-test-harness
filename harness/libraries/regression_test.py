@@ -13,7 +13,7 @@ import random # for shuffle
 # Harness package imports.
 from libraries import apptest
 from libraries.subtest_factory import SubtestFactory
-from fundamental_types.rgt_state import RgtState
+from libraries.rgt_state import RgtState
 from libraries.rgt_loggers import rgt_logger_factory
 from machine_types.machine_factory import MachineFactory
 
@@ -262,7 +262,9 @@ class Harness:
         # Submit futures by means of thread pool.
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.__num_workers) as executor:
             for subtest in self.__app_subtests:
-                future = executor.submit(apptest.do_application_tasks,
+                # gracefully handle keyboard interrupts in main thread
+                try:
+                    future = executor.submit(apptest.do_application_tasks,
                                          self.__launch_id,
                                          subtest,
                                          self.__tasks,
@@ -270,29 +272,38 @@ class Harness:
                                          self.__separate_build_stdio,
                                          self.__reuse_first_build,
                                          self.__reuse_build_from_id)
-                future_to_appname[future] = f'{subtest.getNameOfApplication()}.{subtest.getNameOfSubtest()}'
+                    future_to_appname[future] = f'{subtest.getNameOfApplication()}.{subtest.getNameOfSubtest()}'
+                except KeyboardInterrupt:
+                    pass
 
             # Log when all job tasks are initiated.
-            for my_future in concurrent.futures.as_completed(future_to_appname):
-                # appname is appname.testname, as set above
-                appname = future_to_appname[my_future]
+            all_finished = False
+            while not all_finished:
+                # gracefully handle keyboard interrupts in main thread
+                try:
+                    for my_future in concurrent.futures.as_completed(future_to_appname):
+                        # appname is appname.testname, as set above
+                        appname = future_to_appname[my_future]
 
-                # Check if an exception has been raised
-                my_future_exception = my_future.exception()
-                if my_future_exception:
-                    message = "Test {} exception encountered:\n{}".format(appname, my_future_exception)
-                    self.__myLogger.doCriticalLogging(message)
+                        # Check if an exception has been raised
+                        my_future_exception = my_future.exception()
+                        if my_future_exception:
+                            message = "Test {} exception encountered:\n{}".format(appname, my_future_exception)
+                            self.__myLogger.doCriticalLogging(message)
 
-                subtest_result = my_future.result()
-                if subtest_result:
-                    self.__launched_tests += 1
-                    message = "Test {} is launched.\n\n".format(appname)
-                    self.__myLogger.doErrorLogging(message)
-                else:
-                    self.__failed_tests += 1
-                    self.__failed_test_list.append(appname)
-                    message = "Test {} failed to launch.\n\n".format(appname)
-                    self.__myLogger.doErrorLogging(message)
+                        subtest_result = my_future.result()
+                        if subtest_result:
+                            self.__launched_tests += 1
+                            message = "Test {} is launched.\n\n".format(appname)
+                            self.__myLogger.doErrorLogging(message)
+                        else:
+                            self.__failed_tests += 1
+                            self.__failed_test_list.append(appname)
+                            message = "Test {} failed to launch.\n\n".format(appname)
+                            self.__myLogger.doErrorLogging(message)
+                    all_finished = True
+                except KeyboardInterrupt:
+                    pass
 
             message = "All tests are launched. Yahoo!!"
             self.__myLogger.doInfoLogging(message)

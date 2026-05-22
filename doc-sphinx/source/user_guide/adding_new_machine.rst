@@ -28,7 +28,7 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
     [MachineDetails]
     # Required variables :
     machine_name = frontier
-    # options: linux_x86_64 or ibm_power9
+    # options: linux_x86_64 (power9 was recently removed, use linux_x86_64 instead)
     machine_type = linux_x86_64
     # options: slurm, pbs, lsf
     scheduler_type = slurm

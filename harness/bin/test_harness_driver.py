@@ -23,6 +23,10 @@ import subprocess
 import sys
 
 from shlex import split
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 # Harness imports
 from libraries.subtest_factory import SubtestFactory
@@ -35,7 +39,6 @@ from libraries.status_file_factory import StatusFileFactory
 from libraries import status_file
 from libraries.rgt_loggers import rgt_logger_factory
 from machine_types.machine_factory import MachineFactory
-from machine_types.base_machine import SetBuildRTEError
 
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
 """str : The logging level for this module. """
@@ -118,14 +121,14 @@ def backup_status_file(test_status_dir):
     #
     # Now copy the status file to the backup file.
     #
-    if os.path.exists(src):
+    if Path(src).exists():
         shutil.copyfile(src, dest)
 
 def read_job_file(test_status_dir):
     """ Read test_status_dir/job_id.txt to get job id """
     job_id = "0"
     fpath = os.path.join(test_status_dir, layout.job_id_filename)
-    if os.path.exists(fpath):
+    if Path(fpath).exists():
         jfile = open(fpath, "r")
         job_line = jfile.readline()
         jfile.close()
@@ -160,15 +163,22 @@ def auto_generated_scripts(harness_config,
     build_exit_value = 0
     if actions['build']:
         # Build the executable for this test on the specified machine
+        scripts_dir = os.getcwd()
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
         try:
             build_exit_value = mymachine.build_executable()
-        except SetBuildRTEError as error:
-            message = f"Unable to set the build runtime environnment."
-            message += error.message
-            a_logger.doCriticalLogging(message)
-        finally:
-            jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+        except KeyboardInterrupt:
+            a_logger.doCriticalLogging(f"Detected CTRL+C, aborting build.")
+            os.chdir(scripts_dir)
+            build_exit_value = 21
+            pass
+        except Exception as e:
+            a_logger.doCriticalLogging(f"Exception generated during build, aborting test launch: {e}.")
+            os.chdir(scripts_dir)
+            build_exit_value = 1
+            pass
+
+        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
     #-----------------------------------------------------
     # In this section we run the the binary.             -
     #                                                    -
@@ -411,7 +421,7 @@ def test_harness_driver(argv=None):
     #
     if do_submit:
         kill_file = apptest.get_path_to_kill_file()
-        if os.path.exists(kill_file):
+        if Path(kill_file).exists():
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
@@ -433,7 +443,7 @@ def test_harness_driver(argv=None):
     # Requires implementation in base_machine.py and layout_of_apps_directory.py
     # Environment variable set by user or by runtests.py
     build_dir = apptest.get_path_to_workspace_build()
-    if 'RGT_REUSE_BUILD_FROM' in os.environ and os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+    if 'RGT_REUSE_BUILD_FROM' in os.environ and Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
         build_dir = os.environ['RGT_REUSE_BUILD_FROM']
     elif 'RGT_REUSE_BUILD_FROM' in os.environ:
         # otherwise, update this envvar to the current build directory

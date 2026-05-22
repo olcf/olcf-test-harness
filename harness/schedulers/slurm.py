@@ -15,7 +15,7 @@ class SLURM(BaseScheduler):
 
     """ SLURM class represents an SLURM scheduler. """
 
-    def __init__(self, logger):
+    def __init__(self, logger, use_jinja2=False):
         self.__name = 'SLURM'
         self.__submitCmd = 'sbatch'
         self.__statusCmd = 'squeue'
@@ -23,7 +23,7 @@ class SLURM(BaseScheduler):
         self.__walltimeOpt = '-t'
         self.__numTasksOpt = '-n'
         self.__jobNameOpt = '-J'
-        self.__templateFile = 'slurm.template.x'
+        self.__templateFile = 'slurm.template.x' if not use_jinja2 else 'slurm.template.j2'
         self.__logger = logger
         BaseScheduler.__init__(self, self.__name,
                                self.__submitCmd, self.__statusCmd, self.__deleteCmd,

@@ -4,6 +4,7 @@
 import unittest
 import os
 import shutil
+from pathlib import Path
 
 # NCCS Tesst Harness packages
 from libraries.repositories import RepositoryFactory
@@ -104,7 +105,7 @@ def get_path_to_test_repository():
     return path_head
 
 def creating_root_dir_repo(path_to_repo):
-    if os.path.exists(path_to_repo) :
+    if Path(path_to_repo).exists() :
         shutil.rmtree(path_to_repo)
     os.makedirs(path_to_repo)
     return

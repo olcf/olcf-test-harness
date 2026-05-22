@@ -7,16 +7,16 @@
 
 # Python imports
 from abc import abstractmethod, ABCMeta
-from pathlib import Path
 import os
 import shutil
 import subprocess
 import shlex
 import sys
+from pathlib import Path
 
 # Harness imports
 from libraries.apptest import subtest
-from .scheduler_factory import SchedulerFactory
+from schedulers.scheduler_factory import SchedulerFactory
 from machine_types import linux_utilities
 
 class BaseMachine(metaclass=ABCMeta):
@@ -44,11 +44,11 @@ class BaseMachine(metaclass=ABCMeta):
     # The constructor of class base_machine.
     def __init__(self, name, scheduler_type,
                  numNodes, numSockets, numCoresPerSocket,
-                 apptest, separate_build_stdio=False):
+                 apptest, separate_build_stdio=False, use_jinja2=False):
 
         self.__name = name
 
-        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger)
+        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger, use_jinja2=use_jinja2)
         """An object of type BaseScheduler : This object is the job resource scheduler. See the
            classs SchedulerFactory for more details."""
 
@@ -104,21 +104,6 @@ class BaseMachine(metaclass=ABCMeta):
     @property
     @abstractmethod
     def test_config(self):
-        return
-
-    @property
-    @abstractmethod
-    def build_runtime_environment_command_file(self):
-        return
-
-    @property
-    @abstractmethod
-    def submit_runtime_environment_command_file(self):
-        return
-
-    @property
-    @abstractmethod
-    def check_runtime_environment_command_file(self):
         return
 
     def isTestCycleComplete(self,stest):
@@ -187,19 +172,7 @@ class BaseMachine(metaclass=ABCMeta):
         message = f"The initial directory is {currentdir}"
         self.logger.doInfoLogging(message)
 
-        # Get the environment using the submit runtime environment file.
         new_env = None
-        filename = self.submit_runtime_environment_command_file
-
-        try:
-            if filename != "":
-                message = f"The submit runtime environmental file is {filename}."
-                self.logger.doInfoLogging(message)
-                new_env = linux_utilities.get_new_environment(self,filename)
-        except SetBuildRTEError as error: 
-            message = f"Unable to set the submit runtime environment."
-            self.logger.doCriticalLogging(message)
-
         exit_status = linux_utilities.submit_batch_script(self,new_env)
 
         if exit_status != 0:
@@ -287,7 +260,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
             self.logger.doInfoLogging(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
             return 0
 
@@ -299,17 +272,6 @@ class BaseMachine(metaclass=ABCMeta):
 
         self.logger.doInfoLogging(f"Copied source to build directory.")
 
-        # Get the environment using the build runtime environment file.
-        new_env = None
-        filename = self.build_runtime_environment_command_file
-
-        if filename != "":
-            self.logger.doInfoLogging(f"The build runtime environmental file is {filename}.")
-            new_env = linux_utilities.get_new_environment(self,filename)
-            message = f"The new build environment is as follows:\n"
-            message += str(new_env)
-            self.logger.doInfoLogging(message)
-
         # We now change directories to the build directory.
         os.chdir(path_to_build_directory)
 
@@ -317,6 +279,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doInfoLogging(message)
 
         # We run the build command.
+        new_env = None
         exit_status = self._build_executable(new_env)
 
         message = f"The build exit status is {exit_status}."
@@ -347,17 +310,6 @@ class BaseMachine(metaclass=ABCMeta):
         currentdir = os.getcwd()
         runarchive_dir = self.apptest.get_path_to_runarchive()
 
-        # Get the environment using the check runtime environment file.
-        new_env = None
-        filename = self.check_runtime_environment_command_file
-        try:
-            if filename != "":
-                message = f"The check runtime environmental file is {filename}."
-                new_env = linux_utilities.get_new_environment(self,filename)
-        except SetBuildRTEError as error: 
-            message = f"Unable to set the check runtime environment."
-            self.logger.doCriticalLogging(message)
-
         # We now change to the runarchive directory.
         os.chdir(runarchive_dir)
 
@@ -365,6 +317,7 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.doInfoLogging(message)
 
         # We now run the check command.
+        new_env = None
         check_status = linux_utilities.check_executable(self,new_env)
 
         self._write_check_exit_status(check_status)
@@ -385,6 +338,10 @@ class BaseMachine(metaclass=ABCMeta):
         int : The exit status of executing the report command.
         """
         report_command_str = self.test_config.get_report_command()
+
+        if not report_command_str:
+            self.logger.doInfoLogging("No report command provided, skipping report step.")
+            return 0
 
         message = f"Running report executable script report script {report_command_str }."
 
@@ -439,7 +396,7 @@ class BaseMachine(metaclass=ABCMeta):
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                os.path.exists(os.environ['RGT_REUSE_BUILD_FROM']):
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
             self.logger.doInfoLogging("RGT_REUSE_BUILD_FROM set, skipping copying Source.")
             return 0
 
@@ -447,7 +404,7 @@ class BaseMachine(metaclass=ABCMeta):
                         dst=path_to_build_directory,
                         symlinks=True)
         # If a Source directory exists inside test, overlay that over source directory
-        if os.path.exists(path_to_test_source):
+        if Path(path_to_test_source).exists():
             # Python 3.8 adds the dirs_exist_ok keyword to allow overwriting a destination
             # Prior to that, it's easier to use shell commands to do what we want
             if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
@@ -510,23 +467,6 @@ class BaseMachine(metaclass=ABCMeta):
 class BaseMachineError(Exception):
     """Base class for exceptions in this module"""
     pass
-
-class SetBuildRTEError(BaseMachineError):
-    """Exception raised for errors in setting the build runtime environment."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-    
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
 
 if __name__ == "__main__":
     print("This is the BaseMachine class!")
