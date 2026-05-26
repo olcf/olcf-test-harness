@@ -15,7 +15,7 @@ class LSF(BaseScheduler):
 
     """ LSF class represents an LSF scheduler. """
 
-    def __init__(self, logger):
+    def __init__(self, logger, use_jinja2=False):
         self.__name = 'LSF'
         self.__submitCmd = 'bsub'
         self.__statusCmd = 'bjobs'
@@ -23,7 +23,7 @@ class LSF(BaseScheduler):
         self.__walltimeOpt = '-W'
         self.__numTasksOpt = '-n'
         self.__jobNameOpt = '-N'
-        self.__templateFile = 'lsf.template.x'
+        self.__templateFile = 'lsf.template.x', if not use_jinja2 else 'lsf.template.j2'
         self.__logger = logger
         BaseScheduler.__init__(self, self.__name,
                                self.__submitCmd, self.__statusCmd, self.__deleteCmd,
