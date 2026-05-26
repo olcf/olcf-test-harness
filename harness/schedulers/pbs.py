@@ -13,7 +13,7 @@ from .base_scheduler import BaseScheduler
 
 class PBS(BaseScheduler):
 
-    def __init__(self, logger):
+    def __init__(self, logger, use_jinja2=False):
         self.__name = 'PBS'
         self.__submitCmd = 'qsub'
         self.__statusCmd = 'qstat'
@@ -21,7 +21,7 @@ class PBS(BaseScheduler):
         self.__walltimeOpt = '-l walltime='
         self.__numTasksOpt = '-l nodes='
         self.__jobNameOpt = '-N'
-        self.__templateFile = 'pbs.template.x'
+        self.__templateFile = 'pbs.template.x' if not use_jinja2 else 'pbs.template.j2'
         self.__logger = logger
         BaseScheduler.__init__(self, self.__name,
                                self.__submitCmd, self.__statusCmd, self.__deleteCmd,
