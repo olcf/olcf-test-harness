@@ -92,9 +92,6 @@ def create_parser(logger=None):
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
                            action='store', nargs='?', type=int, const=-1, default=-1)
-    my_parser.add_argument('-R', '--run',
-                           help='Run the application test batch script (NOTE: for use within a job)',
-                           action='store_true')
     my_parser.add_argument('-s', '--submit',
                            help='Submit the application test batch script',
                            action='store_true')
@@ -144,7 +141,7 @@ def auto_generated_scripts(harness_config,
                            a_logger,
                            separate_build_stdio=False):
     """
-    Generates and executes scripts to build, run, and check a test.
+    Generates and executes scripts to build, submit, and check a test.
 
     This function uses the machine_types library.
 
@@ -180,7 +177,7 @@ def auto_generated_scripts(harness_config,
 
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
     #-----------------------------------------------------
-    # In this section we run the the binary.             -
+    # In this section we submit the job.                 -
     #                                                    -
     #-----------------------------------------------------
     job_id = "0"
@@ -243,36 +240,6 @@ def auto_generated_scripts(harness_config,
         else:
             submit_exit_value = 1
 
-    run_exit_value = 0
-    if actions['run']:
-        # The 'run' action should be executed within a job
-
-        # Create the batch script
-        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START, str('1/1'))
-        make_batch_script_status = mymachine.make_batch_script()
-        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, 0)
-
-        # Find the current job id and write it to the associated status file
-        mymachine.write_jobid_to_status()
-        job_id = read_job_file(status_dir)
-        if make_batch_script_status and job_id != "0":
-            jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
-
-            # now run the batch script as a subprocess
-            batch_script = os.path.join(ra_dir, mymachine.test_config.get_batch_file())
-            os.chmod(batch_script, (stat.S_IREAD|stat.S_IWRITE|stat.S_IEXEC))
-            args = [batch_script]
-            run_outfile = os.path.join(ra_dir, "output_run.txt")
-            run_stdout = open(run_outfile, "w")
-            p = subprocess.Popen(args, stdout=run_stdout, stderr=subprocess.STDOUT)
-            p.wait()
-            run_exit_value = p.returncode
-            run_stdout.close()
-        else:
-            message = f"Run error, failed to retrieve the job id."
-            a_logger.doCriticalLogging(message)
-            run_exit_value = 1
-
     #-----------------------------------------------------
     # In this section we check the the results.          -
     #                                                    -
@@ -294,7 +261,6 @@ def auto_generated_scripts(harness_config,
     exit_values = {
         'build'  : build_exit_value,
         'check'  : check_exit_value,
-        'run'    : run_exit_value,
         'submit' : submit_exit_value
     }
     return exit_values
@@ -326,13 +292,12 @@ def test_harness_driver(argv=None):
     do_build = Vargs.build
     do_check = Vargs.check
     do_submit = Vargs.submit
-    do_run = Vargs.run
 
     #
     # If none of the individual actions were specified, act
     # like the previous version and do 'build + submit'
     #
-    if not (do_build or do_submit or do_check or do_run):
+    if not (do_build or do_submit or do_check):
         do_build  = True
         do_submit = True
 
@@ -348,7 +313,6 @@ def test_harness_driver(argv=None):
     actions = {
         'build'    : do_build,
         'check'    : do_check,
-        'run'      : do_run,
         'submit'   : do_submit,
         'resubmit' : resubmit_count
     }
@@ -506,11 +470,6 @@ def test_harness_driver(argv=None):
         submit_exit_value = exit_values['submit']
         apptest.logger.doInfoLogging(f'submit exit value = {submit_exit_value}')
 
-    run_exit_value = 0
-    if actions['run']:
-        run_exit_value = exit_values['run']
-        apptest.logger.doInfoLogging(f'run exit value = {run_exit_value}')
-
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
@@ -526,7 +485,7 @@ def test_harness_driver(argv=None):
         jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END,
                           job_correctness)
 
-    return (build_exit_value + submit_exit_value + run_exit_value + check_exit_value)
+    return (build_exit_value + submit_exit_value + check_exit_value)
 
 
 if __name__ == "__main__":
