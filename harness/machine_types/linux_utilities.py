@@ -11,6 +11,7 @@ import inspect
 import os
 import subprocess
 import shlex
+import stat
 import time
 
 from pathlib import Path
@@ -81,13 +82,15 @@ def make_batch_script_for_linux(a_machine):
         a_machine.logger.doInfoLogging(f"use_batch_template = 0 is set in test configuration file, skipping batch script generation.")
         return True
 
+    batch_template_file = a_machine.get_scheduler_template_file_name()
+    if str(a_machine.test_config.get_run_local()) == '1':
+        batch_template_file = batch_template_file.replace(a_machine.get_scheduler_type().lower(), 'local')
+
     # Log that our execution location.
-    message = "Making batch script for {} using file {}.".format(a_machine.machine_name,a_machine.get_scheduler_template_file_name())
+    message = "Making batch script for {} using file {}.".format(a_machine.machine_name,batch_template_file)
     a_machine.logger.doInfoLogging(message)
 
     bstatus = True
-
-    batch_template_file = a_machine.get_scheduler_template_file_name()
 
     batch_file_path = os.path.join(a_machine.apptest.get_path_to_runarchive(),
                                    a_machine.test_config.get_batch_file())
@@ -368,6 +371,42 @@ def submit_batch_script(a_machine, new_env):
 
     message = f"Submitted batch script {batch_script} with exit status of {submit_exit_value}."
     return submit_exit_value
+
+def run_local_script(a_machine):
+    # Get the name of the current function.
+    frame = inspect.currentframe()
+    function_name = inspect.getframeinfo(frame).function
+
+    # Update the run-time environment
+    env_vars = a_machine.test_config.test_environment
+    message = ""
+    for e in env_vars:
+        v = env_vars[e]
+        eu = e.upper()
+        os.putenv(eu, v)
+        message += f"Set batch environment variable {eu}={v}\n"
+    a_machine.logger.doInfoLogging(message)
+
+    os.chdir(a_machine.apptest.get_path_to_runarchive())
+
+    # Submit the test's batch script
+    run_outfile = "output.txt"
+    run_stdout = open(run_outfile, "w")
+    exe_script = Path(a_machine.apptest.get_path_to_runarchive(),
+                      a_machine.test_config.get_batch_file())
+
+    # Add +x permissions to exe_script
+    exe_script_perms = exe_script.stat().st_mode
+    exe_script.chmod(exe_script_perms | stat.S_IXUSR)
+
+    p = subprocess.Popen(str(exe_script), stdout=run_stdout, stderr=subprocess.STDOUT)
+    run_exit_value = p.wait()
+
+    # Go back to scripts
+    os.chdir(a_machine.apptest.get_path_to_scripts())
+
+    a_machine.logger.doInfoLogging(f"Finished running script {exe_script} with exit status of {run_exit_value}.")
+    return run_exit_value
 
 #-----------------------------------------------------
 #                                                    -

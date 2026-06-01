@@ -299,6 +299,18 @@ class BaseMachine(metaclass=ABCMeta):
 
         return exit_status
 
+    def run_local_script(self):
+        """ Executes the batch script interactively and returns the exit status
+
+        Returns
+        -------
+        int
+            The exit status of the script.
+
+        """
+        exit_status = linux_utilities.run_local_script(self)
+        return exit_status
+
     def check_executable(self):
         """Checks the results of the test and returns pass-failure status of the test.
        
