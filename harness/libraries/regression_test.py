@@ -39,7 +39,6 @@ class Harness:
                  rgt_input_file,
                  log_level,
                  stdout_stderr,
-                 use_fireworks,
                  separate_build_stdio,
                  reuse_first_build,
                  reuse_build_from_id,
@@ -53,7 +52,6 @@ class Harness:
         self.__log_level = log_level
         self.__stdout_stderr = stdout_stderr
         self.__num_workers = 1
-        self.__use_fireworks = use_fireworks
         self.__separate_build_stdio = separate_build_stdio
         self.__reuse_first_build = reuse_first_build
         self.__reuse_build_from_id = reuse_build_from_id
@@ -136,10 +134,7 @@ class Harness:
         self.__app_subtests = self.__formCollectionOfTests()
 
         # Run subtests
-        if self.__use_fireworks:
-            self.__run_fireworks()
-        else:
-            self.__run_subtests_asynchronously()
+        self.__run_subtests_asynchronously()
 
         # If we get to this point mark all task as completed.
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
@@ -314,89 +309,6 @@ class Harness:
                     self.__myLogger.doErrorLogging(f"\t{t}")
 
         return
-
-    def __run_fireworks(self):
-        from fireworks import Firework, Workflow, LaunchPad, ScriptTask
-
-        # set up the LaunchPad
-        launchpad = LaunchPad()
-        launchid = self.__launch_id
-
-        cfg_file = self.__config.get_config_file()
-
-        for subtest in self.__app_subtests:
-            uid = subtest.get_harness_id()
-            appname = subtest.getNameOfApplication()
-            testname = subtest.getNameOfSubtest()
-            task_suffix = f'{appname}.{testname}_@_{uid}'
-
-            message = "Test " + appname + '.' + testname + " has been submitted for running tasks."
-            self.__myLogger.doInfoLogging(message)
-
-            # create machine and run status files/directories for current subtest
-            # (NOTE: working dir must be scripts_dir)
-            scripts_dir = subtest.get_path_to_scripts()
-            current_dir = os.getcwd()
-            os.chdir(scripts_dir)
-            subtest.create_test_status()
-            ra_dir = subtest.create_test_runarchive()
-            machine = MachineFactory.create_machine(self.__config, subtest)
-            machine_name = machine.get_machine_name()
-            os.chdir(current_dir)
-
-            # create build FireWork
-            taskname = f'OTH-BLD.{machine_name}.{task_suffix}'
-            if self.__separate_build_stdio:
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --separate-build-stdio --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
-            else:
-                driver_cmd = f'test_harness_driver.py -C {cfg_file} --build --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
-            script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwbuild.log'
-            build_task = ScriptTask(script=script_cmd,
-                                    store_stdout=True, store_stderr=True)
-            category = f'{machine_name}-build'
-            fw1 = Firework(build_task, fw_id=1, name=taskname,
-                            spec={'_category':category, '_launch_dir':ra_dir})
-
-            # create batch run FireWork
-            taskname = f'OTH-RUN.{machine_name}.{task_suffix}'
-            driver_cmd = f'test_harness_driver.py -C {cfg_file} --run --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
-            script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwrun.log'
-            run_task = ScriptTask(script=script_cmd,
-                                    store_stdout=True, store_stderr=True)
-            rgt_test = machine.test_config
-            replacements = rgt_test.get_test_replacements()
-            job_overrides = {
-                'job_name' : replacements['__job_name__'],
-                'walltime' : replacements['__walltime__'],
-                'nodes'    : replacements['__nodes__']
-            }
-            if '__batch_queue__' in replacements.keys():
-                job_overrides['queue'] = replacements['__batch_queue__']
-            if '__project_id__' in replacements.keys():
-                job_overrides['account'] = replacements['__project_id__']
-
-            category = f'{machine_name}-run'
-            fw2 = Firework(run_task, fw_id=2, name=taskname,
-                            spec={'_category':category, '_launch_dir':ra_dir, '_queueadapter':job_overrides})
-
-            # create check FireWork
-            taskname = f'OTH-CHK.{machine_name}.{task_suffix}'
-            driver_cmd = f'test_harness_driver.py -C {cfg_file} --check --scriptsdir {scripts_dir} --launchid {launchid} --uniqueid {uid} --loglevel {self.__loglevel}'
-            script_cmd = f'echo "Running: {driver_cmd}"; {driver_cmd} &> fwcheck.log'
-            check_task = ScriptTask(script=script_cmd,
-                                    store_stdout=True, store_stderr=True)
-            category = f'{machine_name}-check'
-            fw3 = Firework(check_task, fw_id=3, name=taskname,
-                            spec={'_category':category, '_launch_dir':ra_dir})
-
-            # make workflow and add it to the LaunchPad
-            wfname = f'OTH-WF.{machine_name}.{task_suffix}'
-            workflow = Workflow([fw1, fw2, fw3], {1: [2], 2: [3]}, name=wfname)
-            launchpad.add_wf(workflow)
-
-            message = "Added workflow " + wfname + "\n========\n"
-            message += str(workflow.to_display_dict())
-            self.__myLogger.doInfoLogging(message)
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
