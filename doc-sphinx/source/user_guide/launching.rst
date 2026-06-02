@@ -188,8 +188,6 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
                 'start'      - start application tests listed in input file
                 'stop'       - stop application tests listed in input file
                 'status'     - check status of application tests listed in input file
-    --fireworks
-            Use FireWorks to run harness tasks
     -sb, --separate-build-stdio
             Separate output from build into build_out.stderr.txt and build_out.stdout.txt
     --reuse-first-build

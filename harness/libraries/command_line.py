@@ -15,7 +15,6 @@ class HarnessParsedArguments:
                        configfile=None,
                        runmode=None,
                        stdout_stderr=None,
-                       use_fireworks=False,
                        separate_build_stdio=False,
                        reuse_first_build=False,
                        reuse_build_from_id=None,
@@ -28,7 +27,6 @@ class HarnessParsedArguments:
         self.__configfile = configfile
         self.__mode = runmode
         self.__stdout_stderr = stdout_stderr
-        self.__use_fireworks = use_fireworks
         self.__separate_build_stdio = separate_build_stdio
         self.__reuse_first_build = reuse_first_build
         self.__reuse_build_from_id = reuse_build_from_id
@@ -73,10 +71,6 @@ class HarnessParsedArguments:
     @stdout_stderr.setter
     def stdout_stderr(self,value):
         self.__stdout_stderr = value
-
-    @property
-    def use_fireworks(self):
-        return self.__use_fireworks
 
     @property
     def separate_build_stdio(self):

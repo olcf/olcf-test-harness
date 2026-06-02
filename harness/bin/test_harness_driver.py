@@ -92,14 +92,10 @@ def create_parser(logger=None):
     my_parser.add_argument('-r', '--resubmit',
                            help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
                            action='store', nargs='?', type=int, const=-1, default=-1)
-    my_parser.add_argument('-R', '--run',
-                           help='Run the application test batch script (NOTE: for use within a job)',
-                           action='store_true')
     my_parser.add_argument('-s', '--submit',
                            help='Submit the application test batch script',
                            action='store_true')
     return my_parser
-
 
 def backup_status_file(test_status_dir):
     """ Make a backup copy of master status file """
@@ -135,7 +131,6 @@ def read_job_file(test_status_dir):
         job_id = str.strip(job_line)
     return job_id
 
-
 def auto_generated_scripts(harness_config,
                            apptest,
                            jstatus,
@@ -144,7 +139,7 @@ def auto_generated_scripts(harness_config,
                            a_logger,
                            separate_build_stdio=False):
     """
-    Generates and executes scripts to build, run, and check a test.
+    Generates and executes scripts to build, submit, and check a test.
 
     This function uses the machine_types library.
 
@@ -155,6 +150,14 @@ def auto_generated_scripts(harness_config,
 
     # Instantiate the machine for this computer.
     mymachine = MachineFactory.create_machine(harness_config, apptest, separate_build_stdio=separate_build_stdio)
+
+    # If the test needs to be run in serial outside of the scheduler, do that now
+    if mymachine.test_config.get_run_local():
+        actions['build'] = True
+        actions['submit'] = False
+        actions['run_local'] = True
+        actions['check'] = True
+        actions['resubmit'] = False
 
     #-----------------------------------------------------
     # In this section we build the binary.               -
@@ -180,16 +183,15 @@ def auto_generated_scripts(harness_config,
 
         jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
     #-----------------------------------------------------
-    # In this section we run the the binary.             -
+    # In this section we submit the job.                 -
     #                                                    -
     #-----------------------------------------------------
     job_id = "0"
     submit_exit_value = 0
-    if actions['submit'] and (build_exit_value != 0):
-        message = f"No submit action due to prior failed build."
-        a_logger.doCriticalLogging(message)
+    run_exit_value = 0
+    if build_exit_value != 0:
+        a_logger.doCriticalLogging(f"Build failed, no submit action to be taken.")
     elif actions['submit'] and (build_exit_value == 0):
-
         # determine run count and max
         run_count = 1
         max_count = 1
@@ -242,36 +244,17 @@ def auto_generated_scripts(harness_config,
                     submit_exit_value = 1
         else:
             submit_exit_value = 1
-
-    run_exit_value = 0
-    if actions['run']:
-        # The 'run' action should be executed within a job
-
-        # Create the batch script
-        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START, str('1/1'))
+    elif actions['run_local'] and (build_exit_value == 0):
+        # then run the job locally
         make_batch_script_status = mymachine.make_batch_script()
-        jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, 0)
 
-        # Find the current job id and write it to the associated status file
-        mymachine.write_jobid_to_status()
-        job_id = read_job_file(status_dir)
-        if make_batch_script_status and job_id != "0":
-            jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
-
-            # now run the batch script as a subprocess
-            batch_script = os.path.join(ra_dir, mymachine.test_config.get_batch_file())
-            os.chmod(batch_script, (stat.S_IREAD|stat.S_IWRITE|stat.S_IEXEC))
-            args = [batch_script]
-            run_outfile = os.path.join(ra_dir, "output_run.txt")
-            run_stdout = open(run_outfile, "w")
-            p = subprocess.Popen(args, stdout=run_stdout, stderr=subprocess.STDOUT)
-            p.wait()
-            run_exit_value = p.returncode
-            run_stdout.close()
-        else:
-            message = f"Run error, failed to retrieve the job id."
-            a_logger.doCriticalLogging(message)
-            run_exit_value = 1
+        if make_batch_script_status:
+            # run the batch script locally
+            jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_START)
+            try:
+                run_exit_value = mymachine.run_local_script()
+            finally:
+                jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_END, run_exit_value)
 
     #-----------------------------------------------------
     # In this section we check the the results.          -
@@ -281,21 +264,22 @@ def auto_generated_scripts(harness_config,
     if actions['check']:
         if not actions['submit']:
             job_id = read_job_file(status_dir)
-        if job_id != "0":
+        if job_id != "0" or actions["run_local"]:
             jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
             check_exit_value = mymachine.check_executable()
             mymachine.start_report_executable()
             mymachine.log_to_db()
+            jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END, check_exit_value)
         else:
             message = f"Check error, failed to retrieve the job id."
             a_logger.doCriticalLogging(message)
             check_exit_value = 1
 
     exit_values = {
-        'build'  : build_exit_value,
-        'check'  : check_exit_value,
-        'run'    : run_exit_value,
-        'submit' : submit_exit_value
+        'build'     : build_exit_value,
+        'check'     : check_exit_value,
+        'submit'    : submit_exit_value,
+        'run_local' : run_exit_value
     }
     return exit_values
 
@@ -326,13 +310,12 @@ def test_harness_driver(argv=None):
     do_build = Vargs.build
     do_check = Vargs.check
     do_submit = Vargs.submit
-    do_run = Vargs.run
 
     #
     # If none of the individual actions were specified, act
     # like the previous version and do 'build + submit'
     #
-    if not (do_build or do_submit or do_check or do_run):
+    if not (do_build or do_submit or do_check):
         do_build  = True
         do_submit = True
 
@@ -345,12 +328,13 @@ def test_harness_driver(argv=None):
             print(message)
             return 0
 
+    # run_local detected in autogenerated_scripts later
     actions = {
         'build'    : do_build,
         'check'    : do_check,
-        'run'      : do_run,
         'submit'   : do_submit,
-        'resubmit' : resubmit_count
+        'resubmit' : resubmit_count,
+        'run_local': False
     }
 
     # Create a harness config (which sets harness env vars)
@@ -422,7 +406,6 @@ def test_harness_driver(argv=None):
     if do_submit:
         kill_file = apptest.get_path_to_kill_file()
         if Path(kill_file).exists():
-            import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
             apptest.logger.doCriticalLogging(message)
@@ -501,32 +484,22 @@ def test_harness_driver(argv=None):
         build_exit_value = exit_values['build']
         apptest.logger.doInfoLogging(f'build exit value = {build_exit_value}')
 
+    run_local_exit_value = 0
+    if actions['run_local']:
+        run_local_exit_value = exit_values['run_local']
+        apptest.logger.doInfoLogging(f'run_local exit value = {run_local_exit_value}')
+
     submit_exit_value = 0
     if actions['submit']:
         submit_exit_value = exit_values['submit']
         apptest.logger.doInfoLogging(f'submit exit value = {submit_exit_value}')
-
-    run_exit_value = 0
-    if actions['run']:
-        run_exit_value = exit_values['run']
-        apptest.logger.doInfoLogging(f'run exit value = {run_exit_value}')
 
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
         apptest.logger.doInfoLogging(f'check exit value = {check_exit_value}')
 
-        # Now read the result from the job_status.txt file.
-        jspath = os.path.join(status_dir, layout.job_status_filename)
-        jsfile = open(jspath, "r")
-        job_correctness = jsfile.readline()
-        jsfile.close()
-        job_correctness = str.strip(job_correctness)
-        # Log result of status check.
-        jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END,
-                          job_correctness)
-
-    return (build_exit_value + submit_exit_value + run_exit_value + check_exit_value)
+    return (build_exit_value + run_local_exit_value + submit_exit_value + check_exit_value)
 
 
 if __name__ == "__main__":
