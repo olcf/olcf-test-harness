@@ -125,6 +125,9 @@ The *ini* file format follows the Python3 `configparser <https://docs.python.org
             #project_id = abc123
             #batch_queue = my_special_partition
 
+            # you can optionally force running this test locally (e.g., ./<jobscript> instead of through the scheduler)
+            #run_local = 1
+
             #### Variables that used to be required and may be useful, but are no longer required:
             report_cmd = ./report_hello_mpi_c.sh
             walltime = 10
@@ -185,6 +188,9 @@ The *ini* file format follows the Python3 `configparser <https://docs.python.org
                 #project_id: abc123
                 #batch_queue: my_special_partition
 
+                # you can optionally force running this test locally (e.g., ./<jobscript> instead of through the scheduler)
+                #run_local: 1
+
                 #### Variables that used to be required and may be useful, but are no longer required:
                 report_cmd: './report_{my_job_name}.sh'
                 walltime: 10
@@ -243,7 +249,7 @@ Job Script Template
 ^^^^^^^^^^^^^^^^^^^
 
 The OTH will generate the batch job script from the job script template by replacing keywords
-of the form ``__keyword__`` with the values specified in the test input file's replacements section.
+of the form ``__keyword__`` (or ``{{keyword}}`` for Jinja2) with the values specified in the test input file's replacements section.
 Additionally, the OTH automatically provides several replacement keywords for the job script to use, described below:
 
 * ``results_dir``: absolute path to the test's *Run_Archive* directory, which is where the job is launched from, and where it typically copies results to
@@ -259,12 +265,18 @@ The job script template must be named appropriately to match the specific schedu
 +---------------+-------------------+-----------------------+
 | Scheduler     | INI test input    | YAML test input       |
 +===============+===================+=======================+
-| Slurm         | slurm.template.x  | slurm.template.yaml   |
+| Slurm         | slurm.template.x  | slurm.template.j2     |
 +---------------+-------------------+-----------------------+
-| LSF           | lsf.template.x    | lsf.template.yaml     |
+| LSF           | lsf.template.x    | lsf.template.j2       |
 +---------------+-------------------+-----------------------+
-| PBS           | pbs.template.x    | pbs.template.yaml     |
+| PBS           | pbs.template.x    | pbs.template.j2       |
 +---------------+-------------------+-----------------------+
+| Local\*       | local.template.x  | local.template.j2     |
++---------------+-------------------+-----------------------+
+
+..note::
+
+    \*The Local scheduler is enabled on a per-test basis by setting ``run_local = 1`` in the test input file.
 
 An example Slurm template script for the *hello_mpi* application for both INI+x and YAML+Jinja2 format is provided below.
 In simple cases, there is little functional difference between the two templating formats, but YAML+Jinja2 has far greater power with handling complex test inputs like arrays.
@@ -435,6 +447,12 @@ it can be be copied by adding the following line in the job script:
 The environment variable **$EXECUTABLE** is also populated based on ``executable_path`` entry in *rgt_test_input.ini* file.
 The executable may still be inside **$BUILD_DIR** from the previous step,
 so one would need to either copy it to **$WORK_DIR** or provide the absolute path in the job script such as **$BUILD_DIR/$EXECUTABLE**.
+
+.. note::
+
+    The local scheduler that can be enabled with ``run_local = 1`` in the *rgt_test_input.{yaml,ini}* automatically
+    performs all OTH functions such as ``check_executable_driver.py`` and ``log_binary_execute.py``, and should not
+    be paired with resubmission logic (e.g., calling ``test_harness_driver.py -r``).
 
 
 Check Script
