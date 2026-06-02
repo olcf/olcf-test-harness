@@ -274,7 +274,7 @@ The job script template must be named appropriately to match the specific schedu
 | Local\*       | local.template.x  | local.template.j2     |
 +---------------+-------------------+-----------------------+
 
-..note::
+.. note::
 
     \*The Local scheduler is enabled on a per-test basis by setting ``run_local = 1`` in the test input file.
 

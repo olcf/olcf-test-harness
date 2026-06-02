@@ -281,6 +281,7 @@ machine_name = frontier
 # options: linux_x86_64 (power9 was recently removed, use linux_x86_64 instead)
 machine_type = linux_x86_64
 # options: slurm, pbs, lsf
+# note, a local scheduler (e.g., ./&lt;batchscript&gt;) can be enabled by setting on a per-test basis in ``rgt_test_input.{ini,yaml}``
 scheduler_type = slurm
 
 # Optional: specify some details about the machine

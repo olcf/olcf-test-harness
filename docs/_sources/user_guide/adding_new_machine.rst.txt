@@ -31,6 +31,7 @@ If **RGT_SCHEDULER_TYPE** is set by the user, then the *machine.ini* file will n
     # options: linux_x86_64 (power9 was recently removed, use linux_x86_64 instead)
     machine_type = linux_x86_64
     # options: slurm, pbs, lsf
+    # note, a local scheduler (e.g., ./<batchscript>) can be enabled by setting on a per-test basis in ``rgt_test_input.{ini,yaml}``
     scheduler_type = slurm
 
     # Optional: specify some details about the machine
