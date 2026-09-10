@@ -14,6 +14,7 @@ import sys
 import copy
 import re
 from types import *
+from pathlib import Path
 
 # NCCS Test Harness Package Imports
 from libraries.harness_internal_config import harness_modes
@@ -114,7 +115,9 @@ class subtest(base_apptest, apptest_layout):
                 test_checkout_lock=None,
                 test_display_lock=None,
                 stdout_stderr=None,
-                separate_build_stdio=False):
+                separate_build_stdio=False,
+                reuse_first_build=False,
+                reuse_build_from_id=None):
         """
         :param list_of_string my_tasks: A list of the strings
                                         where each element is an application
@@ -169,7 +172,7 @@ class subtest(base_apptest, apptest_layout):
                     message = "Start of starting test."
                     self.logger.doInfoLogging(message)
 
-                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio)
+                    exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio, reuse_first_build=reuse_first_build, reuse_build_from_id=reuse_build_from_id)
 
                     message = "End of starting test"
                     self.logger.doInfoLogging(message)
@@ -481,7 +484,9 @@ class subtest(base_apptest, apptest_layout):
     def _start_test(self,
                     launchid,
                     stdout_stderr,
-                    separate_build_stdio=False):
+                    separate_build_stdio=False,
+                    reuse_first_build=False,
+                    reuse_build_from_id=None):
 
         # If the file kill file exits then remove it.
         pathtokillfile = self.get_path_to_kill_file()
@@ -492,6 +497,28 @@ class subtest(base_apptest, apptest_layout):
         starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.get_ch_threshold_level()}"
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
+ 
+        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        if reuse_first_build:
+            if not 'RGT_REUSE_BUILD_FROM' in os.environ:
+                # Set a dummy value so that test_harness_driver.py knows to update the value
+                os.environ['RGT_REUSE_BUILD_FROM'] = 'SETME'
+
+        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        if reuse_build_from_id:
+            # Check if test_id exists in Run_Archive
+            target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
+            if not Path(target_build_runarchive_path).exists():
+                self.logger.doCriticalLogging(f"Could not find test_id {reuse_build_from_id} in {target_build_runarchive_path}.")
+                return 1
+            # Check if build_directory from test_id still exists
+            target_builddir_path = os.path.realpath(os.path.join(target_build_runarchive_path, self.test_build_dirname))
+            if not Path(target_builddir_path).exists():
+                self.logger.doCriticalLogging(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
+                return 1
+            # if all checks pass, we're good to set it
+            os.environ['RGT_REUSE_BUILD_FROM'] = target_builddir_path
+            self.logger.doInfoLogging(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
 
         pathtoscripts = self.get_path_to_scripts()
 
@@ -507,9 +534,6 @@ class subtest(base_apptest, apptest_layout):
             message = ( "The command '{cmd}' has exited with a failure.\n"
                         "The exit return value is {value}.\n").format(cmd=starttestcomand,value=exit_status)
             self.logger.doCriticalLogging(message)
-
-
-            string1 = "Command failed: " + starttestcomand
             return 1
         else:
             message =  "'{cmd}' has executed sucessfully.\n".format(cmd=starttestcomand)
@@ -545,7 +569,7 @@ class subtest(base_apptest, apptest_layout):
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
         file_job_id = self.get_path_to_job_id_file()
-        if os.path.exists(file_job_id):
+        if Path(file_job_id).exists():
             file_ = open(file_job_id, 'r')
             job_id_ = file_.read()
             file_.close()
@@ -613,7 +637,7 @@ class subtest(base_apptest, apptest_layout):
         check_status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
         check_status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
-        if not os.path.exists(f"{check_status_file}"):
+        if not Path(f"{check_status_file}").exists():
             self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
             return -1
         with open(f"{check_status_file}", 'r') as check_fstr:
@@ -631,7 +655,7 @@ class subtest(base_apptest, apptest_layout):
         status_file = f"{self.get_path_to_test()}/{self.test_status_dirname}/{self.get_harness_id()}/"
         status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
-        if not os.path.exists(f"{status_file}"):
+        if not Path(f"{status_file}").exists():
             self.logger.doWarningLogging(f"Couldn't find required file event time fetching: {status_file}")
             return -1
         with open(f"{status_file}", 'r') as fstr:
@@ -645,7 +669,7 @@ class subtest(base_apptest, apptest_layout):
 
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:
-            if not os.path.exists(f"{targ}"):
+            if not Path(f"{targ}").exists():
                 self.logger.doWarningLogging(f"Couldn't find required file for time logging: {targ}")
                 return -1
         start_timestamp = ''
@@ -671,7 +695,7 @@ class subtest(base_apptest, apptest_layout):
         metrics = {}
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
-        if not os.path.isfile('metrics.txt'):
+        if not Path('metrics.txt').is_file():
             self.logger.doWarningLogging(f"File metrics.txt not found")
             return metrics
         with open('metrics.txt', 'r') as metric_f:
@@ -705,7 +729,7 @@ class subtest(base_apptest, apptest_layout):
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
 
-        if not os.path.isfile('nodecheck.txt'):
+        if not Path('nodecheck.txt').is_file():
             self.logger.doInfoLogging(f"File nodecheck.txt not found.")
             return node_healths
         self.logger.doDebugLogging("Processing file nodecheck.txt.")
@@ -773,13 +797,19 @@ def do_application_tasks(launch_id,
                          app_test,
                          tasks,
                          stdout_stderr,
-                         separate_build_stdio=False):
-    app_test.logger.doWarningLogging(f"Starting tasks for Application.Test: {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+                         separate_build_stdio=False,
+                         reuse_first_build=False,
+                         reuse_build_from_id=None):
+    # this is the only print statement above INFO that identifies the app/test name
+    app_test.logger.doErrorLogging(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+
     # Non-zero exit status is failure
     if app_test.doTasks(launchid=launch_id,
                         tasks=tasks,
                         stdout_stderr=stdout_stderr,
-                        separate_build_stdio=separate_build_stdio):
+                        separate_build_stdio=separate_build_stdio,
+                        reuse_first_build=reuse_first_build,
+                        reuse_build_from_id=reuse_build_from_id):
         return False
     return True
 

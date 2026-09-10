@@ -9,13 +9,18 @@ The OLCF Test Harness (OTH) packages several scripts that may be useful in the c
 For example, many of these scripts handle keeping the remote database up-to-date with current runs, in the event of job timeouts, connectivity issues, or data loss.
 These scripts are documented below.
 
-``rgt_archive_utility.py``
-========
+rgt_archive_utility.py
+======================
 
 The ``rgt_archive_utility.py`` script allows you to "archive" a test.
 What "archive" actually means is it allows you to select when to keep or discard a test's build and work directories, and will copy the test into a single location on the file system, without needing sym-links between the Run_Archive and scratch areas.
 This is useful for taking all tests older than 6 months and manipulating the directories so that the test is in a single directory, ready to be tarred and archived (if desired).
 The ``--help`` message for the ``rgt_archive_utility.py`` script is provided below.
+
+.. note::
+    The ``--delete-scratch-dir`` and ``--delete-run-dir`` flags are available for automatically cleaning up existing directories, but these flags are NOT recommended if any tests used the ``--reuse-first-build`` or ``--reuse-build-from-id`` options, as the base build directory which these tests sym-link to may be removed before all tests are archived.
+    In this case, it is preferred to run without deleting any directories first, then re-run the utility with the deletion flags enabled.
+
 
 .. code-block::
 
@@ -88,8 +93,8 @@ The ``--help`` message for the ``rgt_archive_utility.py`` script is provided bel
                             Set to /dev/null to disable log file.
 
 
-``update_databases.py``
-========
+update_databases.py
+===================
 
 The ``update_databases.py`` script retrieves all incomplete tests from the remote database (ie, an InfluxDB instance), and tries to determine if that test has completed, but did not log its completion message.
 This script has support for the Slurm job scheduler, and will look for the job ID of the given test, to see if it completed.
@@ -148,8 +153,8 @@ This script was written with Cron usage in mind, so the following list of ``--lo
 * WARNING: prints non-fatal messages/output, plus the single-line summary regardless of the number of jobs updated
 
 
-``add_comment_to_databases.py``
-========
+add_comment_to_databases.py
+===========================
 
 The ``add_comment_to_databases.py`` script adds a comment to a specific test instance in the remote database (ie, an InfluxDB instance).
 The ``--help`` message for the ``add_comment_to_databases.py`` script is provided below.
@@ -176,8 +181,8 @@ This script requires the same environment variables as the core harness requires
                           Specifies the harness event to add the comment to.
                           Defaults to most recent event.
 
-``report_to_databases.py``
-========
+report_to_databases.py
+======================
 
 The ``report_to_databases.py`` script enables you to further utilize a remote database to store custom, non-harness metrics.
 The ``--help`` message for the ``report_to_databases.py`` script is provided below.

@@ -9,7 +9,8 @@ __all__ = [
                 'regression_test',
                 'status_file',
                 'repositories',
-                'rgt_loggers'
+                'rgt_loggers',
+                'rgt_state',
                 'command_line',
                 'get_machine_name',
                 'status_file_factory',

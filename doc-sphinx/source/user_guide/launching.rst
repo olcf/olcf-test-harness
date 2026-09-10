@@ -29,8 +29,11 @@ Setup the environment:
 .. code-block:: bash
 
     export OLCF_HARNESS_DIR=/sw/acceptance/olcf-test-harness
-    module use $OLCF_HARNESS_DIR/modulefiles
-    module load olcf_harness
+    export PATH=$OLCF_HARNESS_DIR/harness/bin:$OLCF_HARNESS_DIR/harness/utilities:$PATH
+    # Or, use the module (not needed anymore, but does the PATH modification)
+    #module use $OLCF_HARNESS_DIR/modulefiles
+    #module load olcf_harness
+
     # Machine name examples: andes, frontier, odo
     # Check ${OLCF_HARNESS_DIR}/configs/*.ini to see all available machines
     export OLCF_HARNESS_MACHINE=<machine_name>
@@ -50,8 +53,11 @@ Setup the environment:
 
     cd olcf-test-harness
     export OLCF_HARNESS_DIR=${PWD}
-    module use $OLCF_HARNESS_DIR/modulefiles
-    module load olcf_harness
+    export PATH=$PWD/harness/bin:$PWD/harness/utilities:$PATH
+    # Or, use the legacy environment module to do the PATH modification
+    #module use $OLCF_HARNESS_DIR/modulefiles
+    #module load olcf_harness
+
     export OLCF_HARNESS_MACHINE=<machine_name>
 
 .. note::
@@ -69,19 +75,20 @@ Launching the OTH
 Basic Usage
 ^^^^^^^^^^^
 
-Create a directory where you will place input files. No computation will be done here:
+Create a directory where you will place input files, which will instruct the OTH on which tests to launch:
 
 .. code-block:: bash
 
     mkdir summit_testshot
     cd summit_testshot
 
-Prepare an input file of tests (e.g., *rgt.input.summit*).
-In the file, set ``Path_to_tests`` to the location where you would like application source and run files to be kept
-(note that the directory provided must be an existing directory on a file system visible to the current machine).
-Alternatively, set the *RGT_PATH_TO_TESTS* environment variable.
-Next, provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
+Prepare an input file of tests in this directory (e.g., *rgt.input.summit*).
+Provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
 In this example for Summit, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
+Optionally, set ``Path_to_tests`` in this file to the location where you would like application source and run files to be kept
+(note that the directory provided must be an existing directory).
+Alternatively, you may set the *RGT_PATH_TO_TESTS* environment variable.
+Either the *RGT_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be provided.
 
 .. note::
 
@@ -92,10 +99,6 @@ In this example for Summit, the application **hello_mpi** is used and we specify
 
 .. code-block:: bash
 
-    ################################################################################
-    #  Set the path to the top level of the application directory.                 #
-    ################################################################################
-    
     # Path_to_tests can also replaced by setting the RGT_PATH_TO_TESTS environment variable
     Path_to_tests = /some/path/to/my/applications
     
@@ -122,7 +125,7 @@ Set a scratch area for this specific instance of the harness (a default is set f
     export RGT_PATH_TO_TESTS=/some/path/to/my/applications
 
 
-The latest version of the harness supports command line tasks as well as input file tasks.
+The harness supports command line tasks as well as input file tasks.
 If no tasks are provided in the input file, it will use the command line mode.
 To launch via the command line, use a command like the following:
 
@@ -140,15 +143,13 @@ To launch tasks in the input file instead of the command-line, add lines like th
     harness_task check_out_tests
     harness_task start_tests
     harness_task stop_tests
-    harness_task display_status
-
 
 When using the checkout mode, the application source repository will be cloned to the *<Path_to_tests>/<app-name>* directory for all the tests,
 but no tests will be run.
 If the repository already exists, no action will be taken.
 Updating the repo via ``git pull`` or ``git fetch`` should be done outside of the test harness.
 
-After using the start mode, results of the most recent test run can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/<testid>*.
+After using the start mode, results can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/<testid>*.
 Results of the most recent test run can be found in the *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/latest* symbolic link.
 
 .. note::
@@ -169,31 +170,37 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
 
 .. code-block::
 
-    -h,--help                           show help message and exit
-    -i,--inputfile INPUTFILE            Input file name (default: rgt.input)
-    -c,--configfile CONFIGFILE          Configuration file name (default: ${OLCF_HARNESS_MACHINE}.ini)
-    -l,--loglevel LOGLEVEL              Logging level (default: NOTSET)
-                    Options: [NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL]
-    -o,--output {screen,logfile}        Destination for harness stdout/stderr messages (default: 'screen')
-                    Options: [screen,logfile]
-                            'screen'  - print messages to console (default)
-                            'logfile' - print messages to log file
-    -m,--mode MODE [MODE ...]           Specify the mode(s) to run the harness with (default: 'use_input_file')
-                    Options: [use_input_file,checkout,start,stop,status]
-                            'use_input_file' - use tasks defined in the input file
-                            'checkout'       - checkout application tests listed in input file
-                            'start'          - start application tests listed in input file
-                            'stop'           - stop application tests listed in input file
-                            'status'         - check status of application tests listed in input file
+    -i INPUTFILE, --inputfile INPUTFILE
+            Input file name (default: rgt.input)
+    --shuffle
+            Shuffle the order of tests before launching.
+    -c CONFIGFILE, --configfile CONFIGFILE
+            Configuration file name (default: master.ini)
+    -l {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}, --loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}
+            Output logging level (default: WARNING)
+    -o {screen,logfile}, --output {screen,logfile}
+            Destination for harness stdout/stderr messages:
+                'screen'  - print messages to console (default)
+                'logfile' - print messages to log file
+    -m {task} [{task} ...], --mode {task} [{task} ...]
+            Harness task:
+                'checkout'   - checkout application tests listed in input file
+                'start'      - start application tests listed in input file
+                'stop'       - stop application tests listed in input file
+                'status'     - check status of application tests listed in input file
+    --fireworks
+            Use FireWorks to run harness tasks
+    -sb, --separate-build-stdio
+            Separate output from build into build_out.stderr.txt and build_out.stdout.txt
+    --reuse-first-build
+            If running a test that can resubmit, re-use the first instance of the build for all tests in that chain.
+    --reuse-build-from-id REUSE_BUILD_FROM_ID
+            Re-use the build from the specified test ID.
+    --app-filter APP_FILTER
+            A comma-separated list of regular expressions or strings used to select specific applications from the provided input file.
+    --test-filter TEST_FILTER
+            A comma-separated list of regular expressions or strings used to select specific tests from the provided input file.
 
-    --fireworks                         Use FireWorks to run harness tasks (beta)
-    -sb, --separate-build-stdio         Separate output from build into build_out.stderr.txt and build_out.stdout.txt
-    --shuffle                           Shuffle the order of tests before launching
-
-.. note::
-
-    The ``--loglevel`` flag currently does not apply to all output from the OTH.
-    This issue is tracked by `Issue 130 <https://github.com/olcf/olcf-test-harness/issues/130>`_.
 
 .. _runtime_configurable_parameters:
 
@@ -206,9 +213,9 @@ For example, *git_reps_branch* is a parameter in *$OLCF_HARNESS_MACHINE.ini* tha
 The *RGT_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
 The general precedence of configuration options from lowest to highest is:
 
-1. *$OLCF_HARNESS_MACHINE.ini*
+1. *$OLCF_HARNESS_MACHINE.ini* (lowest priority)
 2. User-set environment variables (ie, *RGT_GIT_REPS_BRANCH*, *RGT_PROJECT_ID*)
-3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
+3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini* (highest priority)
 
 The specific parameters are defined in :ref:`section_new_test` and :ref:`section_new_machine`.
 
@@ -236,6 +243,8 @@ There are 4 directories referenced in this section:
 - **$WORK_DIR** - equal to **$RGT_PATH_TO_SSPACE/<app>/<test>/<test-id>/workdir**
 - **$RESULTS_DIR** - the directory used to launch the job and store relevant output, equal to **<Path_to_tests>/<app>/<test>/Run_Archive/<test-id>**
 - **$STATUS_DIR** - the directory used to store harness status files, equal to **<Path_to_tests>/<app>/<test>/Status/<test-id>**
+
+**$RESULTS_DIR** should be considered the best starting point, as it contains symbolic links to the other 3 directories.
 
 Build, Submit, and Check Output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

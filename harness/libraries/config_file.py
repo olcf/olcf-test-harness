@@ -2,6 +2,7 @@ import string
 import os
 import configparser
 import logging
+from pathlib import Path
 
 from libraries.rgt_utilities import set_harness_environment
 from libraries.rgt_loggers import rgt_logger_factory
@@ -24,6 +25,7 @@ class rgt_config_file:
         self.__site_vars = {}
         self.__testshot_vars = {}
         self.__logger = logger
+        self.__harness_dir = Path(__file__).resolve().parent.parent.parent
 
         if not logger:
             self.__logger = rgt_logger_factory.create_rgt_logger(
@@ -43,21 +45,19 @@ class rgt_config_file:
 
         base_filename = os.path.basename(self.__configFileName)
         if base_filename == self.__configFileName:
-            # Only base file given, resolve full path by searching CWD, then OLCF_HARNESS_DIR/configs
-            working_dir_config = os.path.join(os.getcwd(), self.__configFileName)
-            if os.path.isfile(working_dir_config):
-                self.__configFileName = os.path.abspath(working_dir_config)
-            elif 'OLCF_HARNESS_DIR' in os.environ:
-                harness_dir = os.environ['OLCF_HARNESS_DIR']
-                harness_dir_config = os.path.join(harness_dir, "configs", self.__configFileName)
-                if os.path.isfile(harness_dir_config):
-                    self.__configFileName = harness_dir_config
+            # Only base file given, resolve full path by searching CWD, then harness_root/configs
+            working_dir_config = Path(os.getcwd(), self.__configFileName)
+            harness_dir_config = Path(self.__harness_dir, "configs", self.__configFileName)
+            if working_dir_config.is_file():
+                self.__configFileName = str(working_dir_config.resolve())
+            elif harness_dir_config.is_file():
+                self.__configFileName = str(harness_dir_config)
 
         # Read the master config file
         self.__read_config_file()
 
     def __read_config_file(self):
-        if os.path.isfile(self.__configFileName):
+        if Path(self.__configFileName).is_file():
             self.__logger.doInfoLogging(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)

@@ -2,7 +2,7 @@
 
 ################################################################################
 # Author: Nick Hagerty
-# Date modified: 2025-07-17
+# Date modified: 2025-08-12
 ################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
@@ -21,7 +21,12 @@ import subprocess
 import argparse
 import csv
 import socket
+import sys
 import re
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
@@ -132,6 +137,9 @@ def event_time_to_timestamp(event_time : str, precision : str = 's'):
         log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f")
     elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$", event_time):
         # YYYY-MM-DDTHH:MM:SS.UUUUUUZ
+        log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$", event_time):
+        # YYYY-MM-DDTHH:MM:SS.UUUZ
         log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%fZ")
     elif re.search(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", event_time):
         # YYYY-MM-DDTHH:MM:SS
@@ -353,6 +361,21 @@ def slurm_time_to_harness_time(timecode):
     """
     return f'{timecode}.000000'
 
+def get_latest_time(t_new, t_ref):
+    """
+    Helper method to compare 2 time strings (via event_time_to_timestamp) and return the latest
+    """
+    if event_time_to_timestamp(t_new, precision='us') > event_time_to_timestamp(t_ref, precision='us'):
+        return t_new
+    else:
+        new_timestamp = event_time_to_timestamp(t_ref, precision='us')
+        # normalize to be in seconds
+        new_timestamp /= (1000 * 1000)
+        # add 1 second
+        new_timestamp += 1.0
+        # return in standard harness time format
+        new_dt = datetime.fromtimestamp(new_timestamp)
+        return datetime.strftime(new_dt, "%Y-%m-%dT%H:%M:%S.%f")
 
 skipped = 0
 sent = 0
@@ -389,7 +412,11 @@ for db in db_logger.enabled_backends:
             if not entry['event_name'] == f"{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][1]}_{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][2]}":
                 skipped += 1
                 continue
-            timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            # InfluxDB & Kafka report event_time in different formats
+            if db.name == "kafka":
+                timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                timediff_dt = datetime.now() - datetime.strptime(entry['event_time'], "%Y-%m-%dT%H:%M:%S.%f")
             timediff_hours = timediff_dt.total_seconds() / (60.0 * 60.0)
             if timediff_hours < args.build_timeout:
                 skipped += 1
@@ -425,7 +452,7 @@ for db in db_logger.enabled_backends:
                 entry['output_txt'] = 'Job canceled'
                 entry['event_value'] = state_to_value['fail']
             # Update fields in entry
-            entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+            entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
@@ -446,7 +473,7 @@ for db in db_logger.enabled_backends:
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['node_fail']:
             logger.doDebugLogging(f"Found node failure from: {entry['job_id']}")
             sent += 1
-            entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+            entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
@@ -467,7 +494,7 @@ for db in db_logger.enabled_backends:
                 logger.doDebugLogging(f"Found timed out job: {entry['job_id']}")
                 entry['output_txt'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
                 entry['event_value'] = state_to_value['timeout']
-            entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+            entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
             entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
             entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']
@@ -485,7 +512,7 @@ for db in db_logger.enabled_backends:
             status_file_path = os.path.join(entry['run_archive'], '..', '..', 'Status', entry['test_id'])
             current_event_num = int(entry['event_filename'].split('_')[1])
             cur_dir = os.getcwd()
-            if not (os.path.exists(status_file_path) and os.path.exists(entry['run_archive'])):
+            if not (Path(status_file_path).exists() and Path(entry['run_archive']).exists()):
                 logger.doDebugLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
                 continue
             logger.doErrorLogging(f"Logging test that completed the Slurm job but did not log to the database, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
@@ -527,7 +554,7 @@ for db in db_logger.enabled_backends:
                 # If the test didn't log a check_end event, we simulate one here
                 logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
                 entry['output_txt'] = f"Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
-                entry['event_time'] = slurm_time_to_harness_time(slurm_data[entry['job_id']]['end'])
+                entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
                 entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
                 entry['event_subtype'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][2]
                 entry['event_name'] = entry['event_type'] + '_' + entry['event_subtype']

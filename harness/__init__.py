@@ -2,8 +2,8 @@ __all__ = [
             "bin",
             "libraries",
             "utilities",
-            "fundamental_types",
-            "machine_types"
+            "machine_types",
+            "schedulers"
           ]
 
-version = 3.1
+version = 3.2

@@ -4,6 +4,8 @@
 import string
 import os
 import configparser
+from pathlib import Path
+import re
 
 # My harness package imports
 from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
@@ -30,6 +32,8 @@ class rgt_input_file:
     def __init__(self,
                  inputfilename="rgt.input",
                  runmodecmd=None,
+                 app_filter=None,
+                 test_filter=None,
                  logger=None):
         self.__tests = []
         self.__harness_task = []
@@ -48,7 +52,7 @@ class rgt_input_file:
 
         # Read the input file. Returns True upon successful read.
         # If read_file fails, self.__tests is emptied and False is returned
-        err = self.__read_file(self.__inputFileName)
+        err = self.__read_file(self.__inputFileName, app_filter=app_filter, test_filter=test_filter)
         if not err:
             self.__logger.doCriticalLogging("ERROR: Failed to parse input file.")
             # Short-circuit upon failure
@@ -90,7 +94,7 @@ class rgt_input_file:
         if self.__harness_task == []:
             self.__logger.doCriticalLogging("ERROR: No valid tasks found in the inputfile or the CLI")
 
-    def __read_file(self, input_file):
+    def __read_file(self, input_file, app_filter=None, test_filter=None):
         ifile_obj = open(input_file,"r")
         lines = ifile_obj.readlines()
         ifile_obj.close()
@@ -133,13 +137,24 @@ class rgt_input_file:
                 if '/' in subtest:
                     self.__logger.doErrorLogging(f"Invalid test name contains slashes in line: {tmpline}. Skipping.")
                     continue
+
+                nm_iters = 1
                 if len(words) == 5:
                     nm_iters = int(words[4])
+                include_test = True
+                # if app_filter is provided and the app is not in the selection, drop it
+                if app_filter and not any([re.search(patt, app) for patt in app_filter.split(',')]):
+                    self.__logger.doDebugLogging(f"Dropping app.subtest {app}.{subtest} due to runtests.py --app-filter argument.")
+                    include_test = False
+                # if test_filter is provided and the test is not in the selection, drop it
+                if test_filter and not any([re.search(patt, subtest) for patt in test_filter.split(',')]):
+                    self.__logger.doDebugLogging(f"Dropping app.subtest {app}.{subtest} due to runtests.py --test-filter argument.")
+                    include_test = False
+                # if all checks have passed, add the test
+                if include_test:
                     # Add nm_iters parallel copies of the same test
                     for i in range(0, nm_iters):
                         self.__tests.append([app,subtest])
-                else:
-                    self.__tests.append([app,subtest])
             elif firstword == rgt_input_file.path_to_test_entry:
                 if (len(words) == 3):
                     # Validate Path_to_tests here:
@@ -148,7 +163,7 @@ class rgt_input_file:
                     self.__logger.doDebugLogging(f"Validating if {test_path} (set via Path_to_tests) exists.")
                     if self.__path_to_tests:
                         self.__logger.doWarningLogging(f"Path_to_tests already set, ignoring Path_to_tests = {test_path}.")
-                    elif os.path.exists(test_path):
+                    elif Path(test_path).exists():
                         self.__path_to_tests = test_path
                     else:
                         self.__logger.doCriticalLogging("Invalid path_to_test")

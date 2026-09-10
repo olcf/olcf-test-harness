@@ -27,6 +27,7 @@ class apptest_layout:
     app_info_filename = 'application_info.txt'
     test_info_filename = 'test_info.txt'
     test_input_ini_filename = 'rgt_test_input.ini'
+    test_input_yaml_filename = 'rgt_test_input.yaml'
     test_kill_filename = '.kill_test'
     test_rc_filename = '.testrc'
     test_status_filename = 'rgt_status.txt'
@@ -73,6 +74,7 @@ class apptest_layout:
         'runarchive_dir'  : os.path.join("${pdir}", "${app}", "${test}", test_run_archive_dirname, "${id}"),
         'scripts_dir'     : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname),
         'test_input_ini'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_ini_filename),
+        'test_input_yaml'  : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_input_yaml_filename),
         'kill_file'       : os.path.join("${pdir}", "${app}", "${test}", test_scripts_dirname, test_kill_filename),
         'status_dir'      : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}"),
         'job_id_file'     : os.path.join("${pdir}", "${app}", "${test}", test_status_dirname, "${id}", job_id_filename),
@@ -110,23 +112,24 @@ class apptest_layout:
     def check_paths(self):
         """ Returns False if the Source dir, Scripts dir, or test input ini files don't exist """
         # Check that the Application dir exists
-        if not os.path.exists(self.__apptest_layout['app']):
+        if not Path(self.__apptest_layout['app']).exists():
             self.__logger.doErrorLogging(f"Could not find the Application root directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Application's Source dir exists
-        if not os.path.exists(self.get_path_to_source()):
+        if not Path(self.get_path_to_source()).exists():
             self.__logger.doErrorLogging(f"Could not find the Source directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Test dir exists
-        if not os.path.exists(self.__apptest_layout['test']):
+        if not Path(self.__apptest_layout['test']).exists():
             self.__logger.doErrorLogging(f"Could not find the test directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Scripts directory exists
-        if not os.path.exists(self.get_path_to_scripts()):
+        if not Path(self.get_path_to_scripts()).exists():
             self.__logger.doErrorLogging(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the an rgt_test_ini.ini file exists 
-        if not (os.path.exists(self.__apptest_layout['test_input_ini'])):
+        if not (Path(self.__apptest_layout['test_input_ini']).exists() or \
+                Path(self.__apptest_layout['test_input_yaml']).exists()):
             self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
             return False
         return True
@@ -136,10 +139,14 @@ class apptest_layout:
         return self.__testid
 
     @property
-    def path_of_test_input_file(self):
-        """Returns the path to the subtest INI input file. """
+    def path_of_test_input_file_ini(self):
+        """Returns the path to the subtest input file. """
         return self.__apptest_layout['test_input_ini']
 
+    @property
+    def path_of_test_input_file_yaml(self):
+        """Returns the path to the subtest input file. """
+        return self.__apptest_layout['test_input_yaml']
 
     @property
     def path_to_logfile(self) :
@@ -217,7 +224,12 @@ class apptest_layout:
     def get_path_to_workspace_build(self):
         if not self.__workspace:
             return None
-        return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
+        # Redirect path to build if reusing from a existing test directory
+        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
+            return os.environ['RGT_REUSE_BUILD_FROM']
+        else:
+            return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
 
     #
     # Returns the path to the test workspace run directory.
@@ -236,7 +248,7 @@ class apptest_layout:
         Create directory if it does not exist.
         """
         spath = self.get_path_to_status()
-        if not os.path.exists(spath):
+        if not Path(spath).exists():
             os.makedirs(spath)
 
         #
@@ -265,7 +277,7 @@ class apptest_layout:
         # This path should be unique.
         #
         rpath = self.get_path_to_runarchive()
-        if not os.path.exists(rpath):
+        if not Path(rpath).exists():
             os.makedirs(rpath)
 
         #
@@ -297,8 +309,16 @@ class apptest_layout:
 
         try_symlink(st_dir, os.path.join(ws_dir, apptest_layout.test_status_dirname))
         try_symlink(ra_dir, os.path.join(ws_dir, apptest_layout.test_run_archive_dirname))
+        # if reusing a build, and the build directory doesn't exist
+        # if it does exist, it's probably set to the current test, and we can ignore it
+        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
+                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists() and \
+                not Path(ws_dir, apptest_layout.test_build_dirname).exists():
+            # If re-using a build, also create a sym-link to the source build in the workspace
+            try_symlink(os.environ['RGT_REUSE_BUILD_FROM'], os.path.join(ws_dir, apptest_layout.test_build_dirname))
         try_symlink(build_dir, os.path.join(ra_dir, apptest_layout.test_build_dirname))
         try_symlink(run_dir, os.path.join(ra_dir, apptest_layout.test_run_dirname))
+        try_symlink(st_dir, os.path.join(ra_dir, apptest_layout.test_status_dirname))
 
     def create_test_workspace(self, path_to_workspace):
         """
@@ -352,7 +372,7 @@ class apptest_layout:
         tmppath = os.path.join(self.__apptest_layout['status_dir'],
                                "start_binary_execution_timestamp.txt")
 
-        if os.path.exists(tmppath):
+        if Path(tmppath).exists():
            path = tmppath
 
         return path
@@ -366,7 +386,7 @@ class apptest_layout:
         tmppath = os.path.join(self.__apptest_layout['status_dir'],
                                "final_binary_execution_timestamp.txt")
 
-        if os.path.exists(tmppath):
+        if Path(tmppath).exists():
            path = tmppath
 
         return path

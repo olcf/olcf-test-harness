@@ -3,7 +3,6 @@ import os
 import sys
 
 # Local package imports
-from .ibm_power9 import IBMpower9
 from .linux_x86_64 import Linux_x86_64
 from .machine_factory_exceptions import MachineTypeNotImplementedError
 from .machine_factory_exceptions import MachineTypeUndefinedVariableError

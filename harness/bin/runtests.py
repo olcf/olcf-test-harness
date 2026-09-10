@@ -5,6 +5,10 @@ import shlex
 import argparse
 import os
 import sys
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 # My harness package imports
 from libraries import input_files
@@ -271,6 +275,30 @@ def create_parser(logger=None):
                         default=False,
                         help="Separate output from build into build_out.stderr.txt and build_out.stdout.txt")
 
+    parser.add_argument("--reuse-first-build",
+                        action='store_true',
+                        required=False,
+                        default=False,
+                        help="If running a test that can resubmit, re-use the first instance of the build for all tests in that chain.")
+
+    parser.add_argument("--reuse-build-from-id",
+                        action='store',
+                        required=False,
+                        default='',
+                        help="Re-use the build from the specified test ID.")
+
+    parser.add_argument("--app-filter",
+                        action='store',
+                        required=False,
+                        default='',
+                        help="A comma-separated list of regular expressions or strings used to select specific applications from the provided input file.")
+
+    parser.add_argument("--test-filter",
+                        action='store',
+                        required=False,
+                        default='',
+                        help="A comma-separated list of regular expressions or strings used to select specific tests from the provided input file.")
+
     return parser
 
 def parse_commandline_argv(argv, logger):
@@ -306,7 +334,11 @@ def parse_commandline_argv(argv, logger):
                                                               stdout_stderr=Vargs.output,
                                                               runmode=Vargs.mode,
                                                               use_fireworks=Vargs.fireworks,
-                                                              separate_build_stdio=Vargs.separate_build_stdio)
+                                                              separate_build_stdio=Vargs.separate_build_stdio,
+                                                              reuse_first_build=Vargs.reuse_first_build,
+                                                              reuse_build_from_id=Vargs.reuse_build_from_id,
+                                                              app_filter=Vargs.app_filter,
+                                                              test_filter=Vargs.test_filter)
     return harness_parsed_args
 
 def runtests(my_arg_string=None):
@@ -349,6 +381,8 @@ def runtests(my_arg_string=None):
     main_logger.doInfoLogging("Reading the harness input file.")
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
                                        runmodecmd=harness_arguments.runmode,
+                                       app_filter=harness_arguments.app_filter,
+                                       test_filter=harness_arguments.test_filter,
                                        logger=main_logger)
     main_logger.doInfoLogging("Completed reading the harness input file.")
 
@@ -371,6 +405,8 @@ def runtests(my_arg_string=None):
                                   harness_arguments.stdout_stderr,
                                   harness_arguments.use_fireworks,
                                   harness_arguments.separate_build_stdio,
+                                  harness_arguments.reuse_first_build,
+                                  harness_arguments.reuse_build_from_id,
                                   shuffle=harness_arguments.shuffle)
 
     main_logger.doInfoLogging("Created an instance of the harness.")

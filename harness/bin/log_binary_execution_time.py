@@ -3,6 +3,10 @@
 import argparse
 import sys
 import os
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file_factory import StatusFileFactory

@@ -8,6 +8,8 @@ Extensions
 Optional extensions have been developed for use with the OLCF Test Harness (OTH).
 Extensions are enabled through environment variables and metadata files placed in the Run_Archive directory of a test launch.
 
+.. _influxdb_event_logging:
+
 Database Event Logging
 ======================
 

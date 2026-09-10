@@ -13,6 +13,10 @@ python3 -m http.server 8080
 
 Sample tests can be found at https://github.com/olcf/olcf-test-harness-examples.
 
+> [!NOTE]
+> Version 3.2 of the OLCF Test Harness is expected to be the final version that is fully-backwards-compatible with version 2.x.
+> Version 4.0 is expected to refactor/remove some features and harness constructs that may break legacy tests.
+
 ## Quick-Start
 
 ### Obtaining the OTH source code
@@ -23,8 +27,13 @@ To obtain the OTH source code, run the following commands on the machine you are
 git clone git@github.com:olcf/olcf-test-harness.git  
 cd olcf-test-harness
 export OLCF_HARNESS_DIR=`pwd`  
+
+# load via the TCL module
 module use $OLCF_HARNESS_DIR/modulefiles  
 module load olcf_harness
+# OR by direct PATH edits (more resilient against `module reset`):
+#export PATH=${OLCF_HARNESS_DIR}/harness/bin:${OLCF_HARNESS_DIR}/harness/utilities:$PATH
+
 export OLCF_HARNESS_MACHINE=<machine>
 ```
 

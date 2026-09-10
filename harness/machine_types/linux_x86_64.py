@@ -9,10 +9,11 @@ import shlex
 import subprocess
 import time
 import re
+from pathlib import Path
 
 # Local imports.
 from machine_types.base_machine import BaseMachine
-from machine_types.rgt_test import RgtTest
+from libraries.rgt_test import RgtTest
 
 class Linux_x86_64(BaseMachine):
 
@@ -25,6 +26,16 @@ class Linux_x86_64(BaseMachine):
                  apptest=None,
                  separate_build_stdio=False):
 
+        # process test input file. The subtest knows the path to the
+        # the test input file.
+        path_to_test_input_file = apptest.path_of_test_input_file_ini
+        using_yaml = False
+        # if ini does not exist, try yaml
+        if not Path(path_to_test_input_file).is_file():
+            path_to_test_input_file = apptest.path_of_test_input_file_yaml
+            using_yaml = True
+
+        # Now tell the base machine if it needs a jinja template or not
         BaseMachine.__init__(self,
                              name=name,
                              scheduler_type=scheduler,
@@ -32,11 +43,9 @@ class Linux_x86_64(BaseMachine):
                              numSockets=numSocketsPerNode,
                              numCoresPerSocket=numCoresPerSocket,
                              apptest=apptest,
-                             separate_build_stdio=separate_build_stdio)
+                             separate_build_stdio=separate_build_stdio,
+                             use_jinja2=using_yaml)
 
-        # process test input file. The subtest knows the path to the
-        # the test input file.
-        path_to_test_input_file = apptest.path_of_test_input_file
         self._rgt_test = RgtTest(path_to_test_input_file,logger=self.logger)
         self._rgt_test.read_input_file()
 
@@ -48,18 +57,6 @@ class Linux_x86_64(BaseMachine):
         harness_parameters['scripts_dir'] = self.apptest.get_path_to_scripts()
         harness_parameters['harness_id'] = self.apptest.get_harness_id()
         self._rgt_test.harness_parameters.update(harness_parameters)
-
-    @property
-    def build_runtime_environment_command_file(self):
-        return self.test_config.build_runtime_environment_command_file
-
-    @property
-    def submit_runtime_environment_command_file(self):
-        return self.test_config.submit_runtime_environment_command_file
-
-    @property
-    def check_runtime_environment_command_file(self):
-        return self.test_config.check_runtime_environment_command_file
 
     @property
     def test_config(self):

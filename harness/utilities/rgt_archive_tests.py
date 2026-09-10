@@ -16,6 +16,10 @@ import re
 import shutil
 import tarfile
 import sys
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
 
 # For directory names
 from libraries.layout_of_apps_directory import apptest_layout
@@ -87,7 +91,7 @@ def validate_args():
             errs += 1
 
     # Check if path to tests exists
-    if not os.path.exists(args.path_to_tests):
+    if not Path(args.path_to_tests).exists():
         logger.doCriticalLogging(f"Path to tests provided by --path-to-tests does not exist: {args.path_to_tests}")
         errs += 1
     ################################################################################
@@ -138,7 +142,7 @@ if exit_code > 0:
     exit(1)
 
 # Make the output directory, if it doesn't exist
-if not os.path.exists(args.path_to_archive):
+if not Path(args.path_to_archive).exists():
     logger.doInfoLogging(f"Creating output directory {args.path_to_archive}")
     os.makedirs(args.path_to_archive)
 
@@ -172,6 +176,10 @@ def should_archive_test(test_path, test_id):
 
     logger.doDebugLogging(f"Using status file {status_dir}/{latest_status_file}")
     event_info = get_status_info_from_file(os.path.join(status_dir, latest_status_file))
+    if len(event_info) == 0:
+        logger.doErrorLogging(f"Status file {status_dir}/{latest_status_file} appears to be empty. Skipping.")
+        return False
+
     event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
 
     # Verify time conditions are met
@@ -242,7 +250,7 @@ def archive_test(apptest, test_id):
         else:
             logger.doWarningLogging(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}. --force is set, so removing this directory.")
             shutil.rmtree(test_archive_dir)
-    elif os.path.exists(f'{test_archive_dir}.tar.gz'):
+    elif Path(f'{test_archive_dir}.tar.gz').exists():
         if not args.force:
             logger.doWarningLogging(f"Found a compressed {apptest}/{test_id} in archive already at {test_archive_dir}.tar.gz. Skipping.")
             return False
@@ -256,9 +264,16 @@ def archive_test(apptest, test_id):
 
     # Archive -- use shutil.copytree to copy the current Run_Archive with sym-links for build_directory and workdir
     shutil.copytree(test_run_archive, test_archive_dir, symlinks=True)
+
     # remove build_directory and workdir sym-links in Archive
     os.unlink(os.path.join(test_archive_dir, apptest_layout.test_run_dirname))
     os.unlink(os.path.join(test_archive_dir, apptest_layout.test_build_dirname))
+
+    # if Status sym-link exists, then un-link, will copy later
+    if Path(test_archive_dir, apptest_layout.test_status_dirname).exists():
+        os.unlink(os.path.join(test_archive_dir, apptest_layout.test_status_dirname))
+    shutil.copytree(test_status, os.path.join(test_archive_dir, apptest_layout.test_status_dirname), symlinks=True)
+
     # copy the real build_directory and workdir directories if they exist & if flags are right
     test_failed = False
     if (not test_info['event_value'] == '0') and (not test_info['event_name'] == 'job_queued') and (not test_info['event_name'] == 'submit_end'):

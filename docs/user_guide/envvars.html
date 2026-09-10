@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/theme_overrides.css" type="text/css" />
 
   
@@ -38,6 +39,7 @@
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/design-tabs.js"></script>
         <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
@@ -172,10 +174,10 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">OTH Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#rgt-archive-utility-py"><code class="docutils literal notranslate"><span class="pre">rgt_archive_utility.py</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#update-databases-py"><code class="docutils literal notranslate"><span class="pre">update_databases.py</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#add-comment-to-databases-py"><code class="docutils literal notranslate"><span class="pre">add_comment_to_databases.py</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#report-to-databases-py"><code class="docutils literal notranslate"><span class="pre">report_to_databases.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#rgt-archive-utility-py">rgt_archive_utility.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#update-databases-py">update_databases.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#add-comment-to-databases-py">add_comment_to_databases.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#report-to-databases-py">report_to_databases.py</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a><ul>
@@ -301,6 +303,7 @@ RGT_PROJECT_ID                  Which project ID to use when submitting to the s
 RGT_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
 RGT_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
 RGT_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
+RGT_LSF_SUBMIT_AS_STDIN         Controls whether the harness runs ``bsub script.lsf`` or ``bsub &lt; script.lsf``. When set to 0, calls ``bsub script.lsf``.
 
 RGT_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be &#39;git&#39; currently.
 RGT_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.
@@ -315,6 +318,11 @@ RGT_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
 RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work &amp; build spaces).
 RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of &#39;Path_to_tests&#39; in ``runtests.py`` input file).
 RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file &amp; database logging.
+RGT_REUSE_BUILD_FROM            Path to a pre-existing build compatible with the currently-launching tests.
+                                    Preferred usage is to use the `--reuse-first-build` flag of `runtests.py`, which
+                                    will internally set this variable to reuse the first build for resubmitted tests.
+                                    The `--reuse-build-from-id` flag is also available to specify a test ID to use
+                                    the build from.
 </pre></div>
 </div>
 </div>
@@ -323,14 +331,17 @@ RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch.
 <p>The OLCF Test Harness also SETS many variables in the scheduler job.
 These variables cannot be used by the <code class="docutils literal notranslate"><span class="pre">rgt_test_input.ini</span></code> file via <code class="docutils literal notranslate"><span class="pre">&lt;obtain_from_environment&gt;</span></code>, since they are not set until job launch.
 These variables are detailed below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PATH_TO_RGT_PACKAGE</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">OLCF</span> <span class="n">Test</span> <span class="n">Harness</span> <span class="n">code</span><span class="o">.</span>
-<span class="n">RGT_APP_SOURCE_DIR</span>          <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="s1">&#39;Source&#39;</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">current</span> <span class="n">application</span><span class="o">.</span>
-<span class="n">RGT_TEST_BUILD_DIR</span>          <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">build</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
-<span class="n">RGT_TEST_RUNARCHIVE_DIR</span>     <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">run</span> <span class="n">archive</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
-<span class="n">RGT_TEST_SOURCE_DIR</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">source</span> <span class="n">overlay</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
-<span class="n">RGT_TEST_SCRIPTS_DIR</span>        <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">scripts</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
-<span class="n">RGT_TEST_STATUS_DIR</span>         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">status</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
-<span class="n">RGT_TEST_WORK_DIR</span>           <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">work</span> <span class="p">(</span><span class="n">scratch</span><span class="p">)</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">currently</span><span class="o">-</span><span class="n">running</span> <span class="n">test</span><span class="o">.</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PATH_TO_RGT_PACKAGE         Path to the OLCF Test Harness code.
+RGT_APP_SOURCE_DIR          Path to the &#39;Source&#39; directory of the current application.
+RGT_TEST_BUILD_DIR          Path to the build directory of the currently-running test.
+RGT_TEST_RUNARCHIVE_DIR     Path to the run archive directory of the currently-running test.
+RGT_TEST_SOURCE_DIR         Path to the source overlay directory of the currently-running test.
+RGT_TEST_SCRIPTS_DIR        Path to the scripts directory of the currently-running test.
+RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
+RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
+RGT_REUSE_BUILD_FROM        If `--reuse-first-build` set in `runtests.py`, path to the first build of the currently-running test,
+                            to be used if a test is resubmitted. Or if `--reuse-build-from-id` is set in `runtests.py`, the path
+                            to the build of the test with a test ID matching that flag&#39;s value.
 </pre></div>
 </div>
 </div>
