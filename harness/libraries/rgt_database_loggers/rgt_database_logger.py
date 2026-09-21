@@ -60,6 +60,11 @@ class RgtDatabaseLogger:
         # Go to the Run_Archive directory to be consistent with metrics & node health logging
         currentdir = os.getcwd()
         runarchive_dir = event_dict['run_archive']
+        if not Path(runarchive_dir).is_dir():
+            self.logger.doWarningLogging(
+                f"Run_Archive directory {runarchive_dir} does not exist. Skipping database event logging."
+            )
+            return False
         os.chdir(runarchive_dir)
 
         # Use event file name to match the logging_start event
