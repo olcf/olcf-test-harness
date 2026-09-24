@@ -2,6 +2,7 @@ import os
 from .lsf import LSF
 from .pbs import PBS
 from .slurm import SLURM
+from .k8s import K8S
 
 class SchedulerFactory:
 
@@ -14,6 +15,8 @@ class SchedulerFactory:
             tmp_scheduler = SLURM(logger=logger, use_jinja2=use_jinja2)
         elif scheduler_type == "PBS" or scheduler_type == "pbs":
             tmp_scheduler = PBS(logger=logger, use_jinja2=use_jinja2)
+        elif scheduler_type == "K8S" or scheduler_type == "k8s":
+            tmp_scheduler = K8S(logger=logger, use_jinja2=use_jinja2)
         else:
             logger.doCriticalLogging("Scheduler not supported. Good bye!")
         return tmp_scheduler
