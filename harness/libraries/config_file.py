@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from libraries.rgt_utilities import set_harness_environment
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 
 class rgt_config_file:
 
@@ -28,13 +28,14 @@ class rgt_config_file:
         self.__harness_dir = Path(__file__).resolve().parent.parent.parent
 
         if not logger:
-            self.__logger = rgt_logger_factory.create_rgt_logger(
-                                logger_name='rgt_config_file_logger',
-                                fh_filepath=None,
-                                logger_threshold_log_level='DEBUG',
-                                fh_threshold_log_level='DEBUG',
-                                ch_threshold_log_level='DEBUG')
-            self.__logger.doInfoLogging("Created a logger in rgt_config_file, since one was not provided.")
+            self.__logger = OutputHub(
+                name="rgt_config_file_logger",
+                log_level="DEBUG",
+                log_file=None,
+                console_log_level="DEBUG",
+                file_log_level="DEBUG",
+            )
+            self.__logger.log_info("Created a logger in rgt_config_file, since one was not provided.")
 
         if machinename != None:
             self.__configFileName = machinename + ".ini"
@@ -58,7 +59,7 @@ class rgt_config_file:
 
     def __read_config_file(self):
         if Path(self.__configFileName).is_file():
-            self.__logger.doInfoLogging(f'reading harness config {self.__configFileName}')
+            self.__logger.log_info(f'reading harness config {self.__configFileName}')
             master_cfg = configparser.ConfigParser()
             master_cfg.read(self.__configFileName)
 
@@ -103,6 +104,6 @@ class rgt_config_file:
         if not logger:
             print(f'Using machine config: {configfile}')
         else:
-            logger.doInfoLogging(f'Using machine config: {configfile}')
+            logger.log_info(f'Using machine config: {configfile}')
         return configfile
 

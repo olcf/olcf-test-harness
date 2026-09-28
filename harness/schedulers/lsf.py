@@ -31,7 +31,7 @@ class LSF(BaseScheduler):
                                self.__templateFile)
 
     def submit_job(self, batchfilename):
-        self.__logger.doInfoLogging(f"Submitting job from LSF class using batchfilename {batchfilename}")
+        self.__logger.log_info(f"Submitting job from LSF class using batchfilename {batchfilename}")
 
         qargs = ""
         if 'RGT_SUBMIT_QUEUE' in os.environ:
@@ -53,7 +53,7 @@ class LSF(BaseScheduler):
                 str(os.environ['RGT_LSF_SUBMIT_AS_STDIN']) == '0':
             qcommand += " " + batchfilename
 
-        self.__logger.doInfoLogging(f"{qcommand}")
+        self.__logger.log_info(f"{qcommand}")
 
         args = shlex.split(qcommand)
         temp_stdout = "submit.out"
@@ -82,20 +82,20 @@ class LSF(BaseScheduler):
             jobid_pattern = re.compile(r'\d+')
             jobid = jobid_pattern.findall(records[0])[0]
             self.set_job_id(jobid)
-            self.__logger.doErrorLogging(f"LSF jobID = {self.get_job_id()}")
+            self.__logger.log_error(f"LSF jobID = {self.get_job_id()}")
         else:
             with open(temp_stderr,"r") as submit_stderr:
-                self.__logger.doCriticalLogging(f"{submit_stderr.read()}")
+                self.__logger.log_critical(f"{submit_stderr.read()}")
 
         return p.returncode
 
     def set_job_id_from_environ(self):
-        self.__logger.doInfoLogging("Setting job id from environment in LSF class")
+        self.__logger.log_info("Setting job id from environment in LSF class")
         jobvar = 'LSB_JOBID'
         if jobvar in os.environ:
             self.set_job_id(os.environ[jobvar])
         else:
-            self.__logger.doErrorLogging(f'{jobvar} not set in environment!')
+            self.__logger.log_error(f'{jobvar} not set in environment!')
         return
 
 if __name__ == '__main__':

@@ -26,7 +26,7 @@ from libraries.layout_of_apps_directory import apptest_layout
 # For interpreting status files
 from libraries.status_file import StatusFile, get_status_info_from_file
 # For logging
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 
 # define some constants
 KW_ALWAYS = 'ALWAYS'
@@ -75,7 +75,7 @@ def validate_args():
         try:
             dt = datetime.strptime(s, "%Y-%m-%dT%H:%M")
         except Exception as e:
-            logger.doCriticalLogging(f"Invalid time format: {s}.")
+            logger.log_critical(f"Invalid time format: {s}.")
             raise
         return True
 
@@ -83,16 +83,16 @@ def validate_args():
     # Check time formatting
     if args.starttime:
         if not check_time_format(args.starttime):
-            logger.doCriticalLogging("Start time validation failed. Exiting.")
+            logger.log_critical("Start time validation failed. Exiting.")
             errs += 1
     if args.endtime:
         if not check_time_format(args.endtime):
-            logger.doCriticalLogging("End time validation failed. Exiting.")
+            logger.log_critical("End time validation failed. Exiting.")
             errs += 1
 
     # Check if path to tests exists
     if not Path(args.path_to_tests).exists():
-        logger.doCriticalLogging(f"Path to tests provided by --path-to-tests does not exist: {args.path_to_tests}")
+        logger.log_critical(f"Path to tests provided by --path-to-tests does not exist: {args.path_to_tests}")
         errs += 1
     ################################################################################
     return errs
@@ -102,16 +102,16 @@ def build_apptest_list():
     for d in os.listdir(args.path_to_tests):
         # implement app-level filtering
         if args.apps and not d in args.apps:
-            logger.doInfoLogging(f"App {d} not in the --apps command-line selector. Skipping.")
+            logger.log_info(f"App {d} not in the --apps command-line selector. Skipping.")
             continue
         app_source = os.path.join(args.path_to_tests, d, apptest_layout.app_source_dirname)
         if not os.path.isdir(app_source):
-            logger.doDebugLogging(f"Ignoring potential app directory due to missing Source directory: {app_source}")
+            logger.log_debug(f"Ignoring potential app directory due to missing Source directory: {app_source}")
             continue
-        logger.doDebugLogging(f"Searching for tests in the following application sub-directory: {d}")
+        logger.log_debug(f"Searching for tests in the following application sub-directory: {d}")
         for t in os.listdir(os.path.join(args.path_to_tests, d)):
             if args.tests and not t in args.tests:
-                logger.doInfoLogging(f"Test {d}/{t} not in the --tests command-line selector. Skipping.")
+                logger.log_info(f"Test {d}/{t} not in the --tests command-line selector. Skipping.")
                 continue
             if t == apptest_layout.app_source_dirname:
                 continue
@@ -122,7 +122,7 @@ def build_apptest_list():
                 # then we have a valid test directory
                 apptests.append(f'{d}/{t}')
             elif os.path.isdir(test_scripts) and not os.path.isdir(test_run_archive):
-                logger.doDebugLogging(f"Excluding test {d}/{t} that has a Scripts directory but no Run_Archive directory.")
+                logger.log_debug(f"Excluding test {d}/{t} that has a Scripts directory but no Run_Archive directory.")
     return apptests
 
 parser = initialize_parser()
@@ -130,20 +130,24 @@ args = parser.parse_args()
 
 fh_log_level = 'DEBUG' if args.loglevel == 'DEBUG' else 'INFO'
 
-logger = rgt_logger_factory.create_rgt_logger(logger_name='rgt_archive_test_utility',
-                fh_filepath=args.logfile, logger_threshold_log_level=fh_log_level,
-                fh_threshold_log_level=fh_log_level, ch_threshold_log_level=args.loglevel)
+logger = OutputHub(
+    name="rgt_archive_test_utility",
+    log_level=fh_log_level,
+    log_file=args.logfile,
+    console_log_level=args.loglevel,
+    file_log_level=fh_log_level,
+)
 
-logger.doCriticalLogging(f"Command-line invocation: {' '.join(sys.argv)}")
+logger.log_critical(f"Command-line invocation: {' '.join(sys.argv)}")
 
 exit_code = validate_args()
 if exit_code > 0:
-    logger.doCriticalLogging(f"Found {exit_code} total errors. Exiting.")
+    logger.log_critical(f"Found {exit_code} total errors. Exiting.")
     exit(1)
 
 # Make the output directory, if it doesn't exist
 if not Path(args.path_to_archive).exists():
-    logger.doInfoLogging(f"Creating output directory {args.path_to_archive}")
+    logger.log_info(f"Creating output directory {args.path_to_archive}")
     os.makedirs(args.path_to_archive)
 
 # Locate candidate directories
@@ -154,7 +158,7 @@ def should_archive_test(test_path, test_id):
     # Read the latest status file for this test to get time, machine, runtag, and user info
     status_dir = f"{test_path}/{apptest_layout.test_status_dirname}/{test_id}"
     if not os.path.isdir(status_dir):
-        logger.doDebugLogging(f"Could not find status directory for test_id {test_id} in {status_dir}. Skipping")
+        logger.log_debug(f"Could not find status directory for test_id {test_id} in {status_dir}. Skipping")
         return False
 
     latest_status_file = None
@@ -171,23 +175,23 @@ def should_archive_test(test_path, test_id):
             current_event_num = event_number
     
     if not latest_status_file:
-        logger.doWarningLogging(f"Skipping a test that couldn't find the latest status file for: {status_dir}.")
+        logger.log_warning(f"Skipping a test that couldn't find the latest status file for: {status_dir}.")
         return False
 
-    logger.doDebugLogging(f"Using status file {status_dir}/{latest_status_file}")
+    logger.log_debug(f"Using status file {status_dir}/{latest_status_file}")
     event_info = get_status_info_from_file(os.path.join(status_dir, latest_status_file))
     if len(event_info) == 0:
-        logger.doErrorLogging(f"Status file {status_dir}/{latest_status_file} appears to be empty. Skipping.")
+        logger.log_error(f"Status file {status_dir}/{latest_status_file} appears to be empty. Skipping.")
         return False
 
     event_time_modified = re.search('([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}):[0-9]{2}\..*', event_info['event_time']).group(1)
 
     # Verify time conditions are met
     if args.starttime and args.starttime > event_time_modified:
-            logger.doDebugLogging(f"Rejecting {test_id} using starttime filter.")
+            logger.log_debug(f"Rejecting {test_id} using starttime filter.")
             return False
     if args.endtime and args.endtime < event_time_modified:
-        logger.doDebugLogging(f"Rejecting {test_id} using endtime filter.")
+        logger.log_debug(f"Rejecting {test_id} using endtime filter.")
         return False
 
     # If none of the optional filters are set, short-circuit
@@ -196,11 +200,11 @@ def should_archive_test(test_path, test_id):
 
     if args.users:
         if not event_info['user'] in args.users:
-            logger.doInfoLogging(f"Excluding test_id {test_id} in {test_path} due to --users filter")
+            logger.log_info(f"Excluding test_id {test_id} in {test_path} due to --users filter")
             return False
     if args.machines:
         if not event_info['machine'] in args.machines:
-            logger.doInfoLogging(f"Excluding test_id {test_id} in {test_path} due to --machines filter")
+            logger.log_info(f"Excluding test_id {test_id} in {test_path} due to --machines filter")
             return False
     if args.runtags:
         matched = False
@@ -208,7 +212,7 @@ def should_archive_test(test_path, test_id):
             if re.match(runtag_regex, event_info['rgt_system_log_tag']):
                 matched = True
         if not matched:
-            logger.doInfoLogging(f"Excluding test_id {test_id} in {test_path} due to --runtags filter")
+            logger.log_info(f"Excluding test_id {test_id} in {test_path} due to --runtags filter")
             return False
 
     return True
@@ -235,27 +239,27 @@ def archive_test(apptest, test_id):
             current_event_num = event_number
 
     if not latest_status_file:
-        logger.doWarningLogging(f"In archive_test, skipping a test that couldn't find the latest status file for: {status_dir}. This should not be happening.")
+        logger.log_warning(f"In archive_test, skipping a test that couldn't find the latest status file for: {status_dir}. This should not be happening.")
         return False
 
-    logger.doDebugLogging(f"Using status file {test_status}/{latest_status_file}")
+    logger.log_debug(f"Using status file {test_status}/{latest_status_file}")
     # status file used for exit codes and build_directory and workdir paths
     test_info = get_status_info_from_file(os.path.join(test_status, latest_status_file))
 
     # check for existing archive:
     if os.path.isdir(test_archive_dir):
         if not args.force:
-            logger.doWarningLogging(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}. Skipping.")
+            logger.log_warning(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}. Skipping.")
             return False
         else:
-            logger.doWarningLogging(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}. --force is set, so removing this directory.")
+            logger.log_warning(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}. --force is set, so removing this directory.")
             shutil.rmtree(test_archive_dir)
     elif Path(f'{test_archive_dir}.tar.gz').exists():
         if not args.force:
-            logger.doWarningLogging(f"Found a compressed {apptest}/{test_id} in archive already at {test_archive_dir}.tar.gz. Skipping.")
+            logger.log_warning(f"Found a compressed {apptest}/{test_id} in archive already at {test_archive_dir}.tar.gz. Skipping.")
             return False
         else:
-            logger.doWarningLogging(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}.tar.gz. --force is set, so removing this tarball.")
+            logger.log_warning(f"Found {apptest}/{test_id} in archive already at {test_archive_dir}.tar.gz. --force is set, so removing this tarball.")
             os.remove(f'{test_archive_dir}.tar.gz')
 
     # make Archive directory if it doesn't already exist
@@ -284,14 +288,14 @@ def archive_test(apptest, test_id):
         if os.path.isdir(test_info['build_directory']):
             shutil.copytree(test_info['build_directory'], os.path.join(test_archive_dir, apptest_layout.test_build_dirname), symlinks=True)
         else:
-            logger.doInfoLogging(f"Build directory for {apptest}/{test_id} does not exist in {test_info['build_directory']}. Skipping copying build_directory.")
+            logger.log_info(f"Build directory for {apptest}/{test_id} does not exist in {test_info['build_directory']}. Skipping copying build_directory.")
 
     # handle build_directory copying
     if (args.keep_workdir == KW_ALWAYS) or (args.keep_workdir == KW_ON_FAIL and test_failed):
         if os.path.isdir(test_info['workdir']):
             shutil.copytree(test_info['workdir'], os.path.join(test_archive_dir, apptest_layout.test_run_dirname), symlinks=True)
         else:
-            logger.doInfoLogging(f"Work directory for {apptest}/{test_id} does not exist in {test_info['workdir']}. Skipping copying workdir.")
+            logger.log_info(f"Work directory for {apptest}/{test_id} does not exist in {test_info['workdir']}. Skipping copying workdir.")
 
     # Compress
     if args.compress:
@@ -302,12 +306,12 @@ def archive_test(apptest, test_id):
 
     # Clean-up based off command-line flags --delete-scratch-dir and --delete-run-dir
     if args.delete_scratch_dir and os.path.isdir(test_info['workdir']):
-        logger.doDebugLogging(f"Removing scratch directory for test {apptest}/{test_id}.")
+        logger.log_debug(f"Removing scratch directory for test {apptest}/{test_id}.")
         # scratch directory for this test is the parent directory of workdir or build_directory
         shutil.rmtree(os.path.dirname(test_info['workdir']))
 
     if args.delete_run_dir:
-        logger.doDebugLogging(f"Removing Run_Archive and Status directories for test {apptest}/{test_id}.")
+        logger.log_debug(f"Removing Run_Archive and Status directories for test {apptest}/{test_id}.")
         shutil.rmtree(test_run_archive)
         shutil.rmtree(test_status)
 
@@ -353,7 +357,7 @@ if not args.no_tqdm:
     try:
         import tqdm
     except ModuleNotFoundError:
-        logger.doWarningLogging("Python module 'tqdm' not found. Turning off TQDM progress bars.")
+        logger.log_warning("Python module 'tqdm' not found. Turning off TQDM progress bars.")
         args.no_tqdm = True
         pass
 
@@ -371,7 +375,7 @@ timestart = datetime.now()
 
 for apptest in my_apptests:
     # this output message may help with the multiple TQDM progress bars
-    logger.doErrorLogging(f"Archiving tests for {apptest}.")
+    logger.log_error(f"Archiving tests for {apptest}.")
     # Handle --no-tqdm flag
     my_tests = os.listdir(os.path.join(args.path_to_tests, apptest, apptest_layout.test_run_archive_dirname))
     if not args.no_tqdm:
@@ -381,10 +385,10 @@ for apptest in my_apptests:
     # We assume that Run_Archive and Status hold the same set of test IDs, and that there is at least 1 test_id in there
     for testid in my_tests_for:
         if not test_id_regex.match(testid):
-            logger.doDebugLogging(f"Excluding test ID that does not match regex: {testid}")
+            logger.log_debug(f"Excluding test ID that does not match regex: {testid}")
         elif should_archive_test(f"{args.path_to_tests}/{apptest}", testid):
             # Then this run passed any other validation checks and we should archive this test
-            logger.doInfoLogging(f"Logging {apptest}/{testid}")
+            logger.log_info(f"Logging {apptest}/{testid}")
             exit_code = archive_test(apptest, testid)
             # a warning will already be printed by the archive_test function if the test fails to archive
             if exit_code:
@@ -395,11 +399,11 @@ for apptest in my_apptests:
         time_elapsed_dt = timenow - timestart
         total_hours = float(time_elapsed_dt.seconds) / float(60 * 60)
         if args.limit and total_logged == args.limit:
-            logger.doCriticalLogging("Reached the maximum number of tests to archive set by --limit. Exiting.")
+            logger.log_critical("Reached the maximum number of tests to archive set by --limit. Exiting.")
             limit_reached = True
             break
         elif args.stop_after and total_hours > args.stop_after:
-            logger.doCriticalLogging("Reached the maximum amount of time set by --stop-after. Exiting.")
+            logger.log_critical("Reached the maximum amount of time set by --stop-after. Exiting.")
             limit_reached = True
             break
 
@@ -412,7 +416,7 @@ for apptest in my_apptests:
 
 
 if args.print_summary:
-    logger.doCriticalLogging("Archive Summary Statistics ---------------------------------------------------------------")
+    logger.log_critical("Archive Summary Statistics ---------------------------------------------------------------")
     for apptest in archive_counts.keys():
-        logger.doCriticalLogging(f"{apptest: <80}:{str(archive_counts[apptest]): >9}")
-    logger.doCriticalLogging(f"Total: {str(total_logged)}")
+        logger.log_critical(f"{apptest: <80}:{str(archive_counts[apptest]): >9}")
+    logger.log_critical(f"Total: {str(total_logged)}")

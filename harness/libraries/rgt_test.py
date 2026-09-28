@@ -175,10 +175,10 @@ class RgtTest():
         return self.__builtin_params
 
     def print_user_parameters(self):
-        self.__logger.doInfoLogging("RGT Test Parameters - User")
-        self.__logger.doInfoLogging("==========================")
+        self.__logger.log_info("RGT Test Parameters - User")
+        self.__logger.log_info("==========================")
         for (k,v) in (self.user_parameters).items():
-            self.__logger.doInfoLogging(f'{k}={v}')
+            self.__logger.log_info(f'{k}={v}')
 
     #
     # Methods to retrieve full test dictionaries
@@ -244,7 +244,7 @@ class RgtTest():
                 self._harness_params[key] = value 
             else:
                 # TODO: Throw an exception if an invalid key,value is assigned.
-                self.__logger.doCriticalLogging("No key found for", key)
+                self.__logger.log_critical("No key found for", key)
 
     def get_test_replacements(self):
         """Returns a dictionary of key word replacements.
@@ -335,7 +335,7 @@ class RgtTest():
                     self._read_rgt_input_ini()
                 elif self.test_input_filename.endswith('yaml'):
                     if yaml_disabled:
-                        self.__logger.doCriticalLogging("import yaml failed, YAML test input file cannot be loaded. Please pip install pyyaml in the current Python environment.")
+                        self.__logger.log_critical("import yaml failed, YAML test input file cannot be loaded. Please pip install pyyaml in the current Python environment.")
                         exit(1)
                     self._read_rgt_input_yaml()
                 else:
@@ -348,7 +348,7 @@ class RgtTest():
                 error_message = "Test input file {} not found".format(self.test_input_filename)
                 raise ErrorRgtTestInputFileNotFound(error_message)
         except Exception as err:
-            self.__logger.doCriticalLogging(err.message)
+            self.__logger.log_critical(err.message)
             exit(1)
 
     # Private methods
@@ -371,7 +371,7 @@ class RgtTest():
             return True
         else:
             if warn:
-                self.__logger.doWarningLogging("WARNING: Ignoring invalid built-in parameter key {}".format(key))
+                self.__logger.log_warning("WARNING: Ignoring invalid built-in parameter key {}".format(key))
             return False
 
     def _update_replacement_parameters(self,params_view):
@@ -521,14 +521,14 @@ class RgtTest():
 
         # Print and bail if any errors
         if error_message != "":
-            self.__logger.doCriticalLogging(error_message)
+            self.__logger.log_critical(error_message)
             exit(1)
 
     def _print_builtin_parameters(self):
-        self.__logger.doInfoLogging("RGT Test Parameters - Builtin")
-        self.__logger.doInfoLogging("=============================")
+        self.__logger.log_info("RGT Test Parameters - Builtin")
+        self.__logger.log_info("=============================")
         for (k,v) in (self.builtin_parameters).items():
-            self.__logger.doInfoLogging(f'{k}={v}')
+            self.__logger.log_info(f'{k}={v}')
 
     def _set_user_param(self, key, val):
         self.__user_params[key] = val
