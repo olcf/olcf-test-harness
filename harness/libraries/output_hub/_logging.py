@@ -56,15 +56,15 @@ class Logger(ABC):
 
     @property
     def log_level(self) -> str:
-        return self._log_level
+        return self._log_level.name
 
     @property
     def console_log_level(self) -> str:
-        return self._console_log_level
+        return self._console_log_level.name
 
     @property
     def file_log_level(self) -> str:
-        return self._file_log_level
+        return self._file_log_level.name
 
     @abstractmethod
     def log_debug(self, message: str) -> None:
