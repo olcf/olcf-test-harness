@@ -22,7 +22,7 @@ class BaseScheduler(ABC):
     submit_stdout_file: str = "submit.out"
     submit_stderr_file: str = "submit.err"
     job_id_regex = re.compile(
-        r"^$"
+        r"\d+"
     )  # Python 3.6 does not have a public type for a compiled regex
 
     def __init__(self, logger: OutputHub, use_jinja2: bool = False):
@@ -34,11 +34,12 @@ class BaseScheduler(ABC):
             # Fixes issue #181
             os.environ["SHLVL"] = "1"
 
+    @property
+    def batch_script_template_file(self) -> str:
+        if self._use_jinja2:
+            return f"{self.__class__.__name__.lower()}.template.j2"
+        return f"{self.__class__.__name__.lower()}.template.x"
+
     @abstractmethod
     def submit_job(self, job: SchedulerJob) -> int:
-        pass
-
-    @property
-    @abstractmethod
-    def batch_script_template_file(self) -> str:
         pass

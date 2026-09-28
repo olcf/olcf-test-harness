@@ -4,25 +4,23 @@ import subprocess
 from .base import BaseScheduler, SchedulerJob
 
 
-class Slurm(BaseScheduler):
-    """Slurm scheduler class."""
+class PBS(BaseScheduler):
+    """PBS scheduler class."""
 
-    name: str = "Slurm"
-    submit_executable: str = "sbatch"
+    name: str = "PBS"
+    submit_executable: str = "qsub"
 
     def submit_job(self, job: SchedulerJob) -> int:
         self._logger.log_info(
-            f"Submitting job from Slurm class using batchfilename {job.batch_script}"
+            f"Submitting job from PBS class using batchfilename {job.batch_script}"
         )
-
-        self._setup_job_env()
 
         submit_cmd = [self.submit_executable]
 
         if "RGT_SUBMIT_QUEUE" in os.environ:
-            submit_cmd.extend(["-p", os.environ.get("RGT_SUBMIT_QUEUE")])
+            submit_cmd.extend(["-q", os.environ.get("RGT_SUBMIT_QUEUE")])
         elif "RGT_BATCH_QUEUE" in os.environ:
-            submit_cmd.extend(["-p", os.environ.get("RGT_BATCH_QUEUE")])
+            submit_cmd.extend(["-q", os.environ.get("RGT_BATCH_QUEUE")])
 
         if "RGT_SUBMIT_ARGS" in os.environ:
             submit_cmd.extend(os.environ.get("RGT_SUBMIT_ARGS").split())
@@ -47,7 +45,7 @@ class Slurm(BaseScheduler):
 
         if result.returncode == 0:
             job.id = self.job_id_regex.search(records[0]).group(0)
-            self._logger.print(f"SLURM JobID = {job.id}")
+            self._logger.print(f"PBS JobID = {job.id}")
         else:
             with open(self.submit_stderr_file, "w") as submit_stderr:
                 self._logger.log_critical(submit_stderr.read())

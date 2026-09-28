@@ -48,7 +48,7 @@ class BaseMachine(metaclass=ABCMeta):
 
         self.__name = name
 
-        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger, use_jinja2=use_jinja2)
+        self.__scheduler = create_scheduler(scheduler_type, logger=apptest.logger, use_jinja2=use_jinja2)
         """An object of type BaseScheduler : This object is the job resource scheduler. See the
            classs SchedulerFactory for more details."""
 
