@@ -252,17 +252,16 @@ def auto_generated_scripts(harness_config,
         if make_batch_script_status:
             # run the batch script locally
             jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_START)
+            kill_file = apptest.get_path_to_kill_file()
+            if not Path(kill_file).exists():
+                with open(kill_file,"w") as kf:
+                    kf.write("")
+                message =  "The kill file '{filename}' has been created.\n".format(filename=kill_file)
+                a_logger.log_info(message)
             try:
                 run_exit_value = mymachine.run_local_script()
             finally:
                 jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_END, run_exit_value)
-                kill_file = apptest.get_path_to_kill_file()
-                if not Path(kill_file).exists():
-                    with open(pathtokillfile,"w") as kill_file:
-                        kill_file.write("")
-                    message =  "The kill file '{filename}' has been created.\n".format(filename=kill_file)
-                    self.logger.log_info(message)
-                    return
 
     #-----------------------------------------------------
     # In this section we check the the results.          -
