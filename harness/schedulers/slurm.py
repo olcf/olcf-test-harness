@@ -36,11 +36,12 @@ class Slurm(BaseScheduler):
 
         self._logger.log_info(" ".join(submit_cmd))
 
-        with (
-            open(self.submit_stdout_file, "w") as stdout,
-            open(self.submit_stderr_file, "w") as stderr,
-        ):
-            result = subprocess.run(submit_cmd, stdout=stdout, stderr=stderr)
+        with open(self.submit_stdout_file, "w") as stdout, open(
+            self.submit_stderr_file, "w"
+        ) as stderr:
+            result = subprocess.run(
+                submit_cmd, stdout=stdout, stderr=stderr, check=False
+            )
 
         with open(self.submit_stdout_file, "r") as submit_stdout:
             records = submit_stdout.readlines()

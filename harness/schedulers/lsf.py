@@ -42,16 +42,21 @@ class LSF(BaseScheduler):
 
         self._logger.log_info(" ".join(submit_cmd))
 
-        with (
-            open(self.submit_stdout_file, "w") as stdout,
-            open(self.submit_stderr_file, "w") as stderr,
-        ):
+        with open(self.submit_stdout_file, "w") as stdout, open(
+            self.submit_stderr_file, "w"
+        ) as stderr:
             if not self._submit_as_stdin:
-                result = subprocess.run(submit_cmd, stdout=stdout, stderr=stderr)
+                result = subprocess.run(
+                    submit_cmd, stdout=stdout, stderr=stderr, check=False
+                )
             else:
                 with open(job.batch_script, "r") as batch_script:
                     result = subprocess.run(
-                        submit_cmd, stdout=stdout, stderr=stderr, stdin=batch_script
+                        submit_cmd,
+                        stdout=stdout,
+                        stderr=stderr,
+                        stdin=batch_script,
+                        check=False,
                     )
 
         with open(self.submit_stdout_file, "r") as submit_stdout:

@@ -22,6 +22,6 @@ def create_scheduler(_type: str, logger: OutputHub, use_jinja2=False):
 
 
 __all__ = [
-    SchedulerJob,
-    create_scheduler,
+    "SchedulerJob",
+    "create_scheduler",
 ]
