@@ -188,6 +188,7 @@ def auto_generated_scripts(harness_config,
     #-----------------------------------------------------
     job_id = "0"
     submit_exit_value = 0
+    run_exit_value = 0
     if actions['submit'] and (build_exit_value != 0):
         message = f"No submit action due to prior failed build."
         a_logger.log_critical(message)
@@ -490,7 +491,7 @@ def test_harness_driver(argv=None):
     run_local_exit_value = 0
     if actions['run_local']:
         run_local_exit_value = exit_values['run_local']
-        apptest.logger.doInfoLogging(f'run_local exit value = {run_local_exit_value}')
+        apptest.logger.log_info(f'run_local exit value = {run_local_exit_value}')
 
     submit_exit_value = 0
     if actions['submit']:

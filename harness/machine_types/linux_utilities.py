@@ -385,7 +385,7 @@ def run_local_script(a_machine):
         eu = e.upper()
         os.putenv(eu, v)
         message += f"Set batch environment variable {eu}={v}\n"
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
 
     os.chdir(a_machine.apptest.get_path_to_runarchive())
 
@@ -405,7 +405,7 @@ def run_local_script(a_machine):
     # Go back to scripts
     os.chdir(a_machine.apptest.get_path_to_scripts())
 
-    a_machine.logger.doInfoLogging(f"Finished running script {exe_script} with exit status of {run_exit_value}.")
+    a_machine.logger.log_info(f"Finished running script {exe_script} with exit status of {run_exit_value}.")
     return run_exit_value
 
 #-----------------------------------------------------
