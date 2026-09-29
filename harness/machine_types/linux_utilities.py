@@ -373,10 +373,6 @@ def submit_batch_script(a_machine, new_env):
     return submit_exit_value
 
 def run_local_script(a_machine):
-    # Get the name of the current function.
-    frame = inspect.currentframe()
-    function_name = inspect.getframeinfo(frame).function
-
     # Update the run-time environment
     env_vars = a_machine.test_config.test_environment
     message = ""
