@@ -67,15 +67,7 @@ class MachineFactory:
         # then warn user, throw an exception and stop.
         tmp_machine = None
         try:
-            if rgt_machine_type == "ibm_power9":
-                tmp_machine = IBMpower9(name=rgt_machine_name,
-                                        scheduler=rgt_scheduler,
-                                        numNodes=int(rgt_num_nodes),
-                                        numSocketsPerNode=int(rgt_sockets_per_node),
-                                        numCoresPerSocket=int(rgt_cores_per_socket),
-                                        separate_build_stdio=separate_build_stdio,
-                                        apptest=app_subtest)
-            elif rgt_machine_type == "linux_x86_64":
+            if rgt_machine_type == "linux_x86_64":
                 tmp_machine = Linux_x86_64(name=rgt_machine_name,
                                            scheduler=rgt_scheduler,
                                            numNodes=int(rgt_num_nodes),

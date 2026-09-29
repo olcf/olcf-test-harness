@@ -354,6 +354,9 @@ See <a class="reference internal" href="#best-practices"><span class="std std-re
 <span class="c1">#project_id = abc123</span>
 <span class="c1">#batch_queue = my_special_partition</span>
 
+<span class="c1"># you can optionally force running this test locally (e.g., ./&lt;jobscript&gt; instead of through the scheduler)</span>
+<span class="c1">#run_local = 1</span>
+
 <span class="c1">#### Variables that used to be required and may be useful, but are no longer required:</span>
 <span class="nv">report_cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>./report_hello_mpi_c.sh
 <span class="nv">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
@@ -414,6 +417,9 @@ replacements:
 <span class="w">    </span><span class="c1">#project_id: abc123</span>
 <span class="w">    </span><span class="c1">#batch_queue: my_special_partition</span>
 
+<span class="w">    </span><span class="c1"># you can optionally force running this test locally (e.g., ./&lt;jobscript&gt; instead of through the scheduler)</span>
+<span class="w">    </span><span class="c1">#run_local: 1</span>
+
 <span class="w">    </span><span class="c1">#### Variables that used to be required and may be useful, but are no longer required:</span>
 <span class="w">    </span>report_cmd:<span class="w"> </span><span class="s1">&#39;./report_{my_job_name}.sh&#39;</span>
 <span class="w">    </span>walltime:<span class="w"> </span><span class="m">10</span>
@@ -461,7 +467,7 @@ This means the build script should be written as if it were executed from <em>So
 <div class="section" id="job-script-template">
 <span id="id4"></span><h3>Job Script Template<a class="headerlink" href="#job-script-template" title="Permalink to this heading">¶</a></h3>
 <p>The OTH will generate the batch job script from the job script template by replacing keywords
-of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> with the values specified in the test input file’s replacements section.
+of the form <code class="docutils literal notranslate"><span class="pre">__keyword__</span></code> (or <code class="docutils literal notranslate"><span class="pre">{{keyword}}</span></code> for Jinja2) with the values specified in the test input file’s replacements section.
 Additionally, the OTH automatically provides several replacement keywords for the job script to use, described below:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">results_dir</span></code>: absolute path to the test’s <em>Run_Archive</em> directory, which is where the job is launched from, and where it typically copies results to</p></li>
@@ -487,18 +493,26 @@ Additionally, the OTH automatically provides several replacement keywords for th
 <tbody>
 <tr class="row-even"><td><p>Slurm</p></td>
 <td><p>slurm.template.x</p></td>
-<td><p>slurm.template.yaml</p></td>
+<td><p>slurm.template.j2</p></td>
 </tr>
 <tr class="row-odd"><td><p>LSF</p></td>
 <td><p>lsf.template.x</p></td>
-<td><p>lsf.template.yaml</p></td>
+<td><p>lsf.template.j2</p></td>
 </tr>
 <tr class="row-even"><td><p>PBS</p></td>
 <td><p>pbs.template.x</p></td>
-<td><p>pbs.template.yaml</p></td>
+<td><p>pbs.template.j2</p></td>
+</tr>
+<tr class="row-odd"><td><p>Local*</p></td>
+<td><p>local.template.x</p></td>
+<td><p>local.template.j2</p></td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>*The Local scheduler is enabled on a per-test basis by setting <code class="docutils literal notranslate"><span class="pre">run_local</span> <span class="pre">=</span> <span class="pre">1</span></code> in the test input file.</p>
+</div>
 <p>An example Slurm template script for the <em>hello_mpi</em> application for both INI+x and YAML+Jinja2 format is provided below.
 In simple cases, there is little functional difference between the two templating formats, but YAML+Jinja2 has far greater power with handling complex test inputs like arrays.</p>
 <div class="sd-tab-set docutils">
@@ -667,6 +681,12 @@ it can be be copied by adding the following line in the job script:</p>
 <p>The environment variable <strong>$EXECUTABLE</strong> is also populated based on <code class="docutils literal notranslate"><span class="pre">executable_path</span></code> entry in <em>rgt_test_input.ini</em> file.
 The executable may still be inside <strong>$BUILD_DIR</strong> from the previous step,
 so one would need to either copy it to <strong>$WORK_DIR</strong> or provide the absolute path in the job script such as <strong>$BUILD_DIR/$EXECUTABLE</strong>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The local scheduler that can be enabled with <code class="docutils literal notranslate"><span class="pre">run_local</span> <span class="pre">=</span> <span class="pre">1</span></code> in the <em>rgt_test_input.{yaml,ini}</em> automatically
+performs all OTH functions such as <code class="docutils literal notranslate"><span class="pre">check_executable_driver.py</span></code> and <code class="docutils literal notranslate"><span class="pre">log_binary_execute.py</span></code>, and should not
+be paired with resubmission logic (e.g., calling <code class="docutils literal notranslate"><span class="pre">test_harness_driver.py</span> <span class="pre">-r</span></code>).</p>
+</div>
 </div>
 <div class="section" id="check-script">
 <h3>Check Script<a class="headerlink" href="#check-script" title="Permalink to this heading">¶</a></h3>
