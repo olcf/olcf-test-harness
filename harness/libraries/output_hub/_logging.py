@@ -35,9 +35,7 @@ class Logger(ABC):
             self._file_log_level: LogLevel = getattr(LogLevel, file_log_level.upper())
         except AttributeError:
             raise ValueError(
-                "one of'({}, {}, {})' is not a valid log level".format(
-                    log_level, console_log_level, file_log_level
-                )
+                f"one of'({log_level}, {console_log_level}, {file_log_level})' is not a valid log level"
             )
 
         # create the log file's parent directory

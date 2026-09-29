@@ -1,7 +1,7 @@
 from abc import ABCMeta
 
-from ._logging import Logger, DefaultLogger
-from ._printing import Printer, DefaultPrinter
+from ._logging import DefaultLogger, Logger
+from ._printing import DefaultPrinter, Printer
 
 
 class OutputHubMeta(ABCMeta):

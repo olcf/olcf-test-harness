@@ -1,0 +1,41 @@
+name: Linter
+
+on:
+  pull_request:
+    branches:
+      - devel
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+run-name: >-
+  Lint PR #${{ github.event.pull_request.number }}
+  [${{ github.sha }}]"
+
+jobs:
+  lint:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+          cache: pip
+
+      - name: Install Ruff
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+
+      - name: Check syntax and formatting
+        run: |
+          python -m ruff check
+          python -m ruff format --check
