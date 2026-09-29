@@ -16,7 +16,7 @@ from pathlib import Path
 
 # Harness imports
 from libraries.apptest import subtest
-from schedulers.scheduler_factory import SchedulerFactory
+from schedulers import SchedulerJob, create_scheduler
 from machine_types import linux_utilities
 
 class BaseMachine(metaclass=ABCMeta):
@@ -48,7 +48,7 @@ class BaseMachine(metaclass=ABCMeta):
 
         self.__name = name
 
-        self.__scheduler = SchedulerFactory.create_scheduler(scheduler_type, logger=apptest.logger, use_jinja2=use_jinja2)
+        self.__scheduler = create_scheduler(scheduler_type, logger=apptest.logger, use_jinja2=use_jinja2)
         """An object of type BaseScheduler : This object is the job resource scheduler. See the
            classs SchedulerFactory for more details."""
 
@@ -136,22 +136,17 @@ class BaseMachine(metaclass=ABCMeta):
 
         return linux_utilities.is_all_tests_passed(stest)
 
-    def print_machine_info(self):
-        """ Print information about the machine"""
-        print("Machine name:\n"+self.get_machine_name())
-        self.scheduler.print_scheduler_info()
-
     def get_machine_name(self):
         """ Return a string with the system's name."""
         return self.__name
 
     def get_scheduler_type(self):
-        """ Return a string with the system's name."""
-        return self.scheduler.get_scheduler_type()
+        """ Return a string with the schedulers's name."""
+        return self.scheduler.name
 
     def get_scheduler_template_file_name(self):
         """ Return a string with the name of the scheduler's template file."""
-        return self.scheduler.get_scheduler_template_file_name()
+        return self.scheduler.batch_script_template_file
 
     def set_numNodes(self,numNodes):
         self.__numNodes = numNodes
@@ -193,21 +188,23 @@ class BaseMachine(metaclass=ABCMeta):
         if cwd != ra_dir:
             os.chdir(ra_dir)
 
-        submit_exit_value = self.scheduler.submit_job(batchfilename)
+        scheduler_job = SchedulerJob(batchfilename)
+
+        submit_exit_value = self.scheduler.submit_job(scheduler_job)
 
         if cwd != ra_dir:
             os.chdir(cwd)
 
         # Record job id
-        self.write_jobid_to_status()
+        self.write_jobid_to_status(scheduler_job)
 
         return submit_exit_value
 
-    def write_jobid_to_status(self):
+    def write_jobid_to_status(self, job: SchedulerJob):
         """ Write the job id to the appropriate status file """
         jobid_file = self.apptest.get_path_to_job_id_file()
         fileobj = open(jobid_file, "w")
-        id_string = "%20s\n" % (self.scheduler.get_job_id())
+        id_string = "%20s\n" % (job.id)
         fileobj.write(id_string)
         fileobj.close()
 

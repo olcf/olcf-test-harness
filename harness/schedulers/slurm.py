@@ -1,96 +1,56 @@
-#!/usr/bin/env python
-#
-# Author: Veronica G. Vergara L.
-#
-#
-
 import os
-import shlex
 import subprocess
-import re
 
-from .base_scheduler import BaseScheduler
+from .base import BaseScheduler, SchedulerJob
 
-class SLURM(BaseScheduler):
 
-    """ SLURM class represents an SLURM scheduler. """
+class Slurm(BaseScheduler):
+    """Slurm scheduler class."""
 
-    def __init__(self, logger, use_jinja2=False):
-        self.__name = 'SLURM'
-        self.__submitCmd = 'sbatch'
-        self.__statusCmd = 'squeue'
-        self.__deleteCmd = 'scancel'
-        self.__walltimeOpt = '-t'
-        self.__numTasksOpt = '-n'
-        self.__jobNameOpt = '-J'
-        self.__templateFile = 'slurm.template.x' if not use_jinja2 else 'slurm.template.j2'
-        self.__logger = logger
-        BaseScheduler.__init__(self, self.__name,
-                               self.__submitCmd, self.__statusCmd, self.__deleteCmd,
-                               self.__walltimeOpt, self.__numTasksOpt, self.__jobNameOpt,
-                               self.__templateFile)
+    name: str = "Slurm"
+    submit_executable: str = "sbatch"
 
-    def submit_job(self, batchfilename):
-        self.__logger.log_info(f"Submitting job from SLURM class using batchfilename {batchfilename}")
+    def submit_job(self, job: SchedulerJob) -> int:
+        self._logger.log_info(
+            f"Submitting job from Slurm class using batchfilename {job.batch_script}"
+        )
 
-        qargs = ""
-        if 'RGT_SUBMIT_QUEUE' in os.environ:
-            qargs += " -p " + os.environ.get('RGT_SUBMIT_QUEUE')
-        elif 'RGT_BATCH_QUEUE' in os.environ:
-            qargs += " -p " + os.environ.get('RGT_BATCH_QUEUE')
+        self._setup_job_env()
 
-        if 'RGT_SUBMIT_ARGS' in os.environ:
-            qargs += " " + os.environ.get('RGT_SUBMIT_ARGS')
+        submit_cmd = [self.submit_executable]
 
-        if 'RGT_SUBMIT_ACCT' in os.environ:
-            qargs += " -A " + os.environ.get('RGT_SUBMIT_ACCT')
-        elif 'RGT_PROJECT_ID' in os.environ:
-            qargs += " -A " + os.environ.get('RGT_PROJECT_ID')
+        if "RGT_SUBMIT_QUEUE" in os.environ:
+            submit_cmd.extend(["-p", os.environ.get("RGT_SUBMIT_QUEUE")])
+        elif "RGT_BATCH_QUEUE" in os.environ:
+            submit_cmd.extend(["-p", os.environ.get("RGT_BATCH_QUEUE")])
 
-        # Fix issue #181 -- reset SHLVL to 1 every time we submit
-        # Since this is not an interactive session, SHLVL is functionally useless
-        if 'SHLVL' in os.environ:
-            os.environ['SHLVL'] = "1"
+        if "RGT_SUBMIT_ARGS" in os.environ:
+            submit_cmd.extend(os.environ.get("RGT_SUBMIT_ARGS").split())
 
-        qcommand = self.__submitCmd + " " + qargs + " " + batchfilename
-        self.__logger.log_info(f"{qcommand}")
+        if "RGT_SUBMIT_ACCT" in os.environ:
+            submit_cmd.extend(["-A", os.environ.get("RGT_SUBMIT_ACCT")])
+        elif "RGT_PROJECT_ID" in os.environ:
+            submit_cmd.extend(["-A", os.environ.get("RGT_PROJECT_ID")])
 
-        args = shlex.split(qcommand)
-        temp_stdout = "submit.out"
-        temp_stderr = "submit.err"
+        submit_cmd.append(job.batch_script)
 
-        submit_stdout = open(temp_stdout,"w")
-        submit_stderr = open(temp_stderr,"w")
+        self._logger.log_info(" ".join(submit_cmd))
 
-        p = subprocess.Popen(args, stdout=submit_stdout, stderr=submit_stderr)
-        p.wait()
+        with open(self.submit_stdout_file, "w") as stdout, open(
+            self.submit_stderr_file, "w"
+        ) as stderr:
+            result = subprocess.run(
+                submit_cmd, stdout=stdout, stderr=stderr, check=False
+            )
 
-        submit_stdout.close()
-        submit_stderr.close()
+        with open(self.submit_stdout_file, "r") as submit_stdout:
+            records = submit_stdout.readlines()
 
-        submit_stdout = open(temp_stdout,"r")
-        records = submit_stdout.readlines()
-        submit_stdout.close()
-
-        if p.returncode == 0:
-            jobid_pattern = re.compile(r'\d+')
-            jobid = jobid_pattern.findall(records[0])[0]
-            self.set_job_id(jobid)
-            self.__logger.log_error(f"SLURM jobID = {self.get_job_id()}")
+        if result.returncode == 0:
+            job.id = self.job_id_regex.search(records[0]).group(0)
+            self._logger.print(f"SLURM JobID = {job.id}")
         else:
-            with open(temp_stderr,"r") as submit_stderr:
-                self.__logger.log_critical(f"{submit_stderr.read()}")
+            with open(self.submit_stderr_file, "w") as submit_stderr:
+                self._logger.log_critical(submit_stderr.read())
 
-        return p.returncode
-
-    def set_job_id_from_environ(self):
-        self.__logger.log_info("Setting job id from environment in SLURM class")
-        jobvar = 'SLURM_JOB_ID'
-        if jobvar in os.environ:
-            self.set_job_id(os.environ[jobvar])
-        else:
-            self.__logger.log_error(f'{jobvar} not set in environment!')
-
-
-if __name__ == '__main__':
-    print('This is the SLURM scheduler class')
+        return result.returncode

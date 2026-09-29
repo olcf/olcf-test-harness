@@ -21,7 +21,8 @@ dev = [
 [tool.ruff]
 target-version = "py37"
 include = [
-    "harness/libraries/output_hub*"
+    "harness/libraries/output_hub*",
+    "harness/schedulers/*"
 ]
 
 [tool.ruff.lint]

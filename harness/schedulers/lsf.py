@@ -1,102 +1,72 @@
-#!/usr/bin/env python
-#
-# Author: Veronica G. Vergara L.
-#
-#
 import os
-import shlex
 import subprocess
-import re
 
-from .base_scheduler import BaseScheduler
+from .base import BaseScheduler, SchedulerJob
 
 
 class LSF(BaseScheduler):
+    """LSF scheduler class."""
 
-    """ LSF class represents an LSF scheduler. """
+    name: str = "LSF"
+    submit_executable: str = "bsub"
 
-    def __init__(self, logger, use_jinja2=False):
-        self.__name = 'LSF'
-        self.__submitCmd = 'bsub'
-        self.__statusCmd = 'bjobs'
-        self.__deleteCmd = 'bkill'
-        self.__walltimeOpt = '-W'
-        self.__numTasksOpt = '-n'
-        self.__jobNameOpt = '-N'
-        self.__templateFile = 'lsf.template.x' if not use_jinja2 else 'lsf.template.j2'
-        self.__logger = logger
-        BaseScheduler.__init__(self, self.__name,
-                               self.__submitCmd, self.__statusCmd, self.__deleteCmd,
-                               self.__walltimeOpt, self.__numTasksOpt, self.__jobNameOpt,
-                               self.__templateFile)
+    def _submit_as_stdin(self) -> bool:
+        # default to stdin unless specified otherwise
+        return (
+            "RGT_LSF_SUBMIT_AS_STDIN" not in os.environ
+            or str(os.environ["RGT_LSF_SUBMIT_AS_STDIN"]) != "0"
+        )
 
-    def submit_job(self, batchfilename):
-        self.__logger.log_info(f"Submitting job from LSF class using batchfilename {batchfilename}")
+    def submit_job(self, job: SchedulerJob) -> int:
+        self._logger.log_info(
+            f"Submitting job from LSF class using batchfilename {job.batch_script}"
+        )
 
-        qargs = ""
-        if 'RGT_SUBMIT_QUEUE' in os.environ:
-            qargs += " -q " + os.environ.get('RGT_SUBMIT_QUEUE')
-        elif 'RGT_BATCH_QUEUE' in os.environ:
-            qargs += " -q " + os.environ.get('RGT_BATCH_QUEUE')
+        submit_cmd = [self.submit_executable]
 
-        if 'RGT_SUBMIT_ARGS' in os.environ:
-            qargs += " " + os.environ.get('RGT_SUBMIT_ARGS')
+        if "RGT_SUBMIT_QUEUE" in os.environ:
+            submit_cmd.extend(["-q", os.environ.get("RGT_SUBMIT_QUEUE")])
+        elif "RGT_BATCH_QUEUE" in os.environ:
+            submit_cmd.extend(["-q", os.environ.get("RGT_BATCH_QUEUE")])
 
-        if 'RGT_SUBMIT_ACCT' in os.environ:
-            qargs += " -P " + os.environ.get('RGT_SUBMIT_ACCT')
-        elif 'RGT_PROJECT_ID' in os.environ:
-            qargs += " -P " + os.environ.get('RGT_PROJECT_ID')
+        if "RGT_SUBMIT_ARGS" in os.environ:
+            submit_cmd.extend(os.environ.get("RGT_SUBMIT_ARGS").split())
 
-        qcommand = self.__submitCmd + " " + qargs
+        if "RGT_SUBMIT_ACCT" in os.environ:
+            submit_cmd.extend(["-P", os.environ.get("RGT_SUBMIT_ACCT")])
+        elif "RGT_PROJECT_ID" in os.environ:
+            submit_cmd.extend(["-P", os.environ.get("RGT_PROJECT_ID")])
 
-        if 'RGT_LSF_SUBMIT_AS_STDIN' in os.environ and \
-                str(os.environ['RGT_LSF_SUBMIT_AS_STDIN']) == '0':
-            qcommand += " " + batchfilename
+        if not self._submit_as_stdin:
+            submit_cmd.append(job.batch_script)
 
-        self.__logger.log_info(f"{qcommand}")
+        self._logger.log_info(" ".join(submit_cmd))
 
-        args = shlex.split(qcommand)
-        temp_stdout = "submit.out"
-        temp_stderr = "submit.err"
+        with open(self.submit_stdout_file, "w") as stdout, open(
+            self.submit_stderr_file, "w"
+        ) as stderr:
+            if not self._submit_as_stdin:
+                result = subprocess.run(
+                    submit_cmd, stdout=stdout, stderr=stderr, check=False
+                )
+            else:
+                with open(job.batch_script, "r") as batch_script:
+                    result = subprocess.run(
+                        submit_cmd,
+                        stdout=stdout,
+                        stderr=stderr,
+                        stdin=batch_script,
+                        check=False,
+                    )
 
-        submit_stdout = open(temp_stdout,"w")
-        submit_stderr = open(temp_stderr,"w")
+        with open(self.submit_stdout_file, "r") as submit_stdout:
+            records = submit_stdout.readlines()
 
-        if 'RGT_LSF_SUBMIT_AS_STDIN' in os.environ and \
-                str(os.environ['RGT_LSF_SUBMIT_AS_STDIN']) == '0':
-            p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr)
-            p.wait()
+        if result.returncode == 0:
+            job.id = self.job_id_regex.search(records[0]).group(0)
+            self._logger.print(f"LSF JobID = {job.id}")
         else:
-            with open(batchfilename,"r") as jobfileobj:
-                p = subprocess.Popen(args,stdout=submit_stdout,stderr=submit_stderr,stdin=jobfileobj)
-                p.wait()
+            with open(self.submit_stderr_file, "w") as submit_stderr:
+                self._logger.log_critical(submit_stderr.read())
 
-        submit_stdout.close()
-        submit_stderr.close()
-
-        submit_stdout = open(temp_stdout,"r")
-        records = submit_stdout.readlines()
-        submit_stdout.close()
-
-        if p.returncode == 0:
-            jobid_pattern = re.compile(r'\d+')
-            jobid = jobid_pattern.findall(records[0])[0]
-            self.set_job_id(jobid)
-            self.__logger.log_error(f"LSF jobID = {self.get_job_id()}")
-        else:
-            with open(temp_stderr,"r") as submit_stderr:
-                self.__logger.log_critical(f"{submit_stderr.read()}")
-
-        return p.returncode
-
-    def set_job_id_from_environ(self):
-        self.__logger.log_info("Setting job id from environment in LSF class")
-        jobvar = 'LSB_JOBID'
-        if jobvar in os.environ:
-            self.set_job_id(os.environ[jobvar])
-        else:
-            self.__logger.log_error(f'{jobvar} not set in environment!')
-        return
-
-if __name__ == '__main__':
-    print('This is the LSF scheduler class')
+        return result.returncode
