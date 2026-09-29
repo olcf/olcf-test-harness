@@ -130,7 +130,7 @@ class subtest(base_apptest, apptest_layout):
         message = "In {app1}  {test1} doing {task1}".format(app1=self.getNameOfApplication(),
                                                                 test1=self.getNameOfSubtest(),
                                                                 task1=tasks)
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         for harness_task in tasks:
             if harness_task == harness_modes.checkout:
@@ -148,13 +148,13 @@ class subtest(base_apptest, apptest_layout):
                                                          url_to_remote_repsitory_application,
                                                          my_repository_branch)
 
-                self.logger.doInfoLogging("Start of cloning repository")
+                self.logger.log_info("Start of cloning repository")
                 destination = self.getLocalPathToTests()
 
                 exit_code = self.cloneRepository(my_repository,
                                      destination)
 
-                self.logger.doInfoLogging("End of cloning repository")
+                self.logger.log_info("End of cloning repository")
 
                 if test_checkout_lock:
                     test_checkout_lock.release()
@@ -164,18 +164,18 @@ class subtest(base_apptest, apptest_layout):
 
             else:
                 if not self.check_paths():
-                    self.logger.doErrorLogging(f"Aborting task {harness_task}. Could not find all required paths.")
+                    self.logger.log_error(f"Aborting task {harness_task}. Could not find all required paths.")
                     message = "Could not find all required paths on the file system for application {app1}, test {test1}.".format(app1=self.getNameOfApplication(),
                                                                                                                                 test1=self.getNameOfSubtest())
                     return 1
                 if harness_task == harness_modes.starttest:
                     message = "Start of starting test."
-                    self.logger.doInfoLogging(message)
+                    self.logger.log_info(message)
 
                     exit_code = self._start_test(launchid, stdout_stderr, separate_build_stdio=separate_build_stdio, reuse_first_build=reuse_first_build, reuse_build_from_id=reuse_build_from_id)
 
                     message = "End of starting test"
-                    self.logger.doInfoLogging(message)
+                    self.logger.log_info(message)
 
                     if exit_code:
                         return 1
@@ -200,7 +200,7 @@ class subtest(base_apptest, apptest_layout):
         cwd = os.getcwd()
 
         message = "For the cloning, my current directory is " + cwd
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         my_repository.cloneRepository(destination,
                                       self.__myLogger)
@@ -209,11 +209,11 @@ class subtest(base_apptest, apptest_layout):
 
         if exit_status > 0:
             string1 = "Cloning of repository failed."
-            self.logger.doCriticalLogging(string1)
+            self.logger.log_critical(string1)
             return 1
         else:
             message = "Cloning of repository passed"
-            self.logger.doInfoLogging(message)
+            self.logger.log_info(message)
 
         return 0
 
@@ -429,7 +429,7 @@ class subtest(base_apptest, apptest_layout):
         message  = 'Waiting for all {} : {} tests to complete the testing cycle.\n'.format(self.getNameOfApplication(),self.getNameOfSubtest())
         message += 'The maximum wait time is {}.\n'.format(str(timeout_secs))
         message += 'The time between checks is {}.\n'.format(str(time_between_checks))
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         # Instantiate the machine for this computer.
         mymachine = MachineFactory.create_machine(harness_config, self)
@@ -440,7 +440,7 @@ class subtest(base_apptest, apptest_layout):
             time.sleep(time_between_checks)
             elapsed_time = datetime.now() - start_time
             message = 'Checking for subtest cycle completion at {} seconds.\n'.format(str(elapsed_time))
-            self.logger.doInfoLogging(message)
+            self.logger.log_info(message)
 
             if mymachine.isTestCycleComplete(self):
                continue_checking = False
@@ -450,7 +450,7 @@ class subtest(base_apptest, apptest_layout):
             if elapsed_time.total_seconds() > timeout_secs:
                 continue_checking = False
                 message_elapsed_time = 'After {} seconds the testing cycle has exceeded the maximum wait time.\n'.format(str(elapsed_time))
-                self.logger.doWarningLogging(message_elapsed_time)
+                self.logger.log_warning(message_elapsed_time)
 
         return
 
@@ -494,7 +494,7 @@ class subtest(base_apptest, apptest_layout):
             os.remove(pathtokillfile)
 
         # This will automatically build & submit
-        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.get_ch_threshold_level()}"
+        starttestcomand = f"test_harness_driver.py -r -l {launchid} --loglevel {self.logger.console_log_level}"
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
  
@@ -509,16 +509,16 @@ class subtest(base_apptest, apptest_layout):
             # Check if test_id exists in Run_Archive
             target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
             if not Path(target_build_runarchive_path).exists():
-                self.logger.doCriticalLogging(f"Could not find test_id {reuse_build_from_id} in {target_build_runarchive_path}.")
+                self.logger.log_critical(f"Could not find test_id {reuse_build_from_id} in {target_build_runarchive_path}.")
                 return 1
             # Check if build_directory from test_id still exists
             target_builddir_path = os.path.realpath(os.path.join(target_build_runarchive_path, self.test_build_dirname))
             if not Path(target_builddir_path).exists():
-                self.logger.doCriticalLogging(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
+                self.logger.log_critical(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
                 return 1
             # if all checks pass, we're good to set it
             os.environ['RGT_REUSE_BUILD_FROM'] = target_builddir_path
-            self.logger.doInfoLogging(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
+            self.logger.log_info(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
 
         pathtoscripts = self.get_path_to_scripts()
 
@@ -533,13 +533,13 @@ class subtest(base_apptest, apptest_layout):
         if exit_status > 0:
             message = ( "The command '{cmd}' has exited with a failure.\n"
                         "The exit return value is {value}.\n").format(cmd=starttestcomand,value=exit_status)
-            self.logger.doCriticalLogging(message)
+            self.logger.log_critical(message)
             return 1
         else:
             message =  "'{cmd}' has executed sucessfully.\n".format(cmd=starttestcomand)
             message += "stdout of command : {}\n".format(stdout)
             message += "stderr of command : {}\n".format(stderr)
-            self.logger.doInfoLogging(message)
+            self.logger.log_info(message)
 
     def _stop_test(self):
         pathtokillfile = self.get_path_to_kill_file()
@@ -547,22 +547,22 @@ class subtest(base_apptest, apptest_layout):
             kill_file.write("")
 
         message =  "The kill file '{filename}' has been created.\n".format(filename=pathtokillfile)
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
     def _run_db_extensions(self):
         """
         Enables the harness database logging extensions for Metrics and Node Health
         """
         currentdir = os.getcwd()
-        self.logger.doDebugLogging(f"Current directory in apptest: {currentdir}")
+        self.logger.log_debug(f"Current directory in apptest: {currentdir}")
         runarchive_dir = self.get_path_to_runarchive()
         os.chdir(runarchive_dir)
-        self.logger.doInfoLogging(f"Starting the harness database extensions in apptest: {os.getcwd()}")
+        self.logger.log_info(f"Starting the harness database extensions in apptest: {os.getcwd()}")
 
         # Find the machine name, or give a best-guess
         if not 'RGT_MACHINE_NAME' in os.environ:
             machine_name = subprocess.check_output(['hostname', '--long'])
-            self.logger.doWarningLogging(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {machine_name}")
+            self.logger.log_warning(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {machine_name}")
         else:
             machine_name = os.environ['RGT_MACHINE_NAME']
 
@@ -591,33 +591,33 @@ class subtest(base_apptest, apptest_layout):
         metrics = self._get_metrics()
 
         if len(metrics) == 0:
-            self.logger.doInfoLogging(f"No metrics found to log to influxDB")
+            self.logger.log_info(f"No metrics found to log to influxDB")
         else:
             metrics[f'{test_info["app"]}-{test_info["test"]}-build_time'] = str(self._get_build_time())
             metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time'] = str(self._get_execution_time())
             if float(metrics[f'{test_info["app"]}-{test_info["test"]}-build_time']) < 0:
-                self.logger.doErrorLogging(f"Invalid build time for jobID {test_info['test_id']}.")
+                self.logger.log_error(f"Invalid build time for jobID {test_info['test_id']}.")
                 do_log_metric = False
             elif float(metrics[f'{test_info["app"]}-{test_info["test"]}-execution_time']) < 0:
-                self.logger.doErrorLogging(f"Invalid execution time for jobID {test_info['test_id']}.")
+                self.logger.log_error(f"Invalid execution time for jobID {test_info['test_id']}.")
                 do_log_metric = False
             elif self.__db_logger.log_metrics(test_info, metrics):
                 success_log += 1
-                self.logger.doDebugLogging(f"Successfully logged {len(metrics)} metrics to all databases.")
+                self.logger.log_debug(f"Successfully logged {len(metrics)} metrics to all databases.")
             else:
                 failed_log += 1
-                self.logger.doWarningLogging(f"Logging metrics failed to log to at least one database.")
+                self.logger.log_warning(f"Logging metrics failed to log to at least one database.")
     
         # add node-based health checking
         node_healths = self._get_node_health()
-        self.logger.doDebugLogging(f"Found {len(node_healths)} nodes reported for node health")
+        self.logger.log_debug(f"Found {len(node_healths)} nodes reported for node health")
         if len(node_healths) > 0:
             if not self.__db_logger.log_node_health(test_info, node_healths):
                 failed_log += 1
-                self.logger.doWarningLogging(f"Logging node_health failed to log to at least one database.")
+                self.logger.log_warning(f"Logging node_health failed to log to at least one database.")
             else:
                 success_log += 1
-                self.logger.doDebugLogging(f"Successfully logged {len(node_healths)} node health results to all databases.")
+                self.logger.log_debug(f"Successfully logged {len(node_healths)} node health results to all databases.")
 
         os.chdir(currentdir)
         return failed_log == 0
@@ -638,7 +638,7 @@ class subtest(base_apptest, apptest_layout):
         check_status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
         if not Path(f"{check_status_file}").exists():
-            self.logger.doWarningLogging(f"Couldn't find required file for post-run time logging: {check_status_file}")
+            self.logger.log_warning(f"Couldn't find required file for post-run time logging: {check_status_file}")
             return -1
         with open(f"{check_status_file}", 'r') as check_fstr:
             line = next(check_fstr)
@@ -656,7 +656,7 @@ class subtest(base_apptest, apptest_layout):
         status_file += f"{StatusFile.EVENT_DICT[event][0]}"
 
         if not Path(f"{status_file}").exists():
-            self.logger.doWarningLogging(f"Couldn't find required file event time fetching: {status_file}")
+            self.logger.log_warning(f"Couldn't find required file event time fetching: {status_file}")
             return -1
         with open(f"{status_file}", 'r') as fstr:
             line = next(fstr)
@@ -670,7 +670,7 @@ class subtest(base_apptest, apptest_layout):
         for targ in [ f"{status_dir}/{start_event_file}", \
                         f"{status_dir}/{end_event_file}" ]:
             if not Path(f"{targ}").exists():
-                self.logger.doWarningLogging(f"Couldn't find required file for time logging: {targ}")
+                self.logger.log_warning(f"Couldn't find required file for time logging: {targ}")
                 return -1
         start_timestamp = ''
         end_timestamp = ''
@@ -681,7 +681,7 @@ class subtest(base_apptest, apptest_layout):
             line = next(end_fstr)
             end_timestamp = line.split()[0]
         if len(start_timestamp) <= 1 or len(end_timestamp) <= 1:
-            self.logger.doErrorLogging(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
+            self.logger.log_error(f"Invalid start or end timestamp: {start_timestamp}, {end_timestamp}")
             return -1
         #start_ts_dt = datetime.fromisoformat(start_timestamp)
         #end_ts_dt = datetime.fromisoformat(end_timestamp)
@@ -696,7 +696,7 @@ class subtest(base_apptest, apptest_layout):
         app_name = self.getNameOfApplication()
         test_name = self.getNameOfSubtest()
         if not Path('metrics.txt').is_file():
-            self.logger.doWarningLogging(f"File metrics.txt not found")
+            self.logger.log_warning(f"File metrics.txt not found")
             return metrics
         with open('metrics.txt', 'r') as metric_f:
             # Each line is in format "metric = value" (space around '=' optional)
@@ -709,17 +709,17 @@ class subtest(base_apptest, apptest_layout):
                         # Replace spaces with underscores, and strip whitespace before/after
                         line_splt[0] = line_splt[0].strip().replace(' ', '_')
                         if len(line_splt[0]) == 0:
-                            self.logger.doWarningLogging(f"Skipping line with no metric name: {line.strip()}")
+                            self.logger.log_warning(f"Skipping line with no metric name: {line.strip()}")
                             continue
                         metric_name = f"{app_name}-{test_name}-{line_splt[0]}"
                         # if it's not numeric, replace spaces with underscores and wrap in quotes
                         line_splt[1] = line_splt[1].strip()
                         if len(line_splt[1]) == 0:
-                            self.logger.doWarningLogging(f"Skipping metric with no value: {line_splt[0]}")
+                            self.logger.log_warning(f"Skipping metric with no value: {line_splt[0]}")
                             continue
                         metrics[metric_name] = str(line_splt[1])
                     else:
-                        self.logger.doErrorLogging(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
+                        self.logger.log_error(f"Found a line in metrics.txt with 0 or >1 equals signs:\n{line.strip()}")
         return metrics
 
     def _get_node_health(self):
@@ -730,9 +730,9 @@ class subtest(base_apptest, apptest_layout):
         test_name = self.getNameOfSubtest()
 
         if not Path('nodecheck.txt').is_file():
-            self.logger.doInfoLogging(f"File nodecheck.txt not found.")
+            self.logger.log_info(f"File nodecheck.txt not found.")
             return node_healths
-        self.logger.doDebugLogging("Processing file nodecheck.txt.")
+        self.logger.log_debug("Processing file nodecheck.txt.")
         # Add additional desired statuses here and in the below for-loop
         status_decoder = {
             'FAILED': ['FAILED', 'FAIL', 'BAD'],
@@ -747,11 +747,11 @@ class subtest(base_apptest, apptest_layout):
                 if not line[0] == '#':
                     line_splt = line.strip().split()
                     if not len(line_splt) >= 2:
-                        self.logger.doErrorLogging(f"Invalid line in nodecheck.txt: {line}. Skipping.")
+                        self.logger.log_error(f"Invalid line in nodecheck.txt: {line}. Skipping.")
                         continue
                     node_name = line_splt[0]
                     if node_name in node_name_list:
-                        self.logger.doErrorLogging(f"Found node name already present in the node_health results: {node_name}. Overwriting.")
+                        self.logger.log_error(f"Found node name already present in the node_health results: {node_name}. Overwriting.")
                     else:
                         node_name_list.append(node_name)
                     node_healths[node_name] = {}
@@ -761,7 +761,7 @@ class subtest(base_apptest, apptest_layout):
                             node_healths[node_name]['status'] = status_string
                             break
                     if not 'status' in node_healths[node_name]:
-                        self.logger.doErrorLogging(f"Could not identify the status given the status string {line_splt[1]}. Skipping {node_name}.")
+                        self.logger.log_error(f"Could not identify the status given the status string {line_splt[1]}. Skipping {node_name}.")
                         node_healths.pop(node_name)
                     node_healths[node_name]['message'] = ''
                     if len(line_splt) >= 3:
@@ -801,7 +801,7 @@ def do_application_tasks(launch_id,
                          reuse_first_build=False,
                          reuse_build_from_id=None):
     # this is the only print statement above INFO that identifies the app/test name
-    app_test.logger.doErrorLogging(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
+    app_test.logger.log_error(f"Starting tasks for {app_test.getNameOfApplication()}.{app_test.getNameOfSubtest()}: {tasks}")
 
     # Non-zero exit status is failure
     if app_test.doTasks(launchid=launch_id,

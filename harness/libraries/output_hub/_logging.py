@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
+import logging as py_l
 from pathlib import Path
 from typing import Optional
 
@@ -19,9 +20,9 @@ class Logger(ABC):
         name: str,
         *args,
         log_file: Optional[str] = None,
-        log_level: str = "WARNING",
-        console_log_level: str = "WARNING",
-        file_log_level: str = "WARNING",
+        log_level: str = "CRITICAL",
+        console_log_level: str = "CRITICAL",
+        file_log_level: str = "CRITICAL",
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -53,15 +54,15 @@ class Logger(ABC):
 
     @property
     def log_level(self) -> str:
-        return self._log_level
+        return self._log_level.name
 
     @property
     def console_log_level(self) -> str:
-        return self._console_log_level
+        return self._console_log_level.name
 
     @property
     def file_log_level(self) -> str:
-        return self._file_log_level
+        return self._file_log_level.name
 
     @abstractmethod
     def log_debug(self, message: str) -> None:
@@ -86,8 +87,6 @@ class Logger(ABC):
 
 class DefaultLogger(Logger):
     def _setup_handlers(self) -> None:
-        import logging as py_l
-
         self._logger = py_l.getLogger(self._name)
 
         if self._logger.hasHandlers():

@@ -15,7 +15,7 @@ class SchedulerFactory:
         elif scheduler_type == "PBS" or scheduler_type == "pbs":
             tmp_scheduler = PBS(logger=logger, use_jinja2=use_jinja2)
         else:
-            logger.doCriticalLogging("Scheduler not supported. Good bye!")
+            logger.log_critical("Scheduler not supported. Good bye!")
         return tmp_scheduler
 
     def __init__(self):

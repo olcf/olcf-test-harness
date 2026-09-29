@@ -31,7 +31,7 @@ from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Add a comment to a specific test ID in the events database")
@@ -50,15 +50,19 @@ args = parser.parse_args()
 # Read in the <machine>.ini configuration file #################################
 # uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
 config = rgt_config_file()
-logger = rgt_logger_factory.create_rgt_logger(logger_name='add_comment_db',
-                fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+logger = OutputHub(
+    name="add_comment_db",
+    log_level=args.loglevel,
+    log_file=None,
+    console_log_level=args.loglevel,
+    file_log_level=args.loglevel,
+)
 
 db_logger = create_rgt_db_logger(logger=logger)
 
 # db_logger is ready
 
-logger.doInfoLogging(f"Enabled {len(db_logger.enabled_backends)} database backends")
+logger.log_info(f"Enabled {len(db_logger.enabled_backends)} database backends")
 
 for db in db_logger.enabled_backends:
     if db.name == "influxdb":
@@ -66,7 +70,7 @@ for db in db_logger.enabled_backends:
     elif db.name == "kafka":
         continue
     else:
-        self.doErrorLogging(f"Unsupported db backend for add_comment_to_databases.py: {db.name}")
+        self.log_error(f"Unsupported db backend for add_comment_to_databases.py: {db.name}")
         exit(1)
 
 if args.dry_run:
@@ -75,8 +79,8 @@ if args.dry_run:
 
 # Checking format of provided times ############################################
 if not (args.time.endswith('d') or args.time.endswith('h')):
-    logger.doErrorLogging(f"Unrecognized time parameter: {args.time}.")
-    logger.doErrorLogging(f"This program allows hours or days to be specified as '1h' or '1d' for one hour or day, respectively.")
+    logger.log_error(f"Unrecognized time parameter: {args.time}.")
+    logger.log_error(f"This program allows hours or days to be specified as '1h' or '1d' for one hour or day, respectively.")
     exit(1)
 
 # Helper functions, one per database type ######################################
@@ -156,7 +160,7 @@ def influxdb_get_results(db):
             if not e in r.keys():
                 missing_entries.append(e)
         if len(missing_entries) > 0:
-            logger.doDebugLogging(f"Discarding event {r['event_id']} from test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
+            logger.log_debug(f"Discarding event {r['event_id']} from test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
         else:
             ret.append(r)
     return ret
@@ -198,7 +202,7 @@ def kafka_get_results(db):
         field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
 
         query = f'SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id'
-        logger.doDebugLogging(f"SQL query: {query}")
+        logger.log_debug(f"SQL query: {query}")
         return query
 
     results = db.query(build_query())
@@ -213,10 +217,10 @@ for db in db_logger.enabled_backends:
         results.extend(kafka_get_results(db))
 
     if not len(results) == 1:
-        logger.doErrorLogging(f"{len(results)} results returned from database query, expected 1. Skipping adding a comment.")
+        logger.log_error(f"{len(results)} results returned from database query, expected 1. Skipping adding a comment.")
     else:
         entry = results[0]
-        logger.doDebugLogging(f"Setting comment for test_id = {entry['test_id']}, event_name = {entry['event_name']}.")
+        logger.log_debug(f"Setting comment for test_id = {entry['test_id']}, event_name = {entry['event_name']}.")
         timestamp = datetime.now().isoformat()
         user = os.environ['USER']
         if 'comment' in entry.keys() and entry['comment'] == db.NO_VALUE:
