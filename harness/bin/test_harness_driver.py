@@ -37,7 +37,7 @@ from libraries import rgt_utilities
 from libraries.config_file import rgt_config_file
 from libraries.status_file_factory import StatusFileFactory
 from libraries import status_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 from machine_types.machine_factory import MachineFactory
 
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
@@ -168,12 +168,12 @@ def auto_generated_scripts(harness_config,
         try:
             build_exit_value = mymachine.build_executable()
         except KeyboardInterrupt:
-            a_logger.doCriticalLogging(f"Detected CTRL+C, aborting build.")
+            a_logger.log_critical(f"Detected CTRL+C, aborting build.")
             os.chdir(scripts_dir)
             build_exit_value = 21
             pass
         except Exception as e:
-            a_logger.doCriticalLogging(f"Exception generated during build, aborting test launch: {e}.")
+            a_logger.log_critical(f"Exception generated during build, aborting test launch: {e}.")
             os.chdir(scripts_dir)
             build_exit_value = 1
             pass
@@ -187,7 +187,7 @@ def auto_generated_scripts(harness_config,
     submit_exit_value = 0
     if actions['submit'] and (build_exit_value != 0):
         message = f"No submit action due to prior failed build."
-        a_logger.doCriticalLogging(message)
+        a_logger.log_critical(message)
     elif actions['submit'] and (build_exit_value == 0):
 
         # determine run count and max
@@ -238,7 +238,7 @@ def auto_generated_scripts(harness_config,
                     jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
                 else:
                     message = f"Submit error, failed to retrieve the job id."
-                    a_logger.doCriticalLogging(message)
+                    a_logger.log_critical(message)
                     submit_exit_value = 1
         else:
             submit_exit_value = 1
@@ -270,7 +270,7 @@ def auto_generated_scripts(harness_config,
             run_stdout.close()
         else:
             message = f"Run error, failed to retrieve the job id."
-            a_logger.doCriticalLogging(message)
+            a_logger.log_critical(message)
             run_exit_value = 1
 
     #-----------------------------------------------------
@@ -288,7 +288,7 @@ def auto_generated_scripts(harness_config,
             mymachine.log_to_db()
         else:
             message = f"Check error, failed to retrieve the job id."
-            a_logger.doCriticalLogging(message)
+            a_logger.log_critical(message)
             check_exit_value = 1
 
     exit_values = {
@@ -317,11 +317,12 @@ def test_harness_driver(argv=None):
         Vargs = my_parser.parse_args(argv)
 
     # Create a stdout-only logger for test_harness_driver.py
-    driver_logger = rgt_logger_factory.create_rgt_logger(
-                        logger_name='test_harness_driver_logger',
-                        logger_threshold_log_level='DEBUG',
-                        fh_threshold_log_level=Vargs.loglevel,
-                        ch_threshold_log_level=Vargs.loglevel)
+    driver_logger = OutputHub(
+        name="test_harness_driver_logger",
+        log_level="DEBUG",
+        console_log_level=Vargs.loglevel,
+        file_log_level=Vargs.loglevel,
+    )
 
     do_build = Vargs.build
     do_check = Vargs.check
@@ -371,17 +372,17 @@ def test_harness_driver(argv=None):
         if testshot_key in testshot_cfg.keys():
             testshot_str = testshot_cfg[testshot_key]
         launch_id = f'{testshot_str}/{user_str}@{time_str}'
-        driver_logger.doInfoLogging(f'Using launch id: {launch_id}')
+        driver_logger.log_info(f'Using launch id: {launch_id}')
     else:
-        driver_logger.doInfoLogging(f'Generated launch id: {launch_id}')
+        driver_logger.log_info(f'Generated launch id: {launch_id}')
 
     # Get the unique id for this test instance.
     unique_id = Vargs.uniqueid
     if unique_id == None:
         unique_id = rgt_utilities.unique_harness_id()
-        driver_logger.doInfoLogging(f'Generated unique id: {unique_id}')
+        driver_logger.log_info(f'Generated unique id: {unique_id}')
     else:
-        driver_logger.doInfoLogging(f'Using unique id: {unique_id}')
+        driver_logger.log_info(f'Using unique id: {unique_id}')
 
     # Make sure we are executing in app/test/Scripts
     testscripts = Vargs.scriptsdir
@@ -401,12 +402,13 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    a_logger = rgt_logger_factory.create_rgt_logger(
-                                         logger_name=logger_name,
-                                         fh_filepath=fh_filepath,
-                                         logger_threshold_log_level=logger_threshold,
-                                         fh_threshold_log_level=fh_threshold_log_level,
-                                         ch_threshold_log_level=ch_threshold_log_level)
+    a_logger = OutputHub(
+        name=logger_name,
+        log_level=logger_threshold,
+        log_file=fh_filepath,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level,
+    )
 
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,
@@ -425,7 +427,7 @@ def test_harness_driver(argv=None):
             import shutil
             message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
             message += "Stopping test cycle."
-            apptest.logger.doCriticalLogging(message)
+            apptest.logger.log_critical(message)
             runarchive_dir = apptest.get_path_to_runarchive()
             shutil.rmtree(runarchive_dir,ignore_errors=True)
             return
@@ -473,12 +475,13 @@ def test_harness_driver(argv=None):
     fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
     # loglevel arg controls the console level
     ch_threshold_log_level = Vargs.loglevel
-    sfile_logger = rgt_logger_factory.create_rgt_logger(
-                                         logger_name=logger_name,
-                                         fh_filepath=fh_filepath,
-                                         logger_threshold_log_level=logger_threshold,
-                                         fh_threshold_log_level=fh_threshold_log_level,
-                                         ch_threshold_log_level=ch_threshold_log_level)
+    sfile_logger = OutputHub(
+        name=logger_name,
+        log_level=logger_threshold,
+        log_file=fh_filepath,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level,
+    )
     path_to_status_file = apptest.get_path_to_status_file()
     jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file,
                                        logger=sfile_logger)
@@ -499,22 +502,22 @@ def test_harness_driver(argv=None):
     build_exit_value = 0
     if actions['build']:
         build_exit_value = exit_values['build']
-        apptest.logger.doInfoLogging(f'build exit value = {build_exit_value}')
+        apptest.logger.log_info(f'build exit value = {build_exit_value}')
 
     submit_exit_value = 0
     if actions['submit']:
         submit_exit_value = exit_values['submit']
-        apptest.logger.doInfoLogging(f'submit exit value = {submit_exit_value}')
+        apptest.logger.log_info(f'submit exit value = {submit_exit_value}')
 
     run_exit_value = 0
     if actions['run']:
         run_exit_value = exit_values['run']
-        apptest.logger.doInfoLogging(f'run exit value = {run_exit_value}')
+        apptest.logger.log_info(f'run exit value = {run_exit_value}')
 
     check_exit_value = 0
     if actions['check']:
         check_exit_value = exit_values['check']
-        apptest.logger.doInfoLogging(f'check exit value = {check_exit_value}')
+        apptest.logger.log_info(f'check exit value = {check_exit_value}')
 
         # Now read the result from the job_status.txt file.
         jspath = os.path.join(status_dir, layout.job_status_filename)

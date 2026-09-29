@@ -15,7 +15,7 @@ from libraries import input_files
 from libraries import regression_test
 from libraries import command_line
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 
 #
 # Authors: Arnold Tharrington, Wayne Joubert, Veronica Vergera, Mark Berrill, and Mike Brim
@@ -51,12 +51,14 @@ def get_main_logger():
     -------
     Logger
     """
-    return rgt_logger_factory.create_rgt_logger(
-                        logger_name=MAIN_LOGGER_NAME,
-                        fh_filepath=MAIN_LOGGER_FILEHANDLER_FILENAME,
-                        logger_threshold_log_level=MAIN_LOGGER_LEVEL,
-                        fh_threshold_log_level=MAIN_LOGGER_FILEHANDLER_LOGLEVEL,
-                        ch_threshold_log_level=MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL)
+
+    return OutputHub(
+        name=MAIN_LOGGER_NAME,
+        log_file=MAIN_LOGGER_FILEHANDLER_FILENAME,
+        log_level=MAIN_LOGGER_LEVEL,
+        console_log_level=MAIN_LOGGER_CONSOLE_HANDLER_LOGLEVEL,
+        file_log_level=MAIN_LOGGER_FILEHANDLER_LOGLEVEL,
+    )
 
 #-----------------------------------------------------
 # End of section we define the main logger and its   -
@@ -367,37 +369,37 @@ def runtests(my_arg_string=None):
     else:
         argv = shlex.split(my_arg_string)
 
-    main_logger.doInfoLogging("Parsing the command line arguments.")
+    main_logger.log_info("Parsing the command line arguments.")
 
     harness_arguments = parse_commandline_argv(argv, main_logger)
 
     # Print the effective command line to stdout.
     effective_command_line = harness_arguments.effective_command_line
-    main_logger.doInfoLogging(effective_command_line)
+    main_logger.log_info(effective_command_line)
 
-    main_logger.doInfoLogging("Completed parsing command line arguments.")
+    main_logger.log_info("Completed parsing command line arguments.")
 
     # Read the input and master config
-    main_logger.doInfoLogging("Reading the harness input file.")
+    main_logger.log_info("Reading the harness input file.")
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
                                        runmodecmd=harness_arguments.runmode,
                                        app_filter=harness_arguments.app_filter,
                                        test_filter=harness_arguments.test_filter,
                                        logger=main_logger)
-    main_logger.doInfoLogging("Completed reading the harness input file.")
+    main_logger.log_info("Completed reading the harness input file.")
 
     # Check if there were any tests found:
     if len(ifile.get_tests()) == 0:
-        main_logger.doErrorLogging("No tests found in input file. Aborting.")
+        main_logger.log_error("No tests found in input file. Aborting.")
         return
     
-    main_logger.doInfoLogging("Reading the harness config file.")
+    main_logger.log_info("Reading the harness config file.")
     try:
         config = rgt_config_file(configfilename=harness_arguments.configfile, logger=main_logger)
     except NameError as e:
-        main_logger.doCriticalLogging(f"Could not find Harness config file: {harness_arguments.configfile}.")
+        main_logger.log_critical(f"Could not find Harness config file: {harness_arguments.configfile}.")
         exit(1)
-    main_logger.doInfoLogging("Completed reading the harness config file.")
+    main_logger.log_info("Completed reading the harness config file.")
 
     # Create and run the harness
     rgt = regression_test.Harness(config, ifile,
@@ -409,11 +411,11 @@ def runtests(my_arg_string=None):
                                   harness_arguments.reuse_build_from_id,
                                   shuffle=harness_arguments.shuffle)
 
-    main_logger.doInfoLogging("Created an instance of the harness.")
-    main_logger.doInfoLogging("Harness: " + str(rgt))
-    main_logger.doInfoLogging("Running the harness tasks.")
+    main_logger.log_info("Created an instance of the harness.")
+    main_logger.log_info("Harness: " + str(rgt))
+    main_logger.log_info("Running the harness tasks.")
     rgt.run_me(my_effective_command_line=effective_command_line)
-    main_logger.doInfoLogging("Completed running the harness tasks.")
+    main_logger.log_info("Completed running the harness tasks.")
 
     return rgt
 
@@ -421,10 +423,10 @@ if __name__ == "__main__":
 
     my_main_logger = get_main_logger()
 
-    my_main_logger.doInfoLogging("Start of harness")
+    my_main_logger.log_info("Start of harness")
 
     rgt = runtests()
 
-    my_main_logger.doInfoLogging("End of harness.")
+    my_main_logger.log_info("End of harness.")
 
 

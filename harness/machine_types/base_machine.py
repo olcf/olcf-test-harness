@@ -161,21 +161,21 @@ class BaseMachine(metaclass=ABCMeta):
             exit_status of 0 indicates success, other wise failure. 
         """
         message = f"Submitting a batch script."
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         currentdir = os.getcwd()
         message = f"The initial directory is {currentdir}"
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         new_env = None
         exit_status = linux_utilities.submit_batch_script(self,new_env)
 
         if exit_status != 0:
             message = f"Unsuccessful batch script submission with exit status of {exit_status}."
-            self.logger.doCriticalLogging(message)
+            self.logger.log_critical(message)
         else:
             message = f"Successful batch script submission with exit status of {exit_status}."
-            self.logger.doInfoLogging(message)
+            self.logger.log_info(message)
 
         return exit_status
 
@@ -221,15 +221,15 @@ class BaseMachine(metaclass=ABCMeta):
         bool
             True if successful creation of batch file.
         """
-        self.logger.doInfoLogging("Start of making a batch script.")
+        self.logger.log_info("Start of making a batch script.")
 
         currentdir = os.getcwd()
         message = f"The initial directory is {currentdir}"
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         bstatus = self._make_batch_script()
 
-        self.logger.doInfoLogging("End of making a batch script.")
+        self.logger.log_info("End of making a batch script.")
         return bstatus
     
     def build_executable(self):
@@ -241,10 +241,10 @@ class BaseMachine(metaclass=ABCMeta):
             The exit status of the build command.
 
         """
-        self.logger.doInfoLogging("Start of buiding executable.")
+        self.logger.log_info("Start of buiding executable.")
 
         currentdir = os.getcwd()
-        self.logger.doInfoLogging(f"The initial directory is {currentdir}")
+        self.logger.log_info(f"The initial directory is {currentdir}")
 
         path_to_source = self.apptest.get_path_to_source()
         path_to_test_source = self.apptest.get_path_to_test_source()
@@ -252,13 +252,13 @@ class BaseMachine(metaclass=ABCMeta):
         path_to_runarchive_directory = self.apptest.get_path_to_runarchive()
 
         # Use Error threshold to show these messages all the time
-        self.logger.doErrorLogging(f"Path to Source: {path_to_source}")
-        self.logger.doErrorLogging(f"Path to Build: {path_to_build_directory}")
-        self.logger.doErrorLogging(f"Path to Run_Archive: {path_to_runarchive_directory}")
+        self.logger.log_error(f"Path to Source: {path_to_source}")
+        self.logger.log_error(f"Path to Build: {path_to_build_directory}")
+        self.logger.log_error(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
                 Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
-            self.logger.doInfoLogging(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
+            self.logger.log_info(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
             return 0
 
         # Copy the source to the build directory.
@@ -267,13 +267,13 @@ class BaseMachine(metaclass=ABCMeta):
         if not copy_rc == 0:
             return copy_rc
 
-        self.logger.doInfoLogging(f"Copied source to build directory.")
+        self.logger.log_info(f"Copied source to build directory.")
 
         # We now change directories to the build directory.
         os.chdir(path_to_build_directory)
 
         message = f"Changed to  build directory {path_to_build_directory}. Commencing build ..."
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         # We run the build command.
         new_env = None
@@ -281,18 +281,18 @@ class BaseMachine(metaclass=ABCMeta):
 
         message = f"The build exit status is {exit_status}."
         if exit_status == 0:
-            self.logger.doInfoLogging(message)
+            self.logger.log_info(message)
         else:
-            self.logger.doCriticalLogging(message)
+            self.logger.log_critical(message)
 
         # We now change back to starting directory.
         os.chdir(currentdir)
 
         message = f"Changed back to Scripts directory {currentdir}."
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         message = f"End of buiding executable."
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         return exit_status
 
@@ -311,7 +311,7 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(runarchive_dir)
 
         message = f"The current working directory is {runarchive_dir} "
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         # We now run the check command.
         new_env = None
@@ -323,7 +323,7 @@ class BaseMachine(metaclass=ABCMeta):
         os.chdir(currentdir)
 
         message = f"The current working directory is {currentdir} "
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
 
         return check_status
 
@@ -337,13 +337,13 @@ class BaseMachine(metaclass=ABCMeta):
         report_command_str = self.test_config.get_report_command()
 
         if not report_command_str:
-            self.logger.doInfoLogging("No report command provided, skipping report step.")
+            self.logger.log_info("No report command provided, skipping report step.")
             return 0
 
         message = f"Running report executable script report script {report_command_str }."
 
         print(message)
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
         
         exit_status = self._start_report_script(self.test_config.get_report_command())
         return exit_status
@@ -358,7 +358,7 @@ class BaseMachine(metaclass=ABCMeta):
         """
         message = f"Attempting to log to Databases."
 
-        self.logger.doInfoLogging(message)
+        self.logger.log_info(message)
         
         exit_status = self._log_to_db()
         return exit_status
@@ -394,7 +394,7 @@ class BaseMachine(metaclass=ABCMeta):
 
         if 'RGT_REUSE_BUILD_FROM' in os.environ and \
                 Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
-            self.logger.doInfoLogging("RGT_REUSE_BUILD_FROM set, skipping copying Source.")
+            self.logger.log_info("RGT_REUSE_BUILD_FROM set, skipping copying Source.")
             return 0
 
         shutil.copytree(src=path_to_source,
@@ -411,7 +411,7 @@ class BaseMachine(metaclass=ABCMeta):
             else:
                 proc = subprocess.run(['cp', '-rTL', os.path.realpath(path_to_test_source), path_to_build_directory])
                 if not proc.returncode == 0:
-                    self.logger.doCriticalLogging(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
+                    self.logger.log_critical(f"Encountered an error copying a test's Source directory from {path_to_test_source} to {path_to_build_directory}")
                     return proc.returncode
         return 0
 
@@ -421,7 +421,7 @@ class BaseMachine(metaclass=ABCMeta):
         status_file = self.apptest.get_path_to_job_status_file()
         with open(status_file, "w")  as file_obj:
             message = f"Writing check_exit_status {cstatus} into {status_file}"
-            self.logger.doInfoLogging(message)
+            self.logger.log_info(message)
             file_obj.write(str(cstatus))
         return
 

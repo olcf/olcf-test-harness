@@ -44,7 +44,7 @@ except ImportError as e:
 from libraries.subtest_factory import SubtestFactory
 from libraries.status_file import StatusFile, get_status_info_from_file
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness runs in database backends using event and Slurm data")
@@ -65,9 +65,13 @@ parser.add_argument('--kafka-grace-period', type=int, default=1800, action='stor
 args = parser.parse_args()
 
 # Create rgt_logger
-logger = rgt_logger_factory.create_rgt_logger(logger_name='update_db',
-                fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+logger = OutputHub(
+    name="update_db",
+    log_level=args.loglevel,
+    log_file=None,
+    console_log_level=args.loglevel,
+    file_log_level=args.loglevel,
+)
 
 # Read in the <machine>.ini configuration file #################################
 # uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
@@ -77,18 +81,18 @@ db_logger = create_rgt_db_logger(logger=logger)
 
 # db_logger is ready
 
-logger.doInfoLogging(f"Enabled {len(db_logger.enabled_backends)} database backends")
+logger.log_info(f"Enabled {len(db_logger.enabled_backends)} database backends")
 
 for db in db_logger.enabled_backends:
     if db.name == "influxdb":
         continue
     elif db.name == "kafka":
         if not 'RGT_KAFKA_EVENTS_TOPIC' in os.environ:
-            self.doErrorLogging(f"The Kafka backend requires RGT_KAFKA_EVENTS_TOPIC to be set in the environment.")
+            self.log_error(f"The Kafka backend requires RGT_KAFKA_EVENTS_TOPIC to be set in the environment.")
             exit(1)
         continue
     else:
-        self.doErrorLogging(f"Unsupported db backend: {db.name}")
+        self.log_error(f"Unsupported db backend: {db.name}")
         exit(1)
 
 # Dictionaries with key-value pairs for global use #############################
@@ -111,7 +115,7 @@ def check_time_format(s):
     try:
         dt = datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
     except Exception as e:
-        logger.doErrorLogging(f"Invalid time format: {s}. Aborting")
+        logger.log_error(f"Invalid time format: {s}. Aborting")
         raise
     return True
 
@@ -123,8 +127,8 @@ if args.endtime:
     # Check format
     check_time_format(args.endtime)
 if not (args.time.endswith('d') or args.time.endswith('h')):
-    logger.doErrorLogging(f"Unrecognized time parameter: {args.time[0]}.")
-    logger.doErrorLogging(f"This program allows hours or days to be specified as '1h' or '1d' for one hour or day, respectively.")
+    logger.log_error(f"Unrecognized time parameter: {args.time[0]}.")
+    logger.log_error(f"This program allows hours or days to be specified as '1h' or '1d' for one hour or day, respectively.")
     exit(1)
 
 # Helper functions, one per database type ######################################
@@ -215,9 +219,9 @@ def influxdb_get_results(db):
             if not e in r.keys():
                 missing_entries.append(e)
         if len(missing_entries) > 0:
-            logger.doDebugLogging(f"Discarding test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
+            logger.log_debug(f"Discarding test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
         elif not r['user'] == args.user:
-            logger.doDebugLogging(f"Discarding test id {r['test_id']} from user {r['user']}")
+            logger.log_debug(f"Discarding test id {r['test_id']} from user {r['user']}")
         else:
             ret.append(r)
     return ret
@@ -272,7 +276,7 @@ def kafka_get_results(db):
 
         #query = f'SELECT * FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} WHERE timestamp = (SELECT MAX(timestamp) FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} AS subq WHERE subq.test_id = test_id) AND {" AND ".join(filters)} GROUP BY test_id,machine,app,test HAVING event_name = "job_queued" or (event_name != "check_end" and (event_value = "0" or event_value = "[NO_VALUE]"))'
         query = f'SELECT * FROM (SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id,machine,app,test) WHERE {unfinished_conditional}'
-        logger.doDebugLogging(f"SQL query: {query}")
+        logger.log_debug(f"SQL query: {query}")
         return query
 
     results = db.query(build_query())
@@ -284,9 +288,9 @@ def kafka_get_results(db):
             if not e in r.keys():
                 missing_entries.append(e)
         if len(missing_entries) > 0:
-            logger.doDebugLogging(f"Discarding test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
+            logger.log_debug(f"Discarding test id {r['test_id']} with missing entries: {','.join(missing_entries)}")
         elif not r['user'] == args.user:
-            logger.doDebugLogging(f"Discarding test id {r['test_id']} from user {r['user']}")
+            logger.log_debug(f"Discarding test id {r['test_id']} from user {r['user']}")
         else:
             ret.append(r)
     return ret
@@ -322,21 +326,21 @@ def check_job_status(slurm_jobid_lst):
                     if next_space < 0 and i == len(labels) - 1:
                         next_space = len(line)
                     elif next_space < 0:
-                        logger.doErrorLogging(f"Sacct parse error: Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
+                        logger.log_error(f"Sacct parse error: Couldn't find enough spaces to correctly parse the columns to fit the labels {','.join(labels)}")
                     cur_field = line[search_pos+1:next_space].strip()
                     search_pos = next_space
                     fields[labels[i].lower()] = cur_field
                 if not 'jobid' in fields:
-                    logger.doWarningLogging(f"Couldn't find JobID in sacct record. Skipping")
+                    logger.log_warning(f"Couldn't find JobID in sacct record. Skipping")
                     continue
                 elif fields['state'] == 'RESIZING':
-                    logger.doDebugLogging(f"Detected RESIZING for job {fields['jobid']}. RESIZING is from node failure + SLURM '--no-kill'. There should be another record in sacct for this job. Skipping")
+                    logger.log_debug(f"Detected RESIZING for job {fields['jobid']}. RESIZING is from node failure + SLURM '--no-kill'. There should be another record in sacct for this job. Skipping")
                     # Add a field to this job that shows it had/survived a node failure
                     node_failed_jobids.append(fields['jobid'])
                     continue
                 elif fields['jobid'] in node_failed_jobids:
                     # Check if a previous step had come in with RESIZING
-                    logger.doDebugLogging(f"Found jobid in node failure list: {fields['jobid']}")
+                    logger.log_debug(f"Found jobid in node failure list: {fields['jobid']}")
                     fields['node-failed'] = True
                 result[fields['jobid']] = fields
         os.remove(f"slurm.jobs.tmp.txt")
@@ -350,7 +354,7 @@ def get_user_from_id(user_id):
     with open(f'tmp.user.txt', 'r') as f:
         user_name = f.readline().strip()
     if len(user_name) == 0:
-        logger.doErrorLogging(f"Couldn't find user name for {user_id}. Returning 'unknown'")
+        logger.log_error(f"Couldn't find user name for {user_id}. Returning 'unknown'")
         user_name = 'unknown'
     os.remove(f"tmp.user.txt")
     return user_name
@@ -403,11 +407,11 @@ for db in db_logger.enabled_backends:
 
     for entry in results:
         # check to see if this entry should be parsed
-        logger.doDebugLogging(f"Processing {entry['test_id']}, SLURM id {entry['job_id']} ========================")
+        logger.log_debug(f"Processing {entry['test_id']}, SLURM id {entry['job_id']} ========================")
 
         if entry['job_id'] == '[NO_VALUE]':
             # Then this test never made it to the scheduler. Ignore it
-            logger.doDebugLogging(f"Test {entry['test_id']} has not made it to a scheduler.")
+            logger.log_debug(f"Test {entry['test_id']} has not made it to a scheduler.")
             # if it's a build_start status that is older than args.build_timeout, then log a build_end status
             if not entry['event_name'] == f"{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][1]}_{StatusFile.EVENT_DICT[StatusFile.EVENT_BUILD_START][2]}":
                 skipped += 1
@@ -432,17 +436,17 @@ for db in db_logger.enabled_backends:
             entry['user'] = os.environ['USER']
             sent += 1
             entry['output_txt'] = f"Build timed out after {timediff_hours:.1f} hours."
-            logger.doErrorLogging(f"Logging build timeout for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']} to {db.url}.")
+            logger.log_error(f"Logging build timeout for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif not entry['job_id'] in slurm_data.keys():
-            logger.doWarningLogging(f"Couldn't find job id {entry['job_id']} in Slurm data. It's possible the job has not finished yet.")
+            logger.log_warning(f"Couldn't find job id {entry['job_id']} in Slurm data. It's possible the job has not finished yet.")
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['pending']:
             # Then this job is still running/waiting in queue, we can skip
-            logger.doDebugLogging(f"Job {entry['job_id']} is in state {slurm_data[entry['job_id']]['state']}. Skipping.")
+            logger.log_debug(f"Job {entry['job_id']} is in state {slurm_data[entry['job_id']]['state']}. Skipping.")
             skipped += 1
             continue
         elif slurm_data[entry['job_id']]['state'].startswith('CANCELLED'):
-            logger.doDebugLogging(f"Found cancelled job {entry['job_id']}. Sending status updates.")
+            logger.log_debug(f"Found cancelled job {entry['job_id']}. Sending status updates.")
             sent += 1
             if 'node-failed' in slurm_data[entry['job_id']] and slurm_data[entry['job_id']]['node-failed']:
                 # Then we possibly had a user-cancelled job following a node failure
@@ -468,10 +472,10 @@ for db in db_logger.enabled_backends:
                 entry['output_txt'] += f" at {slurm_data[entry['job_id']]['end']}"
             entry['output_txt'] += f", after running for {slurm_data[entry['job_id']]['elapsed']}."
             entry['output_txt'] += f" Exit code: {slurm_data[entry['job_id']]['exitcode']}, reason: {slurm_data[entry['job_id']]['reason']}."
-            logger.doErrorLogging(f"Logging cancelled job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.log_error(f"Logging cancelled job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['node_fail']:
-            logger.doDebugLogging(f"Found node failure from: {entry['job_id']}")
+            logger.log_debug(f"Found node failure from: {entry['job_id']}")
             sent += 1
             entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
             entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
@@ -482,16 +486,16 @@ for db in db_logger.enabled_backends:
             entry['hostname'] = socket.gethostname()
             entry['user'] = os.environ['USER']
             entry['output_txt'] = f"Node failure detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
-            logger.doErrorLogging(f"Logging NODE_FAIL'd job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.log_error(f"Logging NODE_FAIL'd job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['timeout']:
             sent += 1
             if 'node-failed' in slurm_data[entry['job_id']] and slurm_data[entry['job_id']]['node-failed']:
-                logger.doDebugLogging(f"Found node_fail + timed out job: {entry['job_id']}")
+                logger.log_debug(f"Found node_fail + timed out job: {entry['job_id']}")
                 entry['output_txt'] = f"NODE_FAIL followed by TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
                 entry['event_value'] = state_to_value['node_fail']
             else:
-                logger.doDebugLogging(f"Found timed out job: {entry['job_id']}")
+                logger.log_debug(f"Found timed out job: {entry['job_id']}")
                 entry['output_txt'] = f"TIMEOUT detected. Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
                 entry['event_value'] = state_to_value['timeout']
             entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
@@ -501,21 +505,21 @@ for db in db_logger.enabled_backends:
             entry['event_filename'] = StatusFile.NO_VALUE
             entry['hostname'] = socket.gethostname()
             entry['user'] = os.environ['USER']
-            logger.doErrorLogging(f"Logging timed-out job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.log_error(f"Logging timed-out job, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             single_db_logger.log_event(entry)
         elif slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['success'] or \
              slurm_data[entry['job_id']]['state'] in slurm_job_state_codes['fail']:
             # Then the job completed, but did not successfully log results (perhaps the compute node can't reach the db?)
             # So we search for status files of events more recent than the one we have
-            logger.doDebugLogging(f"Found job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']}. Newest event state was {entry['event_name']}.")
+            logger.log_debug(f"Found job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']}. Newest event state was {entry['event_name']}.")
             # Annoyingly, status_dir is not stored in the status file, so we have to use Run_Archive
             status_file_path = os.path.join(entry['run_archive'], '..', '..', 'Status', entry['test_id'])
             current_event_num = int(entry['event_filename'].split('_')[1])
             cur_dir = os.getcwd()
             if not (Path(status_file_path).exists() and Path(entry['run_archive']).exists()):
-                logger.doDebugLogging(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
+                logger.log_debug(f"Status file and Run_Archive paths for test {entry['test_id']} do not exist ({entry['run_archive']}). Skipping.")
                 continue
-            logger.doErrorLogging(f"Logging test that completed the Slurm job but did not log to the database, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+            logger.log_error(f"Logging test that completed the Slurm job but did not log to the database, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             sent += 1
             os.chdir(status_file_path)
             found_checkend = False
@@ -530,13 +534,13 @@ for db in db_logger.enabled_backends:
                         # get time between this event and now, check kafka_grace_period
                         diff_s = int(datetime.now().timestamp()) - event_time_to_timestamp(event_info['event_time'], precision='s')
                         if diff_s < args.kafka_grace_period:
-                            logger.doWarningLogging(f"Skipping event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}, since kafka_grace_period has not passed: {diff_s} (actual) < {args.kafka_grace_period} (threshold).")
+                            logger.log_warning(f"Skipping event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}, since kafka_grace_period has not passed: {diff_s} (actual) < {args.kafka_grace_period} (threshold).")
                             kafka_grace_period_invoked = True
                             continue
 
 
                     # This is a global call for all enabled databases -- re-posting an event to InfluxDB doesn't hurt
-                    logger.doErrorLogging(f"Logging event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+                    logger.log_error(f"Logging event {status_file_name} for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
                     single_db_logger.log_event(event_info)
                     if status_file_name == StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][0]:
                         found_checkend = True
@@ -547,12 +551,12 @@ for db in db_logger.enabled_backends:
                                                               logger=logger,
                                                               tag=entry['test_id'],
                                                               db_logger=single_db_logger)
-                        logger.doDebugLogging(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']} to {db.url}.")
+                        logger.log_debug(f"Attempting to log metric and node health information {status_file_name} for test {entry['test_id']} to {db.url}.")
                         if not subtest.run_db_extensions():
-                            logger.doErrorLogging(f"Logging metric & node health data to databases failed for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+                            logger.log_error(f"Logging metric & node health data to databases failed for app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
             if (not found_checkend) and (not kafka_grace_period_invoked):
                 # If the test didn't log a check_end event, we simulate one here
-                logger.doDebugLogging(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
+                logger.log_debug(f"Job {entry['job_id']} in state {slurm_data[entry['job_id']]['state']} did not complete a check_end event. Logging check_end with fail check code.")
                 entry['output_txt'] = f"Job exited in state {slurm_data[entry['job_id']]['state']} at {slurm_data[entry['job_id']]['end']}, after running for {slurm_data[entry['job_id']]['elapsed']}."
                 entry['event_time'] = get_latest_time(slurm_time_to_harness_time(slurm_data[entry['job_id']]['end']), entry['event_time'])
                 entry['event_type'] = StatusFile.EVENT_DICT[StatusFile.EVENT_CHECK_END][1]
@@ -562,15 +566,15 @@ for db in db_logger.enabled_backends:
                 entry['event_value'] = state_to_value['fail']
                 entry['hostname'] = socket.gethostname()
                 entry['user'] = os.environ['USER']
-                logger.doErrorLogging(f"Logging failure exit code for job that exited without logging the check_end event, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
+                logger.log_error(f"Logging failure exit code for job that exited without logging the check_end event, app={entry['app']}, test={entry['test']}, test_id={entry['test_id']}, jobid={entry['job_id']} to {db.url}.")
                 single_db_logger.log_event(entry)
             os.chdir(cur_dir)
         else:
-            logger.doWarningLogging(f"Unrecognized job state: {slurm_data[entry['job_id']]['state']}. No action is being taken for job {entry['job_id']}.")
+            logger.log_warning(f"Unrecognized job state: {slurm_data[entry['job_id']]['state']}. No action is being taken for job {entry['job_id']}.")
             skipped += 1
 
 if sent > 0:
     # Log at critical level if sent > 0, else at error level
-    logger.doCriticalLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
+    logger.log_critical(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
 else:
-    logger.doWarningLogging(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")
+    logger.log_warning(f"Attempted to log {sent} jobs to databases. Skipped {skipped}.")

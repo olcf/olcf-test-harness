@@ -158,16 +158,16 @@ class KafkaLogger(BaseDBLogger):
             Posts the event to Kafka.
         """
         if not 'events' in self.topics:
-            self.__logger.doWarningLogging(f"The events topic is not initialized in Kafka logger {self.uri}. Skipping event logging.")
+            self.__logger.log_warning(f"The events topic is not initialized in Kafka logger {self.uri}. Skipping event logging.")
             return False
 
-        self.__logger.doDebugLogging(f"Posting event {event_dict['event_name']} for test id: {event_dict['test_id']} to Kafka")
+        self.__logger.log_debug(f"Posting event {event_dict['event_name']} for test id: {event_dict['test_id']} to Kafka")
 
         if not 'output_txt' in event_dict.keys():
             # Add handling for pasting outputs to influxdb
             if event_dict['event_name'] == "build_end":
                 file_name = os.path.join(event_dict['build_directory'], "output_build.txt")
-                self.__logger.doDebugLogging(f"Using {file_name} for build output for Kafka")
+                self.__logger.log_debug(f"Using {file_name} for build output for Kafka")
                 if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -177,7 +177,7 @@ class KafkaLogger(BaseDBLogger):
                     event_dict['output_txt'] = f'Output file not found in {file_name}'
             elif event_dict['event_name'] == "submit_end":
                 file_name = os.path.join(event_dict['run_archive'], "submit.err")
-                self.__logger.doDebugLogging(f"Using {file_name} for submit errors for Kafka")
+                self.__logger.log_debug(f"Using {file_name} for submit errors for Kafka")
                 if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -188,7 +188,7 @@ class KafkaLogger(BaseDBLogger):
             elif event_dict['event_name'] == "binary_execute_end":
                 found_job_file = False
                 for file_name in glob.glob(event_dict['run_archive'] + "/*.o" + event_dict['job_id']):
-                    self.__logger.doDebugLogging(f"Using {file_name} for job output for Kafka")
+                    self.__logger.log_debug(f"Using {file_name} for job output for Kafka")
                     if Path(file_name).exists() and not found_job_file:
                         found_job_file = True
                         with open(file_name, "r") as f:
@@ -199,7 +199,7 @@ class KafkaLogger(BaseDBLogger):
                     event_dict['output_txt'] = f'No binary execute output files found.'
             elif event_dict['event_name'] == "check_end":
                 file_name = os.path.join(event_dict['run_archive'], "output_check.txt")
-                self.__logger.doDebugLogging(f"Using {file_name} for check output for Kafka")
+                self.__logger.log_debug(f"Using {file_name} for check output for Kafka")
                 if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -223,10 +223,10 @@ class KafkaLogger(BaseDBLogger):
             Posts metrics to Kafka.
         """
         if not 'metrics' in self.topics:
-            self.__logger.doWarningLogging(f"The metrics topic is not initialized in Kafka logger {self.uri}. Skipping metrics logging.")
+            self.__logger.log_warning(f"The metrics topic is not initialized in Kafka logger {self.uri}. Skipping metrics logging.")
             return False
 
-        self.__logger.doDebugLogging(f"Posting metrics from test id: {test_info_dict['test_id']} to Kafka")
+        self.__logger.log_debug(f"Posting metrics from test id: {test_info_dict['test_id']} to Kafka")
 
         # Put metrics into a fixed-column format, where each metric results in a single message to Kafka
         for metric_name in metrics_dict.keys():
@@ -251,10 +251,10 @@ class KafkaLogger(BaseDBLogger):
         Send node health data to Kafka
         """
         if not 'node_health' in self.topics:
-            self.__logger.doWarningLogging(f"The node_health topic is not initialized in Kafka logger {self.uri}. Skipping node_health logging.")
+            self.__logger.log_warning(f"The node_health topic is not initialized in Kafka logger {self.uri}. Skipping node_health logging.")
             return False
 
-        self.__logger.doDebugLogging(f"Posting node health data from test id: {test_info_dict['test_id']} to Kafka")
+        self.__logger.log_debug(f"Posting node health data from test id: {test_info_dict['test_id']} to Kafka")
 
         # Required environment variable: RGT_NODE_LOCATION_FILE
         if not 'RGT_NODE_LOCATION_FILE' in os.environ:
@@ -301,12 +301,12 @@ class KafkaLogger(BaseDBLogger):
             if node_name in node_locations.keys():
                 for loc_id in required_location_identifiers:
                     if not loc_id in node_locations[node_name].keys():
-                        self.__logger.doErrorLogging(f"Required location identifier {loc_id} not found for node {node_name}. Aborting node health logging.")
+                        self.__logger.log_error(f"Required location identifier {loc_id} not found for node {node_name}. Aborting node health logging.")
                     else:
                         query_dict[loc_id] = node_locations[node_name][loc_id]
             elif use_node_location_file:
                 # If we were supposed to use a node location file, but couldn't find info for this node
-                self.__logger.doErrorLogging(f"Could not find node location information for {node_name}. Aborting node health logging.")
+                self.__logger.log_error(f"Could not find node location information for {node_name}. Aborting node health logging.")
                 return False
             else:
                 # still set these so that all records have consistent schema
@@ -318,7 +318,7 @@ class KafkaLogger(BaseDBLogger):
             if not ret:
                 # then flush the producer & exit
                 self.producer.flush()
-                self.__logger.doErrorLogging(f"Kafka message failed to send. Aborting node health logging.")
+                self.__logger.log_error(f"Kafka message failed to send. Aborting node health logging.")
                 return False
         # flush the producer to clear all messages
         nmsgs = self.producer.flush()
@@ -329,7 +329,7 @@ class KafkaLogger(BaseDBLogger):
             Posts external metrics to Kafka.
         """
 
-        self.__logger.doDebugLogging(f"Posting external metrics to Kafka")
+        self.__logger.log_debug(f"Posting external metrics to Kafka")
 
         # Add time to the query dictionary
         query_dict = tags | values
@@ -344,7 +344,7 @@ class KafkaLogger(BaseDBLogger):
         """
         Check if each of the provided topics exists in the Kafka instance
         """
-        self.__logger.doDebugLogging(f'Checking for the following topics for Kafka health check and topic verification: {",".join(self.topics.values())} at {self.uri}')
+        self.__logger.log_debug(f'Checking for the following topics for Kafka health check and topic verification: {",".join(self.topics.values())} at {self.uri}')
 
         err_msg = None
         # requires broker v0.11 or later
@@ -374,7 +374,7 @@ class KafkaLogger(BaseDBLogger):
         if self.db_type.upper() == 'DRUID':
             return self._query_druid(query)
         else:
-            self.__logger.doCriticalLogging("The Kafka db_logger backend does not support the query() method for any database backend except Druid yet. Support is enabled for Druid via the RGT_KAFKA_DB_TYPE=Druid and RGT_KAFKA_DB_URI fields.")
+            self.__logger.log_critical("The Kafka db_logger backend does not support the query() method for any database backend except Druid yet. Support is enabled for Druid via the RGT_KAFKA_DB_TYPE=Druid and RGT_KAFKA_DB_URI fields.")
             return []
 
 
@@ -414,19 +414,19 @@ class KafkaLogger(BaseDBLogger):
         """
 
         if self.dryrun:
-            self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
+            self.__logger.log_info(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
             return True
         elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
             # A Harness utility may set the environment variable after DB init time
             self.dryrun = True
-            self.__logger.doInfoLogging(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
+            self.__logger.log_info(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
             return True
 
         # validate the payload dict to make sure certain fields exist:
         if not 'timestamp' in payload.keys():
             raise DatabaseDataError(f"Payload dictionary does not contain a 'timestamp' field when sending to Kafka topic {topic}: {payload}")
 
-        self.__logger.doDebugLogging(f"Sending message to Kafka topic {topic}: {payload}")
+        self.__logger.log_debug(f"Sending message to Kafka topic {topic}: {payload}")
 
         self.producer.produce(topic, value=json.dumps(payload))
 
@@ -455,7 +455,7 @@ class KafkaLogger(BaseDBLogger):
             "query": query
         }
 
-        self.__logger.doInfoLogging(f"Querying Druid database with query: {query}.")
+        self.__logger.log_info(f"Querying Druid database with query: {query}.")
 
         response = requests.post(
             f"{self.db_uri}/druid/v2/sql",
@@ -466,11 +466,11 @@ class KafkaLogger(BaseDBLogger):
 
         try:
             response.raise_for_status()
-            self.__logger.doDebugLogging(f"Query completed successfully: {query}")
-            self.__logger.doDebugLogging(f"Query response: {response.json()}")
+            self.__logger.log_debug(f"Query completed successfully: {query}")
+            self.__logger.log_debug(f"Query response: {response.json()}")
             return response.json()
         except requests.exceptions.RequestException as e:
-            self.__logger.doErrorLogging(f"Druid Query failed: {str(e)}.")
+            self.__logger.log_error(f"Druid Query failed: {str(e)}.")
             # continue raising this error to propagate the failure
             raise e
 

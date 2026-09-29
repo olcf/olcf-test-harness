@@ -113,24 +113,24 @@ class apptest_layout:
         """ Returns False if the Source dir, Scripts dir, or test input ini files don't exist """
         # Check that the Application dir exists
         if not Path(self.__apptest_layout['app']).exists():
-            self.__logger.doErrorLogging(f"Could not find the Application root directory for App={self.__appname}, Test={self.__testname}.")
+            self.__logger.log_error(f"Could not find the Application root directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Application's Source dir exists
         if not Path(self.get_path_to_source()).exists():
-            self.__logger.doErrorLogging(f"Could not find the Source directory for App={self.__appname}, Test={self.__testname}.")
+            self.__logger.log_error(f"Could not find the Source directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Test dir exists
         if not Path(self.__apptest_layout['test']).exists():
-            self.__logger.doErrorLogging(f"Could not find the test directory for App={self.__appname}, Test={self.__testname}.")
+            self.__logger.log_error(f"Could not find the test directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the Scripts directory exists
         if not Path(self.get_path_to_scripts()).exists():
-            self.__logger.doErrorLogging(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
+            self.__logger.log_error(f"Could not find the Scripts directory for App={self.__appname}, Test={self.__testname}.")
             return False
         # Check that the an rgt_test_ini.ini file exists 
         if not (Path(self.__apptest_layout['test_input_ini']).exists() or \
                 Path(self.__apptest_layout['test_input_yaml']).exists()):
-            self.__logger.doErrorLogging(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
+            self.__logger.log_error(f"Could not find the test input file for App={self.__appname}, Test={self.__testname}.")
             return False
         return True
 
@@ -162,13 +162,13 @@ class apptest_layout:
     # Debug function.
     #
     def debug_layout(self):
-        self.__logger.doDebugLogging ("\n\n")
-        self.__logger.doDebugLogging ("================================================================")
-        self.__logger.doDebugLogging ("Debugging local layout " + self.__appname + self.__testname)
-        self.__logger.doDebugLogging ("================================================================")
+        self.__logger.log_debug ("\n\n")
+        self.__logger.log_debug ("================================================================")
+        self.__logger.log_debug ("Debugging local layout " + self.__appname + self.__testname)
+        self.__logger.log_debug ("================================================================")
         for key in self.__apptest_layout.keys():
-            self.__logger.doDebugLogging ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
-        self.__logger.doDebugLogging ("================================================================\n\n")
+            self.__logger.log_debug ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
+        self.__logger.log_debug ("================================================================\n\n")
 
     #
     # Returns the path to the application directory.
@@ -262,7 +262,7 @@ class apptest_layout:
             if os.path.islink(latest_lnk):
                 os.unlink(latest_lnk)
         except FileNotFoundError as e:
-            self.__logger.doWarningLogging("Could not remove 'latest' link in Status.")
+            self.__logger.log_warning("Could not remove 'latest' link in Status.")
         try_symlink(spath, latest_lnk)
 
         return spath
@@ -291,7 +291,7 @@ class apptest_layout:
             if os.path.islink(latest_lnk):
                 os.unlink(latest_lnk)
         except FileNotFoundError as e:
-            self.__logger.doWarningLogging("Could not remove 'latest' link in Run_Archive.")
+            self.__logger.log_warning("Could not remove 'latest' link in Run_Archive.")
         try_symlink(rpath, latest_lnk)
 
         return rpath

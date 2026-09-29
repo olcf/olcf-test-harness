@@ -348,7 +348,7 @@ class StatusFile:
             event_type = StatusFile.EVENT_DICT[event_id][1]
             event_subtype = StatusFile.EVENT_DICT[event_id][2]
         else:
-            self.__logger.doWarningLogging('Warning: event not recognized. ' + event_id)
+            self.__logger.log_warning('Warning: event not recognized. ' + event_id)
             event_filename = 'Event__UNKNOWN_EVENT_ENCOUNTERED_'
             event_type = ''
             event_subtype = ''
@@ -512,7 +512,7 @@ class StatusFile:
         """
         if event_time == None:
             event_time = datetime.datetime.now()
-        self.__logger.doInfoLogging(f"Starting __log_event with event {event_id} at {event_time.isoformat()}")
+        self.__logger.log_info(f"Starting __log_event with event {event_id} at {event_time.isoformat()}")
 
         # THE FOLLOWING LINE IS THE OFFICIAL TIMESTAMP FOR THE EVENT.
         # The timestamp can be overridden by event_time=<datetime>
@@ -540,7 +540,7 @@ class StatusFile:
         file_path = os.path.join(dir_head, apptest_layout.test_status_dirname, str(self.__test_id),
                                  event_filename)
         if Path(file_path).exists():
-            self.__logger.doWarningLogging('Warning: event log file already exists. ' + file_path)
+            self.__logger.log_warning('Warning: event log file already exists. ' + file_path)
 
         file_path_partial = os.path.join(dir_head, apptest_layout.test_status_dirname,
                                          str(self.__test_id),
