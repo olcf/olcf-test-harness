@@ -14,7 +14,7 @@ concurrency:
 
 run-name: >-
   Lint PR #${{ github.event.pull_request.number }}
-  [${{ github.sha }}]"
+  [${{ github.sha }}]
 
 jobs:
   lint:
