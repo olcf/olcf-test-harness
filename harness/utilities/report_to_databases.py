@@ -22,7 +22,7 @@ sys.path = [str(prefix)] + sys.path
 from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
 from libraries.config_file import rgt_config_file
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Post a custom metric to Databases")
@@ -39,15 +39,19 @@ args = parser.parse_args()
 # Read in the <machine>.ini configuration file #################################
 # uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
 config = rgt_config_file()
-logger = rgt_logger_factory.create_rgt_logger(logger_name='report_to_db',
-                fh_filepath='/dev/null', logger_threshold_log_level=args.loglevel,
-                fh_threshold_log_level=args.loglevel, ch_threshold_log_level=args.loglevel)
+logger = OutputHub(
+    name="report_to_db",
+    log_level=args.loglevel,
+    log_file=None,
+    console_log_level=args.loglevel,
+    file_log_level=args.loglevel,
+)
 
 db_logger = create_rgt_db_logger(logger=logger)
 
 # db_logger is ready
 
-logger.doInfoLogging(f"Enabled {len(db_logger.enabled_backends)} database backends")
+logger.log_info(f"Enabled {len(db_logger.enabled_backends)} database backends")
 
 if args.dry_run:
     for db in db_logger.enabled_backends:
@@ -83,11 +87,11 @@ def format_check(line):
 
 ret = format_check(args.values)
 if not ret[0]:
-    logger.doErrorLogging(f"Format check of values failed: {ret[1]}")
+    logger.log_error(f"Format check of values failed: {ret[1]}")
     exit(1)
 ret = format_check(args.keys)
 if not ret[0]:
-    logger.doErrorLogging(f"Format check of values failed: {ret[1]}")
+    logger.log_error(f"Format check of values failed: {ret[1]}")
     exit(1)
 
 ################################################################################

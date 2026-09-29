@@ -79,7 +79,7 @@ def make_batch_script_for_linux(a_machine):
     function_name = inspect.getframeinfo(frame).function
 
     if str(a_machine.test_config.get_use_batch_template()) == '0':
-        a_machine.logger.doInfoLogging(f"use_batch_template = 0 is set in test configuration file, skipping batch script generation.")
+        a_machine.logger.log_info(f"use_batch_template = 0 is set in test configuration file, skipping batch script generation.")
         return True
 
     batch_template_file = a_machine.get_scheduler_template_file_name()
@@ -87,8 +87,8 @@ def make_batch_script_for_linux(a_machine):
         batch_template_file = batch_template_file.replace(a_machine.get_scheduler_type().lower(), 'local')
 
     # Log that our execution location.
-    message = "Making batch script for {} using file {}.".format(a_machine.machine_name,batch_template_file)
-    a_machine.logger.doInfoLogging(message)
+    message = "Making batch script for {} using file {}.".format(a_machine.machine_name,a_machine.get_scheduler_template_file_name())
+    a_machine.logger.log_info(message)
 
     bstatus = True
 
@@ -96,7 +96,7 @@ def make_batch_script_for_linux(a_machine):
                                    a_machine.test_config.get_batch_file())
 
     message = f"The batch scheduler template file is {batch_template_file}."
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
     
     if batch_template_file.endswith('x'):
         # Get batch job template lines
@@ -107,11 +107,11 @@ def make_batch_script_for_linux(a_machine):
             bstatus = False
             message = ( f"Error opening batch template file '{batch_template_file}' for reading.\n"
                         f"Handling error: {err}\n" )
-            a_machine.logger.doCriticalLogging(message)
+            a_machine.logger.log_critical(message)
     
         if bstatus:
             message = f"Completed reading lines of the batch template file {batch_template_file}."
-            a_machine.logger.doInfoLogging(message)
+            a_machine.logger.log_info(message)
 
             # Create test batch job script in run archive directory
             try :
@@ -128,10 +128,10 @@ def make_batch_script_for_linux(a_machine):
                 bstatus = False
                 message = ( f"Error opening batch template file '{batch_file_path}' for writing.\n"
                             f"Handling error: {err}\n" )
-                a_machine.logger.doCriticalLogging(message)
+                a_machine.logger.log_critical(message)
 
             message = f"Completed regex substitutions."
-            a_machine.logger.doInfoLogging(message)
+            a_machine.logger.log_info(message)
     elif batch_template_file.endswith('j2'):
         try:
             tpl_text = Path(batch_template_file).read_text(encoding="utf-8")
@@ -140,32 +140,32 @@ def make_batch_script_for_linux(a_machine):
             Path(batch_file_path).write_text(rendered, encoding="utf-8")
             bstatus = True
         except FileNotFoundError as e:
-            a_machine.logger.doCriticalLogging(f"Error: template file not found: {e.filename}")
+            a_machine.logger.log_critical(f"Error: template file not found: {e.filename}")
             bstatus = False
             pass
         except PermissionError as e:
-            a_machine.logger.doCriticalLogging(f"Error: permission denied accessing '{e.filename}'")
+            a_machine.logger.log_critical(f"Error: permission denied accessing '{e.filename}'")
             bstatus = False
             pass
         except TemplateError as e:
-            a_machine.logger.doCriticalLogging(f"Error: Jinja2 template/rendering failed: {e}")
+            a_machine.logger.log_critical(f"Error: Jinja2 template/rendering failed: {e}")
             bstatus = False
             pass
         except OSError as e:
-            a_machine.logger.doCriticalLogging(f"Error: I/O error while reading/writing files: {e}")
+            a_machine.logger.log_critical(f"Error: I/O error while reading/writing files: {e}")
             bstatus = False
             pass
         except Exception as e:
-            a_machine.logger.doCriticalLogging(f"Error: unexpected failure: {e}")
+            a_machine.logger.log_critical(f"Error: unexpected failure: {e}")
             bstatus = False
             pass
     
 
         message = f"Completed regex substitutions."
-        a_machine.logger.doInfoLogging(message)
+        a_machine.logger.log_info(message)
     else:
         bstatus = False
-        a_machine.logger.doCriticalLogging(f"Batch template file has unknown extension: {batch_template_file}.")
+        a_machine.logger.log_critical(f"Batch template file has unknown extension: {batch_template_file}.")
 
     return bstatus
 
@@ -193,7 +193,7 @@ def check_executable(a_machine,new_env):
     check_command_line = _form_proper_command_line(path_to_checkscript,checkcmd)
 
     message = f"The check command line is {check_command_line}."
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
 
     check_outfile = "output_check.txt"
     check_stdout = open(check_outfile, "w")
@@ -209,7 +209,7 @@ def check_executable(a_machine,new_env):
     check_exit_status = p.returncode
 
     message = f"The check command return code {check_exit_status}."
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
 
     return check_exit_status
 
@@ -320,12 +320,12 @@ def build_executable(a_machine, new_env):
             eu = e.upper()
             os.putenv(eu, v)
             message += f"Set build environment variable {eu}={v}\n"
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
 
     # We get the command for bulding the binary.
     buildcmd = a_machine.test_config.get_build_command()
     message = f"The build command: {buildcmd}"
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
 
     if a_machine.separate_build_stdio:
         build_std_out = "output_build.stdout.txt"
@@ -363,7 +363,7 @@ def submit_batch_script(a_machine, new_env):
             eu = e.upper()
             os.putenv(eu, v)
             message += f"Set batch environment variable {eu}={v}\n"
-    a_machine.logger.doInfoLogging(message)
+    a_machine.logger.log_info(message)
 
     # Submit the test's batch script
     batch_script = a_machine.test_config.get_batch_file()

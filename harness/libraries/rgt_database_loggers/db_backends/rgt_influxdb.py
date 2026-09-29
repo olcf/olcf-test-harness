@@ -130,7 +130,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
             Posts the event to InfluxDB.
         """
-        self.__logger.doDebugLogging(f"Posting event {event_dict['event_name']} for test id: {event_dict['test_id']} to Influx")
+        self.__logger.log_debug(f"Posting event {event_dict['event_name']} for test id: {event_dict['test_id']} to Influx")
 
         # Initialize the tags for record string
         influx_event_record_string = 'events'
@@ -152,7 +152,7 @@ class InfluxDBLogger(BaseDBLogger):
             elif not field_name in event_dict.keys():
                 # We don't expect the comment to be populated yet.
                 if not field_name == 'comment':
-                    self.__logger.doWarningLogging(f"Couldn't find InfluxDB field: {field_name}. Setting to NOVALUE")
+                    self.__logger.log_warning(f"Couldn't find InfluxDB field: {field_name}. Setting to NOVALUE")
                 event_dict[field_name] = self.NO_VALUE
             influx_event_record_string += f'{sep}{field_name}="{event_dict[field_name]}"'
             sep = ','
@@ -161,7 +161,7 @@ class InfluxDBLogger(BaseDBLogger):
             # Add handling for pasting outputs to influxdb
             if event_dict['event_name'] == "build_end":
                 file_name = os.path.join(event_dict['build_directory'], "output_build.txt")
-                self.__logger.doDebugLogging(f"Using {file_name} for build output for Influx")
+                self.__logger.log_debug(f"Using {file_name} for build output for Influx")
                 if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -172,7 +172,7 @@ class InfluxDBLogger(BaseDBLogger):
                     influx_event_record_string += ",output_txt=\"Output file not found in " + file_name  + "\""
             elif event_dict['event_name'] == "submit_end":
                 file_name = os.path.join(event_dict['run_archive'], "submit.err")
-                self.__logger.doDebugLogging(f"Using {file_name} for submit errors for Influx")
+                self.__logger.log_debug(f"Using {file_name} for submit errors for Influx")
                 if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -184,7 +184,7 @@ class InfluxDBLogger(BaseDBLogger):
             elif event_dict['event_name'] == "binary_execute_end":
                 found_job_file = False
                 for file_name in glob.glob(event_dict['run_archive'] + "/*.o" + event_dict['job_id']):
-                    self.__logger.doDebugLogging(f"Using {file_name} for job output for Influx")
+                    self.__logger.log_debug(f"Using {file_name} for job output for Influx")
                     if Path(file_name).exists():
                         found_job_file = True
                         with open(file_name, "r") as f:
@@ -196,7 +196,7 @@ class InfluxDBLogger(BaseDBLogger):
                     influx_event_record_string += ",output_txt=\"Job output file not found" + "\""
             elif event_dict['event_name'] == "check_end":
                 file_name = os.path.join(event_dict['run_archive'], "output_check.txt")
-                self.__logger.doDebugLogging(f"Using {file_name} for check output for Influx")
+                self.__logger.log_debug(f"Using {file_name} for check output for Influx")
                 if Path(file_name).exists():
                     with open(file_name, "r") as f:
                         output = f.read()
@@ -224,7 +224,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
             Posts metrics to InfluxDB.
         """
-        self.__logger.doDebugLogging(f"Posting metrics from test id: {test_info_dict['test_id']} to InfluxDB")
+        self.__logger.log_debug(f"Posting metrics from test id: {test_info_dict['test_id']} to InfluxDB")
 
         # Initialize the tags for record string
         influx_event_record_string = 'metrics'
@@ -255,7 +255,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
         Send node health data to InfluxDB
         """
-        self.__logger.doDebugLogging(f"Posting node health data from test id: {test_info_dict['test_id']} to InfluxDB")
+        self.__logger.log_debug(f"Posting node health data from test id: {test_info_dict['test_id']} to InfluxDB")
         # Required environment variable: RGT_NODE_LOCATION_FILE
         if not 'RGT_NODE_LOCATION_FILE' in os.environ:
             raise DatabaseEnvironmentError("RGT_NODE_LOCATION_FILE required to enable node health logging")
@@ -316,7 +316,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
             Posts external metrics to InfluxDB.
         """
-        self.__logger.doDebugLogging(f"Posting external metrics to InfluxDB")
+        self.__logger.log_debug(f"Posting external metrics to InfluxDB")
 
         # Initialize the tags for record string
         influx_event_record_string = table
@@ -344,7 +344,7 @@ class InfluxDBLogger(BaseDBLogger):
             'Accept': "application/json"
         }
 
-        self.__logger.doDebugLogging(f'Using the following endpoint for InfluxDB health check and bucket verification: {self.url}/api/v2/buckets')
+        self.__logger.log_debug(f'Using the following endpoint for InfluxDB health check and bucket verification: {self.url}/api/v2/buckets')
         r = requests.get(f'{self.url}/api/v2/buckets', headers=headers)
         if int(r.status_code) >= 400:
             return f"status_code = {r.status_code}, text = {r.text}, reason = {r.reason}"
@@ -384,10 +384,10 @@ class InfluxDBLogger(BaseDBLogger):
             'Accept': "application/json"
         }
 
-        self.__logger.doDebugLogging(f'Sending query: {query} to: {self.url}/api/v2/query')
+        self.__logger.log_debug(f'Sending query: {query} to: {self.url}/api/v2/query')
         r = requests.post(f'{self.url}/api/v2/query?org={self.org}', data=query, headers=headers)
         if int(r.status_code) >= 400:
-            self.__logger.doErrorLogging(f"InfluxDB request failed. status_code = {r.status_code}, text = {r.text}, reason = {r.reason}")
+            self.__logger.log_error(f"InfluxDB request failed. status_code = {r.status_code}, text = {r.text}, reason = {r.reason}")
             return []
         rdc = r.content.decode('utf-8')
         resp = list(csv.reader(rdc.splitlines(), delimiter=','))
@@ -401,7 +401,7 @@ class InfluxDBLogger(BaseDBLogger):
                 # Empty row, usually just a spacing formality
                 continue
             if len(resp[entry_index]) < len(col_names):
-                self.__logger.doErrorLogging(f"Not enough columns in row. Skipping row: {resp[entry_index]}.")
+                self.__logger.log_error(f"Not enough columns in row. Skipping row: {resp[entry_index]}.")
                 continue
             # First column is useless
             for c_index in range(1, len(col_names)):
@@ -479,23 +479,23 @@ class InfluxDBLogger(BaseDBLogger):
         """
 
         if self.dryrun:
-            self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            self.__logger.log_info(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
             return True
         elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
             # A Harness utility may set the environment variable after DB init time
             self.dryrun = True
-            self.__logger.doInfoLogging(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            self.__logger.log_info(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
             return True
 
-        self.__logger.doDebugLogging(f"Sending message to InfluxDB: {message}")
+        self.__logger.log_debug(f"Sending message to InfluxDB: {message}")
         # We do not catch the exception here -- it will be caught in the database manager class
         r = requests.post(full_url, data=message.encode('utf-8'), headers=headers)
 
         if r.status_code == 200 or r.status_code == 204:
-            self.__logger.doDebugLogging(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {message}")
+            self.__logger.log_debug(f"Logged to InfluxDB successfully ({r.status_code}, {r.reason}): {message}")
             return True
         else:
-            self.__logger.doErrorLogging(f"Failed to post to InfluxDB. Message: {message}, Response: {r.status_code} - {r.reason}")
+            self.__logger.log_error(f"Failed to post to InfluxDB. Message: {message}, Response: {r.status_code} - {r.reason}")
             return False
 
     def _event_time_to_timestamp(self, event_time : str):

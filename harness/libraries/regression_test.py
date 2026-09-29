@@ -14,7 +14,7 @@ import random # for shuffle
 from libraries import apptest
 from libraries.subtest_factory import SubtestFactory
 from libraries.rgt_state import RgtState
-from libraries.rgt_loggers import rgt_logger_factory
+from libraries.output_hub import OutputHub
 from machine_types.machine_factory import MachineFactory
 
 #
@@ -86,12 +86,13 @@ class Harness:
         # Log file always has a consistent log level. Console log level changes
         fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
         ch_threshold_log_level = self.__log_level
-        self.__myLogger = rgt_logger_factory.create_rgt_logger(
-                                     logger_name=logger_name,
-                                     fh_filepath=fh_filepath,
-                                     logger_threshold_log_level=logger_threshold,
-                                     fh_threshold_log_level=fh_threshold_log_level,
-                                     ch_threshold_log_level=ch_threshold_log_level)
+        self.__myLogger = OutputHub(
+            name=logger_name,
+            log_level=logger_threshold,
+            log_file=fh_filepath,
+            console_log_level=ch_threshold_log_level,
+            file_log_level=fh_threshold_log_level,
+        )
 
     def __str__(self):
         message = ( "\n Local path to tests: " + self.__local_path_to_tests  + "\n"
@@ -117,15 +118,15 @@ class Harness:
 
         # Log the start of the harness.
         message = "Start of harness."
-        self.__myLogger.doInfoLogging(message)
+        self.__myLogger.log_info(message)
 
         # Log the effective command line"
         if my_effective_command_line:
-            self.__myLogger.doInfoLogging(my_effective_command_line)
+            self.__myLogger.log_info(my_effective_command_line)
 
         # Log the command line warning messages
         if my_warning_messages:
-            self.__myLogger.doInfoLogging(my_warning_messages)
+            self.__myLogger.log_info(my_warning_messages)
 
         # Mark status as tasks not completed.
         self.__returnState = RgtState.ALL_TASKS_NOT_COMPLETED
@@ -140,7 +141,7 @@ class Harness:
         self.__returnState = RgtState.ALL_TASKS_COMPLETED
 
         message = "End of harness."
-        self.__myLogger.doInfoLogging(message)
+        self.__myLogger.log_info(message)
         return
 
     def getState(self):
@@ -169,10 +170,10 @@ class Harness:
                 my_future_exception = my_future.exception()
                 if my_future_exception:
                     message = "Application {} future for queue exception:\n{}".format(appname, my_future_exception)
-                    self.__myLogger.doCriticalLogging(message)
+                    self.__myLogger.log_critical(message)
                 else:
                     message = "Application {} future for queue is completed.".format(appname)
-                    self.__myLogger.doInfoLogging(message)
+                    self.__myLogger.log_info(message)
         return
 
     def didAllTestsPass(self):
@@ -221,7 +222,7 @@ class Harness:
         if os.getenv('UNIT_TESTS_CWD'):
             value = True
             message = f"UNIT_TESTS_CWD: {value}"
-            self.__myLogger.doInfoLogging(message)
+            self.__myLogger.log_info(message)
         return value
 
     def __formCollectionOfTests(self):
@@ -234,11 +235,13 @@ class Harness:
                 # Log file always has a consistent log level. Console log level changes
                 fh_threshold_log_level = "INFO" if not self.__log_level == "DEBUG" else "DEBUG"
                 ch_threshold_log_level = self.__log_level
-                a_logger = rgt_logger_factory.create_rgt_logger(logger_name=logger_name,
-                                      fh_filepath=fh_filepath,
-                                      logger_threshold_log_level=logger_threshold,
-                                      fh_threshold_log_level=fh_threshold_log_level,
-                                      ch_threshold_log_level=ch_threshold_log_level)
+                a_logger = OutputHub(
+                    name=logger_name,
+                    log_level=logger_threshold,
+                    log_file=fh_filepath,
+                    console_log_level=ch_threshold_log_level,
+                    file_log_level=fh_threshold_log_level,
+                )
 
                 subtest = SubtestFactory.make_subtest(name_of_application=appname,
                                                       name_of_subtest=testname,
@@ -284,29 +287,29 @@ class Harness:
                         my_future_exception = my_future.exception()
                         if my_future_exception:
                             message = "Test {} exception encountered:\n{}".format(appname, my_future_exception)
-                            self.__myLogger.doCriticalLogging(message)
+                            self.__myLogger.log_critical(message)
 
                         subtest_result = my_future.result()
                         if subtest_result:
                             self.__launched_tests += 1
                             message = "Test {} is launched.\n\n".format(appname)
-                            self.__myLogger.doErrorLogging(message)
+                            self.__myLogger.log_error(message)
                         else:
                             self.__failed_tests += 1
                             self.__failed_test_list.append(appname)
                             message = "Test {} failed to launch.\n\n".format(appname)
-                            self.__myLogger.doErrorLogging(message)
+                            self.__myLogger.log_error(message)
                     all_finished = True
                 except KeyboardInterrupt:
                     pass
 
             message = "All tests are launched. Yahoo!!"
-            self.__myLogger.doInfoLogging(message)
-            self.__myLogger.doCriticalLogging(f"Launched {self.__launched_tests} tests, failed to launch {self.__failed_tests} tests.")
+            self.__myLogger.log_info(message)
+            self.__myLogger.log_critical(f"Launched {self.__launched_tests} tests, failed to launch {self.__failed_tests} tests.")
             if self.__failed_tests:
-                self.__myLogger.doErrorLogging("Failed tests:")
+                self.__myLogger.log_error("Failed tests:")
                 for t in self.__failed_test_list:
-                    self.__myLogger.doErrorLogging(f"\t{t}")
+                    self.__myLogger.log_error(f"\t{t}")
 
         return
 

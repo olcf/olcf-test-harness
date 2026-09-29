@@ -75,14 +75,14 @@ class RgtDatabaseLogger:
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_event(event_dict):
-                        self.logger.doErrorLogging(f"An error occurred while logging an event to {backend.url}. Please see log files for more details.")
+                        self.logger.log_error(f"An error occurred while logging an event to {backend.url}. Please see log files for more details.")
                         num_failed += 1
                     elif event_dict['event_name'] == 'check_end':
                         # If we just successfully logged check_end, then we add a dot-file to indicate logging completed
                         if not Path(backend.successful_file_name).exists():
                             os.mknod(backend.successful_file_name)
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging an event to {backend.url}: {e}.")
+                self.logger.log_error(f"The following exception occurred while logging an event to {backend.url}: {e}.")
                 num_failed += 1
                 pass
 
@@ -117,10 +117,10 @@ class RgtDatabaseLogger:
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_metrics(test_info_dict, metrics_dict):
-                        self.logger.doErrorLogging(f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details.")
+                        self.logger.log_error(f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details.")
                         num_failed += 1
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging metrics to {backend.url}: {e}.")
+                self.logger.log_error(f"The following exception occurred while logging metrics to {backend.url}: {e}.")
                 num_failed += 1
                 pass
         return num_failed == 0
@@ -152,10 +152,10 @@ class RgtDatabaseLogger:
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_node_health_results(test_info_dict, node_health_dict):
-                        self.logger.doErrorLogging(f"An error occurred while logging node health data to {backend.url}. Please see log files for more details.")
+                        self.logger.log_error(f"An error occurred while logging node health data to {backend.url}. Please see log files for more details.")
                         num_failed += 1
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging node health results to {backend.url}: {e}.")
+                self.logger.log_error(f"The following exception occurred while logging node health results to {backend.url}: {e}.")
                 num_failed += 1
                 pass
         return num_failed == 0
@@ -187,10 +187,10 @@ class RgtDatabaseLogger:
         for backend in self._make_db_target_list(only):
             try:
                 if not backend.send_external_metrics(table, tags, values, log_time):
-                    self.logger.doErrorLogging(f"An error occurred while logging external metrics to {backend.url}. Please see log files for more details.")
+                    self.logger.log_error(f"An error occurred while logging external metrics to {backend.url}. Please see log files for more details.")
                     num_failed += 1
             except Exception as e:
-                self.logger.doErrorLogging(f"The following exception occurred while logging external metrics to {backend.url}: {e}.")
+                self.logger.log_error(f"The following exception occurred while logging external metrics to {backend.url}: {e}.")
                 num_failed += 1
                 pass
         return num_failed == 0
@@ -223,7 +223,7 @@ class RgtDatabaseLogger:
         provided_keys = list(test_info_dict.keys())
         for key in self.REQUIRED_TEST_INFO:
             if not key in provided_keys:
-                self.logger.doErrorLogging(f'Missing key in provided test info for database logging: {key}')
+                self.logger.log_error(f'Missing key in provided test info for database logging: {key}')
                 return False
         return True
 
@@ -256,7 +256,7 @@ class RgtDatabaseLogger:
         # possible that a test previously had InfluxDB disabled, but was not explicitly
         # disabled in the current environment. We want to enforce the past disabling
         if Path(db_logger.disable_file_name).exists():
-            self.logger.doDebugLogging(f'Found {db_logger.disable_file_name} in {os.getcwd()}. Disabling {db_logger.name}.')
+            self.logger.log_debug(f'Found {db_logger.disable_file_name} in {os.getcwd()}. Disabling {db_logger.name}.')
             return True
 
         return False
@@ -282,7 +282,7 @@ class RgtDatabaseLogger:
             if db.url == only:
                 db_list.append(db)
         if len(db_list) == 0:
-            self.logger.doWarningLogging(f"Found no database backends matching the URL {only}")
+            self.logger.log_warning(f"Found no database backends matching the URL {only}")
         return db_list
 
     def _find_disabled_backends(self):
@@ -299,12 +299,12 @@ class RgtDatabaseLogger:
             from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
             influxdb_loaded = True
         except ImportError as e:
-            self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}.")
+            self.logger.log_error(f"Failed to import InfluxDB backend: {e}.")
             pass
 
         if influxdb_loaded and InfluxDBLogger.kw['disable'] in os.environ and \
                             str(os.environ[InfluxDBLogger.kw['disable']]) == '1':
-            self.logger.doInfoLogging(f"InfluxDB logging is explicitly disabled with {InfluxDBLogger.kw['disable']}=1")
+            self.logger.log_info(f"InfluxDB logging is explicitly disabled with {InfluxDBLogger.kw['disable']}=1")
             self.disabled_backends.append('influxdb')
             self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
         return
@@ -332,7 +332,7 @@ class RgtDatabaseLogger:
                 from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
                 influxdb_loaded = True
             except ImportError as e:
-                self.logger.doErrorLogging(f"Failed to import InfluxDB backend: {e}")
+                self.logger.log_error(f"Failed to import InfluxDB backend: {e}")
                 pass
 
         if any(k.startswith('RGT_KAFKA') for k in os.environ):
@@ -341,7 +341,7 @@ class RgtDatabaseLogger:
                 from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
                 kafka_loaded = True
             except ImportError as e:
-                self.logger.doErrorLogging(f"Failed to import Kafka backend: {e}")
+                self.logger.log_error(f"Failed to import Kafka backend: {e}")
                 pass
 
         if influxdb_loaded and not 'influxdb' in self.disabled_backends \
@@ -351,7 +351,7 @@ class RgtDatabaseLogger:
             influxdb_uris = os.environ[InfluxDBLogger.kw['uri']].split(';')
             influxdb_tokens = os.environ[InfluxDBLogger.kw['token']].split(';')
             if not len(influxdb_uris) == len(influxdb_tokens):
-                self.logger.doErrorLogging("The number of InfluxDB URI's provided does not match the number of InfluxDB tokens. Skpping.")
+                self.logger.log_error("The number of InfluxDB URI's provided does not match the number of InfluxDB tokens. Skpping.")
             else:
                 if influxdb_loaded:
                     for i in range(0,len(influxdb_uris)):
@@ -361,13 +361,13 @@ class RgtDatabaseLogger:
                             # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
                             influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
                             if not only:
-                                self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                                self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                                 self.enabled_backends.append(influxdb_backend)
                             elif influxdb_backend.url == only:
-                                self.logger.doDebugLogging(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                                self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
                                 self.enabled_backends.append(influxdb_backend)
                         except Exception as e:
-                            self.logger.doErrorLogging(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
+                            self.logger.log_error(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
         if kafka_loaded and ( not 'kafka' in self.disabled_backends ) \
                 and KafkaLogger.kw['uri'] in os.environ \
                 and KafkaLogger.kw['username'] in os.environ \
@@ -394,7 +394,7 @@ class RgtDatabaseLogger:
                 kafka_ssl_ca_loc = os.environ[KafkaLogger.kw['ssl_ca_loc']].split(';')
                 kafka_ssl_cert_locs = os.environ[KafkaLogger.kw['ssl_cert_loc']].split(';')
             except ValueError as e:
-                self.logger.doErrorLogging(f"Could not find all required environment variables for the Kafka backend: {e}")
+                self.logger.log_error(f"Could not find all required environment variables for the Kafka backend: {e}")
 
             for i in range(0,len(kafka_uris)):
                 try:
@@ -413,13 +413,13 @@ class RgtDatabaseLogger:
                                                 ssl_cert_loc=kafka_ssl_cert_locs[i],
                                                 logger=self.logger)
                     if not only:
-                        self.logger.doDebugLogging(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
+                        self.logger.log_debug(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
                         self.enabled_backends.append(kafka_backend)
                     elif kafka_backend.url == only:
-                        self.logger.doDebugLogging(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
+                        self.logger.log_debug(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
                         self.enabled_backends.append(kafka_backend)
                 except Exception as e:
-                    self.logger.doErrorLogging(f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}")
+                    self.logger.log_error(f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}")
         return
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
