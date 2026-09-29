@@ -50,7 +50,7 @@ class Slurm(BaseScheduler):
             job.id = self.job_id_regex.search(records[0]).group(0)
             self._logger.print(f"SLURM JobID = {job.id}")
         else:
-            with open(self.submit_stderr_file, "w") as submit_stderr:
+            with open(self.submit_stderr_file, "r") as submit_stderr:
                 self._logger.log_critical(submit_stderr.read())
 
         return result.returncode
