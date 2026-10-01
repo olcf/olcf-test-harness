@@ -137,22 +137,17 @@ class subtest(base_apptest, apptest_layout):
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
-                from libraries.repositories import RepositoryFactory
+                from libraries.repositories import create_repository, get_type_of_repository
 
-                repository_type = RepositoryFactory.get_type_of_repository()
+                repository_type = get_type_of_repository()
                 name_of_application = self.getNameOfApplication()
-                url_to_remote_repsitory_application = RepositoryFactory.get_repository_url_of_application(name_of_application)
-                my_repository_branch = RepositoryFactory.get_repository_git_branch()
 
-                my_repository = RepositoryFactory.create(repository_type,
-                                                         url_to_remote_repsitory_application,
-                                                         my_repository_branch)
+                my_repository = create_repository(repository_type, name_of_application)
 
                 self.logger.log_info("Start of cloning repository")
                 destination = self.getLocalPathToTests()
 
-                exit_code = self.cloneRepository(my_repository,
-                                     destination)
+                exit_code = my_repository.clone(destination)
 
                 self.logger.log_info("End of cloning repository")
 
@@ -194,28 +189,6 @@ class subtest(base_apptest, apptest_layout):
 
                 elif harness_task == harness_modes.summarize_results:
                     self.generateReport()
-
-    def cloneRepository(self,my_repository,destination):
-        #Get the current working directory.
-        cwd = os.getcwd()
-
-        message = "For the cloning, my current directory is " + cwd
-        self.logger.log_info(message)
-
-        my_repository.cloneRepository(destination,
-                                      self.__myLogger)
-
-        exit_status = 0
-
-        if exit_status > 0:
-            string1 = "Cloning of repository failed."
-            self.logger.log_critical(string1)
-            return 1
-        else:
-            message = "Cloning of repository passed"
-            self.logger.log_info(message)
-
-        return 0
 
     #
     # Displays the status of the tests.
