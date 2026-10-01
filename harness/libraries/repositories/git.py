@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from libraries.output_hub import logger
+from harness.libraries.output_hub import logger
 
 from .base import BaseRepository
 
 
-class IncorrectRepositoryOrigin(Exception):
+class IncorrectGitRepositoryOrigin(Exception):
     pass
 
 
@@ -107,6 +107,7 @@ class GitRepository(BaseRepository):
         clone_path: Path = destination_directory.joinpath(
             Path(urlparse(self.url).path).stem
         )
+        clone_cmd.append(str(clone_path.absolute()))
 
         repo_status: GitCloneStatus = self._check_for_existing_clone(clone_path)
 
@@ -118,6 +119,6 @@ class GitRepository(BaseRepository):
                 f"The directory {clone_path} exists and is already cloned. Therefore we will will skip cloning repository {self.url}."
             )
         elif repo_status == GitCloneStatus.CLONED_WITH_INCORRECT_ORIGIN:
-            raise IncorrectRepositoryOrigin(
+            raise IncorrectGitRepositoryOrigin(
                 f"The directory {clone_path} is an existing git repository whose origin is not {self.url}."
             )
