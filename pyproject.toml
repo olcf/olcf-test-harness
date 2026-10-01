@@ -28,6 +28,7 @@ ext = [
 [tool.ruff]
 target-version = "py37"
 include = [
+    "tests/*",
     "harness/libraries/output_hub/*",
     "harness/libraries/repositories/*",
     "harness/schedulers/*"
@@ -40,6 +41,7 @@ ignore = [
 
 [tool.mypy]
 files = [
+    "tests",
     "harness/libraries/output_hub",
     "harness/libraries/repositories",
     "harness/schedulers"

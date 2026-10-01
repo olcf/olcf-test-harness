@@ -37,7 +37,7 @@ class LSF(BaseScheduler):
         elif "RGT_PROJECT_ID" in os.environ:
             submit_cmd.extend(["-P", str(os.environ.get("RGT_PROJECT_ID"))])
 
-        if not self._submit_as_stdin:
+        if not self._submit_as_stdin():
             submit_cmd.append(job.batch_script)
 
         self._logger.log_info(" ".join(submit_cmd))
@@ -45,7 +45,7 @@ class LSF(BaseScheduler):
         with open(self.submit_stdout_file, "w") as stdout, open(
             self.submit_stderr_file, "w"
         ) as stderr:
-            if not self._submit_as_stdin:
+            if not self._submit_as_stdin():
                 result = subprocess.run(
                     submit_cmd, stdout=stdout, stderr=stderr, check=False
                 )
