@@ -1,3 +1,4 @@
+import configparser
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
@@ -75,7 +76,10 @@ def test_get_repository_branch_from_env(monkeypatch):
 
 
 def test_git_check_for_existing_clone():
-    gr = GitRepository("pytest", url="https://github.com/olcf/olcf-test-harness.git")
+    git_config = configparser.ConfigParser()
+    git_config.read(".git/config")
+    current_origin = git_config['remote "origin"']["url"]
+    gr = GitRepository("pytest", url=current_origin)
 
     assert (
         gr._check_for_existing_clone(Path(__file__).parent.parent)
