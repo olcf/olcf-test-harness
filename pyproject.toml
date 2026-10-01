@@ -10,22 +10,43 @@ requires-python = ">=3.6"
 dependencies = []
 
 [project.optional-dependencies]
+dev = [
+    "mypy",
+    "pytest",
+    "ruff"
+]
+docs = [
+    "sphinx",
+    "sphinx-design",
+    "sphinx-rtd-theme"
+]
 ext = [
     "pyyaml",
     "jinja2"
-]
-dev = [
-    "ruff"
 ]
 
 [tool.ruff]
 target-version = "py37"
 include = [
-    "harness/libraries/output_hub*",
+    "harness/libraries/output_hub/*",
+    "harness/libraries/repositories/*",
     "harness/schedulers/*"
 ]
 
 [tool.ruff.lint]
 ignore = [
     "FA100"
+]
+
+[tool.mypy]
+files = [
+    "harness/libraries/output_hub",
+    "harness/libraries/repositories",
+    "harness/schedulers"
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
 ]

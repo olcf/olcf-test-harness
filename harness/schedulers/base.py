@@ -11,7 +11,7 @@ class SchedulerJob(ABC):
 
     def __init__(self, batch_script: str, id: Optional[str] = None):
         self.batch_script: str = batch_script
-        self.id: None | str = id
+        self.id: Optional[str] = id
 
 
 class BaseScheduler(ABC):
