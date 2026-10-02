@@ -25,26 +25,26 @@ import sys
 import re
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent
+prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from harness.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 # Silently wrapped in try/except so errors are handled by rgt_db_logger class
 try:
-    from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+    from harness.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
 except ImportError as e:
     pass
 
 try:
-    from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+    from harness.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
 except ImportError as e:
     pass
 
-from libraries.subtest_factory import SubtestFactory
-from libraries.status_file import StatusFile, get_status_info_from_file
-from libraries.config_file import rgt_config_file
-from libraries.output_hub import OutputHub
+from harness.libraries.subtest_factory import SubtestFactory
+from harness.libraries.status_file import StatusFile, get_status_info_from_file
+from harness.libraries.config_file import rgt_config_file
+from harness.libraries.output_hub import OutputHub
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness runs in database backends using event and Slurm data")

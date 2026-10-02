@@ -17,18 +17,16 @@ from types import *
 from pathlib import Path
 
 # NCCS Test Harness Package Imports
-from libraries.harness_internal_config import harness_modes
-from libraries.base_apptest import base_apptest
-from libraries.base_apptest import BaseApptestError
-from libraries.layout_of_apps_directory import apptest_layout
-from libraries.status_file import parse_status_file
-from libraries.status_file import parse_status_file2
-from libraries.status_file import summarize_status_file
-from libraries.status_file import StatusFile
-from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_exitstatus
-from libraries.repositories.common_repository_utility_functions import run_as_subprocess_command_return_stdout_stderr_exitstatus
+from harness.libraries.harness_internal_config import harness_modes
+from harness.libraries.base_apptest import base_apptest
+from harness.libraries.base_apptest import BaseApptestError
+from harness.libraries.layout_of_apps_directory import apptest_layout
+from harness.libraries.status_file import parse_status_file
+from harness.libraries.status_file import parse_status_file2
+from harness.libraries.status_file import summarize_status_file
+from harness.libraries.status_file import StatusFile
 
-from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from harness.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 #
 # Inherits "apptest_layout".
@@ -137,7 +135,7 @@ class subtest(base_apptest, apptest_layout):
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
-                from libraries.repositories import create_repository, get_type_of_repository
+                from harness.libraries.repositories import create_repository, get_type_of_repository
 
                 repository_type = get_type_of_repository()
                 name_of_application = self.getNameOfApplication()
@@ -145,7 +143,7 @@ class subtest(base_apptest, apptest_layout):
                 my_repository = create_repository(repository_type, name_of_application)
 
                 self.logger.log_info("Start of cloning repository")
-                destination = self.getLocalPathToTests()
+                destination = Path(self.getLocalPathToTests())
 
                 exit_code = my_repository.clone(destination)
 
@@ -429,7 +427,7 @@ class subtest(base_apptest, apptest_layout):
 
     def did_all_tests_pass(self, harness_config):
         from machine_types.machine_factory import MachineFactory
-        from libraries.status_file_factory import StatusFileFactory
+        from harness.libraries.status_file_factory import StatusFileFactory
 
         # Instantiate the machine for this computer.
         mymachine = MachineFactory.create_machine(harness_config, self)
@@ -496,13 +494,15 @@ class subtest(base_apptest, apptest_layout):
         pathtoscripts = self.get_path_to_scripts()
 
         if stdout_stderr == "logfile":
-            (stdout,stderr,exit_status) = \
-            run_as_subprocess_command_return_stdout_stderr_exitstatus(starttestcomand,
-                                                                      command_execution_directory=pathtoscripts)
+            result = subprocess.run(starttestcomand, cwd=pathtoscripts, capture_output=True, shell=True, text=True)
+            stdout = result.stdout
+            stderr = restlt.stderr
+            exit_status = result.returncode
         elif stdout_stderr == "screen":
-            (stdout,stderr,exit_status) = \
-            run_as_subprocess_command_return_exitstatus(starttestcomand,
-                                                        command_execution_directory=pathtoscripts)
+            result = subprocess.run(starttestcomand, cwd=pathtoscripts, shell=True)
+            stdout = " Standard output piped to screen"
+            stderr = " Standard error piped to screen"
+            exit_status = result.returncode
         if exit_status > 0:
             message = ( "The command '{cmd}' has exited with a failure.\n"
                         "The exit return value is {value}.\n").format(cmd=starttestcomand,value=exit_status)
