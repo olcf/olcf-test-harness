@@ -85,10 +85,12 @@ for command_name in ruff mypy pytest; do
 done
 
 run_check "Ruff linting" \
-    python -m ruff check
+    ruff check
+    # TODO can updated this to "python -m ruff" when we move past Python 3.6
 
 run_check "Ruff formatting" \
-    rpython -m uff format --check
+    ruff format --check
+    # TODO can updated this to "python -m ruff" when we move past Python 3.6
 
 run_check "MyPy type checking" \
     python -m mypy
