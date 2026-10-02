@@ -2,4 +2,4 @@
 
 from ._hub import OutputHub
 
-__all__ = ["OutputHub"]
+__all__ = ["OutputHub", "logger"]

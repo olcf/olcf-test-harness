@@ -5,10 +5,10 @@ import sys
 import getopt
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent
+prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from libraries.layout_of_apps_directory import apptest_layout
+from harness.libraries.layout_of_apps_directory import apptest_layout
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)
