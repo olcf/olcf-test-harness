@@ -10,9 +10,9 @@ import re
 # My harness package imports
 from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
 from runtests import get_main_logger
-from libraries import rgt_utilities
-from libraries.harness_internal_config import harness_modes
-from libraries.output_hub import OutputHub
+from harness.libraries import rgt_utilities
+from harness.libraries.harness_internal_config import harness_modes
+from harness.libraries.output_hub import OutputHub
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)

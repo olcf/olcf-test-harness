@@ -22,16 +22,16 @@ import re
 import sys
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent
+prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
-from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
-from libraries.subtest_factory import SubtestFactory
-from libraries.status_file import StatusFile, get_status_info_from_file
-from libraries.config_file import rgt_config_file
-from libraries.output_hub import OutputHub
+from harness.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from harness.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+from harness.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+from harness.libraries.subtest_factory import SubtestFactory
+from harness.libraries.status_file import StatusFile, get_status_info_from_file
+from harness.libraries.config_file import rgt_config_file
+from harness.libraries.output_hub import OutputHub
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Add a comment to a specific test ID in the events database")

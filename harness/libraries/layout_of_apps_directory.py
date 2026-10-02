@@ -15,7 +15,7 @@ from pathlib import Path
 from string import Template
 
 # NCCS Test Harness Package Imports
-from libraries.rgt_utilities import try_symlink, unique_harness_id
+from harness.libraries.rgt_utilities import try_symlink, unique_harness_id
 
 class apptest_layout:
     """

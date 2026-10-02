@@ -1,6 +1,6 @@
 from typing import Optional
 
-from libraries.output_hub import OutputHub
+from harness.libraries.output_hub import OutputHub
 
 from .base import BaseScheduler, SchedulerJob
 from .lsf import LSF

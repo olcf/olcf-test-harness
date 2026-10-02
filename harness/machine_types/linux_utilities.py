@@ -225,7 +225,7 @@ def is_all_tests_passed(stest):
         any test has failed False is returned.
     """
     
-    from libraries.status_file_factory import StatusFileFactory
+    from harness.libraries.status_file_factory import StatusFileFactory
     path_to_status_file = stest.get_path_to_status_file()
     sfile = StatusFileFactory.create(path_to_status_file=path_to_status_file)
     ret_val = sfile.didAllTestsPass()
@@ -248,7 +248,7 @@ def isTestCycleComplete(stest):
     # From the test status file, verify all jobs
     # are completed and no new jobs are waiting to run.
     # Get the path to the status file
-    from libraries.status_file_factory import StatusFileFactory
+    from harness.libraries.status_file_factory import StatusFileFactory
     path_to_status_file = stest.get_path_to_status_file()
     sfile = StatusFileFactory.create(path_to_status_file=path_to_status_file)
 

@@ -8,15 +8,15 @@ import getopt
 import string
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent
+prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # Harness imports
-from libraries.apptest import subtest
-from libraries.subtest_factory import SubtestFactory 
-from libraries.layout_of_apps_directory import get_layout_from_runarchivedir
-from libraries.layout_of_apps_directory import get_path_to_logfile_from_runarchivedir
-from libraries.output_hub import OutputHub
+from harness.libraries.apptest import subtest
+from harness.libraries.subtest_factory import SubtestFactory
+from harness.libraries.layout_of_apps_directory import get_layout_from_runarchivedir
+from harness.libraries.layout_of_apps_directory import get_path_to_logfile_from_runarchivedir
+from harness.libraries.output_hub import OutputHub
 
 #
 # Author: Arnold Tharrington, Scientific Computing Group
