@@ -5,6 +5,7 @@ from typing import Optional
 
 import pytest
 
+from harness.libraries.output_hub import OutputHub
 from harness.libraries.repositories import create_repository, get_type_of_repository
 from harness.libraries.repositories.base import BaseRepository
 from harness.libraries.repositories.git import (
@@ -41,7 +42,7 @@ def test_instantiate_base_repository():
         def _build_repository_url_from_env(self) -> str:
             return "url"
 
-        def clone(self, destination: Path) -> None:
+        def clone(self, destination: Path, logger: OutputHub) -> None:
             pass
 
     with pytest.raises(TypeError):
@@ -120,24 +121,25 @@ def test_build_repository_url_from_env(monkeypatch):
 
 
 def test_clone():
+    oh = OutputHub("pytest")
     gr = GitRepository("pytest", url="https://github.com/olcf/olcf-test-harness.git")
 
     with TemporaryDirectory() as temp_dir:
         td = Path(temp_dir)
-        gr.clone(td)
+        gr.clone(td, oh)
         assert td.joinpath("olcf-test-harness/README.md").exists()
 
-        gr.clone(td)
+        gr.clone(td, oh)
 
         gr.url = "https://github.com/error/olcf-test-harness.git"
         with pytest.raises(IncorrectGitRepositoryOrigin):
-            gr.clone(td)
+            gr.clone(td, oh)
 
     with TemporaryDirectory() as temp_dir:
         td = Path(temp_dir)
         gr.url = "https://github.com/olcf/olcf-test-harness.git"
         gr.branch = "v3.2"
-        gr.clone(td)
+        gr.clone(td, oh)
         with open(td.joinpath("olcf-test-harness/.git/HEAD")) as f:
             assert f.read() == "47dfced0bb043866e6fbb243d402ab5e3a751dbe\n"
 
