@@ -145,7 +145,7 @@ class subtest(base_apptest, apptest_layout):
                 self.logger.log_info("Start of cloning repository")
                 destination = Path(self.getLocalPathToTests())
 
-                exit_code = my_repository.clone(destination)
+                exit_code = my_repository.clone(destination, self.__myLogger)
 
                 self.logger.log_info("End of cloning repository")
 
