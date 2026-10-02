@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from harness.libraries.output_hub import logger
+from harness.libraries.output_hub import OutputHub
 
 from .base import BaseRepository
 
@@ -45,7 +45,10 @@ class GitRepository(BaseRepository):
         repo_status: GitCloneStatus = GitCloneStatus.NOT_CLONED
 
         status_result: sp.CompletedProcess = sp.run(
-            [self.executable, "-C", str(path), "status"], check=False
+            [self.executable, "-C", str(path), "status"],
+            stdout=sp.DEVNULL,
+            stdin=sp.DEVNULL,
+            check=False,
         )
         if status_result.returncode == 0:
             repo_origin: str = (
@@ -95,7 +98,7 @@ class GitRepository(BaseRepository):
 
         return app_url
 
-    def clone(self, destination_directory: Path) -> None:
+    def clone(self, destination_directory: Path, logger: OutputHub) -> None:
         clone_cmd: List[str] = [self.executable, "clone"]
 
         if self.branch:
