@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
+from harness.libraries.output_hub import OutputHub
+
 
 class BaseRepository(ABC):
     executable: str = "echo"
@@ -30,5 +32,5 @@ class BaseRepository(ABC):
         pass
 
     @abstractmethod
-    def clone(self, destination: Path) -> None:
+    def clone(self, destination: Path, logger: OutputHub) -> None:
         pass
