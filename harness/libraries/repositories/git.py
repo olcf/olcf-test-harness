@@ -47,7 +47,7 @@ class GitRepository(BaseRepository):
         status_result: sp.CompletedProcess = sp.run(
             [self.executable, "-C", str(path), "status"],
             stdout=sp.DEVNULL,
-            stdin=sp.DEVNULL,
+            stderr=sp.DEVNULL,
             check=False,
         )
         if status_result.returncode == 0:
