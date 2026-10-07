@@ -426,7 +426,7 @@ class subtest(base_apptest, apptest_layout):
         return
 
     def did_all_tests_pass(self, harness_config):
-        from machine_types.machine_factory import MachineFactory
+        from harness.machine_types.machine_factory import MachineFactory
         from harness.libraries.status_file_factory import StatusFileFactory
 
         # Instantiate the machine for this computer.
