@@ -644,7 +644,7 @@ class StatusFile:
                 file_obj2.write(binary_running_value)
                 file_obj2.close()
 
-            if mode == 'Add_Run_Aborning':
+            if mode == 'Add_Run_Aborting':
                 aborning_run_value = event_value
                 check_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_CHECK]
                 words[check_col] = aborning_run_value

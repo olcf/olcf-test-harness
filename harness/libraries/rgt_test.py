@@ -121,8 +121,8 @@ class RgtTest():
             "nodes" :              {"required": True, "type": int, "valid": lambda x: True if (int(x) >= 1) else False},
             "project_id" :         {"required": False, "type": str},
             "report_cmd" :         {"required": False, "type": str},
-            "resubmit" :           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
-            "use_batch_template":  {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False}
+            "use_batch_template":  {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False},
+            "run_local":           {"required": False, "type": int, "valid": lambda x: True if (int(x) == 1 or int(x) == 0) else False}
         }
 
     def __str__(self):
@@ -312,6 +312,9 @@ class RgtTest():
 
     def get_use_batch_template(self):
         return self._get_builtin_param("use_batch_template")
+
+    def get_run_local(self):
+        return self._get_builtin_param("run_local")
 
     def get_nodes(self):
         return self._get_builtin_param("nodes")
