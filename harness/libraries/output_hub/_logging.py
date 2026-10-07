@@ -40,11 +40,10 @@ class Logger(ABC):
             )
 
         # create the log file's parent directory
+        self._log_file: Optional[Path] = None
         if log_file:
-            self._log_file: Path = Path(log_file)
+            self._log_file = Path(log_file)
             self._log_file.parent.mkdir(parents=True, exist_ok=True)
-        else:
-            self._log_file = None
 
         self._setup_handlers()
 

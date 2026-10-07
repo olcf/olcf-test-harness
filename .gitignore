@@ -18,3 +18,9 @@ doc-sphinx/build
 # Ignore all vim temporary files.
 *.swp
 *.swo
+
+# Ignore git hooks
+.githooks
+
+# Ignore build files
+dist

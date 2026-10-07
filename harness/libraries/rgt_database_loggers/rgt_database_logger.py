@@ -296,7 +296,7 @@ class RgtDatabaseLogger:
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
-            from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+            from harness.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
             influxdb_loaded = True
         except ImportError as e:
             self.logger.log_error(f"Failed to import InfluxDB backend: {e}.")
@@ -329,7 +329,7 @@ class RgtDatabaseLogger:
         if any(k.startswith('RGT_INFLUX') for k in os.environ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
-                from libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+                from harness.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
                 influxdb_loaded = True
             except ImportError as e:
                 self.logger.log_error(f"Failed to import InfluxDB backend: {e}")
@@ -338,7 +338,7 @@ class RgtDatabaseLogger:
         if any(k.startswith('RGT_KAFKA') for k in os.environ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
-                from libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+                from harness.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
                 kafka_loaded = True
             except ImportError as e:
                 self.logger.log_error(f"Failed to import Kafka backend: {e}")
