@@ -21,3 +21,6 @@ doc-sphinx/build
 
 # Ignore git hooks
 .githooks
+
+# Ignore build files
+dist
