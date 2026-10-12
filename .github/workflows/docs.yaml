@@ -1,16 +1,19 @@
 name: Docs
 
 on:
+  pull_request:
+    branches:
+      - devel
   push:
     branches:
       - devel
 
 concurrency:
-  group: github-pages
+  group: docs-${{ github.ref }}
   cancel-in-progress: true
 
 run-name: >-
-  Deploy Docs
+  Docs
   [${{ github.ref_name }} @ ${{ github.sha }}]
 
 jobs:
@@ -48,6 +51,7 @@ jobs:
   deploy:
     name: Deploy documentation
     needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/devel'
     runs-on: ubuntu-latest
 
     permissions:
