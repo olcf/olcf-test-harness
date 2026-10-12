@@ -7,15 +7,15 @@ import os
 import sys
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent
+prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # My harness package imports
-from libraries import input_files
-from libraries import regression_test
-from libraries import command_line
-from libraries.config_file import rgt_config_file
-from libraries.output_hub import OutputHub
+from harness.libraries import input_files
+from harness.libraries import regression_test
+from harness.libraries import command_line
+from harness.libraries.config_file import rgt_config_file
+from harness.libraries.output_hub import OutputHub
 
 #
 # Authors: Arnold Tharrington, Wayne Joubert, Veronica Vergera, Mark Berrill, and Mike Brim

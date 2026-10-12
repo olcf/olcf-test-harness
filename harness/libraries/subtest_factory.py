@@ -10,7 +10,7 @@ creates an instance of subtest.
 import os
 
 # Harness imports
-from libraries.apptest import subtest
+from harness.libraries.apptest import subtest
 
 
 class SubtestFactory():

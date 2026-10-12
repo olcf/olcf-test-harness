@@ -11,11 +11,11 @@ import time
 import random # for shuffle
 
 # Harness package imports.
-from libraries import apptest
-from libraries.subtest_factory import SubtestFactory
-from libraries.rgt_state import RgtState
-from libraries.output_hub import OutputHub
-from machine_types.machine_factory import MachineFactory
+from harness.libraries import apptest
+from harness.libraries.subtest_factory import SubtestFactory
+from harness.libraries.rgt_state import RgtState
+from harness.libraries.output_hub import OutputHub
+from harness.machine_types.machine_factory import MachineFactory
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)

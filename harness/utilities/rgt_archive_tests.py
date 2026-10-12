@@ -18,15 +18,15 @@ import tarfile
 import sys
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent
+prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # For directory names
-from libraries.layout_of_apps_directory import apptest_layout
+from harness.libraries.layout_of_apps_directory import apptest_layout
 # For interpreting status files
-from libraries.status_file import StatusFile, get_status_info_from_file
+from harness.libraries.status_file import StatusFile, get_status_info_from_file
 # For logging
-from libraries.output_hub import OutputHub
+from harness.libraries.output_hub import OutputHub
 
 # define some constants
 KW_ALWAYS = 'ALWAYS'
