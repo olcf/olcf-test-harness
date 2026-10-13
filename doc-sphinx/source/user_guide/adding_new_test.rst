@@ -7,11 +7,11 @@ Adding a New Test
 The OLCF Test Harness (OTH) requires a specific source code repository structure for application tests.
 This document describes how to add an application and associated tests for a specific system to the harness.
 
-Application Source Code Repository Structure
---------------------------------------------
+Application Repository Structure
+--------------------------------
 
-The OTH consists of the core harness code (e.g., ``olcf-test-harness``) and application source code that defines the application to build and tests to run.
-The following subsections define the constraints to the URL and directory structure.
+Running the OTH requires the core harness code (e.g., ``olcf-test-harness``) and user-provided application source code that defines the application to build and tests to run.
+The following subsections define the constraints to the URL and directory structure of the user-provided application source code.
 
 Repository URL
 ^^^^^^^^^^^^^^
