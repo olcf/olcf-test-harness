@@ -7,15 +7,18 @@ Adding a New Test
 The OLCF Test Harness (OTH) requires a specific source code repository structure for application tests.
 This document describes how to add an application and associated tests for a specific system to the harness.
 
-Application Source Code Repository Structure
---------------------------------------------
+Application Repository Structure
+--------------------------------
 
-The top-level group in a GitLab group (or GitHub repo) contains a sub-group for each target machine.
+Running the OTH requires the core harness code (e.g., ``olcf-test-harness``) and user-provided application source code that defines the application to build and tests to run.
+The following subsections define the constraints to the URL and directory structure of the user-provided application source code.
 
 Repository URL
 ^^^^^^^^^^^^^^
 
-Each application that can be run on a given machine should have a repository (or directory) within that machine's group.
+If using the OTH to automatically clone an application from GitLab (e.g., ``--mode checkout``), the OTH requires one repository per application inside a subgroup matching **$RGT_GIT_MACHINE_NAME**.
+Since GitHub does not support subgroups, repositories hosted on GitHub must be cloned manually.
+If ``--mode checkout`` is not used, then the OTH does not enforce any specific Git repository constraints.
 
 .. _repository-structure:
 
@@ -28,7 +31,7 @@ The application repository must be structured as shown below:
 
     <application name>/<test name>/
                                    Scripts/
-                                          /rgt_test_input.ini
+                                          /rgt_test_input.{ini,yaml}
                                           /<check script>
                                           /<report script>
                                           /<job script template>
@@ -41,23 +44,23 @@ The application repository must be structured as shown below:
                              /<inputs, scripts shared by multiple tests>
 
 
-First, each application test must have its own subdirectory.
-The test directory has a mandatory *Scripts* subdirectory,
-which should contain the test configuration file (see :ref:`application-test-input` below)
+First, each test must have its own subdirectory.
+The test directory must contain the *Scripts* subdirectory,
+which contains the test configuration file (see :ref:`application-test-input` below)
 and other required scripts (see :ref:`required-application-test-scripts` below).
-This directory contains templates and input files for the test -- a test must not modify files in this directory.
+This directory contains templates and input files for the test -- a test must not modify files in this directory when running.
 
 Second, the application's source code and required build script should reside within the *Source* directory of the repository.
 Optionally, a test may add or override files from the application's *Source* tree by providing a *Source* directory within the test directory.
 This directory will be overlayed over the application *Source* directory, so it may use the same internal directory structure.
-Please note that unlike in the application *Source* directory, symbolic links are not preserved, so any broken symbolic links will cause the harness to fail.
+Please note that unlike in the application *Source* directory, symbolic links are not preserved, so any broken symbolic links will cause ``runtests.py`` to fail.
 
 Example Repository Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For instance, let's assume we have a Git repository for an application called *hello_mpi*.
+For instance, let's assume we have a GitLab repository for an application called *hello_mpi*.
 
-To add a single node test and a two node test, we would create a separate subdirectory for each test, including their required *Scripts* subdirectory:
+To add a single-node test and a two node test, we would create one directory for each test, including their required *Scripts* subdirectory:
 
 .. code-block:: bash
 
@@ -66,7 +69,7 @@ To add a single node test and a two node test, we would create a separate subdir
              /Source
 
 Note that the test names are not required to follow any specific naming convention, but you should avoid spaces and special characters in the names.
-Since these tests are going to share the same source and build script, we are not going to create a *Source* subdirectory in either of the tests' subdirectories.
+Since these tests are going to share the same application source and build script, we do not need to create a *Source* subdirectory in either of the tests' subdirectories.
 
 .. _application-test-input:
 
@@ -74,8 +77,9 @@ Application Test Input
 ----------------------
 
 Each test's *Scripts* directory should contain a test input file named *rgt_test_input.ini* or *rgt_test_input.yaml*.
-The test input file contains information that is used by the OTH to build, submit, and check the results of application tests.
+The test input file defines how to build, submit, and check the results of application tests, and provides parameters to the job script template.
 The *ini* file format follows the Python3 `configparser <https://docs.python.org/3/library/configparser.html>`_ file format, while *yaml* file format is standard YAML.
+YAML is the preferred file format starting in v3.2 of the OTH.
 
 .. tab-set::
 
@@ -152,7 +156,7 @@ The *ini* file format follows the Python3 `configparser <https://docs.python.org
         There are slight changes to the *yaml* section and variable names relative to the *ini* file format.
         The fields in the ``variables`` section can be used in the ``replacements`` section of the configuration file by writing a Python format string, as seen below.
         All the fields in the ``replacements`` section can be used in the job script template and will be replaced when creating the batch script (see :ref:`job-script-template` section below).
-        Unlike *ini* file format, the *yaml* file does not support ``[EnvVars]``, as using this feature is not good practice.
+        Unlike *ini* file format, the *yaml* file does not support ``[EnvVars]``, as using this feature is not good practice anyway.
         See :ref:`best-practices` section for other test input file recommendations.
         The following is a sample input for the single node test of the *hello_mpi* application mentioned above:
 
@@ -210,16 +214,16 @@ The *ini* file format follows the Python3 `configparser <https://docs.python.org
 Required Application Test Scripts
 ---------------------------------
 
-The OTH requires each application test to provide (1) a build script, (2) a job script template, (3) a check script.
+The OTH requires each application test to provide (1) a build script, (2) a job script template, and (3) a check script.
 These scripts should be placed in the locations described in :ref:`repository-structure`.
-A test that relies on standard system-provided binaries can set the build script to ``/usr/bin/echo`` to remove the need to have an empty build script.
+A test that relies on standard system-provided binaries can set the build script to ``/usr/bin/echo``.
 If the OTH cannot find the scripts specified by the test input file (*rgt_test_input.[yaml,ini]*), it will fail to launch.
 
 Build Script
 ^^^^^^^^^^^^
 
 The build script can be a shell script, a Python script, or other executable command.
-It is specified in the test input file as *build_cmd*, and the OTH will execute the provided value as a subprocess.
+It is specified in the test input file as *build_cmd*, and the OTH will execute the provided value from a copy of the *Source* directory.
 The build script should return 0 on success, non-zero otherwise.
 
 For *hello_mpi*, an example build script named *build_hello_mpi_c.sh* may
@@ -238,10 +242,10 @@ contain the following:
     mkdir -p bin
     mpicc hello_mpi.c -o bin/hello
 
-The build command be executed from the directory **$BUILD_DIR**, which is a copy of the contents of *Source/*.
-This means the build script should be written as if it were executed from *Source/*, regardless of where it is located (e.g., *Source/myapp/build_scripts/systems/build_frontier.sh*). 
+The build command is executed from the directory **$BUILD_DIR**, which is a copy of the contents of *Source/*.
+This means the build script should be written as if it were executed from *Source/*, regardless of where it is actually located (e.g., *Source/myapp/build_scripts/systems/build_frontier.sh*). 
 
-Likewise, the path to the build script given by *build_cmd* in *rgt_test_input.[yaml,ini]* should be relative to the *Source/* directory. 
+Likewise, the path to the build script provided by *build_cmd* in *rgt_test_input.[yaml,ini]* should be relative to the *Source/* directory. 
 
 .. _job-script-template:
 
@@ -313,7 +317,7 @@ In simple cases, there is little functional difference between the two templatin
             # Ensure we are in the starting directory
             cd $SCRIPTS_DIR
     
-            # Make the working scratch space directory.
+            # Make the working scratch space directory exists.
             [ -d $WORK_DIR ] && mkdir -p $WORK_DIR
     
             # Change directory to the working directory.
@@ -323,7 +327,7 @@ In simple cases, there is little functional difference between the two templatin
             scontrol show hostnames &> job.nodes
             ldd $BUILD_DIR/bin/$EXECUTABLE &> ldd.log
     
-            # Run the executable.
+            # Tell the OTH to mark the binary_execute_start event
             log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
     
             set -x
@@ -332,6 +336,7 @@ In simple cases, there is little functional difference between the two templatin
             exit_code=$?
             set +x
     
+            # Tell the OTH to mark the binary_execute_end event
             log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
     
             # Ensure we return to the starting directory.
@@ -398,7 +403,7 @@ In simple cases, there is little functional difference between the two templatin
             scontrol show hostnames &> job.nodes
             ldd $BUILD_DIR/bin/$EXECUTABLE &> ldd.log
     
-            # Run the executable.
+            # Tell the OTH to generate the binary_execute_start event
             log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
     
             set -x
@@ -407,6 +412,7 @@ In simple cases, there is little functional difference between the two templatin
             exit_code=$?
             set +x
     
+            # Tell the OTH to generate the binary_execute_end event
             log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
     
             # Ensure we return to the starting directory.
@@ -434,19 +440,19 @@ In simple cases, there is little functional difference between the two templatin
 
 Using the job template above, the job will be submitted from the test *Run_Archive/* directory and starts from there.
 This is **$RESULTS_DIR** in the job template.
-The executable should then be invoked from **$WORK_DIR** directory, which is a scratch workspace derived from **$RGT_PATH_TO_SSPACE**.
+The job script should call the executable from the **$WORK_DIR** directory, which is a scratch workspace derived from **$RGT_PATH_TO_SSPACE**.
 
 One can access or copy any files relative to the *Scripts/* directory using the **$SCRIPT_DIR** environment variable.
-For example, if one stores a *CorrectResults* directory at the same level as *Scripts* and *Run_Archive* for a test case,
+For example, if a *CorrectResults* directory is stored at the same level as *Scripts* and *Run_Archive* for a test case,
 it can be be copied by adding the following line in the job script:
 
 .. code-block:: bash
 
     cp -a ${SCRIPT_DIR}/../CorrectResults ${WORK_DIR}/
 
-The environment variable **$EXECUTABLE** is also populated based on ``executable_path`` entry in *rgt_test_input.ini* file.
+The environment variable **$EXECUTABLE** is populated in this example based on the ``executable_path`` variable in *rgt_test_input.ini* file.
 The executable may still be inside **$BUILD_DIR** from the previous step,
-so one would need to either copy it to **$WORK_DIR** or provide the absolute path in the job script such as **$BUILD_DIR/$EXECUTABLE**.
+so it must be called by the absolute path in the job script, e.g. **$BUILD_DIR/$EXECUTABLE**.
 
 .. note::
 
@@ -514,6 +520,7 @@ At the completion of this section, we will have created a directory structure th
     mpi-tests/
              /Source/
                     /build.sh
+                    /test_src/hello_world.c
                     /Common_Scripts/
                                    /setup_env.sh
                                    /slurm.template.j2
@@ -562,7 +569,7 @@ Both of these tests will use the same source code (this is very common for many 
       MPI_Finalize();
     }' > test_src/hello_world.c
 
-The environment and build scripts will also be the same for both tests, so we can create a build script and a script to set up the environment:
+The module environment and build scripts will also be the same for both tests, so we can create a build script and a common script to set up the environment:
 
 .. code-block:: bash
 
@@ -570,18 +577,18 @@ The environment and build scripts will also be the same for both tests, so we ca
     cd Source
     # create a directory to hold shared scripts -- "Common_Scripts" is a good name for it, but not required
     mkdir Common_Scripts
-    # Create a basic environment file:
+    # Create a basic module environment file:
     echo '#!/bin/bash
     # As an example, we do a ``module reset`` here
     module reset
-    # The OTH is loaded by a module, so we need to re-add this to our environment
-    module use $OLCF_HARNESS_DIR/modulefiles
-    module load olcf_harness
+    # If you loaded the OTH by the module, you need to re-load the module
+    #module use $OLCF_HARNESS_DIR/modulefiles
+    #module load olcf_harness
     # Now, we load a basic gcc and openmpi
     module load gcc
     module load openmpi
     ' > Common_Scripts/setup_env.sh
-    # Now, create a build script in the top-level of the Source directory:
+    # Now, create the build script in the top-level of the Source directory:
     echo '#!/bin/bash
     # Setup the environment:
     source ./Common_Scripts/setup_env.sh
@@ -590,13 +597,14 @@ The environment and build scripts will also be the same for both tests, so we ca
     mpicc -O1 -g -Wall -o hello_world hello_world.c
     ' > ./build.sh
 
-Let's give some thought to how we want to construct these tests.
+Let's give some thought to how we want to template these tests.
 We'll start by working on the *rgt_test_input.yaml* for the single-node *Hello, World!* test.
 Below is a file that can be used for the *rgt_test_input.yaml*, with discussion infused as comments.
 
 .. code-block::
 
     variables:
+        # makes it easier to re-use this value later
         nnodes: 1
     replacements:
         # when we want to re-use something in the variables section, use a Python format string
@@ -616,16 +624,16 @@ Below is a file that can be used for the *rgt_test_input.yaml*, with discussion 
         build_cmd: ./build.sh
         # check.sh is in ${SCRIPTS_DIR}/check.sh
         check_cmd: './check.sh {nnodes}'
-        # Don't allow resubmissions currently
+        # Don't allow resubmissions to start, since this is a very simple & quick check
         resubmit: 0
 
-Notice that the only lines specific to this test are up in the ``variables`` section: *nnodes*.
-This should help us re-use as much code as possible.
-Duplicate code will make tests difficult to maintain in the long run.
+Notice that the only lines specific to this particular test are up in the ``variables`` section: *nnodes*.
+This should help us re-use as much code as possible for the 2-node test.
+Duplicating code makes tests difficult to maintain in the long run.
 
 Next up is the Slurm template.
-Since we're using YAML input file, we have to use the Jinja2 template.
-Moving from 1 to 2 nodes shouldn't change much about the job template, so let's try to develop a generic Slurm job template for *Hello, World!* programs:
+Since we're using YAML input file, we have to use the Jinja2 template format.
+Moving from 1 to 2 nodes shouldn't have to change much about the job template, so let's try to develop a generic Slurm job template for *Hello, World!* programs:
 
 .. code-block:: bash
 
@@ -672,9 +680,7 @@ Moving from 1 to 2 nodes shouldn't change much about the job template, so let's 
     # Run the executable.
     log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
     
-    # We use ${SLURM_NNODES} over __nodes__ for several reasons:
-    #   1. for testing purposes, it's good to ensure that SLURM_NNODES is correct, since users will use that
-    #   2. if you inadvertently set $RGT_SUBMIT_ARGS, using SLURM_NNODES will adapt to the size of the job
+    # We use ${SLURM_NNODES} over __nodes__ because it's good to ensure that SLURM_NNODES is correct, since users will use that
     set -x
     {% for ppn in ppn_list %}
     srun -N ${SLURM_NNODES} -n $((${SLURM_NNODES}*{{ppn}})) --ntasks-per-node={{ppn}} $BUILD_DIR/$EXECUTABLE |& tee -a stdout.txt
@@ -705,16 +711,16 @@ Moving from 1 to 2 nodes shouldn't change much about the job template, so let's 
     esac
 
 
-This job script will leave the output from the application in a file named ``stdout.txt``.
+This job script will leave the output from the application in a file named ``stdout.txt`` in ``$WORK_DIR`` (which the batch script also copies back to ``$RESULTS_DIR``).
 Let's write a check script that can validate the output from this file.
-Recall that we provided the check script with the total number of tasks to expect as a command-line argument.
+Recall that we provided the check script with the number of nodes in the job as a command-line argument.
 
 .. code-block:: bash
 
     #!/bin/bash
 
     nnodes=$1
-    # 11 = 1 + 2 + 8
+    # 11 = 1 + 2 + 8, for the 3 ppn spec's we used
     expected_ranks=$((nnodes*11))
     nranks=$(grep "Hello, World from rank" ${RESULTS_DIR}/stdout.txt | wc -l)
     if [ ! "${nranks}" == "${expected_ranks}" ]; then
@@ -725,7 +731,7 @@ Recall that we provided the check script with the total number of tasks to expec
     exit 0
 
 
-This check script is generic and should be able to be re-used in multiple tests, so let's put it in ``Source/Common_Scripts/check_hello_world.sh``.
+This check script is not hard-coded to a 1-node job, so it should be able to be re-used in multiple tests, so let's put it in ``Source/Common_Scripts/check_hello_world.sh``, and we'll use a sym-link to put it in our test's ``Scripts/check.sh``.
 
 The Slurm template and check scripts are required in the *Scripts* directory, so we use symbolic links to achieve this:
 
