@@ -2,6 +2,7 @@ import subprocess as sp
 from typing import List
 
 import yaml
+import json
 
 from .base import BaseScheduler, SchedulerJob
 
@@ -22,6 +23,8 @@ class OPENSHIFT(BaseScheduler):
             "apply",
             "-f",
             job.batch_script,
+            "-o",
+            "json",
         ]
 
         with open(self.submit_stdout_file, "w") as stdout, open(
@@ -32,8 +35,14 @@ class OPENSHIFT(BaseScheduler):
         if result.returncode == 0:
             with open(job.batch_script, "r") as f:
                 job_yaml = yaml.safe_load(f)
-                job.id = job_yaml["metadata"]["name"]
+                job.name = job_yaml["metadata"]["name"]
+                self._logger.print(f"OPENSHIFT JobName = {job.name}")
+#                job.id = 'K8S_JOB_ID'
+            with open(self.submit_stdout_file, "r") as f_stdout:
+                cluster_response = json.load(f_stdout)
+                job.id = cluster_response["metadata"]["uid"]
                 self._logger.print(f"OPENSHIFT JobID = {job.id}")
+                
         else:
             with open(self.submit_stderr_file, "r") as submit_stderr:
                 self._logger.log_critical(submit_stderr.read())

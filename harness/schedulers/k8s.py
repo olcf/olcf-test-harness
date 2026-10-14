@@ -22,6 +22,8 @@ class K8S(BaseScheduler):
             "apply",
             "-f",
             job.batch_script,
+            "-o",
+            "json",
         ]
 
         with open(self.submit_stdout_file, "w") as stdout, open(
@@ -32,7 +34,11 @@ class K8S(BaseScheduler):
         if result.returncode == 0:
             with open(job.batch_script, "r") as f:
                 job_yaml = yaml.safe_load(f)
-                job.id = job_yaml["metadata"]["name"]
+                job.name = job_yaml["metadata"]["name"]
+                self._logger.print(f"K8S JobName = {job.name}")
+            with open(self.submit_stdout_file, "r") as f_stdout:
+                cluster_response = json.load(f_stdout)
+                job.id = cluster_response["metadata"]["uid"]
                 self._logger.print(f"K8S JobID = {job.id}")
         else:
             with open(self.submit_stderr_file, "r") as submit_stderr:
