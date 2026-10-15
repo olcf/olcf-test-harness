@@ -113,16 +113,11 @@ class Harness:
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     def run_me(self,
-               my_effective_command_line=None,
                my_warning_messages=None):
 
         # Log the start of the harness.
         message = "Start of harness."
         self.__myLogger.log_info(message)
-
-        # Log the effective command line"
-        if my_effective_command_line:
-            self.__myLogger.log_info(my_effective_command_line)
 
         # Log the command line warning messages
         if my_warning_messages:

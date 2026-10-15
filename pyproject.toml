@@ -25,10 +25,17 @@ ext = [
     "jinja2"
 ]
 
+[project.scripts]
+othctl = "harness.cli.othctl:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["oth"]
+
 [tool.ruff]
 target-version = "py37"
 include = [
     "tests/*",
+    "harness/cli/*",
     "harness/libraries/output_hub/*",
     "harness/libraries/repositories/*",
     "harness/schedulers/*"
@@ -42,6 +49,7 @@ ignore = [
 [tool.mypy]
 files = [
     "tests",
+    "harness/cli",
     "harness/libraries/output_hub",
     "harness/libraries/repositories",
     "harness/schedulers"

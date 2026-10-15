@@ -356,9 +356,6 @@ class RgtTest():
 
     # Private methods
 
-    def _set_builtin_param(self, key, value):
-        self.builtin_parameters[key] = value
-
     def _get_builtin_param(self, key):
         if key in self.builtin_parameters:
             return (self.builtin_parameters)[key]

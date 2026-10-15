@@ -95,15 +95,9 @@ class rgt_config_file:
         return self.__testshot_vars
 
     @staticmethod
-    def getDefaultConfigFile(logger=None):
-        """Returns the default config file name."""
-        machinename = 'master'
-        if 'OLCF_HARNESS_MACHINE' in os.environ:
-            machinename = os.environ['OLCF_HARNESS_MACHINE']
-        configfile = machinename + '.ini'
-        if not logger:
-            print(f'Using machine config: {configfile}')
-        else:
-            logger.log_info(f'Using machine config: {configfile}')
-        return configfile
+    def get_default_config_file_name() -> str:
+        name = "master"
+        if "OLCF_HARNESS_MACHINE" in os.environ:
+            name = os.environ["OLCF_HARNESS_MACHINE"]
 
+        return name + ".ini"

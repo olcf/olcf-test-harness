@@ -8,8 +8,6 @@ from pathlib import Path
 import re
 
 # My harness package imports
-from runtests import USE_HARNESS_TASKS_IN_RGT_INPUT_FILE
-from runtests import get_main_logger
 from harness.libraries import rgt_utilities
 from harness.libraries.harness_internal_config import harness_modes
 from harness.libraries.output_hub import OutputHub
@@ -65,7 +63,7 @@ class rgt_input_file:
             return
 
         # If a CLI task was input use that instead
-        if not USE_HARNESS_TASKS_IN_RGT_INPUT_FILE in runmodecmd :
+        if "use_input_file" not in runmodecmd :
             self.__logger.log_info("Discarding tasks in inputfile since CLI mode was provided")
             self.__logger.log_debug(f"runmodecmd = {runmodecmd}")
             unsorted_harness_task = []
