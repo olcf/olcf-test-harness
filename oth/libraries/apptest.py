@@ -17,16 +17,16 @@ from types import *
 from pathlib import Path
 
 # NCCS Test Harness Package Imports
-from harness.libraries.harness_internal_config import harness_modes
-from harness.libraries.base_apptest import base_apptest
-from harness.libraries.base_apptest import BaseApptestError
-from harness.libraries.layout_of_apps_directory import apptest_layout
-from harness.libraries.status_file import parse_status_file
-from harness.libraries.status_file import parse_status_file2
-from harness.libraries.status_file import summarize_status_file
-from harness.libraries.status_file import StatusFile
+from oth.libraries.harness_internal_config import harness_modes
+from oth.libraries.base_apptest import base_apptest
+from oth.libraries.base_apptest import BaseApptestError
+from oth.libraries.layout_of_apps_directory import apptest_layout
+from oth.libraries.status_file import parse_status_file
+from oth.libraries.status_file import parse_status_file2
+from oth.libraries.status_file import summarize_status_file
+from oth.libraries.status_file import StatusFile
 
-from harness.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 #
 # Inherits "apptest_layout".
@@ -135,7 +135,7 @@ class subtest(base_apptest, apptest_layout):
                 if test_checkout_lock:
                     test_checkout_lock.acquire()
 
-                from harness.libraries.repositories import create_repository, get_type_of_repository
+                from oth.libraries.repositories import create_repository, get_type_of_repository
 
                 repository_type = get_type_of_repository()
                 name_of_application = self.getNameOfApplication()
@@ -426,8 +426,8 @@ class subtest(base_apptest, apptest_layout):
         return
 
     def did_all_tests_pass(self, harness_config):
-        from harness.machine_types.machine_factory import MachineFactory
-        from harness.libraries.status_file_factory import StatusFileFactory
+        from oth.machine_types.machine_factory import MachineFactory
+        from oth.libraries.status_file_factory import StatusFileFactory
 
         # Instantiate the machine for this computer.
         mymachine = MachineFactory.create_machine(harness_config, self)

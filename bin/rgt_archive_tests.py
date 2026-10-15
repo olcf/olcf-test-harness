@@ -22,11 +22,11 @@ prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # For directory names
-from harness.libraries.layout_of_apps_directory import apptest_layout
+from oth.libraries.layout_of_apps_directory import apptest_layout
 # For interpreting status files
-from harness.libraries.status_file import StatusFile, get_status_info_from_file
+from oth.libraries.status_file import StatusFile, get_status_info_from_file
 # For logging
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.output_hub import OutputHub
 
 # define some constants
 KW_ALWAYS = 'ALWAYS'

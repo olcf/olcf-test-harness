@@ -8,9 +8,9 @@ from pathlib import Path
 import re
 
 # My harness package imports
-from harness.libraries import rgt_utilities
-from harness.libraries.harness_internal_config import harness_modes
-from harness.libraries.output_hub import OutputHub
+from oth.libraries import rgt_utilities
+from oth.libraries.harness_internal_config import harness_modes
+from oth.libraries.output_hub import OutputHub
 
 #
 # Author: Arnold Tharrington (arnoldt@ornl.gov)

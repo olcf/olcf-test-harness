@@ -19,10 +19,10 @@ from pathlib import Path
 prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from harness.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
-from harness.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-from harness.libraries.config_file import rgt_config_file
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+from oth.libraries.config_file import rgt_config_file
+from oth.libraries.output_hub import OutputHub
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Post a custom metric to Databases")

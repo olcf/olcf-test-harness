@@ -5,10 +5,10 @@ from typing import Optional
 
 import pytest
 
-from harness.libraries.output_hub import OutputHub
-from harness.libraries.repositories import create_repository, get_type_of_repository
-from harness.libraries.repositories.base import BaseRepository
-from harness.libraries.repositories.git import (
+from oth.libraries.output_hub import OutputHub
+from oth.libraries.repositories import create_repository, get_type_of_repository
+from oth.libraries.repositories.base import BaseRepository
+from oth.libraries.repositories.git import (
     GitCloneStatus,
     GitRepository,
     IncorrectGitRepositoryOrigin,

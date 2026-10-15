@@ -26,7 +26,7 @@ ext = [
 ]
 
 [project.scripts]
-othctl = "harness.cli.othctl:main"
+othctl = "oth.cli.othctl:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["oth"]

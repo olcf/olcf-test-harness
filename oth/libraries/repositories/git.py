@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.output_hub import OutputHub
 
 from .base import BaseRepository
 

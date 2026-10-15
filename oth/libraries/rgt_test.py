@@ -49,8 +49,8 @@ except ModuleNotFoundError:
     yaml_disabled = True
 
 # Harness imports
-from harness.libraries.rgt_utilities import rgt_variable_name_modification
-from harness.libraries import rgt_utilities
+from oth.libraries.rgt_utilities import rgt_variable_name_modification
+from oth.libraries import rgt_utilities
 
 class RgtTest():
     """This class is the abstraction of regression test input file."""

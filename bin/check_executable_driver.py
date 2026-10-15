@@ -12,11 +12,11 @@ prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # Harness imports
-from harness.libraries.apptest import subtest
-from harness.libraries.subtest_factory import SubtestFactory
-from harness.libraries.layout_of_apps_directory import get_layout_from_runarchivedir
-from harness.libraries.layout_of_apps_directory import get_path_to_logfile_from_runarchivedir
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.apptest import subtest
+from oth.libraries.subtest_factory import SubtestFactory
+from oth.libraries.layout_of_apps_directory import get_layout_from_runarchivedir
+from oth.libraries.layout_of_apps_directory import get_path_to_logfile_from_runarchivedir
+from oth.libraries.output_hub import OutputHub
 
 #
 # Author: Arnold Tharrington, Scientific Computing Group

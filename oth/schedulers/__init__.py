@@ -1,6 +1,6 @@
 from typing import Optional
 
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.output_hub import OutputHub
 
 from .base import BaseScheduler, SchedulerJob
 from .k8s import K8S

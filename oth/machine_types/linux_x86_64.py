@@ -12,8 +12,8 @@ import re
 from pathlib import Path
 
 # Local imports.
-from harness.machine_types.base_machine import BaseMachine
-from harness.libraries.rgt_test import RgtTest
+from oth.machine_types.base_machine import BaseMachine
+from oth.libraries.rgt_test import RgtTest
 
 class Linux_x86_64(BaseMachine):
 

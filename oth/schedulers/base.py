@@ -3,7 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.output_hub import OutputHub
 
 
 class SchedulerJob(ABC):

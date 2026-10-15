@@ -15,9 +15,9 @@ import sys
 from pathlib import Path
 
 # Harness imports
-from harness.libraries.apptest import subtest
-from harness.schedulers import SchedulerJob, create_scheduler
-from harness.machine_types import linux_utilities
+from oth.libraries.apptest import subtest
+from oth.schedulers import SchedulerJob, create_scheduler
+from oth.machine_types import linux_utilities
 
 class BaseMachine(metaclass=ABCMeta):
 

@@ -5,7 +5,7 @@
 import sys
 
 # Harness imports
-from harness.libraries.status_file import StatusFile
+from oth.libraries.status_file import StatusFile
 
 class StatusFileFactory:
     """This is the factory class of StatusFile objects."""

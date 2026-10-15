@@ -10,7 +10,7 @@ import requests
 from urllib.parse import urlparse
 from pathlib import Path
 
-from harness.libraries.rgt_database_loggers.db_backends.base_db import *
+from oth.libraries.rgt_database_loggers.db_backends.base_db import *
 
 class InfluxDBLogger(BaseDBLogger):
 

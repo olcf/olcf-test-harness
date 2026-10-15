@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-from harness.libraries.output_hub import OutputHub
+from oth.libraries.output_hub import OutputHub
 
 
 class BaseRepository(ABC):

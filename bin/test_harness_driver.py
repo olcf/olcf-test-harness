@@ -29,16 +29,16 @@ prefix = Path(__file__).resolve().parent.parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # Harness imports
-from harness.libraries.subtest_factory import SubtestFactory
-from harness.libraries.layout_of_apps_directory import apptest_layout as layout
-from harness.libraries.layout_of_apps_directory import get_layout_from_scriptdir
-from harness.libraries.layout_of_apps_directory import get_path_to_logfile_from_scriptdir
-from harness.libraries import rgt_utilities
-from harness.libraries.config_file import rgt_config_file
-from harness.libraries.status_file_factory import StatusFileFactory
-from harness.libraries import status_file
-from harness.libraries.output_hub import OutputHub
-from harness.machine_types.machine_factory import MachineFactory
+from oth.libraries.subtest_factory import SubtestFactory
+from oth.libraries.layout_of_apps_directory import apptest_layout as layout
+from oth.libraries.layout_of_apps_directory import get_layout_from_scriptdir
+from oth.libraries.layout_of_apps_directory import get_path_to_logfile_from_scriptdir
+from oth.libraries import rgt_utilities
+from oth.libraries.config_file import rgt_config_file
+from oth.libraries.status_file_factory import StatusFileFactory
+from oth.libraries import status_file
+from oth.libraries.output_hub import OutputHub
+from oth.machine_types.machine_factory import MachineFactory
 
 MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
 """str : The logging level for this module. """
