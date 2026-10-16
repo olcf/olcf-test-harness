@@ -31,6 +31,9 @@ othctl = "oth.cli.othctl:main"
 [tool.hatch.build.targets.wheel]
 packages = ["oth"]
 
+[tool.hatch.version]
+path = "oth/__init__.py"
+
 [tool.ruff]
 target-version = "py37"
 include = [

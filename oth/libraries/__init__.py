@@ -15,5 +15,3 @@ __all__ = [
                 'get_machine_name',
                 'status_file_factory',
           ]
-
-version = 2.0
