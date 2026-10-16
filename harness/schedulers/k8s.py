@@ -1,9 +1,8 @@
+import json
 import subprocess as sp
 from typing import List
 
-
 import yaml
-import json
 
 from .base import BaseScheduler, SchedulerJob
 
