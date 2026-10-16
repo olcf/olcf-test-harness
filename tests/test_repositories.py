@@ -70,7 +70,7 @@ def test_get_application_parent_directory_from_env(monkeypatch):
 
 
 def test_get_repository_branch_from_env(monkeypatch):
-    assert GitRepository.get_repository_branch_from_env() == None
+    assert GitRepository.get_repository_branch_from_env() is None
 
     monkeypatch.setenv("RGT_GIT_REPS_BRANCH", "pytest")
     assert GitRepository.get_repository_branch_from_env() == "pytest"
@@ -161,7 +161,7 @@ def test_create_repository():
 
 
 def test_get_type_of_repository(monkeypatch):
-    assert get_type_of_repository() == None
+    assert get_type_of_repository() is None
 
     monkeypatch.setenv("RGT_TYPE_OF_REPOSITORY", "git")
     assert get_type_of_repository() == "git"

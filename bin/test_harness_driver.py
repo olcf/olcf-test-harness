@@ -73,7 +73,7 @@ def create_parser(logger=None):
                            action='store_true')
     my_parser.add_argument('-C', '--configfile',
                            required=False,
-                           default=rgt_config_file.getDefaultConfigFile(logger=logger),
+                           default=rgt_config_file.get_default_config_file_name(),
                            type=str,
                            help="Configuration file name (default: %(default)s)")
     my_parser.add_argument('-d', '--scriptsdir',

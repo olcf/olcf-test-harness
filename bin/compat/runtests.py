@@ -13,7 +13,6 @@ sys.path = [str(prefix)] + sys.path
 # My harness package imports
 from oth.libraries import input_files
 from oth.libraries import regression_test
-from oth.libraries import command_line
 from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
 
@@ -235,7 +234,7 @@ def create_parser(logger=None):
 
     parser.add_argument('-c', '--configfile',
                         required=False,
-                        default=rgt_config_file.getDefaultConfigFile(logger=logger),
+                        default=rgt_config_file.get_default_config_file_name(),
                         type=str,
                         help="Configuration file name (default: %(default)s)")
 
@@ -316,27 +315,13 @@ def parse_commandline_argv(argv, logger):
 
     Returns
     -------
-    HarnessParsedArguments
-        Stores the Python data of the command line arguments. See module
-        command_line.py for details on HarnessParsedArguments object.
-
+        Parsed command line options.
 
     """
 
     parser = create_parser(logger=logger)
     Vargs = parser.parse_args(argv)
-    harness_parsed_args = command_line.HarnessParsedArguments(inputfile=Vargs.inputfile,
-                                                              shuffle=Vargs.shuffle,
-                                                              loglevel=Vargs.loglevel,
-                                                              configfile=Vargs.configfile,
-                                                              stdout_stderr=Vargs.output,
-                                                              runmode=Vargs.mode,
-                                                              separate_build_stdio=Vargs.separate_build_stdio,
-                                                              reuse_first_build=Vargs.reuse_first_build,
-                                                              reuse_build_from_id=Vargs.reuse_build_from_id,
-                                                              app_filter=Vargs.app_filter,
-                                                              test_filter=Vargs.test_filter)
-    return harness_parsed_args
+    return Vargs
 
 def runtests(my_arg_string=None):
     """
@@ -369,15 +354,14 @@ def runtests(my_arg_string=None):
     harness_arguments = parse_commandline_argv(argv, main_logger)
 
     # Print the effective command line to stdout.
-    effective_command_line = harness_arguments.effective_command_line
-    main_logger.log_info(effective_command_line)
+    main_logger.log_info(harness_arguments)
 
     main_logger.log_info("Completed parsing command line arguments.")
 
     # Read the input and master config
     main_logger.log_info("Reading the harness input file.")
     ifile = input_files.rgt_input_file(inputfilename=harness_arguments.inputfile,
-                                       runmodecmd=harness_arguments.runmode,
+                                       runmodecmd=harness_arguments.mode,
                                        app_filter=harness_arguments.app_filter,
                                        test_filter=harness_arguments.test_filter,
                                        logger=main_logger)
@@ -399,7 +383,7 @@ def runtests(my_arg_string=None):
     # Create and run the harness
     rgt = regression_test.Harness(config, ifile,
                                   harness_arguments.loglevel,
-                                  harness_arguments.stdout_stderr,
+                                  harness_arguments.output,
                                   harness_arguments.separate_build_stdio,
                                   harness_arguments.reuse_first_build,
                                   harness_arguments.reuse_build_from_id,
@@ -408,7 +392,7 @@ def runtests(my_arg_string=None):
     main_logger.log_info("Created an instance of the harness.")
     main_logger.log_info("Harness: " + str(rgt))
     main_logger.log_info("Running the harness tasks.")
-    rgt.run_me(my_effective_command_line=effective_command_line)
+    rgt.run_me()
     main_logger.log_info("Completed running the harness tasks.")
 
     return rgt

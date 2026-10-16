@@ -39,7 +39,7 @@ def run(args: ap.Namespace) -> None:
     rgt = regression_test.Harness(
         config,
         input_file,
-        args.loglevel,
+        args.log_level,
         args.output,
         args.separate_build_stdio,
         args.reuse_first_build,
@@ -121,7 +121,7 @@ def main() -> None:
     )
     run_parser.add_argument(
         "-sb",
-        "--separate-build-studio",
+        "--separate-build-stdio",
         action="store_true",
         required=False,
         help="separate build output into build_out.stderr.txt and build_out.stdout.txt",
@@ -155,28 +155,6 @@ def main() -> None:
         help="comma-separated list of regular expressions or strings used to select specific tests from the provided input file",
     )
 
-    # status subparser
-    status_parser: ap.ArgumentParser = sub_parsers.add_parser(
-        "status",
-        help="check status of run(s)",
-        formatter_class=ap.ArgumentDefaultsHelpFormatter,
-    )
-    status_parser.add_argument(
-        "-id",
-        "--run-id",
-        action="store",
-        type=str,
-        required=False,
-        help="specific run id to check",
-    )
-    status_parser.add_argument(
-        "--color",
-        action="store_true",
-        default=False,
-        required=False,
-        help="print status with color",
-    )
-
     # parse args
     args: ap.Namespace = arg_parser.parse_args()
 
@@ -191,6 +169,7 @@ def main() -> None:
     oh.log_info("starting harness")
     oh.log_info(f"invoked with: '{' '.join(sys.argv[1:])}'")
 
+    oh.log_debug(f"parsed command line options: {args}")
     oh.print(f"Using machine config: {args.config_file}")
 
     # branch to sub-command
