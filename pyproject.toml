@@ -22,7 +22,8 @@ docs = [
 ]
 ext = [
     "pyyaml",
-    "jinja2"
+    "jinja2",
+    "python-dateutil"
 ]
 
 [project.scripts]
