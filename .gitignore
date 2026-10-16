@@ -24,3 +24,7 @@ doc-sphinx/build
 
 # Ignore build files
 dist
+
+# Ignore venvs
+.venv
+

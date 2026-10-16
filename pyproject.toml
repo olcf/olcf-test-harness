@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "olcf-test-harness"
-version = "4.0.0.dev0"
+dynamic = ["version"]
 description = "Oak Ridge Computing Facility's HPC test harness."
 requires-python = ">=3.6"
 dependencies = []
@@ -13,7 +13,10 @@ dependencies = []
 dev = [
     "mypy",
     "pytest",
-    "ruff"
+    "ruff",
+    "types-PyYAML",
+    "types-python-dateutil",
+    "types-requests"
 ]
 docs = [
     "sphinx",
@@ -21,17 +24,29 @@ docs = [
     "sphinx-rtd-theme"
 ]
 ext = [
-    "pyyaml",
-    "jinja2"
+    "PyYAML",
+    "Jinja2",
+    "python-dateutil",
+    "requests"
 ]
+
+[project.scripts]
+othctl = "oth.cli.othctl:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["oth"]
+
+[tool.hatch.version]
+path = "oth/__init__.py"
 
 [tool.ruff]
 target-version = "py37"
 include = [
     "tests/*",
-    "harness/libraries/output_hub/*",
-    "harness/libraries/repositories/*",
-    "harness/schedulers/*"
+    "oth/cli/*",
+    "oth/libraries/output_hub/*",
+    "oth/libraries/repositories/*",
+    "oth/schedulers/*"
 ]
 
 [tool.ruff.lint]
@@ -42,9 +57,10 @@ ignore = [
 [tool.mypy]
 files = [
     "tests",
-    "harness/libraries/output_hub",
-    "harness/libraries/repositories",
-    "harness/schedulers"
+    "oth/cli",
+    "oth/libraries/output_hub",
+    "oth/libraries/repositories",
+    "oth/schedulers"
 ]
 ignore_missing_imports = true
 

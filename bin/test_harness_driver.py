@@ -1,0 +1,517 @@
+#! /usr/bin/env python3
+
+#
+# Author: Arnold Tharrington (arnoldt@ornl.gov)
+# Scientific Computing Group.
+#
+# Modified by: Veronica G. Vergara Larrea (vergaravg@ornl.gov)
+# User Assistance Group.
+#
+# National Center for Computational Sciences
+# Oak Ridge National Laboratory
+#
+
+# Python imports
+import argparse
+import datetime
+import getpass
+import os
+import shutil
+import stat
+import string
+import subprocess
+import sys
+
+from shlex import split
+from pathlib import Path
+
+prefix = Path(__file__).resolve().parent.parent
+sys.path = [str(prefix)] + sys.path
+
+# Harness imports
+from oth.libraries.subtest_factory import SubtestFactory
+from oth.libraries.layout_of_apps_directory import apptest_layout as layout
+from oth.libraries.layout_of_apps_directory import get_layout_from_scriptdir
+from oth.libraries.layout_of_apps_directory import get_path_to_logfile_from_scriptdir
+from oth.libraries import rgt_utilities
+from oth.libraries.config_file import rgt_config_file
+from oth.libraries.status_file_factory import StatusFileFactory
+from oth.libraries import status_file
+from oth.libraries.output_hub import OutputHub
+from oth.machine_types.machine_factory import MachineFactory
+
+MODULE_THRESHOLD_LOG_LEVEL = "DEBUG"
+"""str : The logging level for this module. """
+
+MODULE_LOGGER_NAME = __name__
+"""The logger name for this module."""
+
+def get_log_level():
+    """Returns the test harness driver threshold log level.
+
+    Returns
+    -------
+    int
+    """
+    return MODULE_THRESHOLD_LOG_LEVEL
+
+def get_logger_name():
+    """Returns the logger name for this module."""
+    return MODULE_LOGGER_NAME
+
+def create_parser(logger=None):
+    my_parser = argparse.ArgumentParser(description="Application Test Driver",
+                                        allow_abbrev=False)
+    my_parser.add_argument('-b', '--build',
+                           help='Build the application test',
+                           action='store_true')
+    my_parser.add_argument('-sb', '--separate-build-stdio',
+                           help='Separate the stdout and stderr of a build',
+                           action='store_true')
+    my_parser.add_argument('-c', '--check',
+                           help='Check the application test results',
+                           action='store_true')
+    my_parser.add_argument('-C', '--configfile',
+                           required=False,
+                           default=rgt_config_file.get_default_config_file_name(),
+                           type=str,
+                           help="Configuration file name (default: %(default)s)")
+    my_parser.add_argument('-d', '--scriptsdir',
+                           default=os.getcwd(),
+                           help='Provide full path to app/test/Scripts directory (default: current working directory)')
+    my_parser.add_argument('-i', '--uniqueid',
+                           help='Use previously generated unique id')
+    my_parser.add_argument('-l', '--launchid',
+                           required=False,
+                           type=str,
+                           help='Annotate test status with given harness launch id')
+    my_parser.add_argument('--loglevel',
+                           default='WARNING',
+                           choices=['NOTSET', 'notset', 'DEBUG', 'debug', 'INFO', 'info', 'WARNING', 'warning', 'ERROR', 'error', 'CRITICAL', 'critical'],
+                           help='Control the level of information printed to stdout.')
+    my_parser.add_argument('-r', '--resubmit',
+                           help='Have the application test batch script resubmit itself, optionally for a total submission count of N. Leave off N for infinite submissions.',
+                           action='store', nargs='?', type=int, const=-1, default=-1)
+    my_parser.add_argument('-s', '--submit',
+                           help='Submit the application test batch script',
+                           action='store_true')
+    return my_parser
+
+def backup_status_file(test_status_dir):
+    """ Make a backup copy of master status file """
+    #
+    # Set the name of the source file (i.e., the status file to backup).
+    # status_dir = test_status_dir/.. (i.e., app/test/Status)
+    #
+    status_dir = os.path.dirname(test_status_dir)
+    fname = status_file.StatusFile.FILENAME
+    src = os.path.join(status_dir, fname)
+
+    #
+    # Set the name of the destination file (i.e., the backup file)
+    #
+    currenttime = datetime.datetime.now().isoformat()
+    backup_filename = ".backup." + fname + "." + currenttime
+    dest = os.path.join(status_dir, backup_filename)
+
+    #
+    # Now copy the status file to the backup file.
+    #
+    if Path(src).exists():
+        shutil.copyfile(src, dest)
+
+def read_job_file(test_status_dir):
+    """ Read test_status_dir/job_id.txt to get job id """
+    job_id = "0"
+    fpath = os.path.join(test_status_dir, layout.job_id_filename)
+    if Path(fpath).exists():
+        jfile = open(fpath, "r")
+        job_line = jfile.readline()
+        jfile.close()
+        job_id = str.strip(job_line)
+    return job_id
+
+def auto_generated_scripts(harness_config,
+                           apptest,
+                           jstatus,
+                           launch_id,
+                           actions,
+                           a_logger,
+                           separate_build_stdio=False):
+    """
+    Generates and executes scripts to build, submit, and check a test.
+
+    This function uses the machine_types library.
+
+    """
+
+    status_dir = apptest.get_path_to_status()
+    ra_dir = apptest.get_path_to_runarchive()
+
+    # Instantiate the machine for this computer.
+    mymachine = MachineFactory.create_machine(harness_config, apptest, separate_build_stdio=separate_build_stdio)
+
+    # If the test needs to be run in serial outside of the scheduler, do that now
+    if mymachine.test_config.get_run_local():
+        actions['build'] = True
+        actions['submit'] = False
+        actions['run_local'] = True
+        actions['check'] = True
+        actions['resubmit'] = False
+
+    #-----------------------------------------------------
+    # In this section we build the binary.               -
+    #                                                    -
+    #-----------------------------------------------------
+    build_exit_value = 0
+    if actions['build']:
+        # Build the executable for this test on the specified machine
+        scripts_dir = os.getcwd()
+        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_START)
+        try:
+            build_exit_value = mymachine.build_executable()
+        except KeyboardInterrupt:
+            a_logger.log_critical(f"Detected CTRL+C, aborting build.")
+            os.chdir(scripts_dir)
+            build_exit_value = 21
+            pass
+        except Exception as e:
+            a_logger.log_critical(f"Exception generated during build, aborting test launch: {e}.")
+            os.chdir(scripts_dir)
+            build_exit_value = 1
+            pass
+
+        jstatus.log_event(status_file.StatusFile.EVENT_BUILD_END, build_exit_value)
+    #-----------------------------------------------------
+    # In this section we submit the job.                 -
+    #                                                    -
+    #-----------------------------------------------------
+    job_id = "0"
+    submit_exit_value = 0
+    run_exit_value = 0
+    if actions['submit'] and (build_exit_value != 0):
+        message = f"No submit action due to prior failed build."
+        a_logger.log_critical(message)
+    elif actions['submit'] and (build_exit_value == 0):
+        # determine run count and max
+        run_count = 1
+        max_count = 1
+        max_subs_cfg = mymachine.test_config.get_max_submissions()
+        if not max_subs_cfg:
+            # Ensure we have a valid string so the template variable can resolve
+            mymachine.test_config.set_max_submissions("-1")
+        else:
+            # If test.ini specified a finite amount of submissions (max_submissions):
+            #   on 1st iteration, use the value from test.ini file
+            #   on further iterations, get the resubmit count from `test_harness_driver.py -r N` invocation, passed through actions['resubmit']
+            max_subs_count = int(max_subs_cfg)
+
+            resub_count = actions['resubmit']
+            if resub_count == -1: # 1st iteration
+                resub_count = max_subs_count
+
+            # decrement the value to set the resubmission count for the next test_harness_driver run
+            resub_count -= 1
+
+            run_count = max_subs_count - resub_count
+            max_count = max_subs_count
+
+            # update test config parameter for substitution in batch script we're about to create
+            mymachine.test_config.set_max_submissions(str(resub_count))
+
+        run_count_str = f'{run_count}/{max_count}'
+
+
+        # Create the batch script
+        make_batch_script_status = mymachine.make_batch_script()
+
+        # Submit the batch script
+        if make_batch_script_status:
+            # Submit the batch script
+            jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_START, run_count_str)
+            try:
+                submit_exit_value = mymachine.submit_batch_script()
+            finally:
+                jstatus.log_event(status_file.StatusFile.EVENT_SUBMIT_END, submit_exit_value)
+
+            if submit_exit_value == 0:
+                # Log the job id.
+                job_id = read_job_file(status_dir)
+                if job_id != "0":
+                    jstatus.log_event(status_file.StatusFile.EVENT_JOB_QUEUED, job_id)
+                else:
+                    message = f"Submit error, failed to retrieve the job id."
+                    a_logger.log_critical(message)
+                    submit_exit_value = 1
+        else:
+            submit_exit_value = 1
+    elif actions['run_local'] and (build_exit_value == 0):
+        # then run the job locally
+        make_batch_script_status = mymachine.make_batch_script()
+
+        if make_batch_script_status:
+            # run the batch script locally
+            jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_START)
+            kill_file = apptest.get_path_to_kill_file()
+            if not Path(kill_file).exists():
+                with open(kill_file,"w") as kf:
+                    kf.write("")
+                message =  "The kill file '{filename}' has been created.\n".format(filename=kill_file)
+                a_logger.log_info(message)
+            try:
+                run_exit_value = mymachine.run_local_script()
+            finally:
+                jstatus.log_event(status_file.StatusFile.EVENT_BINARY_EXECUTE_END, run_exit_value)
+
+    #-----------------------------------------------------
+    # In this section we check the the results.          -
+    #                                                    -
+    #-----------------------------------------------------
+    check_exit_value = 0
+    if actions['check']:
+        if not actions['submit']:
+            job_id = read_job_file(status_dir)
+        if job_id != "0" or actions["run_local"]:
+            jstatus.log_event(status_file.StatusFile.EVENT_CHECK_START)
+            check_exit_value = mymachine.check_executable()
+            mymachine.start_report_executable()
+            mymachine.log_to_db()
+            jstatus.log_event(status_file.StatusFile.EVENT_CHECK_END, check_exit_value)
+        else:
+            message = f"Check error, failed to retrieve the job id."
+            a_logger.log_critical(message)
+            check_exit_value = 1
+
+    exit_values = {
+        'build'     : build_exit_value,
+        'check'     : check_exit_value,
+        'submit'    : submit_exit_value,
+        'run_local' : run_exit_value
+    }
+    return exit_values
+
+
+# This program coordinates the scripts build_executable.x and submit_executable.x
+# and is designed such that it will be called from the Scripts directory.
+#
+def test_harness_driver(argv=None):
+    import time
+
+    #
+    # Parse arguments
+    #
+    my_parser = create_parser()
+    Vargs = None
+    if argv == None:
+        Vargs = my_parser.parse_args()
+    else:
+        Vargs = my_parser.parse_args(argv)
+
+    # Create a stdout-only logger for test_harness_driver.py
+    driver_logger = OutputHub(
+        name="test_harness_driver_logger",
+        log_level="DEBUG",
+        console_log_level=Vargs.loglevel,
+        file_log_level=Vargs.loglevel,
+    )
+
+    do_build = Vargs.build
+    do_check = Vargs.check
+    do_submit = Vargs.submit
+
+    #
+    # If none of the individual actions were specified, act
+    # like the previous version and do 'build + submit'
+    #
+    if not (do_build or do_submit or do_check):
+        do_build  = True
+        do_submit = True
+
+    resubmit_count = -1 # -1 means resubmit forever until stopped
+    if do_submit:
+        resubmit_count = int(Vargs.resubmit)
+        if resubmit_count == 0:
+            # end of max_submissions
+            message = 'Resubmit count is 0. Stopping test cycle.\n'
+            print(message)
+            return 0
+
+    # run_local detected in autogenerated_scripts later
+    actions = {
+        'build'    : do_build,
+        'check'    : do_check,
+        'submit'   : do_submit,
+        'resubmit' : resubmit_count,
+        'run_local': False
+    }
+
+    # Create a harness config (which sets harness env vars)
+    harness_cfg = rgt_config_file(configfilename=Vargs.configfile, logger=driver_logger)
+
+    # Get the launch id for this test instance.
+    launch_id = Vargs.launchid
+    if launch_id == None:
+        now_str = datetime.datetime.now().isoformat()
+        if len(now_str) == 26: # now_str includes microseconds
+            time_str = now_str[0:-4] # strip off last four characters
+        else:
+            time_str = now_str
+        user_str = getpass.getuser()
+        testshot_key = 'system_log_tag'
+        testshot_str = 'notag'
+        testshot_cfg = harness_cfg.get_testshot_config()
+        if testshot_key in testshot_cfg.keys():
+            testshot_str = testshot_cfg[testshot_key]
+        launch_id = f'{testshot_str}/{user_str}@{time_str}'
+        driver_logger.log_info(f'Using launch id: {launch_id}')
+    else:
+        driver_logger.log_info(f'Generated launch id: {launch_id}')
+
+    # Get the unique id for this test instance.
+    unique_id = Vargs.uniqueid
+    if unique_id == None:
+        unique_id = rgt_utilities.unique_harness_id()
+        driver_logger.log_info(f'Generated unique id: {unique_id}')
+    else:
+        driver_logger.log_info(f'Using unique id: {unique_id}')
+
+    # Make sure we are executing in app/test/Scripts
+    testscripts = Vargs.scriptsdir
+    (apps_root, app, test) = get_layout_from_scriptdir(testscripts)
+    if os.getcwd() != testscripts:
+        os.chdir(testscripts)
+
+    # Prepend path to Scripts directory to my PYTHONPATH
+    sys.path.insert(0, testscripts)
+
+    # Instantiate application subtest
+    logger_name = get_logger_name()
+    fh_filepath = get_path_to_logfile_from_scriptdir(testscripts,unique_id)
+    # Logger threshold screens ALL traffic before it gets to file/console handlers. Set to lowest level
+    logger_threshold = MODULE_THRESHOLD_LOG_LEVEL
+    # Always set file handler level to MODULE_THRESHOLD_LOG_LEVEL
+    fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
+    # loglevel arg controls the console level
+    ch_threshold_log_level = Vargs.loglevel
+    a_logger = OutputHub(
+        name=logger_name,
+        log_level=logger_threshold,
+        log_file=fh_filepath,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level,
+    )
+
+    apptest = SubtestFactory.make_subtest(name_of_application=app,
+                                          name_of_subtest=test,
+                                          local_path_to_tests=apps_root,
+                                          logger=a_logger,
+                                          tag=unique_id)
+
+    #
+    # Check for the existence of the file "kill_test".
+    # If the file exists then the program will return
+    # without building and submitting scripts.
+    #
+    if do_submit:
+        kill_file = apptest.get_path_to_kill_file()
+        if Path(kill_file).exists():
+            message = f'The kill file {kill_file} exists. It must be removed to run this test.\n'
+            message += "Stopping test cycle."
+            apptest.logger.log_critical(message)
+            runarchive_dir = apptest.get_path_to_runarchive()
+            shutil.rmtree(runarchive_dir,ignore_errors=True)
+            return
+
+
+    # Create the status and run archive directories for this test instance
+    status_dir = apptest.create_test_status()
+    ra_dir = apptest.create_test_runarchive()
+
+    # Create the temporary workspace path for this test instance -- does not create build_dir
+    workspace = rgt_utilities.harness_work_space()
+    apptest.create_test_workspace(workspace)
+
+    # Implement the RGT_REUSE_BUILD_FROM environment variable
+    # Requires implementation in base_machine.py and layout_of_apps_directory.py
+    # Environment variable set by user or by runtests.py
+    build_dir = apptest.get_path_to_workspace_build()
+    if 'RGT_REUSE_BUILD_FROM' in os.environ and Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
+        build_dir = os.environ['RGT_REUSE_BUILD_FROM']
+    elif 'RGT_REUSE_BUILD_FROM' in os.environ:
+        # otherwise, update this envvar to the current build directory
+        os.environ['RGT_REUSE_BUILD_FROM'] = build_dir
+
+    # Update environment with the paths to test directories
+    apptest_env_vars = {
+        'APP_SOURCE_DIR'      : apptest.get_path_to_source(),
+        'TEST_SCRIPTS_DIR'    : testscripts,
+        'TEST_BUILD_DIR'      : build_dir,
+        'TEST_WORK_DIR'       : apptest.get_path_to_workspace_run(),
+        'TEST_SOURCE_DIR'     : apptest.get_path_to_test_source(),
+        'TEST_STATUS_DIR'     : status_dir,
+        'TEST_RUNARCHIVE_DIR' : ra_dir
+    }
+    rgt_utilities.set_harness_environment(apptest_env_vars, override=True)
+
+    # Make backup of master status file
+    backup_status_file(status_dir)
+
+    # We now create the status file if it doesn't already exist.
+    logger_name = "status_file."+ app + "__" + test
+    fh_filepath = apptest.path_to_status_logfile
+    # Logger threshold screens ALL traffic before it gets to file/console handlers. Set to lowest level
+    logger_threshold = MODULE_THRESHOLD_LOG_LEVEL
+    # Always set file handler level to MODULE_THRESHOLD_LOG_LEVEL
+    fh_threshold_log_level = MODULE_THRESHOLD_LOG_LEVEL
+    # loglevel arg controls the console level
+    ch_threshold_log_level = Vargs.loglevel
+    sfile_logger = OutputHub(
+        name=logger_name,
+        log_level=logger_threshold,
+        log_file=fh_filepath,
+        console_log_level=ch_threshold_log_level,
+        file_log_level=fh_threshold_log_level,
+    )
+    path_to_status_file = apptest.get_path_to_status_file()
+    jstatus = StatusFileFactory.create(path_to_status_file=path_to_status_file,
+                                       logger=sfile_logger)
+
+    # Initialize subtest entry 'unique_id' to status file.
+    jstatus.initialize_subtest(launch_id, unique_id)
+
+    #
+    # Build tests
+    #
+    exit_values = auto_generated_scripts(harness_cfg,
+                                         apptest,
+                                         jstatus,
+                                         launch_id,
+                                         actions,
+                                         a_logger,
+                                         Vargs.separate_build_stdio)
+    build_exit_value = 0
+    if actions['build']:
+        build_exit_value = exit_values['build']
+        apptest.logger.log_info(f'build exit value = {build_exit_value}')
+
+    run_local_exit_value = 0
+    if actions['run_local']:
+        run_local_exit_value = exit_values['run_local']
+        apptest.logger.log_info(f'run_local exit value = {run_local_exit_value}')
+
+    submit_exit_value = 0
+    if actions['submit']:
+        submit_exit_value = exit_values['submit']
+        apptest.logger.log_info(f'submit exit value = {submit_exit_value}')
+
+    check_exit_value = 0
+    if actions['check']:
+        check_exit_value = exit_values['check']
+        apptest.logger.log_info(f'check exit value = {check_exit_value}')
+
+    return (build_exit_value + run_local_exit_value + submit_exit_value + check_exit_value)
+
+
+if __name__ == "__main__":
+    exit_code = test_harness_driver()
+    exit(exit_code)
