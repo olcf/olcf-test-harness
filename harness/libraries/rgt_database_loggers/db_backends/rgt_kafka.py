@@ -13,7 +13,7 @@ from pathlib import Path
 from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient
 
-from libraries.rgt_database_loggers.db_backends.base_db import *
+from harness.libraries.rgt_database_loggers.db_backends.base_db import *
 
 class KafkaLogger(BaseDBLogger):
 

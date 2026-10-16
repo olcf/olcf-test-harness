@@ -25,19 +25,19 @@ class LSF(BaseScheduler):
         submit_cmd = [self.submit_executable]
 
         if "RGT_SUBMIT_QUEUE" in os.environ:
-            submit_cmd.extend(["-q", os.environ.get("RGT_SUBMIT_QUEUE")])
+            submit_cmd.extend(["-q", str(os.environ.get("RGT_SUBMIT_QUEUE"))])
         elif "RGT_BATCH_QUEUE" in os.environ:
-            submit_cmd.extend(["-q", os.environ.get("RGT_BATCH_QUEUE")])
+            submit_cmd.extend(["-q", str(os.environ.get("RGT_BATCH_QUEUE"))])
 
         if "RGT_SUBMIT_ARGS" in os.environ:
-            submit_cmd.extend(os.environ.get("RGT_SUBMIT_ARGS").split())
+            submit_cmd.extend(str(os.environ.get("RGT_SUBMIT_ARGS")).split())
 
         if "RGT_SUBMIT_ACCT" in os.environ:
-            submit_cmd.extend(["-P", os.environ.get("RGT_SUBMIT_ACCT")])
+            submit_cmd.extend(["-P", str(os.environ.get("RGT_SUBMIT_ACCT"))])
         elif "RGT_PROJECT_ID" in os.environ:
-            submit_cmd.extend(["-P", os.environ.get("RGT_PROJECT_ID")])
+            submit_cmd.extend(["-P", str(os.environ.get("RGT_PROJECT_ID"))])
 
-        if not self._submit_as_stdin:
+        if not self._submit_as_stdin():
             submit_cmd.append(job.batch_script)
 
         self._logger.log_info(" ".join(submit_cmd))
@@ -45,7 +45,7 @@ class LSF(BaseScheduler):
         with open(self.submit_stdout_file, "w") as stdout, open(
             self.submit_stderr_file, "w"
         ) as stderr:
-            if not self._submit_as_stdin:
+            if not self._submit_as_stdin():
                 result = subprocess.run(
                     submit_cmd, stdout=stdout, stderr=stderr, check=False
                 )
@@ -63,8 +63,10 @@ class LSF(BaseScheduler):
             records = submit_stdout.readlines()
 
         if result.returncode == 0:
-            job.id = self.job_id_regex.search(records[0]).group(0)
-            self._logger.print(f"LSF JobID = {job.id}")
+            job_id_search = self.job_id_regex.search(records[0])
+            if job_id_search:
+                job.id = job_id_search.group(0)
+                self._logger.print(f"LSF JobID = {job.id}")
         else:
             with open(self.submit_stderr_file, "r") as submit_stderr:
                 self._logger.log_critical(submit_stderr.read())

@@ -21,8 +21,8 @@ import dateutil.parser
 import subprocess
 from pathlib import Path
 
-from libraries.layout_of_apps_directory import apptest_layout
-from libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from harness.libraries.layout_of_apps_directory import apptest_layout
+from harness.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""

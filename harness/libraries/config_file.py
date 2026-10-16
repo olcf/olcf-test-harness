@@ -4,8 +4,8 @@ import configparser
 import logging
 from pathlib import Path
 
-from libraries.rgt_utilities import set_harness_environment
-from libraries.output_hub import OutputHub
+from harness.libraries.rgt_utilities import set_harness_environment
+from harness.libraries.output_hub import OutputHub
 
 class rgt_config_file:
 

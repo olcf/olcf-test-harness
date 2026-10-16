@@ -13,16 +13,16 @@ For adding support for a new machine, see :ref:`section_new_machine`.
 Installation
 ------------
 
-To launch the OLCF Test Harness (OTH) you must first access the harness code.
+To launch the OLCF Test Harness (OTH) you must first access the core harness code.
 This can be done in two ways: by obtaining your own copy of the code or using the centralized harness code that is available on most OLCF systems.
 
 Option 1: Using the centralized (pre-built) OTH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On Andes and Frontier
+On Riker and Frontier
 """""""""""""""""""""
 
-On most OLCF machines, the code is already installed in: */sw/acceptance/olcf-test-harness*
+On all OLCF machines, the latest release of the code is already installed in: */sw/acceptance/olcf-test-harness*
 
 Setup the environment:
 
@@ -30,11 +30,11 @@ Setup the environment:
 
     export OLCF_HARNESS_DIR=/sw/acceptance/olcf-test-harness
     export PATH=$OLCF_HARNESS_DIR/harness/bin:$OLCF_HARNESS_DIR/harness/utilities:$PATH
-    # Or, use the module (not needed anymore, but does the PATH modification)
+    # Or, use the module
     #module use $OLCF_HARNESS_DIR/modulefiles
     #module load olcf_harness
 
-    # Machine name examples: andes, frontier, odo
+    # Machine name examples: riker, frontier, odo
     # Check ${OLCF_HARNESS_DIR}/configs/*.ini to see all available machines
     export OLCF_HARNESS_MACHINE=<machine_name>
 
@@ -75,32 +75,35 @@ Launching the OTH
 Basic Usage
 ^^^^^^^^^^^
 
-Create a directory where you will place input files, which will instruct the OTH on which tests to launch:
+There are 3 directory trees that the OTH expects to see:
+
+1. "Launch" directory: where you run the ``runtests.py`` command from, contains the input files defining which tests to run.
+2. "Path_to_tests" directory: where the content of each app-test is cloned or developed locally.
+3. "Scratch" directory: where the OTH automatically populates build & work directories for use within the test.
+
+First, create a launch directory where you will place the ``runtests.py`` input files, which instructs the OTH on which tests to launch:
 
 .. code-block:: bash
 
-    mkdir summit_testshot
-    cd summit_testshot
+    mkdir frontier_testshot
+    cd frontier_testshot
 
-Prepare an input file of tests in this directory (e.g., *rgt.input.summit*).
+Prepare an input file of tests in this directory (e.g., *rgt.input.frontier*).
 Provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
-In this example for Summit, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
-Optionally, set ``Path_to_tests`` in this file to the location where you would like application source and run files to be kept
-(note that the directory provided must be an existing directory).
-Alternatively, you may set the *RGT_PATH_TO_TESTS* environment variable.
-Either the *RGT_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be provided.
+In the example below, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
+Either the *RGT_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be set, and provide a path to a directory that holds the application-test configurations (e.g., for ``runtests.py --mode start -i rgt.inp``, ``$RGT_PATH_TO_TESTS/<app>/<test>`` should exist).
 
 .. note::
 
     Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``/*RGT_PATH_TO_TESTS*.
-    The OTH can automatically clone Git repositories from remote servers.
+    The OTH can also automatically clone Git repositories from remote servers.
     Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine` or :ref:`env_vars_config`).
-    Applications not hosted in GitHub/GitLab must be manually placed in ``Path_to_tests``.
+    Applications not hosted in GitHub/GitLab should be manually placed in ``Path_to_tests``.
 
 .. code-block:: bash
 
-    # Path_to_tests can also replaced by setting the RGT_PATH_TO_TESTS environment variable
-    Path_to_tests = /some/path/to/my/applications
+    # Path_to_tests can be specified here instead of the RGT_PATH_TO_TESTS environment variable, if desired
+    #Path_to_tests = /some/path/to/my/applications
     
     Test = hello_mpi c_n001
     Test = hello_mpi c_n002
@@ -116,26 +119,26 @@ For example:
     Include 1-node-tests.inp
     Include 2-node-tests.inp
 
-Set a scratch area for this specific instance of the harness (a default is set from *$OLCF_HARNESS_MACHINE.ini*, but this is how to change from the default):
+Second, set a scratch area for this specific instance of the harness (a default can be set in *$OLCF_HARNESS_MACHINE.ini*, this is how to override the default):
 
 .. code-block:: bash
 
     export RGT_PATH_TO_SSPACE=/some/path/to/my/Scratch
     # optional (in place of Path_to_tests in input file):
-    export RGT_PATH_TO_TESTS=/some/path/to/my/applications
+    #export RGT_PATH_TO_TESTS=/some/path/to/my/applications
 
 
-The harness supports command line tasks as well as input file tasks.
-If no tasks are provided in the input file, it will use the command line mode.
+The harness supports providing tasks/modes on the command-line or in the input file.
+If no tasks are provided in the input file, ``runtests.py`` will use the command line mode.
 To launch via the command line, use a command like the following:
 
 .. code-block:: bash
 
     # Preferred to checkout separately, to verify that the checkout was successful
-    runtests.py --inputfile rgt.input.summit --mode checkout
-    runtests.py --inputfile rgt.input.summit --mode start stop
+    runtests.py -i rgt.input.frontier --mode checkout
+    runtests.py -i rgt.input.frontier --mode start stop
 
-To launch tasks in the input file instead of the command-line, add lines like the following to ``rgt.input.summit``:
+To launch tasks in the input file instead of the command-line, add lines like the following to ``rgt.input.frontier``:
 
 .. code-block:: text
 
@@ -144,12 +147,11 @@ To launch tasks in the input file instead of the command-line, add lines like th
     harness_task start_tests
     harness_task stop_tests
 
-When using the checkout mode, the application source repository will be cloned to the *<Path_to_tests>/<app-name>* directory for all the tests,
-but no tests will be run.
+When using the checkout mode, the application source repository will be cloned to the *<Path_to_tests>/<app-name>* directory for all the tests, but no tests will be run.
 If the repository already exists, no action will be taken.
-Updating the repo via ``git pull`` or ``git fetch`` should be done outside of the test harness.
+Updating the repo via ``git pull`` or ``git fetch`` must be done outside of the test harness.
 
-After using the start mode, results can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/<testid>*.
+After using the *start* mode, results can be found in *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/<testid>*.
 Results of the most recent test run can be found in the *<Path_to_tests>/<app-name>/<test-name>/Run_Archive/latest* symbolic link.
 
 .. note::
@@ -175,7 +177,7 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
     --shuffle
             Shuffle the order of tests before launching.
     -c CONFIGFILE, --configfile CONFIGFILE
-            Configuration file name (default: master.ini)
+            Configuration file name (default: $OLCF_HARNESS_MACHINE.ini)
     -l {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}, --loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}
             Output logging level (default: WARNING)
     -o {screen,logfile}, --output {screen,logfile}
@@ -193,7 +195,7 @@ The primary OTH driver script, ``runtests.py``, supports the following command-l
     --reuse-first-build
             If running a test that can resubmit, re-use the first instance of the build for all tests in that chain.
     --reuse-build-from-id REUSE_BUILD_FROM_ID
-            Re-use the build from the specified test ID.
+            Re-use the build from the specified test ID. This test ID must exist for the test being run.
     --app-filter APP_FILTER
             A comma-separated list of regular expressions or strings used to select specific applications from the provided input file.
     --test-filter TEST_FILTER
@@ -222,11 +224,7 @@ The precedence of configuration options for the batch queue and project ID from 
 
 1. **batch_queue** and **project_id** from *$OLCF_HARNESS_MACHINE.ini* (overridden by setting **RGT_BATCH_QUEUE** and **RGT_PROJECT_ID** at launch)
 2. **batch_queue** and **project_id** from *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
-3. User-set environment variables: **RGT_SUBMIT_QUEUE** and **RGT_SUBMIT_ACCT**
-
-Since the test configuration overrides the machine configuration for these two variables, the user cannot use the same environment variable names to override the settings.
-The test configuration will just override whatever the user sets, because the OTH does not know who sets **RGT_BATCH_QUEUE** -- the user or the *machine.ini*.
-So, two separate variables are used to override the machine and test configuration: **RGT_SUBMIT_QUEUE** for setting a batch queue and **RGT_SUBMIT_ACCT** for setting the account ID for submission.
+3. A big hammer to override all test-specific settings: environment variables **RGT_SUBMIT_QUEUE** and **RGT_SUBMIT_ACCT**
 
 
 .. understanding_output:
@@ -242,7 +240,7 @@ There are 4 directories referenced in this section:
 - **$RESULTS_DIR** - the directory used to launch the job and store relevant output, equal to **<Path_to_tests>/<app>/<test>/Run_Archive/<test-id>**
 - **$STATUS_DIR** - the directory used to store harness status files, equal to **<Path_to_tests>/<app>/<test>/Status/<test-id>**
 
-**$RESULTS_DIR** should be considered the best starting point, as it contains symbolic links to the other 3 directories.
+**$RESULTS_DIR** is the best starting point, as it contains symbolic links to the other 3 directories.
 
 Build, Submit, and Check Output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
