@@ -9,9 +9,12 @@ from oth.libraries.output_hub import OutputHub
 class SchedulerJob(ABC):
     """Scheduler job class."""
 
-    def __init__(self, batch_script: str, id: Optional[str] = None):
+    def __init__(
+        self, batch_script: str, id: Optional[str] = None, name: Optional[str] = None
+    ):
         self.batch_script: str = batch_script
         self.id: Optional[str] = id
+        self.name: Optional[str] = name
 
 
 class BaseScheduler(ABC):

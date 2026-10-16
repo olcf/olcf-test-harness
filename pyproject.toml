@@ -13,7 +13,10 @@ dependencies = []
 dev = [
     "mypy",
     "pytest",
-    "ruff"
+    "ruff",
+    "types-PyYAML",
+    "types-python-dateutil",
+    "types-requests"
 ]
 docs = [
     "sphinx",
