@@ -21,9 +21,10 @@ docs = [
     "sphinx-rtd-theme"
 ]
 ext = [
-    "pyyaml",
-    "jinja2",
-    "python-dateutil"
+    "PyYAML",
+    "Jinja2",
+    "python-dateutil",
+    "requests"
 ]
 
 [project.scripts]
