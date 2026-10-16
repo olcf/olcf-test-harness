@@ -332,7 +332,7 @@ class KafkaLogger(BaseDBLogger):
         self.__logger.log_debug(f"Posting external metrics to Kafka")
 
         # Add time to the query dictionary
-        query_dict = tags | values
+        query_dict = {**tags, **values}
         query_dict['time'] = log_time
         # Kafka also wants a timestamp:
         query_dict['timestamp'] = self._event_time_to_timestamp(log_time)
