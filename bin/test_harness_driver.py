@@ -25,7 +25,7 @@ import sys
 from shlex import split
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent.parent
+prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # Harness imports

@@ -2,12 +2,14 @@ import argparse as ap
 import sys
 from typing import List
 
-#from oth.libraries import input_files, regression_test
-#from oth.libraries.config_file import rgt_config_file
-#from oth.libraries.output_hub import OutputHub
+from oth.libraries import input_files, regression_test
+from oth.libraries.config_file import rgt_config_file
+from oth.libraries.output_hub import OutputHub
+
 
 def comma_separated_items(value: str) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
 
 def run(args: ap.Namespace) -> None:
     oh: OutputHub = OutputHub(__name__)
@@ -49,6 +51,7 @@ def run(args: ap.Namespace) -> None:
     oh.log_info("running the harness tasks")
     rgt.run_me()
     oh.log_info("completed running the harness tasks")
+
 
 def main() -> None:
     # argument parser
@@ -201,5 +204,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    #main()
-    print("made it")
+    main()

@@ -16,7 +16,7 @@ import re
 import sys
 from pathlib import Path
 
-prefix = Path(__file__).resolve().parent.parent.parent
+prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
 from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
