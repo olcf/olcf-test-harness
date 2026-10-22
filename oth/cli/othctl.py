@@ -2,55 +2,16 @@ import argparse as ap
 import sys
 from typing import List
 
-from oth.libraries import input_files, regression_test
+from oth import __version__
 from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
+
+from .create import create
+from .run import run
 
 
 def comma_separated_items(value: str) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def run(args: ap.Namespace) -> None:
-    oh: OutputHub = OutputHub(__name__)
-
-    oh.log_info("reading the harness input file")
-    input_file = input_files.rgt_input_file(
-        inputfilename=args.input_file,
-        runmodecmd=args.mode,
-        app_filter=args.app_filter,
-        test_filter=args.test_filter,
-        logger=oh,
-    )
-    oh.log_info("completed reading the harness input file")
-
-    if len(input_file.get_tests()) == 0:
-        oh.print("No tests were found in the input file. Aborting!")
-        sys.exit(0)
-
-    oh.log_info("reading the harness config file")
-    try:
-        config = rgt_config_file(configfilename=args.config_file, logger=oh)
-    except NameError as e:
-        oh.log_critical(str(e))
-        sys.exit(1)
-    oh.log_info("completed reading the harness config file")
-
-    rgt = regression_test.Harness(
-        config,
-        input_file,
-        args.log_level,
-        args.output,
-        args.separate_build_stdio,
-        args.reuse_first_build,
-        args.reuse_build_from_id,
-        shuffle=args.shuffle,
-    )
-    oh.log_info(f"created an instance of the harness: {rgt}")
-
-    oh.log_info("running the harness tasks")
-    rgt.run_me()
-    oh.log_info("completed running the harness tasks")
 
 
 def main() -> None:
@@ -60,6 +21,11 @@ def main() -> None:
         description="OLCF Test Harness CLI driver.",
         epilog="See https://github.com/olcf/olcf-test-harness.git",
         formatter_class=ap.ArgumentDefaultsHelpFormatter,
+    )
+    arg_parser.add_argument(
+        "--version",
+        action="version",
+        version=__version__,
     )
     arg_parser.add_argument(
         "-l",
@@ -83,6 +49,31 @@ def main() -> None:
     sub_parsers = arg_parser.add_subparsers(
         dest="subcommand", help="harness action"
     )  # TODO: add required=True when Python >= 3.7
+
+    # create subparser
+    create_parser: ap.ArgumentParser = sub_parsers.add_parser(
+        "create",
+        help="create application test",
+        formatter_class=ap.ArgumentDefaultsHelpFormatter,
+    )
+    create_parser.add_argument(
+        "application",
+        type=str,
+        help="application to be tested",
+    )
+    create_parser.add_argument(
+        "test",
+        type=str,
+        help="name of the application test",
+    )
+    create_parser.add_argument(
+        "--scheduler",
+        default="slurm",
+        type=str,
+        choices=("slurm",),
+        required=False,
+        help="test scheduler",
+    )
 
     # run subparser
     run_parser: ap.ArgumentParser = sub_parsers.add_parser(
@@ -173,11 +164,13 @@ def main() -> None:
     oh.print(f"Using machine config: {args.config_file}")
 
     # branch to sub-command
-    if args.subcommand == "run":
+    if args.subcommand == "create":
+        create(args)
+    elif args.subcommand == "run":
         run(args)
     else:
-        # TODO: can be removed when the above todo has been done
-        raise ValueError("you must specify a valid subcommand - options: (run)")
+        # TODO: remove when >= Python 3.7 because we can add required=True to add_subparsers
+        raise ValueError("you must specify a valid subcommand - options: (create, run)")
 
     oh.log_info("ending harness")
 
