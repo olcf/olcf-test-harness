@@ -28,8 +28,6 @@ set -o pipefail
 module reset
 # Assumes MPI is loaded by default
 module list
-
-exit 0
 """
 
 EXAMPLE_CHECK_SCRIPT: str = """\
@@ -46,8 +44,6 @@ else
     cat output.txt
     exit 1
 fi
-
-
 """
 
 EXAMPLE_SLURM_TEMPLATE: str = """\
@@ -112,7 +108,7 @@ replacements:
     walltime: 1
     batch_filename: run.sh
     build_cmd: ./build.sh
-    check_cmd: './check.sh $(({nodes}*{ppn}))'
+    check_cmd: './check.sh $(({nnodes}*{ppn}))'
 
     # User-defined replacements
     ppn: 1
@@ -160,6 +156,7 @@ def create(args: ap.Namespace) -> None:
         # build script
         with open(path_to_application / "Source/build.sh", "w") as f:
             f.write(EXAMPLE_BUILD_SCRIPT)
+        (path_to_application / "Source/build.sh").chmod(0o755)
 
         # dummy C++ code
         with open(path_to_application / "Source/hello_world.cpp", "w") as f:
@@ -198,6 +195,7 @@ def create(args: ap.Namespace) -> None:
 
         # check script
         if not (app_path / "check.sh").exists():
-            with open(app_path / "check.sh") as f:
+            with open(app_path / "check.sh", "w") as f:
                 f.write(EXAMPLE_CHECK_SCRIPT)
+            (app_path / "check.sh").chmod(0o755)
         (test_path / "check.sh").symlink_to("../../Source/Common_Scripts/check.sh")
