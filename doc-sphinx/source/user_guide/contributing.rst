@@ -12,7 +12,7 @@ Please report bugs to the `OTH GitHub Repository <https://github.com/olcf/olcf-t
 Include the following information in your Issue:
 
 - What are you trying to do?
-- Command-line usage (ie, ``runtests.py -i rgt.inp ...``)
+- Command-line usage (ie, ``othctl run -i rgt.inp ...``)
 - Standard output & error from running
 - The contents of your harness input file (ie, *rgt.inp*)
 - The contents of your machine configuration file (*<machine>.ini*)

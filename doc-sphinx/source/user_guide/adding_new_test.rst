@@ -53,7 +53,7 @@ This directory contains templates and input files for the test -- a test must no
 Second, the application's source code and required build script should reside within the *Source* directory of the repository.
 Optionally, a test may add or override files from the application's *Source* tree by providing a *Source* directory within the test directory.
 This directory will be overlayed over the application *Source* directory, so it may use the same internal directory structure.
-Please note that unlike in the application *Source* directory, symbolic links are not preserved, so any broken symbolic links will cause ``runtests.py`` to fail.
+Please note that unlike in the application *Source* directory, symbolic links are not preserved, so any broken symbolic links will cause ``othctl run`` to fail.
 
 Example Repository Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -116,7 +116,7 @@ YAML is the preferred file format starting in v3.2 of the OTH.
             check_cmd = ./check_hello_mpi_c.sh 
 
             #### Optional built-in replacements:
-            # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
+            # Set to 1 if you want to allow this test to be resubmitted automatically with ``othctl run --mode start ...``
             resubmit = 0
             # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
             # Set to 0 (or don't define) for indefinite resubmissions
@@ -148,7 +148,7 @@ YAML is the preferred file format starting in v3.2 of the OTH.
         .. note::
 
             Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
-            For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``runtests.py``, then *__nodes__* will be replaced with 4.
+            For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``othctl run``, then *__nodes__* will be replaced with 4.
 
     .. tab-item:: YAML file format
 
@@ -179,7 +179,7 @@ YAML is the preferred file format starting in v3.2 of the OTH.
                 check_cmd: ./check_{my_job_name}.sh 
 
                 #### Optional built-in replacements:
-                # Set to 1 if you want to allow this test to be resubmitted automatically with ``runtests.py --mode start ...``
+                # Set to 1 if you want to allow this test to be resubmitted automatically with ``othctl run --mode start ...``
                 resubmit: 0
                 # Used in conjunction with resubmit argument to limit total submissions/runs of a test (inclusive of initial run)
                 # Set to 0 (or don't define) for indefinite resubmissions
