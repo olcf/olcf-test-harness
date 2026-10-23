@@ -12,7 +12,9 @@ set -o pipefail
 
 ### This is an example build script for the application.
 
-source Common_Scripts/env.sh
+source Common_Scripts/setup_env.sh
+
+mpicxx hello_world.cpp -o hello_world
 
 exit 0
 """
@@ -24,6 +26,7 @@ set -o pipefail
 ### This script configures the environment for building and running the application.
 
 module reset
+# Assumes MPI is loaded by default
 module list
 
 exit 0
@@ -35,37 +38,99 @@ set -o pipefail
 
 ### This script checks the job output to see if it ran correctly
 
-if grep output.* "Hello, world!"; then
+if [ "$(grep "Hello from rank" output.txt | wc -l)" == "${1:-1}" ]; then
+    echo "Found expected number of processes: ${1:-1}"
+    exit 0
+else
+    echo "Did not find expected number of processes (${1:-1}), found $(grep "Hello from rank" output.txt | wc -l). Output:"
+    cat output.txt
+    exit 1
+fi
 
 
 """
 
 EXAMPLE_SLURM_TEMPLATE: str = """\
 #!/usr/bin/bash
-#SBATCH -N{{ nodes }}
-#SBTACH -n{{ nodes | int * ppn | int }}
+#SBATCH -t {{walltime}}
+#SBATCH -N {{nodes}}
+#SBATCH -n {{(nodes | int)*(ppn | int)}}
+#SBATCH --job-name={{job_name}}
 
-### This is a slurm submit script for the application.
+# Define environment variables needed
+export SCRIPTS_DIR="{{scripts_dir}}"
+export WORK_DIR="{{working_dir}}"
+export RESULTS_DIR="{{results_dir}}"
+export HARNESS_ID="{{harness_id}}"
+export BUILD_DIR="{{build_dir}}"
 
-export BUILD_DIR="{{ build_dir }}"
+# Ensure we are in the starting directory
+cd $SCRIPTS_DIR
 
-source ${BUILD_DIR}/Common_Scripts/env.sh
+# Make the working scratch space directory.
+if [ ! -e $WORK_DIR ]
+then
+    mkdir -p $WORK_DIR
+fi
 
-srun -N{{ nodes }} -n {{ nodes | int * ppn | int }} python3 hello_world.py
+# Change directory to the working directory.
+cd $WORK_DIR
 
+env &> job.environ
+scontrol show hostnames > job.nodes
+ldd ${BUILD_DIR}/hello_world > ldd.txt
+
+# Run the executable.
+log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
+
+srun -N {{nodes}} -n {{(nodes | int)*(ppn | int)}} --ntasks-per-node={{ppn}} ${BUILD_DIR}/hello_world | tee output.txt
+
+log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
+
+# Ensure we return to the starting directory.
+cd $SCRIPTS_DIR
+
+# Copy the output back to the $RESULTS_DIR, if desired
+cp $WORK_DIR/* $RESULTS_DIR
+
+# Check the final results.
+check_executable_driver.py -p $RESULTS_DIR -i $HARNESS_ID
+
+# Uncomment this if you want the test to resubmit
+#test_harness_driver.py -r {{max_submissions}} ;;
 """
 
 EXAMPLE_TEST_INPUT: str = """
-nodes: 1
-ppn: 1
+variables:
+    nnodes: 1
+    ppn: 1
+
+replacements:
+    # Required replacements
+    job_name: 'run_n{nnodes}_{ppn}ppn'
+    nodes: '{nnodes}'
+    walltime: 1
+    batch_filename: run.sh
+    build_cmd: ./build.sh
+    check_cmd: './check.sh $(({nodes}*{ppn}))'
+
+    # User-defined replacements
+    ppn: 1
 """
 
 EXAMPLE_APPLICATION_SCRIPT: str = """\
-#!/usr/bin/env python3
+#include <iostream>
+#include <mpi.h>
 
-print("Hello, world!")
-
-exit(0)
+int main(int argc, char **argv) {
+  int rank, numprocs;
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+  std::cout << "Hello from rank " << rank << " of " << numprocs << std::endl;
+  MPI_Finalize();
+  return 0;
+}
 """
 
 
@@ -86,7 +151,9 @@ def create(args: ap.Namespace) -> None:
     )
 
     if path_to_application.exists():
-        oh.log_info(f"Application '{args.application}' already exists")
+        oh.log_warning(
+            f"application '{args.application}' already exists; not creating application"
+        )
     else:
         (path_to_application / "Source/Common_Scripts").mkdir(parents=True)
 
@@ -94,8 +161,12 @@ def create(args: ap.Namespace) -> None:
         with open(path_to_application / "Source/build.sh", "w") as f:
             f.write(EXAMPLE_BUILD_SCRIPT)
 
+        # dummy C++ code
+        with open(path_to_application / "Source/hello_world.cpp", "w") as f:
+            f.write(EXAMPLE_APPLICATION_SCRIPT)
+
         # env script
-        with open(path_to_application / "Source/Common_Scripts/env.sh", "w") as f:
+        with open(path_to_application / "Source/Common_Scripts/setup_env.sh", "w") as f:
             f.write(EXAMPLE_ENV_SCRIPT)
 
     if path_to_test.exists():
