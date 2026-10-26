@@ -29,7 +29,7 @@ Setup the environment:
 .. code-block:: bash
 
     export OLCF_HARNESS_DIR=/sw/acceptance/olcf-test-harness
-    export PATH=$OLCF_HARNESS_DIR/harness/bin:$OLCF_HARNESS_DIR/harness/utilities:$PATH
+    export PATH=${OLCF_HARNESS_DIR}/bin:${PATH}
     # Or, use the module
     #module use $OLCF_HARNESS_DIR/modulefiles
     #module load olcf_harness
@@ -53,7 +53,7 @@ Setup the environment:
 
     cd olcf-test-harness
     export OLCF_HARNESS_DIR=${PWD}
-    export PATH=$PWD/harness/bin:$PWD/harness/utilities:$PATH
+    export PATH=${PWD}/bin:${PATH}
     # Or, use the legacy environment module to do the PATH modification
     #module use $OLCF_HARNESS_DIR/modulefiles
     #module load olcf_harness
@@ -77,11 +77,11 @@ Basic Usage
 
 There are 3 directory trees that the OTH expects to see:
 
-1. "Launch" directory: where you run the ``runtests.py`` command from, contains the input files defining which tests to run.
+1. "Launch" directory: where you run the ``othctl run`` command from, contains the input files defining which tests to run.
 2. "Path_to_tests" directory: where the content of each app-test is cloned or developed locally.
 3. "Scratch" directory: where the OTH automatically populates build & work directories for use within the test.
 
-First, create a launch directory where you will place the ``runtests.py`` input files, which instructs the OTH on which tests to launch:
+First, create a launch directory where you will place the ``othctl run`` input files, which instructs the OTH on which tests to launch:
 
 .. code-block:: bash
 
@@ -91,7 +91,7 @@ First, create a launch directory where you will place the ``runtests.py`` input 
 Prepare an input file of tests in this directory (e.g., *rgt.input.frontier*).
 Provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
 In the example below, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
-Either the *RGT_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be set, and provide a path to a directory that holds the application-test configurations (e.g., for ``runtests.py --mode start -i rgt.inp``, ``$RGT_PATH_TO_TESTS/<app>/<test>`` should exist).
+Either the *RGT_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be set, and provide a path to a directory that holds the application-test configurations (e.g., for ``othctl run --mode start -i rgt.inp``, ``$RGT_PATH_TO_TESTS/<app>/<test>`` should exist).
 
 .. note::
 
@@ -129,14 +129,14 @@ Second, set a scratch area for this specific instance of the harness (a default 
 
 
 The harness supports providing tasks/modes on the command-line or in the input file.
-If no tasks are provided in the input file, ``runtests.py`` will use the command line mode.
+If no tasks are provided in the input file, ``othctl run`` will use the command line mode.
 To launch via the command line, use a command like the following:
 
 .. code-block:: bash
 
     # Preferred to checkout separately, to verify that the checkout was successful
-    runtests.py -i rgt.input.frontier --mode checkout
-    runtests.py -i rgt.input.frontier --mode start stop
+    othctl run -i rgt.input.frontier --mode checkout
+    othctl run -i rgt.input.frontier --mode start stop
 
 To launch tasks in the input file instead of the command-line, add lines like the following to ``rgt.input.frontier``:
 
@@ -168,38 +168,42 @@ Command-line Options
 The OTH receives configurations from two primary methods: command-line flags and environment variables.
 This section details the command-line parameters and the next section details available environment variables.
 
-The primary OTH driver script, ``runtests.py``, supports the following command-line parameters:
+The primary OTH run command, ``othctl run``, supports the following command-line parameters:
 
 .. code-block::
 
-    -i INPUTFILE, --inputfile INPUTFILE
-            Input file name (default: rgt.input)
-    --shuffle
-            Shuffle the order of tests before launching.
-    -c CONFIGFILE, --configfile CONFIGFILE
-            Configuration file name (default: $OLCF_HARNESS_MACHINE.ini)
-    -l {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}, --loglevel {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}
-            Output logging level (default: WARNING)
+    usage: othctl run [-h] [-i INPUT_FILE] [--shuffle] [-o {screen,logfile}]
+                    [-m {checkout,start,stop,status} [{checkout,start,stop,status} ...]]
+                    [-sb] [--reuse-first-build]
+                    [--reuse-build-from-id REUSE_BUILD_FROM_ID]
+                    [--app-filter APP_FILTER] [--test-filter TEST_FILTER]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    -i INPUT_FILE, --input-file INPUT_FILE
+                            input file (default: rgt.input)
+    --shuffle             shuffle the test launch order (default: False)
     -o {screen,logfile}, --output {screen,logfile}
-            Destination for harness stdout/stderr messages:
-                'screen'  - print messages to console (default)
-                'logfile' - print messages to log file
-    -m {task} [{task} ...], --mode {task} [{task} ...]
-            Harness task:
-                'checkout'   - checkout application tests listed in input file
-                'start'      - start application tests listed in input file
-                'stop'       - stop application tests listed in input file
-                'status'     - check status of application tests listed in input file
+                            test output method (default: screen)
+    -m {checkout,start,stop,status} [{checkout,start,stop,status} ...], --mode {checkout,start,stop,status} [{checkout,start,stop,status} ...]
+                            perform checkout, start, stop, or status on
+                            application tests listed in the input file (default:
+                            ['use_input_file'])
     -sb, --separate-build-stdio
-            Separate output from build into build_out.stderr.txt and build_out.stdout.txt
-    --reuse-first-build
-            If running a test that can resubmit, re-use the first instance of the build for all tests in that chain.
+                            separate build output into build_out.stderr.txt and
+                            build_out.stdout.txt (default: False)
+    --reuse-first-build   for re-submittable tests, re-use the first build in
+                            the chain (default: False)
     --reuse-build-from-id REUSE_BUILD_FROM_ID
-            Re-use the build from the specified test ID. This test ID must exist for the test being run.
+                            re-use build from specified test ID (default: None)
     --app-filter APP_FILTER
-            A comma-separated list of regular expressions or strings used to select specific applications from the provided input file.
+                            comma-separated list of regular expressions or strings
+                            used to select specific applications from the provided
+                            input file (default: [])
     --test-filter TEST_FILTER
-            A comma-separated list of regular expressions or strings used to select specific tests from the provided input file.
+                            comma-separated list of regular expressions or strings
+                            used to select specific tests from the provided input
+                            file (default: [])
 
 
 .. _runtime_configurable_parameters:
@@ -276,13 +280,13 @@ The table below lists the available log files and what scope messages in each fi
      - Description
    * - **<launch_directory>**
      - ``main.log``
-     - The highest-level execution information. For example, "Completed reading the harness input file." This scope ends when the ``runtests.py`` command returns.
+     - The highest-level execution information. For example, "Completed reading the harness input file." This scope ends when the ``othctl run`` command returns.
    * - **<launch_directory>/harness_log_files.<timestamp>**
      - ``libraries.regression_test.<timestamp>.txt``
-     - High-level logging messages while preparing tests. For example, "Application Hello, World! has completed launching." This scope ends when the ``runtests.py`` command returns.
+     - High-level logging messages while preparing tests. For example, "Application Hello, World! has completed launching." This scope ends when the ``othctl run`` command returns.
    * - **<launch_directory>/harness_log_files.<timestamp>/<app>**
      - ``<app>__<test>.logfile.txt``
-     - A brief scope between the regression_test log-file and the log files located inside the test's results directory. This scope ends when the ``runtests.py`` command returns.
+     - A brief scope between the regression_test log-file and the log files located inside the test's results directory. This scope ends when the ``othctl run`` command returns.
    * - **${RESULTS_DIR}/LogFiles**
      - application_logfile.txt
      - The majority of log messages generated while building, submitting, running, and checking a test.

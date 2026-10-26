@@ -20,7 +20,7 @@ executables, running jobs, and checking test results.
 Execution Overview
 =====================
 
-*runtests.py* is the command used to execute the OTH. Users provide an
+**othctl run** is the command used to execute the OTH. Users provide an
 input file that lists the set of tests to run, and a command-line option
 controls whether to run a single iteration (**\-\-mode start stop**)
 or continuously (**\-\-mode start**). In continuous mode, the test job script has the

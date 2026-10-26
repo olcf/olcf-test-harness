@@ -71,10 +71,10 @@ For example, ``machine_name = <obtain_from_environment>`` will fetch the value f
     RGT_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
 
     RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work & build spaces).
-    RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of 'Path_to_tests' in ``runtests.py`` input file).
+    RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of 'Path_to_tests' in ``othctl run`` input file).
     RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file & database logging.
     RGT_REUSE_BUILD_FROM            Path to a pre-existing build compatible with the currently-launching tests.
-                                        Preferred usage is to use the `--reuse-first-build` flag of `runtests.py`, which
+                                        Preferred usage is to use the `--reuse-first-build` flag of `othctl run`, which
                                         will internally set this variable to reuse the first build for resubmitted tests.
                                         The `--reuse-build-from-id` flag is also available to specify a test ID to use
                                         the build from.
@@ -99,8 +99,8 @@ These variables are detailed below:
     RGT_TEST_SCRIPTS_DIR        Path to the scripts directory of the currently-running test.
     RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
     RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
-    RGT_REUSE_BUILD_FROM        If `--reuse-first-build` set in `runtests.py`, path to the first build of the currently-running test,
-                                to be used if a test is resubmitted. Or if `--reuse-build-from-id` is set in `runtests.py`, the path
+    RGT_REUSE_BUILD_FROM        If `--reuse-first-build` set in `othctl run`, path to the first build of the currently-running test,
+                                to be used if a test is resubmitted. Or if `--reuse-build-from-id` is set in `othctl run`, the path
                                 to the build of the test with a test ID matching that flag's value.
 
 

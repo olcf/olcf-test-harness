@@ -7,11 +7,11 @@ proc ModulesHelp { } {
 #---------------------------------------------
 # Base path to test harness python scripts.  -
 #---------------------------------------------
-set harness $env(OLCF_HARNESS_DIR)/harness
+set harness_dir $env(OLCF_HARNESS_DIR)
 
 #------------------------------------------------------
 # Set path to harness driver programs, binaries, ...  -
 #------------------------------------------------------
-setenv PATH_TO_RGT_PACKAGE    $harness
-prepend-path PATH             $harness/bin
-prepend-path PATH             $harness/utilities
+setenv PATH_TO_RGT_PACKAGE    $harness_dir/oth
+prepend-path PATH             $harness_dir/bin
+prepend-path PATH             $harness_dir/bin/compat
