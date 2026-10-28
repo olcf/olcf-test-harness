@@ -100,7 +100,7 @@ The ``update_databases.py`` script retrieves all incomplete tests from the remot
 This script has support for the Slurm job scheduler, and will look for the job ID of the given test, to see if it completed.
 If the job failed, this script will log a completion message to the database with information about how long the job ran, if it timed out, if it hit a node failure, etc..
 The ``--help`` message for the ``update_databases.py`` script is provided below.
-This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`_influxdb_event_logging`.
+This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`influxdb_event_logging`.
 
 .. code-block::
 
@@ -158,7 +158,7 @@ add_comment_to_databases.py
 
 The ``add_comment_to_databases.py`` script adds a comment to a specific test instance in the remote database (ie, an InfluxDB instance).
 The ``--help`` message for the ``add_comment_to_databases.py`` script is provided below.
-This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`_influxdb_event_logging`.
+This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`influxdb_event_logging`.
 
 .. code-block::
 
@@ -186,7 +186,7 @@ report_to_databases.py
 
 The ``report_to_databases.py`` script enables you to further utilize a remote database to store custom, non-harness metrics.
 The ``--help`` message for the ``report_to_databases.py`` script is provided below.
-This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`_influxdb_event_logging`.
+This script requires the same environment variables as the core harness requires to enable the database backend, as described in :ref:`influxdb_event_logging`.
 
 .. code-block::
 
