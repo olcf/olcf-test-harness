@@ -41,7 +41,7 @@ jobs:
 
       - name: Build documentation
         working-directory: doc-sphinx
-        run: bash doc-sphinx/build_documentation.sh
+        run: bash build_documentation.sh
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
