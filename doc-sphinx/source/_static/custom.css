@@ -1,0 +1,132 @@
+/* ==========================================================================
+   Version selector
+   ========================================================================== */
+
+/* Keep the "Version:" label and dropdown on one row. */
+.wy-side-nav-search .smv-version-selector {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.65rem;
+
+  width: 100%;
+  margin: 1rem 0 0.9rem;
+}
+
+/* "Version:" label. */
+.wy-side-nav-search .smv-version-label {
+  display: block;
+  margin: 0;
+  color: #3f4a4f;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Dropdown outer container. */
+.wy-side-nav-search .smv-version-select-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+
+  border: 1px solid #b9c4c7;
+  border-radius: 0.5rem;
+  background: #f7f9f9;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(24, 42, 47, 0.1);
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Separate background area for the dropdown chevron. */
+.wy-side-nav-search .smv-version-select-wrap::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.5rem;
+  content: "";
+
+  border-left: 1px solid #c7d0d2;
+  background: #e9eeee;
+  pointer-events: none;
+}
+
+/* Chevron icon. */
+.wy-side-nav-search .smv-version-select-wrap::after {
+  position: absolute;
+  top: 50%;
+  right: 0.95rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  content: "";
+
+  border-right: 2px solid #4c5a5f;
+  border-bottom: 2px solid #4c5a5f;
+  pointer-events: none;
+  transform: translateY(-65%) rotate(45deg);
+}
+
+/* Actual native select element. */
+.wy-side-nav-search .smv-version-select-wrap select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.45rem;
+  margin: 0;
+  padding: 0.55rem 3rem 0.55rem 0.75rem;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #2f3f44;
+
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+/* Hover state. */
+.wy-side-nav-search .smv-version-select-wrap:hover {
+  border-color: #7f9791;
+  background: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 2px 5px rgba(24, 42, 47, 0.16);
+}
+
+/* Keyboard focus state. */
+.wy-side-nav-search .smv-version-select-wrap:focus-within {
+  border-color: #4f8a72;
+  box-shadow:
+    0 0 0 3px rgba(79, 138, 114, 0.2),
+    0 2px 5px rgba(24, 42, 47, 0.14);
+}
+
+/* Colors in the browser's native opened option list. */
+.wy-side-nav-search .smv-version-select-wrap option {
+  background: #ffffff;
+  color: #2f3f44;
+}
+
+/* Keep the layout usable on very narrow screens. */
+@media screen and (max-width: 360px) {
+  .wy-side-nav-search .smv-version-selector {
+    grid-template-columns: 1fr;
+    row-gap: 0.4rem;
+  }
+}

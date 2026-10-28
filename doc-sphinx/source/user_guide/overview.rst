@@ -30,7 +30,7 @@ A brief logical flow of harness execution follows:
 
 ....
 
-.. image:: /images/OTH_flowchart.jpg
+.. image:: ../_static/images/OTH_flowchart.jpg
     :align: center
     :width: 60%
     :alt: OTH Flowchart

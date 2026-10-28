@@ -27,6 +27,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -41,7 +44,7 @@ jobs:
 
       - name: Build documentation
         working-directory: doc-sphinx
-        run: make html
+        run: bash build_documentation.sh
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

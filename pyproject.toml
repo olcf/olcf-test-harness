@@ -21,7 +21,8 @@ dev = [
 docs = [
     "sphinx",
     "sphinx-design",
-    "sphinx-rtd-theme"
+    "sphinx-rtd-theme",
+    "sphinx-multiversion"
 ]
 ext = [
     "PyYAML",

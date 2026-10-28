@@ -1,0 +1,40 @@
+{% extends "!layout.html" %}
+
+{% block sidebartitle %}
+  {# Preserve the RTD logo/project link behavior. #}
+  {% if logo %}
+    <a href="{{ pathto(master_doc) }}">
+      <img src="{{ pathto('_static/' + logo, 1) }}"
+           class="logo"
+           alt="{{ _('Logo') }}">
+    </a>
+  {% else %}
+    <a href="{{ pathto(master_doc) }}" class="icon icon-home">
+      {{ project }}
+    </a>
+  {% endif %}
+
+  {# No visible label; aria-label retains accessibility. #}
+  {% if versions %}
+  <div class="smv-version-selector">
+      <span class="smv-version-label" id="smv-version-label">Version:</span>
+
+      <div class="smv-version-select-wrap">
+      <select id="smv-version-select"
+              aria-labelledby="smv-version-label"
+              onchange="if (this.value) window.location.assign(this.value);">
+          {% for version in versions %}
+          <option value="{{ version.url }}"
+                  {% if current_version and version.name == current_version.name %}selected{% endif %}>
+              {{ version.name }}
+          </option>
+          {% endfor %}
+      </select>
+      </div>
+  </div>
+  {% endif %}
+
+
+  {# This must remain after the selector. #}
+  {% include "searchbox.html" %}
+{% endblock %}
