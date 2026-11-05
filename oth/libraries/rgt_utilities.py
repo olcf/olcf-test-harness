@@ -70,17 +70,15 @@ def try_symlink(target, link_name):
 ########################################################################
 def set_harness_environment(env_vars, override=False, logger=None):
     for k in env_vars:
-        envk = rgt_variable_name_modification(k)
+        envk = oth_variable_name_modification(k)
         v = env_vars[k]
         if envk in os.environ and not override:
-            if not logger:
-                print(envk + " is already set. Skipping.")
-            else:
+            if logger:
                 logger.log_info(envk + " is already set. Skipping.")
         else:
             os.environ[envk] = v
 
-def rgt_variable_name_modification(variable_name):
+def oth_variable_name_modification(variable_name):
     """Transforms the variable name.
 
     Parameters
@@ -93,6 +91,6 @@ def rgt_variable_name_modification(variable_name):
     str:
         The transformed variable name.
     """
-    new_var_name = "RGT_" + str.upper(variable_name)
+    new_var_name = "OTHCTL_" + str.upper(variable_name)
     return new_var_name
 

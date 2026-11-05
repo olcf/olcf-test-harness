@@ -7,6 +7,9 @@ from oth.libraries.output_hub import OutputHub
 
 
 def run(args: ap.Namespace) -> None:
+    # Must be imported inside the run function to properly parse config file
+    from oth.config import othctl_runtime_config
+
     oh: OutputHub = OutputHub(__name__)
 
     oh.log_info("reading the harness input file")

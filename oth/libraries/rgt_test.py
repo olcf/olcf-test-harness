@@ -49,7 +49,7 @@ except ModuleNotFoundError:
     yaml_disabled = True
 
 # Harness imports
-from oth.libraries.rgt_utilities import rgt_variable_name_modification
+from oth.libraries.rgt_utilities import oth_variable_name_modification
 from oth.libraries import rgt_utilities
 
 class RgtTest():
@@ -450,7 +450,7 @@ class RgtTest():
         # shell environment variables.
         for (key,value) in self.__builtin_params.items():
             if value == self.OBTAIN_FROM_ENVIRONMENT:
-                key_modified = rgt_variable_name_modification(key)
+                key_modified = oth_variable_name_modification(key)
                 tmp_value = os.getenv(key_modified)
                 if tmp_value :
                     self.__builtin_params[key] = tmp_value
@@ -462,7 +462,7 @@ class RgtTest():
         # the shell environment variables.
         for (key,value) in self.__user_params.items():
             if value == self.OBTAIN_FROM_ENVIRONMENT:
-                key_modified = rgt_variable_name_modification(key)
+                key_modified = oth_variable_name_modification(key)
                 tmp_value = os.getenv(key_modified)
                 if tmp_value :
                     self.__user_params[key] = tmp_value
@@ -475,7 +475,7 @@ class RgtTest():
         # the shell environment variables.
         for (key,value) in self.__environ.items():
             if value == self.OBTAIN_FROM_ENVIRONMENT:
-                key_modified = rgt_variable_name_modification(key)
+                key_modified = oth_variable_name_modification(key)
                 tmp_value = os.getenv(key_modified)
                 if tmp_value :
                     self.__environ[key] = tmp_value
