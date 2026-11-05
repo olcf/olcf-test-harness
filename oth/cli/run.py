@@ -2,14 +2,10 @@ import argparse as ap
 import sys
 
 from oth.libraries import input_files, regression_test
-from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
 
 
 def run(args: ap.Namespace) -> None:
-    # Must be imported inside the run function to properly parse config file
-    from oth.config import othctl_runtime_config
-
     oh: OutputHub = OutputHub(__name__)
 
     oh.log_info("reading the harness input file")
@@ -26,16 +22,7 @@ def run(args: ap.Namespace) -> None:
         oh.print("No tests were found in the input file. Aborting!")
         sys.exit(0)
 
-    oh.log_info("reading the harness config file")
-    try:
-        config = rgt_config_file(configfilename=args.config_file, logger=oh)
-    except NameError as e:
-        oh.log_critical(str(e))
-        sys.exit(1)
-    oh.log_info("completed reading the harness config file")
-
     rgt = regression_test.Harness(
-        config,
         input_file,
         args.log_level,
         args.output,

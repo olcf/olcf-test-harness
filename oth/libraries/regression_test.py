@@ -35,7 +35,6 @@ class Harness:
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     def __init__(self,
-                 config,
                  rgt_input_file,
                  log_level,
                  stdout_stderr,
@@ -43,7 +42,9 @@ class Harness:
                  reuse_first_build,
                  reuse_build_from_id,
                  shuffle=False):
-        self.__config = config
+        # v4 implementation of the OTH machine config file
+        from oth.config import othctl_runtime_config
+
         self.__tests = rgt_input_file.get_tests()
         self.__tasks = rgt_input_file.get_harness_tasks()
         self.__local_path_to_tests = rgt_input_file.get_path_to_tests()
@@ -69,11 +70,7 @@ class Harness:
         else:
             time_str = now_str
         user_str = getpass.getuser()
-        testshot_key = 'system_log_tag'
-        testshot_str = 'notag'
-        testshot_cfg = self.__config.get_testshot_config()
-        if testshot_key in testshot_cfg.keys():
-            testshot_str = testshot_cfg[testshot_key]
+        testshot_str = othctl_runtime_config.system_log_tag
         self.__launch_id = f'{testshot_str}/{user_str}@{time_str}'
         self.__launched_tests = 0
         self.__failed_tests = 0
