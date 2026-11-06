@@ -1,26 +1,19 @@
 #! /usr/bin/env python3
 
-# Python package imports
-import string
-import os
 import configparser
+import os
 from pathlib import Path
 import re
+import string
 
 # My harness package imports
 from oth.libraries import rgt_utilities
 from oth.libraries.harness_internal_config import harness_modes
 from oth.libraries.output_hub import OutputHub
 
-#
-# Author: Arnold Tharrington (arnoldt@ornl.gov)
-# National Center for Computational Sciences, Scientific Computing Group.
-# Oak Ridge National Laboratory
-#
+class oth_input_file:
 
-class rgt_input_file:
-
-    #These are the entries in the input file.
+    # These are the keywords in the input file.
     test_entry = "test"
     include_entry = "include"
     path_to_test_entry = "path_to_tests"
@@ -33,21 +26,24 @@ class rgt_input_file:
                  app_filter=None,
                  test_filter=None,
                  logger=None):
+
+        from oth.config import othctl_runtime_config
+
         self.__tests = []
         self.__harness_task = []
-        self.__path_to_tests = os.environ["RGT_PATH_TO_TESTS"] if "RGT_PATH_TO_TESTS" in os.environ else ""
+        self.__path_to_tests = othctl_runtime_config.path_to_tests
         self.__inputFileName = inputfilename
         self.__logger = logger
 
         if not logger:
             self.__logger = OutputHub(
-                name="rgt_input_file_logger",
+                name="oth_input_file_logger",
                 log_level="DEBUG",
                 log_file=None,
                 console_log_level="DEBUG",
                 file_log_level="DEBUG",
             )
-            self.__logger.log_info("Created a logger in rgt_input_file, since one was not provided.")
+            self.__logger.log_info("Created a logger in oth_input_file, since one was not provided.")
 
         # Read the input file. Returns True upon successful read.
         # If read_file fails, self.__tests is emptied and False is returned
@@ -58,7 +54,7 @@ class rgt_input_file:
             return
 
         if not self.__path_to_tests:
-            self.__logger.log_critical("ERROR: Path_to_tests was not set by RGT_PATH_TO_TESTS or Path_to_tests in the input file.")
+            self.__logger.log_critical("ERROR: Path_to_tests was not set by OTHCTL_PATH_TO_TESTS or Path_to_tests in the input file.")
             # Short-circuit upon failure
             return
 
@@ -114,7 +110,7 @@ class rgt_input_file:
             firstword = str.lower(words[0])
 
             # Parse the line,depending upon what type of entry it is.
-            if firstword == rgt_input_file.test_entry:
+            if firstword == oth_input_file.test_entry:
                 # Check that there are at either 4 or 5 items in the line
                 if not (len(words) == 4 or len(words) == 5):
                     log_message = "Invalid number of words in test line: " + tmpline
@@ -154,7 +150,7 @@ class rgt_input_file:
                     # Add nm_iters parallel copies of the same test
                     for i in range(0, nm_iters):
                         self.__tests.append([app,subtest])
-            elif firstword == rgt_input_file.path_to_test_entry:
+            elif firstword == oth_input_file.path_to_test_entry:
                 if (len(words) == 3):
                     # Validate Path_to_tests here:
                     test_path = os.path.expanduser(words[2])
@@ -173,7 +169,7 @@ class rgt_input_file:
                     self.__logger.log_critical(log_message)
                     self.__tests = []
                     return False
-            elif firstword == rgt_input_file.harness_task_entry:
+            elif firstword == oth_input_file.harness_task_entry:
                 if (len(words) == 3):
                     if words[2] in harness_modes.valid_modes:
                         self.__harness_task.append(words[2])
@@ -185,7 +181,7 @@ class rgt_input_file:
                     self.__logger.log_critical(f"Invalid number of words in task line: {tmpline}")
                     self.__tests = []
                     return False
-            elif firstword == rgt_input_file.include_entry:
+            elif firstword == oth_input_file.include_entry:
                 if len(words) == 2:
                     if not self.__read_file(words[1]):
                         self.__logger.log_critical(f"Failed to parse included input file {words[1]}.")
@@ -202,7 +198,7 @@ class rgt_input_file:
         return True
 
     def __is_comment_line(self,word):
-        if word[0] == rgt_input_file.comment_line_entry:
+        if word[0] == oth_input_file.comment_line_entry:
             return True
         else:
             return False
