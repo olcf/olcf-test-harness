@@ -45,6 +45,7 @@ target-version = "py37"
 include = [
     "tests/*",
     "oth/cli/*",
+    "oth/config.py",
     "oth/libraries/output_hub/*",
     "oth/libraries/repositories/*",
     "oth/schedulers/*"
