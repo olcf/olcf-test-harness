@@ -25,7 +25,7 @@ class OthctlRuntimeConfig:
         )
 
         configfile = get_from_environ("OTHCTL_CONFIG_FILE")
-        self.config = configfile if configfile else f'{self.machine_name}.ini'
+        self.config = configfile if configfile else f"{self.machine_name}.ini"
 
         if Path(self.config).name == self.config:
             # Only base file name given, search CWD, then harness_dir/configs
@@ -42,9 +42,7 @@ class OthctlRuntimeConfig:
         self.machine_type = get_from_environ(
             "OTHCTL_MACHINE_TYPE", default="linux_x86_64"
         )
-        self.scheduler_type = get_from_environ(
-            "OTHCTL_SCHEDULER_TYPE", required=True
-        )
+        self.scheduler_type = get_from_environ("OTHCTL_SCHEDULER_TYPE", required=True)
 
         # Repository settings
         self.type_of_repository = get_from_environ(
@@ -109,7 +107,7 @@ class OthctlRuntimeConfig:
         os.makedirs(self.path_to_sspace, exist_ok=True)
 
     def set_env_from_config(self):
-        """ Given a config file, export the environment variables to the environment """
+        """Given a config file, export the environment variables to the environment"""
         if Path(self.config).is_file():
             cfg = configparser.ConfigParser()
             cfg.read(self.config)

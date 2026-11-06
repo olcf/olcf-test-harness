@@ -161,7 +161,7 @@ def main() -> None:
 
     # Set config file envvar, if set
     if args.config_file:
-        os.environ['OTHCTL_CONFIG_FILE'] = args.config_file
+        os.environ["OTHCTL_CONFIG_FILE"] = args.config_file
 
     oh.log_debug(f"parsed command line options: {args}")
     oh.log_info(f"Using machine config: {args.config_file}")
