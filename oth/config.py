@@ -117,6 +117,7 @@ class OthctlRuntimeConfig:
         else:
             raise NameError(f"Harness config file not found: {self.config}")
 
+
 def get_from_environ(
     envvar_name: str,
     default: Optional[str] = None,
