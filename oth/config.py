@@ -26,6 +26,9 @@ class OthctlRuntimeConfig:
 
         configfile = get_from_environ("OTHCTL_CONFIG_FILE")
         self.config = configfile if configfile else f"{self.machine_name}.ini"
+        self.use_config = get_from_environ(
+            "OTHCTL_USE_CONFIG_FILE", regex=r"^[0-1]$", default="1"
+        )
 
         if Path(self.config).name == self.config:
             # Only base file name given, search CWD, then harness_dir/configs
@@ -36,8 +39,8 @@ class OthctlRuntimeConfig:
             elif harness_dir_config.is_file():
                 self.config = str(harness_dir_config)
 
-        # Read config file
-        self.set_env_from_config()
+        if self.use_config == "1":
+            self.set_env_from_config()
 
         self.machine_type = get_from_environ(
             "OTHCTL_MACHINE_TYPE", default="linux_x86_64"

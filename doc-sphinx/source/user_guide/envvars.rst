@@ -12,7 +12,7 @@ These environment variables are detailed below.
 
 .. note::
 
-    The ``<machine>.ini`` file can contain user-defined environment variables (such as ``mpi_version``, which sets ``RGT_MPI_VERSION`` in the environment).
+    The ``<machine>.ini`` file can contain user-defined environment variables (such as ``mpi_version``, which sets ``OTHCTL_MPI_VERSION`` in the environment).
     The only variables covered in this section are those ingested by the core harness code.
 
 .. _env_vars_config:
@@ -25,7 +25,7 @@ All but ONE of these can have default values provided through the ``<machine>ini
 which can be overridden by setting the environment variable prior to launching the harness.
 These variables are all available for use in the build, run, and check stages of an OTH job.
 These variables canl also be used as a replacement in the ``rgt_test_input.ini`` file by setting the variable name to ``<obtain_from_environment>``.
-For example, ``machine_name = <obtain_from_environment>`` will fetch the value from ``RGT_MACHINE_NAME`` and use it while evaluating replacements.
+For example, ``machine_name = <obtain_from_environment>`` will fetch the value from ``OTHCTL_MACHINE_NAME`` and use it while evaluating replacements.
 
 .. note::
 
@@ -35,45 +35,40 @@ For example, ``machine_name = <obtain_from_environment>`` will fetch the value f
 
 .. code-block::
 
-    OLCF_HARNESS_MACHINE            Name of the system, used to find the machine ini file (default: 'master')
-                                        This is the ONLY variable that CANNOT be set in ``<machine>.ini``,
-                                        since it is needed to locate that file.
-    RGT_MACHINE_NAME                Name of the system (can be different than OLCF_HARNESS_MACHINE).
+    OTHCTL_MACHINE_NAME                Name of the system (can be different than OLCF_HARNESS_MACHINE).
                                         Used for status file and database logging.
-    RGT_MACHINE_TYPE                System architecture: 'linux_x86_64' or 'ibm_power9'.
-    RGT_SCHEDULER_TYPE              Name of the scheduler: 'slurm' or 'pbs' or 'lsf' or 'none'.
-    RGT_JOBLAUNCHER_TYPE            Name of the job launcher: 'srun' or 'jsrun' or 'mpirun'.
-    RGT_CPUS_PER_NODE               Number of CPUs per node.
-    RGT_GPUS_PER_NODE               Number of GPUs per node.
-    RGT_BATCH_QUEUE                 Which scheduler queue/partition to submit to.
+    OTHCTL_CONFIG_FILE                 Path to an alternate machine configuration file.
+    OTHCTL_USE_CONFIG_FILE             If set to 0, disables loading of the machine.ini configuration file.
+    OTHCTL_MACHINE_TYPE                System architecture: 'linux_x86_64' or 'ibm_power9'.
+    OTHCTL_SCHEDULER_TYPE              Name of the scheduler: 'slurm' or 'pbs' or 'lsf' or 'none'.
+    OTHCTL_BATCH_QUEUE                 Which scheduler queue/partition to submit to.
                                     NOTE: is overridden by `batch_queue` in a test's ini file.
-                                    To override a test's ini file, use `RGT_SUBMIT_QUEUE`
-                                        For Slurm, this is enforced with `-p $RGT_BATCH_QUEUE`
-                                        For LSF, this is enforced with `-q $RGT_BATCH_QUEUE`
-                                        For PBS, this is enforced with `-q $RGT_BATCH_QUEUE`
-    RGT_PROJECT_ID                  Which project ID to use when submitting to the scheduler.
+                                    To override a test's ini file, use `OTHCTL_SUBMIT_QUEUE`
+                                        For Slurm, this is enforced with `-p $OTHCTL_BATCH_QUEUE`
+                                        For LSF, this is enforced with `-q $OTHCTL_BATCH_QUEUE`
+                                        For PBS, this is enforced with `-q $OTHCTL_BATCH_QUEUE`
+    OTHCTL_PROJECT_ID                  Which project ID to use when submitting to the scheduler.
                                     NOTE: is overridden by `proj_id` in a test's ini file.
-                                        For Slurm and PBS, this is enforced with `-A $RGT_PROJECT_ID`
-                                        For LSF, this is enforced with `-P $RGT_PROJECT_ID`
-    RGT_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
-    RGT_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
-    RGT_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
-    RGT_LSF_SUBMIT_AS_STDIN         Controls whether the harness runs ``bsub script.lsf`` or ``bsub < script.lsf``. When set to 0, calls ``bsub script.lsf``.
+                                        For Slurm and PBS, this is enforced with `-A $OTHCTL_PROJECT_ID`
+                                        For LSF, this is enforced with `-P $OTHCTL_PROJECT_ID`
+    OTHCTL_SUBMIT_ARGS                 Provide additional flags to use when submitting to the scheduler
+    OTHCTL_SUBMIT_QUEUE                The highest-precedence specification of which scheduler queue/partition to submit to.
+    OTHCTL_SUBMIT_ACCT                 The highest-precedence specification of which project ID to submit to.
+    OTHCTL_LSF_SUBMIT_AS_STDIN         Controls whether the harness runs ``bsub script.lsf`` or ``bsub < script.lsf``. When set to 0, calls ``bsub script.lsf``.
 
-    RGT_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be 'git' currently.
-    RGT_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.
-    RGT_GIT_DATA_TRANSFER_PROTOCOL  Protocol to use when communicating with Git. 'https' or 'ssh'.
-    RGT_GIT_MACHINE_NAME            Name of machine to use for navigating the Git repo.
+    OTHCTL_TYPE_OF_REPOSITORY          Type of repository to access/clone the code. Must be 'git' currently.
+    OTHCTL_GIT_REPS_BRANCH             Branch name to clone a Git repo from. Optional, default behavior is to clone default branch.
+    OTHCTL_GIT_DATA_TRANSFER_PROTOCOL  Protocol to use when communicating with Git. 'https' or 'ssh'.
+    OTHCTL_GIT_MACHINE_NAME            Name of machine to use for navigating the Git repo.
                                         ie, a test system may use the same test as the corresponding production machine.
-    RGT_GIT_SERVER_APPLICATION_PARENT_DIR 
-                                    Path from the root of the parent repo to find the machine name collections.
-    RGT_GIT_SSH_SERVER_URL          URL for the SSH Git client
-    RGT_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
+    OTHCTL_GIT_APP_PARENT_DIR          Path from the root of the parent repo to find the machine name collections.
+    OTHCTL_GIT_SSH_SERVER_URL          URL for the SSH Git client
+    OTHCTL_GIT_HTTPS_SERVER_URL        URL for the HTTPS Git client
 
-    RGT_PATH_TO_SSPACE              Path to the harness scratch directory (for work & build spaces).
-    RGT_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of 'Path_to_tests' in ``othctl run`` input file).
-    RGT_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file & database logging.
-    RGT_REUSE_BUILD_FROM            Path to a pre-existing build compatible with the currently-launching tests.
+    OTHCTL_PATH_TO_SSPACE              Path to the harness scratch directory (for work & build spaces).
+    OTHCTL_PATH_TO_TESTS               Path to the directory containing application repositories (can be used in place of 'Path_to_tests' in ``othctl run`` input file).
+    OTHCTL_SYSTEM_LOG_TAG              A tag describing the purpose of the test launch. Used in status file & database logging.
+    OTHCTL_REUSE_BUILD_FROM            Path to a pre-existing build compatible with the currently-launching tests.
                                         Preferred usage is to use the `--reuse-first-build` flag of `othctl run`, which
                                         will internally set this variable to reuse the first build for resubmitted tests.
                                         The `--reuse-build-from-id` flag is also available to specify a test ID to use
@@ -91,15 +86,15 @@ These variables are detailed below:
 
 .. code-block::
 
-    PATH_TO_RGT_PACKAGE         Path to the OLCF Test Harness code.
-    RGT_APP_SOURCE_DIR          Path to the 'Source' directory of the current application.
-    RGT_TEST_BUILD_DIR          Path to the build directory of the currently-running test.
-    RGT_TEST_RUNARCHIVE_DIR     Path to the run archive directory of the currently-running test.
-    RGT_TEST_SOURCE_DIR         Path to the source overlay directory of the currently-running test.
-    RGT_TEST_SCRIPTS_DIR        Path to the scripts directory of the currently-running test.
-    RGT_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
-    RGT_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
-    RGT_REUSE_BUILD_FROM        If `--reuse-first-build` set in `othctl run`, path to the first build of the currently-running test,
+    PATH_TO_OTHCTL_PACKAGE         Path to the OLCF Test Harness code.
+    OTHCTL_APP_SOURCE_DIR          Path to the 'Source' directory of the current application.
+    OTHCTL_TEST_BUILD_DIR          Path to the build directory of the currently-running test.
+    OTHCTL_TEST_RUNARCHIVE_DIR     Path to the run archive directory of the currently-running test.
+    OTHCTL_TEST_SOURCE_DIR         Path to the source overlay directory of the currently-running test.
+    OTHCTL_TEST_SCRIPTS_DIR        Path to the scripts directory of the currently-running test.
+    OTHCTL_TEST_STATUS_DIR         Path to the status directory of the currently-running test.
+    OTHCTL_TEST_WORK_DIR           Path to the work (scratch) directory of the currently-running test.
+    OTHCTL_REUSE_BUILD_FROM        If `--reuse-first-build` set in `othctl run`, path to the first build of the currently-running test,
                                 to be used if a test is resubmitted. Or if `--reuse-build-from-id` is set in `othctl run`, the path
                                 to the build of the test with a test ID matching that flag's value.
 
@@ -110,51 +105,51 @@ Extension-specific Variables
 ============================
 
 With the addition of several extensions to the OTH, there are a few more environment variables that configure extension behavior.
-These are grouped below by extension. The general naming convention is ``RGT_<extension>_<option>``.
+These are grouped below by extension. The general naming convention is ``OTHCTL_<extension>_<option>``.
 
 .. code-block::
 
     # InfluxDB configuration -- default values indicated where applicable
-    RGT_INFLUXDB_DISABLE        When set to '1', explicitly disables InfluxDB logging for the run tests.
+    OTHCTL_INFLUXDB_DISABLE        When set to '1', explicitly disables InfluxDB logging for the run tests.
                                     Creates a `.disable_influxdb` dot-file in the Run_Archive/<test_id> directory
                                     to prevent any future logging for this test ID.
-    RGT_INFLUXDB_URI            URLs to one or more InfluxDB server, separated by semi-colons. This may either be of format:
+    OTHCTL_INFLUXDB_URI            URLs to one or more InfluxDB server, separated by semi-colons. This may either be of format:
                                     https://my.influxdb.server:<port>/api/v2/write?org=myorg&bucket=mybucket
                                     OR
                                     https://my.influxdb.server:<port>
-                                    If the latter, you must provide RGT_INFLUXDB_BUCKET and RGT_INFLUXDB_ORG.
+                                    If the latter, you must provide OTHCTL_INFLUXDB_BUCKET and OTHCTL_INFLUXDB_ORG.
                                     Otherwise, the OTH can automatically detect your settings.
                                     Only org, bucket, and precision are supported.
-    RGT_INFLUXDB_TOKEN          Authentication tokens for each provided InfluxDB server. Separate by semi-colons if >1.
-    RGT_INFLUXDB_BUCKET         The data bucket to log to in InfluxDB.
+    OTHCTL_INFLUXDB_TOKEN          Authentication tokens for each provided InfluxDB server. Separate by semi-colons if >1.
+    OTHCTL_INFLUXDB_BUCKET         The data bucket to log to in InfluxDB.
                                     If >1 InfluxDB instance, use URL encoding to specify the bucket if not the same.
-    RGT_INFLUXDB_ORG            The organization to log as in InfluxDB.
+    OTHCTL_INFLUXDB_ORG            The organization to log as in InfluxDB.
                                     If >1 InfluxDB instance, use URL encoding to specify the org if not the same.
-    RGT_INFLUXDB_PRECISION      The precision to log with in InfluxDB. Only `ms` (milliseconds) or `ns` (nanoseconds) are supported.
+    OTHCTL_INFLUXDB_PRECISION      The precision to log with in InfluxDB. Only `ms` (milliseconds) or `ns` (nanoseconds) are supported.
                                     Default: 'ns'
                                     If >1 InfluxDB instance, use URL encoding to specify the precision if not the same.
-    RGT_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it to the database.
+    OTHCTL_INFLUXDB_DRY_RUN        Print the database logging string, but do not send it to the database.
 
-    # Kafka configuration -- no default values. If multiple servers, all RGT_KAFKA_* envvars must be the same length
-    RGT_KAFKA_DISABLE           When set to '1', explicitly disables Kafka logging for the run tests.
+    # Kafka configuration -- no default values. If multiple servers, all OTHCTL_KAFKA_* envvars must be the same length
+    OTHCTL_KAFKA_DISABLE           When set to '1', explicitly disables Kafka logging for the run tests.
                                     Creates a `.disable_kafka` dot-file in the Run_Archive/<test_id> directory
                                     to prevent any future logging for this test ID.
-    RGT_KAFKA_URI               URLs to one or more Kafka servers, separated by semicolons.
+    OTHCTL_KAFKA_URI               URLs to one or more Kafka servers, separated by semicolons.
                                     Typical format is my.kafka.server:<port>.
-    RGT_KAFKA_USERNAME          Usernames to one or more Kafka servers, separated by semicolons.
-    RGT_KAFKA_PASSWORD          Passwords to one or more Kafka servers, separated by semicolons.
-    RGT_KAFKA_EVENTS_TOPIC      Names of the topic to log events to, separated by semicolons.
-    RGT_KAFKA_METRICS_TOPIC     Names of the topic to log metrics to, separated by semicolons.
-    RGT_KAFKA_NODE_HEALTH_TOPIC Names of the topic to log node health data to, separated by semicolons.
-    RGT_KAFKA_DB_TYPE           The type of database behind Kafka (used by harness utilities for read queries).
+    OTHCTL_KAFKA_USERNAME          Usernames to one or more Kafka servers, separated by semicolons.
+    OTHCTL_KAFKA_PASSWORD          Passwords to one or more Kafka servers, separated by semicolons.
+    OTHCTL_KAFKA_EVENTS_TOPIC      Names of the topic to log events to, separated by semicolons.
+    OTHCTL_KAFKA_METRICS_TOPIC     Names of the topic to log metrics to, separated by semicolons.
+    OTHCTL_KAFKA_NODE_HEALTH_TOPIC Names of the topic to log node health data to, separated by semicolons.
+    OTHCTL_KAFKA_DB_TYPE           The type of database behind Kafka (used by harness utilities for read queries).
                                     Currently, only Druid is supported.
-    RGT_KAFKA_DB_URI            The URI for the database behind Kafka.
-    RGT_KAFKA_SSL_CA_LOCATION   The absolute path to the SSL Certificate Authority file for your remote Kafka server.
-    RGT_KAFKA_SSL_CERTIFICATE_LOCATION
+    OTHCTL_KAFKA_DB_URI            The URI for the database behind Kafka.
+    OTHCTL_KAFKA_SSL_CA_LOCATION   The absolute path to the SSL Certificate Authority file for your remote Kafka server.
+    OTHCTL_KAFKA_SSL_CERTIFICATE_LOCATION
                                 The absolute path to the SSL Certificate file for your remote Kafka server.
-    RGT_KAFKA_DRY_RUN           Print the json package to be sent to Kafka, but do not send it to the database.
+    OTHCTL_KAFKA_DRY_RUN           Print the json package to be sent to Kafka, but do not send it to the database.
 
     # Common configuration required for extensions
-    RGT_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
+    OTHCTL_NODE_LOCATION_FILE      (Node health only) Provides metadata about the physical location of a node to the node health
                                 database logging extension. Set to "none" (not case-sensitive) to disable.
 
