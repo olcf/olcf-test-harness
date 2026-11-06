@@ -2,8 +2,8 @@ import argparse as ap
 import sys
 
 from oth.libraries.input_files import oth_input_file
-from oth.libraries.regression_test import Harness
 from oth.libraries.output_hub import OutputHub
+from oth.libraries.regression_test import Harness
 
 
 def run(args: ap.Namespace) -> None:
