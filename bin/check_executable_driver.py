@@ -5,7 +5,6 @@ import os
 import sys
 import subprocess
 import getopt
-import string
 from pathlib import Path
 
 prefix = Path(__file__).resolve().parent.parent

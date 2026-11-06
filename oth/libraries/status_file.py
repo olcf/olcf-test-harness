@@ -16,8 +16,6 @@ import re
 import socket
 import pprint
 import abc
-import urllib
-import dateutil.parser
 import subprocess
 from pathlib import Path
 
@@ -256,16 +254,6 @@ class StatusFile:
 
         return result
 
-    @classmethod
-    def validate_mode(cls,mode):
-        """Validates that we are using a valid mode."""
-        if mode == cls.MODE_NEW :
-            pass
-        elif mode == cls.MODE_OLD:
-            pass
-        else:
-            raise
-
     ###################
     # Special methods #
     ###################
@@ -352,22 +340,6 @@ class StatusFile:
             event_filename = 'Event__UNKNOWN_EVENT_ENCOUNTERED_'
             event_type = ''
             event_subtype = ''
-
-        return self.__log_event(event_id, event_filename,
-                                event_type, event_subtype, str(event_value))
-
-    def log_custom_event(self, event_type, event_subtype, event_value=NO_VALUE):
-        """Log the occurrence of a harness event.
-           This version logs a custom user event not in the dictionary.
-        """
-
-        event_name = (event_type + '_' + event_subtype
-                      if event_type != '' and event_subtype != ''
-                      else event_type + event_subtype)
-
-        event_id = 'EVENT_CUSTOM'
-
-        event_filename = 'Event_' + event_name + '.txt'
 
         return self.__log_event(event_id, event_filename,
                                 event_type, event_subtype, str(event_value))
@@ -488,23 +460,6 @@ class StatusFile:
                     break
 
         return record
-
-    def __get_all_harness_id(self):
-        with open(self.__status_file_path, 'r') as status_file_obj:
-            records = status_file_obj.readlines()
-
-        unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
-
-        harness_ids = []
-        for index, line in enumerate(records):
-            if self.ignore_line(line):
-                continue
-            words = line.rstrip().split()
-            if len(words) > unique_col:
-                test_id = words[unique_col]
-                harness_ids.append(test_id)
-
-        return harness_ids
 
     def __log_event(self, event_id, event_filename, event_type, event_subtype,
                     event_value, event_time = None):
@@ -1110,78 +1065,3 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
              "inconclusive_jobs": ilist}
 
     return shash
-
-#------------------------------------------------------------------------------
-
-#-----------------------------------------------------
-#                                                    -
-# Start of defining errors classes for this module.  -
-#                                                    -
-#-----------------------------------------------------
-
-class StatusFileError(Exception):
-    """Base class for exceptions of the StatusFile"""
-    def __init__(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def message(self):
-        pass
-
-class IncompatibleStatusFileModeError(StatusFileError):
-    """Exception raised for errors of incompatible modes for various StatusFile tasks."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-
-class InvalidStatusFileModeError(StatusFileError):
-    """Exception raised for error of invalid mode for StatusFile."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-
-class StatusFileMissingError(StatusFileError):
-    """Exception raised for missing status file."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-
-#-----------------------------------------------------
-#                                                    -
-# End of defining errors classes for this module.    -
-#                                                    -
-#-----------------------------------------------------

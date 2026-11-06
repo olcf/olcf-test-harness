@@ -158,18 +158,6 @@ class apptest_layout:
         return self.__apptest_layout['status_logfile']
 
     #
-    # Debug function.
-    #
-    def debug_layout(self):
-        self.__logger.log_debug ("\n\n")
-        self.__logger.log_debug ("================================================================")
-        self.__logger.log_debug ("Debugging local layout " + self.__appname + self.__testname)
-        self.__logger.log_debug ("================================================================")
-        for key in self.__apptest_layout.keys():
-            self.__logger.log_debug ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
-        self.__logger.log_debug ("================================================================\n\n")
-
-    #
     # Returns the path to the application directory.
     #
     def get_path_to_application(self):

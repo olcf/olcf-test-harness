@@ -1,24 +1,11 @@
 #! /usr/bin/env python3
 
-#
-# Author: Arnold Tharrington (arnoldt@ornl.gov)
-# Scientific Computing Group.
-#
-# Modified by: Veronica G. Vergara Larrea (vergaravg@ornl.gov)
-# User Assistance Group.
-#
-# National Center for Computational Sciences
-# Oak Ridge National Laboratory
-#
-
-# Python imports
 import argparse
 import datetime
 import getpass
 import os
 import shutil
 import stat
-import string
 import subprocess
 import sys
 

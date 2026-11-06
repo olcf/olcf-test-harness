@@ -4,8 +4,6 @@ import sys
 
 # Local package imports
 from .linux_x86_64 import Linux_x86_64
-from .machine_factory_exceptions import MachineTypeNotImplementedError
-from .machine_factory_exceptions import MachineTypeUndefinedVariableError
 
 class MachineFactory:
 

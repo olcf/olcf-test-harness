@@ -128,38 +128,6 @@ class Harness:
         self.__myLogger.log_info(message)
         return
 
-    def getState(self):
-        return self.__returnState
-
-    def wait_for_completion_in_queue(self,timeout):
-        """Waits 'timeout' minutes for all jobs to be completed in the queue.
-
-        Parameters
-        ----------
-        timeout : float
-            The maximum time to wait in minutes for the subtest cycle to complete.
-        """
-        future_to_appname = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.__num_workers) as executor:
-            for appname in self.__app_subtests.keys():
-                future = executor.submit(apptest.wait_for_jobs_to_complete_in_queue,
-                                         self.__config,
-                                         self.__app_subtests[appname],
-                                         timeout)
-
-                future_to_appname[future] = appname
-
-            for my_future in concurrent.futures.as_completed(future_to_appname):
-                appname = future_to_appname[my_future]
-                my_future_exception = my_future.exception()
-                if my_future_exception:
-                    message = "Application {} future for queue exception:\n{}".format(appname, my_future_exception)
-                    self.__myLogger.log_critical(message)
-                else:
-                    message = "Application {} future for queue is completed.".format(appname)
-                    self.__myLogger.log_info(message)
-        return
-
     def didAllTestsPass(self):
         """Returns True if all tests have passed, otherwise False is returned.
 
@@ -200,14 +168,6 @@ class Harness:
                 application_names.add(appname)
                 self.__apptests_dict[appname] = []
             self.__apptests_dict[appname].append(testname)
-
-    def __doing_unit_testing(self):
-        value = False
-        if os.getenv('UNIT_TESTS_CWD'):
-            value = True
-            message = f"UNIT_TESTS_CWD: {value}"
-            self.__myLogger.log_info(message)
-        return value
 
     def __formCollectionOfTests(self):
         app_subtests = []

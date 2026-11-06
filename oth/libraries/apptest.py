@@ -212,69 +212,6 @@ class subtest(base_apptest, apptest_layout):
         efile_obj.write(bheader)
         efile_obj.close()
 
-    #
-    # Displays the status of the tests.
-    #
-    def display_status2(self,taskwords,mycomputer_with_events_record):
-        failed_jobs = []
-        log_message =  "Testing status of: " + self.getNameOfApplication() +self.getNameOfSubtest()
-        print(log_message)
-
-        starttimestring = taskwords[0]
-        starttimestring = starttimestring.strip()
-        starttimewords = starttimestring.split("_")
-        startdate = datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
-                                      int(starttimewords[3]),int(starttimewords[4]))
-        log_message =  "The startdate is " + startdate.ctime()
-        print (log_message)
-
-        endtimestring = taskwords[1]
-        endtimestring = endtimestring.strip()
-        endtimewords = endtimestring.split("_")
-        enddate = datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
-                                      int(endtimewords[3]),int(endtimewords[4]))
-        log_message = "The enddate is " + enddate.ctime()
-        print(log_message)
-
-        #Parse the status file.
-        path_to_status_file = self.get_path_to_status_file()
-        (self.__status,failed_jobs) = parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_events_record)
-
-        currenttime = time.localtime()
-        time1 = time.strftime("%Y %b %d %H:%M:%S\n",currenttime)
-        theader = "\n--------------------\n"
-        appname = "%s, %s\n" % (self.getNameOfApplication(), self.getNameOfSubtest())
-        w1 = "Warning: No tests passed!!\n"
-        s1 = "%20s %20s %20s %20s\n" % ("Total tests","Test passed", "Test failed", "Test inconclusive")
-        s2 = "%20s %20s %20s %20s\n" % (str(self.__status["number_of_tests"]),
-                                        str(self.__status["number_of_passed_tests"]),
-                                        str(self.__status["number_of_failed_tests"]),
-                                        str(self.__status["number_of_inconclusive_tests"])
-                                       )
-        bheader = "\n====================\n"
-
-
-        filename= apptest_layout.test_status_filename
-        dfile_obj = open(filename,"a")
-        dfile_obj.write(theader)
-        dfile_obj.write(time1)
-        dfile_obj.write(appname)
-        dfile_obj.write(s1)
-        dfile_obj.write(s2)
-        dfile_obj.write(bheader)
-        dfile_obj.close()
-
-        efile_obj = open("failed_jobs.txt","a")
-        efile_obj.write(theader)
-        efile_obj.write(time1)
-        efile_obj.write(appname)
-        for job in failed_jobs:
-            s3 = "%20s %20s %20s\n" % (job[0],job[1],job[2])
-            efile_obj.write(s3)
-        efile_obj.write(bheader)
-        efile_obj.close()
-
-
     def generateReport(self,logfile,taskwords):
         #Parse the status file.
 
@@ -702,12 +639,6 @@ class subtest(base_apptest, apptest_layout):
                     if len(line_splt) >= 3:
                         node_healths[node_name]['message'] = ' '.join(line_splt[2:])
         return node_healths
-
-    def __name_of_current_function(self):
-        classname = self.__class__.__name__
-        functionname = sys._getframe(1).f_code.co_name
-        my_name = classname + "." + functionname
-        return my_name
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

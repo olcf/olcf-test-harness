@@ -20,9 +20,6 @@ class Linux_x86_64(BaseMachine):
     def __init__(self,
                  name='Linux x86_64',
                  scheduler=None,
-                 numNodes=1,
-                 numSocketsPerNode=1,
-                 numCoresPerSocket=1,
                  apptest=None,
                  separate_build_stdio=False):
 
@@ -39,9 +36,6 @@ class Linux_x86_64(BaseMachine):
         BaseMachine.__init__(self,
                              name=name,
                              scheduler_type=scheduler,
-                             numNodes=numNodes,
-                             numSockets=numSocketsPerNode,
-                             numCoresPerSocket=numCoresPerSocket,
                              apptest=apptest,
                              separate_build_stdio=separate_build_stdio,
                              use_jinja2=using_yaml)
