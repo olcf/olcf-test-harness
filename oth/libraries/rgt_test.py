@@ -4,9 +4,8 @@ This module implements the application-test input file, rgt_test_input.{ini,yaml
 
 import configparser
 import os
+import typing
 from pathlib import Path
-
-# from typing import ClassVar
 
 try:
     import yaml
@@ -49,24 +48,24 @@ class RgtTest:
 
         self.__inputfile = filename
 
-        self.__builtin_params: dict[str, str] = {}
+        self.__builtin_params: typing.Dict[str, str] = {}
         """dict: The buitin parameters of the application-test input file."""
 
-        self.__user_params: dict[str, str] = {}
+        self.__user_params: typing.Dict[str, str] = {}
         """dict: A dictionary of the keys and values that are not builtin params.
 
         These keys and values are found in the "Replacements" section of the
         application-test input file. These key-values are not builtin key-values.
         """
 
-        self.__environ: dict[str, str] = {}
+        self.__environ: typing.Dict[str, str] = {}
         """dict: A dictionary of the environmental variables in the application-test input file.
 
         The dictonary store the keys and values of the EnvVars section of the application-test
         input file.
         """
 
-        self._harness_params: dict[str, str] = {}
+        self._harness_params: typing.Dict[str, str] = {}
         """A dictionary: A dictionary of keys and values needed by the harness
 
             The keys of the dictionary are strings, and the corrsponding values

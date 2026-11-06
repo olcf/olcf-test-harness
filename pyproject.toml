@@ -68,6 +68,9 @@ files = [
 ]
 ignore_missing_imports = true
 
+[tool.pytest_env]
+OTHCTL_MACHINE = "minimal_machine"
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests"

@@ -78,7 +78,7 @@ print_header
 
 printf "%bRepository:%b %s\n" "$BOLD" "$RESET" "$REPO_ROOT"
 printf "%bPython:%b    %s\n\n" "$BOLD" "$RESET" \
-    "$(command -v python 2>/dev/null || printf 'not found')"
+    "$(command -v python3 2>/dev/null || printf 'not found')"
 
 for command_name in ruff mypy pytest; do
     require_command "$command_name"
@@ -93,10 +93,10 @@ run_check "Ruff formatting" \
     # TODO can updated this to "python -m ruff" when we move past Python 3.6
 
 run_check "MyPy type checking" \
-    python -m mypy
+    python3 -m mypy
 
 run_check "Pytest test suite" \
-    python -m pytest -v
+    python3 -m pytest -v
 
 printf "%b━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━%b\n" \
     "$BLUE" "$RESET"

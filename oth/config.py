@@ -21,7 +21,7 @@ class OthctlRuntimeConfig:
         # Set defaults for each variable
         self.harness_dir = Path(__file__).resolve().parent.parent
         self.machine_name = get_from_environ(
-            "OTHCTL_MACHINE", default="master", regex=r"^[a-zA-Z0-9]+$"
+            "OTHCTL_MACHINE", default="master", regex=r"^[a-zA-Z0-9_]+$"
         )
 
         configfile = get_from_environ("OTHCTL_CONFIG_FILE")
@@ -63,7 +63,7 @@ class OthctlRuntimeConfig:
         # Queueing defaults
         self.batch_queue = get_from_environ("OTHCTL_BATCH_QUEUE")
         self.project_id = get_from_environ("OTHCTL_PROJECT_ID")
-        self.path_to_sspace: str = get_from_environ("OTHCTL_PATH_TO_SSPACE")
+        self.path_to_sspace = get_from_environ("OTHCTL_PATH_TO_SSPACE")
         self.path_to_tests = get_from_environ("OTHCTL_PATH_TO_TESTS")
         self.system_log_tag = get_from_environ("OTHCTL_SYSTEM_LOG_TAG")
 
@@ -103,8 +103,9 @@ class OthctlRuntimeConfig:
         self.influxdb_dry_run = get_from_environ("OTHCTL_INFLUXDB_DRY_RUN")
         self.influxdb_disable = get_from_environ("OTHCTL_INFLUXDB_DISABLE")
 
-        # Make work dir
-        os.makedirs(self.path_to_sspace, exist_ok=True)
+        # Make work dir -- set to /dev/null for unit tests
+        if self.path_to_sspace != "/dev/null":
+            os.makedirs(self.path_to_sspace, exist_ok=True)
 
     def set_env_from_config(self):
         """Given a config file, export the environment variables to the environment"""
