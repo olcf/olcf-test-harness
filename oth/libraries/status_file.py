@@ -688,6 +688,7 @@ class StatusFile:
 def get_status_info(test_id, event_type, event_subtype,
                     event_value, event_time, event_filename):
     """Create a data structure with verbose info for an event."""
+    from oth.config import othctl_runtime_config
 
     no_value = StatusFile.NO_VALUE
 
@@ -720,7 +721,7 @@ def get_status_info(test_id, event_type, event_subtype,
     run_archive_all = os.path.join(dir_head1, apptest_layout.test_run_archive_dirname)
     test_instance_info['run_archive'] = os.path.join(run_archive_all, test_id)
 
-    test_instance_info['rgt_path_to_sspace'] = os.environ['RGT_PATH_TO_SSPACE']
+    test_instance_info['rgt_path_to_sspace'] = othctl_runtime_config.path_to_sspace
 
     test_instance_info['build_directory'] = os.path.join(
         test_instance_info['rgt_path_to_sspace'],
@@ -728,7 +729,7 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_build_dirname)
 
-    test_instance_info['machine'] = os.environ['RGT_MACHINE_NAME'] if 'RGT_MACHINE_NAME' in os.environ else no_value
+    test_instance_info['machine'] = othctl_runtime_config.machine_name
 
     test_instance_info['workdir'] = os.path.join(
         test_instance_info['rgt_path_to_sspace'],
@@ -737,19 +738,13 @@ def get_status_info(test_id, event_type, event_subtype,
         test_instance_info['test_id'], apptest_layout.test_run_dirname)
 
     job_account = no_value
-    if 'RGT_PROJECT_ID' in os.environ:
-        job_account = os.environ['RGT_PROJECT_ID']
-    elif 'RGT_ACCT_ID' in os.environ:
-        job_account = os.environ['RGT_ACCT_ID']
+    if 'OTHCTL_PROJECT_ID' in os.environ:
+        job_account = os.environ['OTHCTL_PROJECT_ID']
+    elif 'OTHCTL_ACCT_ID' in os.environ:
+        job_account = os.environ['OTHCTL_ACCT_ID']
     test_instance_info['job_account_id'] = job_account
-
-    test_instance_info['path_to_rgt_package'] = (
-        os.environ['PATH_TO_RGT_PACKAGE']
-        if 'PATH_TO_RGT_PACKAGE' in os.environ else str(Path(__file__).resolve().parent.parent))
-
-    test_instance_info['rgt_system_log_tag'] = (
-        os.environ['RGT_SYSTEM_LOG_TAG']
-        if 'RGT_SYSTEM_LOG_TAG' in os.environ else no_value)
+    test_instance_info['path_to_rgt_package'] = str(Path(__file__).resolve().parent.parent)
+    test_instance_info['rgt_system_log_tag'] = othctl_runtime_config.system_log_tag
 
     #---
 
@@ -761,7 +756,7 @@ def get_status_info(test_id, event_type, event_subtype,
     event_info['event_value'] = (
         str(event_value) if event_value else no_value)
 
-    event_info['runtag'] = test_instance_info['rgt_system_log_tag']
+    event_info['runtag'] = othctl_runtime_config.system_log_tag
 
     file_check_alias = os.path.join(run_archive_all, test_id, 'check_alias.txt')
     if Path(file_check_alias).exists():

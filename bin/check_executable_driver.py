@@ -113,7 +113,6 @@ def main():
 
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,
-                                          local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=testid)
 

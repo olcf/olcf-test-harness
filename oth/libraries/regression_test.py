@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-# Python imports
-
 import collections
 import concurrent.futures
 import datetime
@@ -17,12 +15,6 @@ from oth.libraries.rgt_state import RgtState
 from oth.libraries.output_hub import OutputHub
 from oth.machine_types.machine_factory import MachineFactory
 
-#
-# Author: Arnold Tharrington (arnoldt@ornl.gov)
-# National Center for Computational Sciences, Scientific Computing Group.
-# Oak Ridge National Laboratory
-#
-
 class Harness:
 
     # Defines the harness log file name.
@@ -35,7 +27,7 @@ class Harness:
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     def __init__(self,
-                 rgt_input_file,
+                 oth_input_file,
                  log_level,
                  stdout_stderr,
                  separate_build_stdio,
@@ -44,10 +36,10 @@ class Harness:
                  shuffle=False):
         # v4 implementation of the OTH machine config file
         from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
 
-        self.__tests = rgt_input_file.get_tests()
-        self.__tasks = rgt_input_file.get_harness_tasks()
-        self.__local_path_to_tests = rgt_input_file.get_path_to_tests()
+        self.__tests = oth_input_file.get_tests()
+        self.__tasks = oth_input_file.get_harness_tasks()
         self.__apptests_dict = collections.OrderedDict()
         self.__app_subtests = []
         self.__log_level = log_level
@@ -70,7 +62,7 @@ class Harness:
         else:
             time_str = now_str
         user_str = getpass.getuser()
-        testshot_str = othctl_runtime_config.system_log_tag
+        testshot_str = self.othctl_runtime_config.system_log_tag
         self.__launch_id = f'{testshot_str}/{user_str}@{time_str}'
         self.__launched_tests = 0
         self.__failed_tests = 0
@@ -92,7 +84,7 @@ class Harness:
         )
 
     def __str__(self):
-        message = ( "\n Local path to tests: " + self.__local_path_to_tests  + "\n"
+        message = ( "\nPath to tests: " + self.othctl_runtime_config.path_to_tests  + "\n"
                     "Tests: " + str(self.__tests) + "\n"
                     "Tasks: " + str(self.__tasks) + "\n")
         return message
@@ -237,7 +229,6 @@ class Harness:
 
                 subtest = SubtestFactory.make_subtest(name_of_application=appname,
                                                       name_of_subtest=testname,
-                                                      local_path_to_tests=self.__local_path_to_tests,
                                                       logger = a_logger,
                                                       tag=self.__timestamp)
 

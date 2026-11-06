@@ -34,7 +34,6 @@ from oth.libraries.layout_of_apps_directory import apptest_layout as layout
 from oth.libraries.layout_of_apps_directory import get_layout_from_scriptdir
 from oth.libraries.layout_of_apps_directory import get_path_to_logfile_from_scriptdir
 from oth.libraries import rgt_utilities
-from oth.libraries.config_file import rgt_config_file
 from oth.libraries.status_file_factory import StatusFileFactory
 from oth.libraries import status_file
 from oth.libraries.output_hub import OutputHub
@@ -73,7 +72,6 @@ def create_parser(logger=None):
                            action='store_true')
     my_parser.add_argument('-C', '--configfile',
                            required=False,
-                           default=rgt_config_file.get_default_config_file_name(),
                            type=str,
                            help="Configuration file name (default: %(default)s)")
     my_parser.add_argument('-d', '--scriptsdir',
@@ -131,8 +129,7 @@ def read_job_file(test_status_dir):
         job_id = str.strip(job_line)
     return job_id
 
-def auto_generated_scripts(harness_config,
-                           apptest,
+def auto_generated_scripts(apptest,
                            jstatus,
                            launch_id,
                            actions,
@@ -144,12 +141,13 @@ def auto_generated_scripts(harness_config,
     This function uses the machine_types library.
 
     """
+    from oth.config import othctl_runtime_config
 
     status_dir = apptest.get_path_to_status()
     ra_dir = apptest.get_path_to_runarchive()
 
     # Instantiate the machine for this computer.
-    mymachine = MachineFactory.create_machine(harness_config, apptest, separate_build_stdio=separate_build_stdio)
+    mymachine = MachineFactory.create_machine(apptest, separate_build_stdio=separate_build_stdio)
 
     # If the test needs to be run in serial outside of the scheduler, do that now
     if mymachine.test_config.get_run_local():
@@ -319,6 +317,9 @@ def test_harness_driver(argv=None):
     do_check = Vargs.check
     do_submit = Vargs.submit
 
+    if Vargs.configfile:
+        os.environ["OTHCTL_CONFIG_FILE"] = Vargs.configfile
+
     #
     # If none of the individual actions were specified, act
     # like the previous version and do 'build + submit'
@@ -346,7 +347,7 @@ def test_harness_driver(argv=None):
     }
 
     # Create a harness config (which sets harness env vars)
-    harness_cfg = rgt_config_file(configfilename=Vargs.configfile, logger=driver_logger)
+    from oth.config import othctl_runtime_config
 
     # Get the launch id for this test instance.
     launch_id = Vargs.launchid
@@ -357,11 +358,7 @@ def test_harness_driver(argv=None):
         else:
             time_str = now_str
         user_str = getpass.getuser()
-        testshot_key = 'system_log_tag'
-        testshot_str = 'notag'
-        testshot_cfg = harness_cfg.get_testshot_config()
-        if testshot_key in testshot_cfg.keys():
-            testshot_str = testshot_cfg[testshot_key]
+        testshot_str = othctl_runtime_config.system_log_tag
         launch_id = f'{testshot_str}/{user_str}@{time_str}'
         driver_logger.log_info(f'Using launch id: {launch_id}')
     else:
@@ -403,7 +400,6 @@ def test_harness_driver(argv=None):
 
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,
-                                          local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=unique_id)
 
@@ -428,7 +424,7 @@ def test_harness_driver(argv=None):
     ra_dir = apptest.create_test_runarchive()
 
     # Create the temporary workspace path for this test instance -- does not create build_dir
-    workspace = rgt_utilities.harness_work_space()
+    workspace = othctl_runtime_config.path_to_sspace
     apptest.create_test_workspace(workspace)
 
     # Implement the RGT_REUSE_BUILD_FROM environment variable
@@ -482,8 +478,7 @@ def test_harness_driver(argv=None):
     #
     # Build tests
     #
-    exit_values = auto_generated_scripts(harness_cfg,
-                                         apptest,
+    exit_values = auto_generated_scripts(apptest,
                                          jstatus,
                                          launch_id,
                                          actions,

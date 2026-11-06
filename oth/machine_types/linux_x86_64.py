@@ -46,7 +46,7 @@ class Linux_x86_64(BaseMachine):
                              separate_build_stdio=separate_build_stdio,
                              use_jinja2=using_yaml)
 
-        self._rgt_test = RgtTest(path_to_test_input_file,logger=self.logger)
+        self._rgt_test = RgtTest(path_to_test_input_file)
         self._rgt_test.read_input_file()
 
         # Add test parameters needed by the harness
@@ -57,6 +57,7 @@ class Linux_x86_64(BaseMachine):
         harness_parameters['scripts_dir'] = self.apptest.get_path_to_scripts()
         harness_parameters['harness_id'] = self.apptest.get_harness_id()
         self._rgt_test.harness_parameters.update(harness_parameters)
+        self._rgt_test.print_test_parameters(self.logger)
 
     @property
     def test_config(self):

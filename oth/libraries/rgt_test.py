@@ -1,45 +1,13 @@
 #!/usr/bin/env python3
-"""This module abstracts the application-test input file rgt_test_input.ini.
-
-This modules main responsibilty is to process the file application-test input file.
-The input file stores various key-value entries that are parameters for running
-the application-test. The extant OLCF Harness currently supports processing input files
-of one format: The INI file format.
-
-INI format of application-test input file rgt_test_input.ini
-------------------------------------------------------------
-The following sections are allowed:
-
-    [Replacements]
-    [EnvVars]
-    [RuntimeEnvironmentCommands]
-
-The [Replacements] section is the only madatory section. TThe key-value entries
-in the section is stored in 2 dictionaries which are attributes of the class 
-RgtTest:
-
-    * self.__builtin_params
-    * self.__user_params
-
-The method class method self.__is_builtin_param tests if a key-value pair 
-belongs in dictionary self.__builtin_params. If a the key-valule fails the test
-then the key-value pair is in the dictionary self.__user_params. The key-value pairs
-are used for replacements of patterns in template files.  
-
-The [EnvVars] section is optional
-The section contains keys-value pairs for setting environmental varibles.
-
+"""
+This module implements the application-test input file, rgt_test_input.{ini,yaml}.
 """
 
-#
-# Author: Veronica G. Vergara L.
-#
-
-# Python imports
 import configparser
 import os
-import sys
 from pathlib import Path
+import sys
+
 try:
     # YAML & Jinja2 must be used together
     import yaml
@@ -66,7 +34,8 @@ class RgtTest():
     OBTAIN_FROM_ENVIRONMENT="<obtain_from_environment>"
     """str: The string value for an entry that indicates to get the value from the shell environment."""
 
-    def __init__(self, filename,logger=None):
+    def __init__(self,
+                 filename : str):
         """ The constructor of the RgtTest class.
 
         Parameters
@@ -75,16 +44,9 @@ class RgtTest():
             The name to the rgt_test.py input file. The input file contains
             test settings, environmental varibles settings and other information
             to run a test/application.
-            
-        a_logger: A rgt_logger class
-            An instance of the rgt_logger class.
         """
 
         self.__inputfile = filename
-        """str: The name to the rgt_test.py application-test input file. """
-
-        self.__logger = logger
-        """rgt_logger: An instance of the rgt_logger class."""
 
         self.__builtin_params = {}
         """dict: The buitin parameters of the application-test input file."""
@@ -174,12 +136,6 @@ class RgtTest():
         """dict: The dictionary of builtin parameters of the application-test input file."""
         return self.__builtin_params
 
-    def print_user_parameters(self):
-        self.__logger.log_info("RGT Test Parameters - User")
-        self.__logger.log_info("==========================")
-        for (k,v) in (self.user_parameters).items():
-            self.__logger.log_info(f'{k}={v}')
-
     #
     # Methods to retrieve full test dictionaries
     #
@@ -243,17 +199,10 @@ class RgtTest():
             if key in self.HARNESS_SECTION_KEYS.values():
                 self._harness_params[key] = value 
             else:
-                # TODO: Throw an exception if an invalid key,value is assigned.
-                self.__logger.log_critical("No key found for", key)
+                raise ValueError(f"Attempted to set invalid key: {key}")
 
     def get_test_replacements(self):
-        """Returns a dictionary of key word replacements.
-
-        In the application-test input file there are entries in the replacement
-        of the form key1 = value1. Correspondingly, there are records in the template
-        files with __key1__. The returned dictionary contains {...,  __key1__ : value1, ...}
-        and is used to make the appropiate substitutions in the templates file to form the
-        correct files.
+        """Returns a dictionary of key-value replacements from the test input file.
 
         Returns
         -------
@@ -332,27 +281,24 @@ class RgtTest():
         The functions exits if the application-test input filename 
         is not a permitted value.
         """
-        try:
-            if Path(self.test_input_filename).is_file():
-                if self.test_input_filename.endswith('ini'):
-                    self._read_rgt_input_ini()
-                elif self.test_input_filename.endswith('yaml'):
-                    if yaml_disabled:
-                        self.__logger.log_critical("import yaml failed, YAML test input file cannot be loaded. Please pip install pyyaml in the current Python environment.")
-                        exit(1)
-                    self._read_rgt_input_yaml()
-                else:
-                    error_message = "File type of input file {} not supported (expected yaml or ini).".format(self.test_input_filename)
-                    raise ErrorRgtTestInputFileNotFound(error_message)
-                self._reconcile_with_shell_environment_variables()
-                self._check_parameters()
-                self._print_test_parameters()
+        if Path(self.test_input_filename).is_file():
+            if self.test_input_filename.endswith('ini'):
+                self._read_rgt_input_ini()
+            elif self.test_input_filename.endswith('yaml'):
+                if yaml_disabled:
+                    raise ImportError("import yaml, jinja2 failed, YAML test input file cannot be loaded. Please install pyyaml and jinja2 in the current Python environment.")
+                self._read_rgt_input_yaml()
             else:
-                error_message = "Test input file {} not found".format(self.test_input_filename)
-                raise ErrorRgtTestInputFileNotFound(error_message)
-        except Exception as err:
-            self.__logger.log_critical(err.message)
-            exit(1)
+                error_message = "File type of input file {} not supported (expected yaml or ini).".format(self.test_input_filename)
+                raise ValueError(error_message)
+            self._reconcile_with_shell_environment_variables()
+            self._check_parameters()
+        else:
+            raise FileNotFoundError(f"Test input file not found: {self.test_input_filename}")
+
+    def print_test_parameters(self, logger):
+        self._print_builtin_parameters(logger)
+        self._print_user_parameters(logger)
 
     # Private methods
 
@@ -365,14 +311,12 @@ class RgtTest():
     def _is_builtin_param(self, key):
         return key in self.__builtin_keys
 
-    def _set_builtin_param(self, key, val, warn=True):
+    def _set_builtin_param(self, key, val):
         if self._is_builtin_param(key):
             self.__builtin_params[key] = val
             return True
         else:
-            if warn:
-                self.__logger.log_warning("WARNING: Ignoring invalid built-in parameter key {}".format(key))
-            return False
+            raise ValueError(f"Attempted to set invalid built-in parameter key: {key}")
 
     def _update_replacement_parameters(self,params_view):
         """Updates the appropiate replacement parameter dictionary as required."""
@@ -441,13 +385,8 @@ class RgtTest():
         self.test_environment = dict()
         self.runtime_environment_params = dict()
 
-    def _print_test_parameters(self):
-        self._print_builtin_parameters()
-        self.print_user_parameters()
-    
     def _reconcile_with_shell_environment_variables(self):
-        # Reconcile the builtin parameters, self.__builtin_params, with the
-        # shell environment variables.
+        # Resolve any <obtain_from_environment> variables
         for (key,value) in self.__builtin_params.items():
             if value == self.OBTAIN_FROM_ENVIRONMENT:
                 key_modified = oth_variable_name_modification(key)
@@ -455,8 +394,8 @@ class RgtTest():
                 if tmp_value :
                     self.__builtin_params[key] = tmp_value
                 else :
-                    error_message = "Unable to reconcile shell environmental variables and self.__builtin_params[{key}]={value}.".format(key=key,value=value)
-                    raise ErrorRgtParameterReconcile(error_message)
+                    error_message = "Unable to find environment variable to fulfill self.__builtin_params[{key}]={value}.".format(key=key,value=value)
+                    raise ValueError(error_message)
 
         # Reconcile the user parameters, self.__user_params, with
         # the shell environment variables.
@@ -468,7 +407,7 @@ class RgtTest():
                     self.__user_params[key] = tmp_value
                 else :
                     error_message = "Unable to reconcile shell environmental variables and self.__user_params[{key}]={value}.".format(key=key,value=value)
-                    raise ErrorRgtParameterReconcile(error_message)
+                    raise ValueError(error_message)
 
 
         # Reconcile the environment parameters, self.__environ, with
@@ -481,16 +420,16 @@ class RgtTest():
                     self.__environ[key] = tmp_value
                 else :
                     error_message = "Unable to reconcile shell environmental variables and self.__environ[{key}]={value}.".format(key=key,value=value)
-                    raise ErrorRgtParameterReconcile(error_message)
+                    raise ValueError(error_message)
         return
 
     def _check_parameters(self):
         # Check validation parameters for input
         # Start with the required flag
-        error_message = ""
+        errs = []
         for (k,params) in self.__builtin_keys.items():
             if 'required' in params and params['required'] and k not in self.builtin_parameters:
-                error_message += "ERROR: required test input parameter {} is not set!\n".format(k)
+                errs.append(f"\tRequired test input parameter {k} is not set!")
 
         # Check type
         for (k,params) in self.__builtin_keys.items():
@@ -501,68 +440,45 @@ class RgtTest():
                 if params['type'] is int and not (isinstance(self.builtin_parameters[k],int) or \
                         self.builtin_parameters[k].lstrip("-").isdigit()):
                     valid_type = False # Need to reference in lambda function
-                    error_message += "ERROR: test input parameter {} is not type {}!\n".format(k, str(params['type']))
+                    errs.append(f"\tTest input parameter {k} is not type {str(params['type'])}!")
 
                 # Check file
                 if params['type'] == 'file':
                     # Check whether it exists
                     if not Path(self.builtin_parameters[k]).exists():
-                        error_message += "ERROR: test input parameter {} does not exist {}!\n".format(k, self.builtin_parameters[k])
+                        errs.append("\tTest input parameter {k} is expected to be a file, but does not exist:{self.builtin_parameters[k]}!")
 
                     # Check whether is executable
                     if not os.access(self.builtin_parameters[k], os.X_OK):
-                        error_message += "ERROR: test input parameter {} is not executable {}!\n".format(k, self.builtin_parameters[k])
+                        errs.append(f"\tTest input parameter {k} is not executable: {self.builtin_parameters[k]}!")
 
             if 'valid' in params and k in self.builtin_parameters:
                 # Run our validation function
                 if valid_type == False or not params['valid'](self.builtin_parameters[k]):
-                    error_message += "ERROR: test input parameter {} failed validation!\n".format(k)
+                    errs.append(f"\tTest input parameter {k} failed validation!")
 
 
         # Print and bail if any errors
-        if error_message != "":
-            self.__logger.log_critical(error_message)
-            exit(1)
+        if len(errs) > 0:
+            err_msg = 'Test parameter validation failed due to the following errors:\n'
+            err_msg += '\n'.join(errs)
+            raise ValueError(err_msg)
 
-    def _print_builtin_parameters(self):
-        self.__logger.log_info("RGT Test Parameters - Builtin")
-        self.__logger.log_info("=============================")
+    def _print_user_parameters(self, logger):
+        logger.log_info("RGT Test Parameters - User")
+        logger.log_info("==========================")
+        for (k,v) in (self.user_parameters).items():
+            logger.log_info(f'{k}={v}')
+
+    def _print_builtin_parameters(self, logger):
+        logger.log_info("RGT Test Parameters - Builtin")
+        logger.log_info("=============================")
         for (k,v) in (self.builtin_parameters).items():
-            self.__logger.log_info(f'{k}={v}')
+            logger.log_info(f'{k}={v}')
 
     def _set_user_param(self, key, val):
         self.__user_params[key] = val
 
-
-class RgtTestError(Exception):
-    """Base error class for RgtTest."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-        return
-    
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-    
-class ErrorRgtParameterReconcile(RgtTestError):
-    """Exception raised for errors in reconciling RgtTest parameters."""
-    def __init__(self,message):
-        RgtTestError.__init__(self,message)
-        return
-
-class ErrorRgtTestInputFileNotFound(RgtTestError):
-    """Exception raised for errors when the rgt_test_input.ini is not found."""
-    def __init__(self,message):
-        RgtTestError.__init__(self,message)
-        return
 
 if __name__ == "__main__":
     print('This is the RgtTest class')

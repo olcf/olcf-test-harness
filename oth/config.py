@@ -19,7 +19,7 @@ class OthctlRuntimeConfig:
     def __init__(self):
 
         # Set defaults for each variable
-        self.harness_dir = Path(__file__).resolve().parent.parent.parent
+        self.harness_dir = Path(__file__).resolve().parent.parent
         self.machine_name = get_from_environ(
             "OTHCTL_MACHINE", default="master", regex=r"^[a-zA-Z0-9]+$"
         )
@@ -121,7 +121,7 @@ class OthctlRuntimeConfig:
 def get_from_environ(
     envvar_name: str,
     default: Optional[str] = None,
-    regex: str = r"^.+$",
+    regex: str = r"^.*$",
     required: bool = False,
 ) -> Optional[str]:
     raw: Optional[str] = os.getenv(envvar_name)

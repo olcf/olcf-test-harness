@@ -28,10 +28,11 @@ class oth_input_file:
                  logger=None):
 
         from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
 
         self.__tests = []
         self.__harness_task = []
-        self.__path_to_tests = othctl_runtime_config.path_to_tests
+        self.__path_to_tests = self.othctl_runtime_config.path_to_tests
         self.__inputFileName = inputfilename
         self.__logger = logger
 

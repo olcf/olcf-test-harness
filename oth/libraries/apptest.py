@@ -32,30 +32,21 @@ from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import creat
 # Inherits "apptest_layout".
 #
 class subtest(base_apptest, apptest_layout):
-    """Encapsulates the application-test layout.
-
-    Only one method is public and it exposes the doing of harness tasks:
-        * do_tasks.
-
-    The class is derived from classes base_apptest and apptest_layout.
-
-
     """
-
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    #                                                                 @
-    # Special methods                                                 @
-    #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    An instantiation of a single app+test to run.
+    The class is derived from classes base_apptest and apptest_layout.
+    """
 
     def __init__(self,
                  name_of_application=None,
                  name_of_subtest=None,
-                 local_path_to_tests=None,
                  number_of_iterations=-1,
                  logger=None,
                  tag=None,
                  db_logger=None):
+
+        from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
 
         # Ensure that tag is not None.
         if (tag == None):
@@ -66,21 +57,16 @@ class subtest(base_apptest, apptest_layout):
         base_apptest.__init__(self,
                               name_of_application,
                               name_of_subtest,
-                              local_path_to_tests,
+                              self.othctl_runtime_config.path_to_tests,
                               tag)
 
         apptest_layout.__init__(self,
-                                local_path_to_tests,
+                                self.othctl_runtime_config.path_to_tests,
                                 name_of_application,
                                 name_of_subtest,
                                 logger=logger,
                                 harness_id=tag)
 
-        # Format of data is [<local_path_to_tests>, <application>, <test>]
-        self.__apps_test_checked_out = []
-        self.__apps_test_checked_out.append([self.getLocalPathToTests(),
-                                             self.getNameOfApplication(),
-                                             name_of_subtest])
         self.__number_of_iterations = -1
         self.__myLogger = logger
 
@@ -88,13 +74,6 @@ class subtest(base_apptest, apptest_layout):
             self.__db_logger = create_rgt_db_logger(logger=logger)
         else:
             self.__db_logger = db_logger
-
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    #                                                                 @
-    # End of special methods                                          @
-    #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -358,19 +337,6 @@ class subtest(base_apptest, apptest_layout):
                 "Failed_jobs" : self.__summary["failed_jobs"],
                 "Inconclusive_jobs" : self.__summary["inconclusive_jobs"]}
 
-
-    #
-    # Debug apptest.
-    #
-    def debug_apptest(self):
-        print ("\n\n")
-        print ("================================================================")
-        print ("Debugging apptest ")
-        print ("================================================================")
-        for tmp_test in self.__apps_test_checked_out:
-            print( "%-20s  %-20s %-20s" % (tmp_test[0], tmp_test[1], tmp_test[2]))
-        print( "================================================================\n\n")
-
     def waitForAllJobsToCompleteQueue(self, harness_config, timeout):
         """Waits for subtest cycle to end.
 
@@ -526,18 +492,14 @@ class subtest(base_apptest, apptest_layout):
         """
         Enables the harness database logging extensions for Metrics and Node Health
         """
+        from oth.config import othctl_runtime_config
         currentdir = os.getcwd()
         self.logger.log_debug(f"Current directory in apptest: {currentdir}")
         runarchive_dir = self.get_path_to_runarchive()
         os.chdir(runarchive_dir)
         self.logger.log_info(f"Starting the harness database extensions in apptest: {os.getcwd()}")
 
-        # Find the machine name, or give a best-guess
-        if not 'RGT_MACHINE_NAME' in os.environ:
-            machine_name = subprocess.check_output(['hostname', '--long'])
-            self.logger.log_warning(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {machine_name}")
-        else:
-            machine_name = os.environ['RGT_MACHINE_NAME']
+        machine_name = othctl_runtime_config.machine_name
 
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
