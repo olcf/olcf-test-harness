@@ -2,7 +2,7 @@ import configparser
 import os
 import re
 from pathlib import Path
-from typing import Callable, Optional, TypeVar, cast
+from typing import Optional
 
 from oth.libraries.rgt_utilities import set_harness_environment
 
@@ -37,7 +37,7 @@ class OthctlRuntimeConfig:
                 self.config = str(harness_dir_config)
 
         # Read config file
-        set_env_from_config()
+        self.set_env_from_config()
 
         self.machine_type = get_from_environ(
             "OTHCTL_MACHINE_TYPE", default="linux_x86_64"
@@ -117,7 +117,7 @@ class OthctlRuntimeConfig:
             for section in cfg.sections():
                 set_harness_environment(cfg[section])
         else:
-            raise NameError("Harness config file not found: %s" % self.config)
+            raise NameError(f"Harness config file not found: {self.config}")
 
 def get_from_environ(
     envvar_name: str,
