@@ -2,12 +2,11 @@
 This module implements the application-test input file, rgt_test_input.{ini,yaml}.
 """
 
-from __future__ import annotations
-
 import configparser
 import os
 from pathlib import Path
-from typing import ClassVar
+
+# from typing import ClassVar
 
 try:
     import yaml
@@ -24,7 +23,8 @@ from oth.libraries.rgt_utilities import oth_variable_name_modification
 class RgtTest:
     """This class is the abstraction of regression test input file."""
 
-    HARNESS_SECTION_KEYS: ClassVar[dict[str, str]] = {
+    # TODO -- Python3.7+, add typing.ClassVar spec
+    HARNESS_SECTION_KEYS = {  # noqa: RUF012
         "application_test_results_dir": "results_dir",
         "application_test_work_dir": "working_dir",
         "application_test_build_dir": "build_dir",
