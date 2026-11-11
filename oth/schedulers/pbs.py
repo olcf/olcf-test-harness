@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 from .base import BaseScheduler, SchedulerJob
@@ -11,24 +10,27 @@ class PBS(BaseScheduler):
     submit_executable: str = "qsub"
 
     def submit_job(self, job: SchedulerJob) -> int:
+
+        from oth.config import othctl_runtime_config
+
         self._logger.log_info(
             f"Submitting job from PBS class using batchfilename {job.batch_script}"
         )
 
         submit_cmd = [self.submit_executable]
 
-        if "RGT_SUBMIT_QUEUE" in os.environ:
-            submit_cmd.extend(["-q", str(os.environ.get("RGT_SUBMIT_QUEUE"))])
-        elif "RGT_BATCH_QUEUE" in os.environ:
-            submit_cmd.extend(["-q", str(os.environ.get("RGT_BATCH_QUEUE"))])
+        if othctl_runtime_config.submit_queue:
+            submit_cmd.extend(["-q", othctl_runtime_config.submit_queue])
+        elif othctl_runtime_config.batch_queue:
+            submit_cmd.extend(["-q", othctl_runtime_config.batch_queue])
 
-        if "RGT_SUBMIT_ARGS" in os.environ:
-            submit_cmd.extend(str(os.environ.get("RGT_SUBMIT_ARGS")).split())
+        if othctl_runtime_config.submit_args:
+            submit_cmd.extend(othctl_runtime_config.submit_args.split())
 
-        if "RGT_SUBMIT_ACCT" in os.environ:
-            submit_cmd.extend(["-A", str(os.environ.get("RGT_SUBMIT_ACCT"))])
-        elif "RGT_PROJECT_ID" in os.environ:
-            submit_cmd.extend(["-A", str(os.environ.get("RGT_PROJECT_ID"))])
+        if othctl_runtime_config.submit_acct:
+            submit_cmd.extend(["-A", othctl_runtime_config.submit_acct])
+        elif othctl_runtime_config.project_id:
+            submit_cmd.extend(["-A", othctl_runtime_config.project_id])
 
         submit_cmd.append(job.batch_script)
 

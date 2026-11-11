@@ -69,6 +69,9 @@ class OthctlRuntimeConfig:
         self.path_to_sspace = get_from_environ("OTHCTL_PATH_TO_SSPACE")
         self.path_to_tests = get_from_environ("OTHCTL_PATH_TO_TESTS")
         self.system_log_tag = get_from_environ("OTHCTL_SYSTEM_LOG_TAG")
+        self.lsf_submit_as_stdin = get_from_environ(
+            "OTHCTL_LSF_SUBMIT_AS_STDIN", default=0, regex=r"^[0-1]$"
+        )
 
         # Overrides for batch queueing defaults
         self.submit_args = get_from_environ("OTHCTL_SUBMIT_ARGS")
