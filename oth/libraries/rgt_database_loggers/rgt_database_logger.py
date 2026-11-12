@@ -33,6 +33,9 @@ class RgtDatabaseLogger:
             (Optional) a string URL for a specific database backend to initialize
         """
 
+        from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
+
         if not logger:
             print("Invalid call to rgt_database_logger constructor: no logger provided")
             return
@@ -302,9 +305,8 @@ class RgtDatabaseLogger:
             self.logger.log_error(f"Failed to import InfluxDB backend: {e}.")
             pass
 
-        if influxdb_loaded and InfluxDBLogger.kw['disable'] in os.environ and \
-                            str(os.environ[InfluxDBLogger.kw['disable']]) == '1':
-            self.logger.log_info(f"InfluxDB logging is explicitly disabled with {InfluxDBLogger.kw['disable']}=1")
+        if influxdb_loaded and self.othctl_runtime_config.influxdb_disable == '1':
+            self.logger.log_info(f"InfluxDB logging is explicitly disabled.")
             self.disabled_backends.append('influxdb')
             self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
         return
@@ -345,56 +347,54 @@ class RgtDatabaseLogger:
                 pass
 
         if influxdb_loaded and not 'influxdb' in self.disabled_backends \
-                and ( InfluxDBLogger.kw['uri'] in os.environ and InfluxDBLogger.kw['token'] in os.environ ):
+                and ( self.othctl_runtime_config.influxdb_uri and self.othctl_runtime_config.influxdb_token):
             # Then we enable InfluxDB
             # Fields for multiple InfluxDB databases can be separated by semicolons
-            influxdb_uris = os.environ[InfluxDBLogger.kw['uri']].split(';')
-            influxdb_tokens = os.environ[InfluxDBLogger.kw['token']].split(';')
+            influxdb_uris = self.othctl_runtime_config.influxdb_uri.split(';')
+            influxdb_tokens = self.othctl_runtime_config.influxdb_token.split(';')
             if not len(influxdb_uris) == len(influxdb_tokens):
                 self.logger.log_error("The number of InfluxDB URI's provided does not match the number of InfluxDB tokens. Skpping.")
-            else:
-                if influxdb_loaded:
-                    for i in range(0,len(influxdb_uris)):
-                        try:
-                            # If you use multiple InfluxDB instances, you must not use the RGT_INFLUXDB_BUCKET or RGT_INFLUXDB_ORG variables
-                            # unless the same bucket and org name apply to all InfluxDB instances
-                            # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
-                            influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
-                            if not only:
-                                self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
-                                self.enabled_backends.append(influxdb_backend)
-                            elif influxdb_backend.url == only:
-                                self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
-                                self.enabled_backends.append(influxdb_backend)
-                        except Exception as e:
-                            self.logger.log_error(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
-        if kafka_loaded and ( not 'kafka' in self.disabled_backends ) \
-                and KafkaLogger.kw['uri'] in os.environ \
-                and KafkaLogger.kw['username'] in os.environ \
-                and KafkaLogger.kw['password'] in os.environ:
+            elif influxdb_loaded:
+                for i in range(0,len(influxdb_uris)):
+                    try:
+                        # If you use multiple InfluxDB instances, you must not use the OTHCTL_INFLUXDB_BUCKET or OTHCTL_INFLUXDB_ORG variables
+                        # unless the same bucket and org name apply to all InfluxDB instances
+                        # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
+                        influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
+                        if not only:
+                            self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                            self.enabled_backends.append(influxdb_backend)
+                        elif influxdb_backend.url == only:
+                            self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                            self.enabled_backends.append(influxdb_backend)
+                    except Exception as e:
+                        self.logger.log_error(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
+        if kafka_loaded and (not 'kafka' in self.disabled_backends)
+            and (self.othctl_runtime_config.kafka_uri
+            and self.othctl_runtime_config.kafka_username
+            and self.othctl_runtime_config.kafka_password
+            and self.othctl_runtime_config.kafka_events_topic
+        ):
             # Then we enable Kafka
             # Fields for multiple Kafka databases can be separated by semicolons
             # the length of kafka_uris is the authoritative source of how many sources are expected
 
-            try:
-                # required fields:
-                kafka_uris = os.environ[KafkaLogger.kw['uri']].split(';')
-                kafka_usernames = os.environ[KafkaLogger.kw['username']].split(';')
-                kafka_passwords = os.environ[KafkaLogger.kw['password']].split(';')
-                kafka_topic_events = os.environ[KafkaLogger.kw['topic_events']].split(';')
-                # metrics & node health topics are optional
-                kafka_topic_metrics = None
-                kafka_topic_node_healths = None
-                if KafkaLogger.kw['topic_metrics'] in os.environ:
-                    kafka_topic_metrics = os.environ[KafkaLogger.kw['topic_metrics']].split(';')
-                if KafkaLogger.kw['topic_node_health'] in os.environ:
-                    kafka_topic_node_healths = os.environ[KafkaLogger.kw['topic_node_health']].split(';')
-                kafka_db_type = os.environ[KafkaLogger.kw['db_type']].split(';')
-                kafka_db_uri = os.environ[KafkaLogger.kw['db_uri']].split(';')
-                kafka_ssl_ca_loc = os.environ[KafkaLogger.kw['ssl_ca_loc']].split(';')
-                kafka_ssl_cert_locs = os.environ[KafkaLogger.kw['ssl_cert_loc']].split(';')
-            except ValueError as e:
-                self.logger.log_error(f"Could not find all required environment variables for the Kafka backend: {e}")
+            # required fields:
+            kafka_uris = self.othctl_runtime_config.kafka_uri.split(';')
+            kafka_usernames = self.othctl_runtime_config.kafka_username.split(';')
+            kafka_passwords = self.othctl_runtime_config.kafka_password.split(';')
+            kafka_topic_events = self.othctl_runtime_config.kafka_events_topic.split(';')
+            # metrics & node health topics are optional
+            kafka_topic_metrics = None
+            kafka_topic_node_healths = None
+            if self.othctl_runtime_config.kafka_metrics_topic:
+                kafka_topic_metrics = self.othctl_runtime_config.kafka_metrics_topic.split(';')
+            if self.othctl_runtime_config.kafka_node_health_topic:
+                kafka_topic_node_healths = self.othctl_runtime_config.kafka_node_health_topic.split(';')
+            kafka_db_type = self.othctl_runtime_config.kafka_db_type.split(';')
+            kafka_db_uri = self.othctl_runtime_config.kafka_db_uri.split(';')
+            kafka_ssl_ca_loc = self.othctl_runtime_config.kafka_ssl_ca_location.split(';')
+            kafka_ssl_cert_locs = self.othctl_runtime_config.kafka_ssl_certificate_location.split(';')
 
             for i in range(0,len(kafka_uris)):
                 try:

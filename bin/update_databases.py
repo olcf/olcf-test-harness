@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 ################################################################################
-# Author: Nick Hagerty
-# Date modified: 2025-08-12
-################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
 #   Kafka with the Druid database backend.
@@ -28,23 +25,23 @@ from pathlib import Path
 prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
-# Silently wrapped in try/except so errors are handled by rgt_db_logger class
+# Silently wrapped in try/except so errors are handled by oth_db_logger class
 try:
-    from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+    from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
 except ImportError as e:
     pass
 
 try:
-    from oth.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+    from oth.libraries.oth_database_loggers.db_backends.oth_kafka import KafkaLogger
 except ImportError as e:
     pass
 
 from oth.libraries.subtest_factory import SubtestFactory
 from oth.libraries.status_file import StatusFile, get_status_info_from_file
-from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
+from oth.config import othctl_runtime_config
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness runs in database backends using event and Slurm data")
@@ -73,11 +70,7 @@ logger = OutputHub(
     file_log_level=args.loglevel,
 )
 
-# Read in the <machine>.ini configuration file #################################
-# uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
-config = rgt_config_file(logger=logger)
-
-db_logger = create_rgt_db_logger(logger=logger)
+db_logger = OthDatabaseLogger(logger=logger)
 
 # db_logger is ready
 
@@ -393,7 +386,7 @@ if args.dry_run:
 # results
 for db in db_logger.enabled_backends:
     # Create a local db_logger with ONLY the current database
-    single_db_logger = create_rgt_db_logger(logger=logger, only=db.url)
+    single_db_logger = OthDatabaseLogger(logger=logger, only=db.url)
     results = []
     if db.name == "influxdb":
         results.extend(influxdb_get_results(db))
