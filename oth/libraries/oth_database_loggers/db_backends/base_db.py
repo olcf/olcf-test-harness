@@ -12,21 +12,15 @@ class BaseDBLogger(ABC):
     """
     __metaclass__ = ABCMeta
 
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    #                                                                 @
-    # Special methods                                                 @
-    #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     def __init__(self):
+        # Import the othctl_runtime_config for all DB implementations to use
+        from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
+
+        # Define what string to use if no value present, matches StatusFile.NO_VALUE
+        self.NO_VALUE = '[NO_VALUE]'
         return
-
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    #                                                                 @
-    # End of special methods                                          @
-    #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -88,30 +82,10 @@ class BaseDBLogger(ABC):
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     def _is_numeric(self, s : str):
-        """ Checks if a string is a recognized numeric format """
+        """ Checks if a string is an OTH-recognized numeric format """
         number_regex = re.compile(r'^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
         if number_regex.match(s):
             return True
         else:
             return False
 
-# Raised when there is an initialization error
-class DatabaseInitError(Exception):
-    """ An exception to indicate a database initialization failure """
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-        return
-
-# Raised when there is an data error
-class DatabaseDataError(Exception):
-    """ An exception to indicate a problem in the data provided by the harness to log to a database """
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-        return
-
-# Raised when there is an environment variable-related error
-class DatabaseEnvironmentError(Exception):
-    """ An exception to indicate a problem with the RGT_ environment variables """
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-        return

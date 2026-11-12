@@ -8,7 +8,7 @@ This module implements the database logging capability of the harness.
 import os
 from pathlib import Path
 
-class RgtDatabaseLogger:
+class OthDatabaseLogger:
 
     # This class depends solely on the dictionaries provided to the log_* methods
     # There is no dependence on the subtest or statusfile classes
@@ -26,8 +26,8 @@ class RgtDatabaseLogger:
         """ 
         Parameters
         ----------
-        logger : rgt_logger
-            The rgt_logger of the current scope. Since this class only serves for logging,
+        logger : oth_logger
+            The oth_logger of the current scope. Since this class only serves for logging,
             we want it to inherit the logger from the calling class.
         only : str
             (Optional) a string URL for a specific database backend to initialize
@@ -37,7 +37,7 @@ class RgtDatabaseLogger:
         self.othctl_runtime_config = othctl_runtime_config
 
         if not logger:
-            print("Invalid call to rgt_database_logger constructor: no logger provided")
+            print("Invalid call to oth_database_logger constructor: no logger provided")
             return
         self.logger = logger
         self.disabled_backends = [] # strings -- 'influxdb', 'kafka', etc
@@ -290,7 +290,7 @@ class RgtDatabaseLogger:
 
     def _find_disabled_backends(self):
         """
-        Parses the RGT_* environment variables to add appropriate dot-files to disable database logging
+        Parses the OTHCTL_* environment variables to add appropriate dot-files to disable database logging
 
         Returns
         -------
@@ -299,7 +299,7 @@ class RgtDatabaseLogger:
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
-            from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+            from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
             influxdb_loaded = True
         except ImportError as e:
             self.logger.log_error(f"Failed to import InfluxDB backend: {e}.")
@@ -328,19 +328,19 @@ class RgtDatabaseLogger:
         influxdb_loaded = False
         kafka_loaded = False
 
-        if any(k.startswith('RGT_INFLUX') for k in os.environ):
+        if any(k.startswith('OTHCTL_INFLUX') for k in os.environ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
-                from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+                from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
                 influxdb_loaded = True
             except ImportError as e:
                 self.logger.log_error(f"Failed to import InfluxDB backend: {e}")
                 pass
 
-        if any(k.startswith('RGT_KAFKA') for k in os.environ):
+        if any(k.startswith('OTHCTL_KAFKA') for k in os.environ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
-                from oth.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+                from oth.libraries.oth_database_loggers.db_backends.oth_kafka import KafkaLogger
                 kafka_loaded = True
             except ImportError as e:
                 self.logger.log_error(f"Failed to import Kafka backend: {e}")

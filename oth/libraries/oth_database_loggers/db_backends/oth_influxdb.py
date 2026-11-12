@@ -10,26 +10,13 @@ import requests
 from urllib.parse import urlparse
 from pathlib import Path
 
-from oth.libraries.rgt_database_loggers.db_backends.base_db import *
+from oth.libraries.oth_database_loggers.db_backends.base_db import *
 
 class InfluxDBLogger(BaseDBLogger):
 
     """
     The logging class for InfluxDB databases
     """
-
-    kw = {
-        'uri': 'RGT_INFLUXDB_URI',
-        'token': 'RGT_INFLUXDB_TOKEN',
-        'bucket': 'RGT_INFLUXDB_BUCKET',
-        'org': 'RGT_INFLUXDB_ORG',
-        'precision': 'RGT_INFLUXDB_PRECISION',
-        'dryrun': 'RGT_INFLUXDB_DRY_RUN',
-        'disable': 'RGT_INFLUXDB_DISABLE'
-    }
-
-    # Re-defines the StatusFile.NOVALUE
-    NO_VALUE = '[NO_VALUE]'
 
     #---Influx key identifiers.
     INFLUX_TAGS = [
@@ -53,9 +40,9 @@ class InfluxDBLogger(BaseDBLogger):
                 'hostname',
                 'job_account_id',
                 'job_id',
-                'path_to_rgt_package',
-                'rgt_path_to_sspace',
-                'rgt_system_log_tag',
+                'path_to_oth_package',
+                'oth_path_to_sspace',
+                'oth_system_log_tag',
                 'run_archive',
                 'user',
                 'workdir',
@@ -77,8 +64,11 @@ class InfluxDBLogger(BaseDBLogger):
                  token='',
                  logger=None):
 
+        # Initialize parent so that config vars are accessible
+        super().__init__()
+
         # This function can't be reached except through the parent
-        # rgt_database_logger, which checks if the logger is not None
+        # oth_database_logger, which checks if the logger is not None
         self.__logger = logger
         self.full_uri = uri
         self.token = token
@@ -86,16 +76,17 @@ class InfluxDBLogger(BaseDBLogger):
         self.url = None
         self.bucket = None
         self.org = None
-        # Default of nanosecond precision
-        self.precision = 'ns'
-        self.dryrun = False
+        self.bucket = self.othctl_runtime_config.influxdb_bucket
+        self.org = self.othctl_runtime_config.influxdb_org
+        self.precision = self.othctl_runtime_config.influxdb_precision
+        self.dryrun = self.othctl_runtime_config.influxdb_dry_run == "1"
 
         self._validate_uri()
 
         alive_msg = self.is_alive()
         if alive_msg:
             message = f'An InfluxDB server at {self.url} is not alive: {alive_msg}'
-            raise DatabaseInitError(message)
+            raise ValueError(message)
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -113,10 +104,6 @@ class InfluxDBLogger(BaseDBLogger):
     @property
     def disable_file_name(self):
         return self.DISABLE_DOTFILE_NAME
-
-    @property
-    def disable_envvar_name(self):
-        return self.kw['dryrun']
 
     @property
     def successful_file_name(self):
@@ -139,7 +126,7 @@ class InfluxDBLogger(BaseDBLogger):
         for tag_name in self.INFLUX_TAGS:
             if not tag_name in event_dict.keys():
                 message = "Could not find required InfluxDB tag in event dictionary: {tag_name}"
-                raise DatabaseDataError(message)
+                raise ValueError(message)
             influx_event_record_string += f',{tag_name}={event_dict[tag_name]}'
 
         # Add fields to influx record string
@@ -233,7 +220,7 @@ class InfluxDBLogger(BaseDBLogger):
         for tag_name in self.INFLUX_TAGS:
             if not tag_name in test_info_dict.keys():
                 message = "Could not find required InfluxDB tag in metrics dictionary: {tag_name}"
-                raise DatabaseDataError(message)
+                raise ValueError(message)
             influx_event_record_string += f',{tag_name}={test_info_dict[tag_name]}'
 
         influx_event_record_string += ' '
@@ -256,16 +243,13 @@ class InfluxDBLogger(BaseDBLogger):
         Send node health data to InfluxDB
         """
         self.__logger.log_debug(f"Posting node health data from test id: {test_info_dict['test_id']} to InfluxDB")
-        # Required environment variable: RGT_NODE_LOCATION_FILE
-        if not 'RGT_NODE_LOCATION_FILE' in os.environ:
-            raise DatabaseEnvironmentError("RGT_NODE_LOCATION_FILE required to enable node health logging")
 
         required_tags = ['test', 'machine', 'test_id', 'event_time']
 
         # Check that test_info_dict provided all required tags
         for t in required_tags:
             if not t in test_info_dict.keys():
-                raise DatabaseDataError(f"Test info provided to node health logging missing tag: {t}")
+                raise ValueError(f"Test info provided to node health logging missing tag: {t}")
 
         influxdb_tags = ['test', 'machine']
         static_tag_line = ','.join([f'{k}={test_info_dict[k]}' for k in influxdb_tags])
@@ -273,16 +257,14 @@ class InfluxDBLogger(BaseDBLogger):
         # find and read node location file -- json file
         use_node_location_file = True
 
-        if 'RGT_NODE_LOCATION_FILE' in os.environ and str(os.environ['RGT_NODE_LOCATION_FILE']).lower() == 'none':
+        if self.othctl_runtime_config.node_metadata_file.lower() == "none":
             use_node_location_file = False
-        elif not 'RGT_NODE_LOCATION_FILE' in os.environ:
-            # We want to abort in this case because previous runs may have been logged
-            # with node location data, and we do not want to log incomplete data
-            raise DatabaseEnvironmentError("The RGT_NODE_LOCATION_FILE environment variable is required. If you do not want this functionality, please set to \"None\".")
         else:
             # else, we assume it is a path and we look for it
-            if not Path(os.environ['RGT_NODE_LOCATION_FILE']).exists():
-                raise DatabaseEnvironmentError(f"An RGT_NODE_LOCATION_FILE does not exist at {os.environ['RGT_NODE_LOCATION_FILE']}")
+            if not Path(self.othctl_runtime_config.node_metadata_file).exists():
+                raise ValueError(
+                    f"The OTHCTL_NODE_LOCATION_FILE does not exist at {self.othctl_runtime_config.node_metadata_file}"
+                )
 
         node_locations = {}
         # By default, we don't want to log node healths without extra node location (like cabinet, chassis, etc)
@@ -291,7 +273,7 @@ class InfluxDBLogger(BaseDBLogger):
         json_read_success = True
         if use_node_location_file:
             import json
-            with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
+            with open(self.othctl_runtime_config.node_metadata_file, 'r') as f:
                 # if this generates an exception, it will be caught by parent class
                 node_locations = json.loads(f.read())
         # collect all node health lines, then post in one single batch
@@ -432,7 +414,7 @@ class InfluxDBLogger(BaseDBLogger):
 
     def _validate_uri(self):
         """
-        Parses the URI provided by RGT_INFLUXDB_URI
+        Parses the URI provided by OTHCTL_INFLUXDB_URI
         Looks for bucket, organization, and precision specifiers
         Also strips the URI down to just the protocol & hostname
         """
@@ -441,37 +423,25 @@ class InfluxDBLogger(BaseDBLogger):
         # Check for a specified protocol (http, https)
         if len(parsed.scheme) == 0:
             message = f'The InfluxDB URI must specify the protocol (http, https, etc).'
-            raise DatabaseInitError(message)
+            raise ValueError(message)
         # Get the raw URL for the InfluxDB server
         self.url = f'{parsed.scheme}://{parsed.netloc}'
         for arg in parsed.query.split('&'):
             arg_split = arg.split('=')
-            if arg_split[0] == 'bucket':
+            if arg_split[0] == 'bucket' and not self.bucket:
                 self.bucket = arg_split[1]
-            elif arg_split[0] == 'org':
+            elif arg_split[0] == 'org' and not self.org:
                 self.org = arg_split[1]
-            elif arg_split[0] == 'precision':
+            elif arg_split[0] == 'precision' and not self.precision:
                 self.precision = arg_split[1]
             else:
                 message = f'Unrecognized URL-encoded keyword argument: {arg_split[0]}'
-                raise DatabaseInitError(message)
-
-        # Check if RGT_INFLUXDB_BUCKET, RGT_INFLUXDB_ORG, or
-        # RGT_INFLUXDB_PRECISION are in the environment
-        # These env-vars override what is in the RGT_INFLUXDB_URI
-        if self.kw['bucket'] in os.environ:
-            self.bucket = os.environ[self.kw['bucket']]
-        if self.kw['org'] in os.environ:
-            self.org = os.environ[self.kw['org']]
-        if self.kw['precision'] in os.environ:
-            self.precision = os.environ[self.kw['precision']]
-        if self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
-            self.dryrun = True
+                raise ValueError(message)
 
         if (not self.bucket) or (not self.org):
             message = f'The bucket and organization for the InfluxDB server could not be found.'
             message += f' The InfluxDB URI was {self.full_uri}.'
-            raise DatabaseInitError(message)
+            raise ValueError(message)
 
     def _send_message(self, full_url : str, message : str, headers : dict):
         """
@@ -479,12 +449,7 @@ class InfluxDBLogger(BaseDBLogger):
         """
 
         if self.dryrun:
-            self.__logger.log_info(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
-            return True
-        elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
-            # A Harness utility may set the environment variable after DB init time
-            self.dryrun = True
-            self.__logger.log_info(f'InfluxDB dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {message}')
+            self.__logger.log_info(f'InfluxDB dry-run is set. Message: {message}')
             return True
 
         self.__logger.log_debug(f"Sending message to InfluxDB: {message}")
@@ -515,7 +480,7 @@ class InfluxDBLogger(BaseDBLogger):
             # YYYY-MM-DDTHH:MM:SSZ
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
         else:
-            raise DatabaseDataError(f"Unrecognized time format in string {event_time}.")
+            raise ValueError(f"Unrecognized time format in string {event_time}.")
 
         if self.precision == "ms":
             return round(datetime.timestamp(log_time) * 1000 * 1000)

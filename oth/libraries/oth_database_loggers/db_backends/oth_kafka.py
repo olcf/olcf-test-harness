@@ -13,31 +13,13 @@ from pathlib import Path
 from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient
 
-from oth.libraries.rgt_database_loggers.db_backends.base_db import *
+from oth.libraries.oth_database_loggers.db_backends.base_db import *
 
 class KafkaLogger(BaseDBLogger):
 
     """
     The logging class for Apache Kafka stream processing system
     """
-
-    kw = {
-        'uri': 'RGT_KAFKA_URI',
-        'username': 'RGT_KAFKA_USERNAME',
-        'password': 'RGT_KAFKA_PASSWORD',
-        'topic_events': 'RGT_KAFKA_EVENTS_TOPIC',
-        'topic_metrics': 'RGT_KAFKA_METRICS_TOPIC',
-        'topic_node_health': 'RGT_KAFKA_NODE_HEALTH_TOPIC',
-        'db_type': 'RGT_KAFKA_DB_TYPE',
-        'db_uri': 'RGT_KAFKA_DB_URI',
-        'ssl_ca_loc': 'RGT_KAFKA_SSL_CA_LOCATION',
-        'ssl_cert_loc': 'RGT_KAFKA_SSL_CERTIFICATE_LOCATION',
-        'dryrun': 'RGT_KAFKA_DRY_RUN',
-        'disable': 'RGT_KAFKA_DISABLE'
-    }
-
-    # Re-defines the StatusFile.NOVALUE
-    NO_VALUE = '[NO_VALUE]'
 
     # Columns to include in events, metrics, and node health records
     KAFKA_COMMON_TEST_FIELDS = [
@@ -51,7 +33,7 @@ class KafkaLogger(BaseDBLogger):
     ]
 
     # This list is a subset of what is available, to avoid logging extra columns that don't help
-    # For example, since we log runtag, we don't log rgt_system_log_tag
+    # For example, since we log runtag, we don't log oth_system_log_tag
     KAFKA_EVENT_FIELDS = KAFKA_COMMON_TEST_FIELDS + [
                 'build_directory',
                 'event_filename',
@@ -60,8 +42,8 @@ class KafkaLogger(BaseDBLogger):
                 'check_alias',
                 'hostname',
                 'job_account_id',
-                'path_to_rgt_package',
-                'rgt_path_to_sspace',
+                'path_to_oth_package',
+                'oth_path_to_sspace',
                 'run_archive',
                 'workdir',
                 'user',
@@ -90,8 +72,11 @@ class KafkaLogger(BaseDBLogger):
                  ssl_cert_loc='',
                  logger=None):
 
+        # Initialize parent so that config vars are accessible
+        super().__init__()
+
         # This function can't be reached except through the parent
-        # rgt_database_logger, which checks if the logger is not None
+        # oth_database_logger, which checks if the logger is not None
         self.__logger = logger
         self.uri = uri
         self.url = uri
@@ -120,7 +105,7 @@ class KafkaLogger(BaseDBLogger):
         alive_msg = self.is_alive()
         if alive_msg:
             message = f'The Kafka server at {self.uri} is not alive or does not have all expected topics: {alive_msg}'
-            raise DatabaseInitError(message)
+            raise ValueError(message)
 
         self.producer = Producer(self.conf)
 
@@ -140,10 +125,6 @@ class KafkaLogger(BaseDBLogger):
     @property
     def disable_file_name(self):
         return self.DISABLE_DOTFILE_NAME
-
-    @property
-    def disable_envvar_name(self):
-        return self.kw['dryrun']
 
     @property
     def successful_file_name(self):
@@ -256,9 +237,9 @@ class KafkaLogger(BaseDBLogger):
 
         self.__logger.log_debug(f"Posting node health data from test id: {test_info_dict['test_id']} to Kafka")
 
-        # Required environment variable: RGT_NODE_LOCATION_FILE
-        if not 'RGT_NODE_LOCATION_FILE' in os.environ:
-            raise DatabaseEnvironmentError("RGT_NODE_LOCATION_FILE required to enable node health logging")
+        # Required environment variable: OTHCTL_NODE_LOCATION_FILE
+        if not self.othctl_runtime_config.node_metadata_file:
+            raise ValueError("OTHCTL_NODE_LOCATION_FILE required to enable node health logging")
 
         # on frontier, xname encodes cabinet, chassis, rack, and board information (ie, complete location information)
         required_location_identifiers = ['xname']
@@ -266,28 +247,26 @@ class KafkaLogger(BaseDBLogger):
         # find and read node location file -- json file
         use_node_location_file = True
 
-        if 'RGT_NODE_LOCATION_FILE' in os.environ and str(os.environ['RGT_NODE_LOCATION_FILE']).lower() == 'none':
+        if self.othctl_runtime_config.node_metadata_file.lower() == 'none':
             use_node_location_file = False
-        elif not 'RGT_NODE_LOCATION_FILE' in os.environ:
-            # We want to abort in this case because previous runs may have been logged
-            # with node location data, and we do not want to log incomplete data
-            raise DatabaseEnvironmentError("The RGT_NODE_LOCATION_FILE environment variable is required. If you do not want this functionality, please set to \"None\".")
         else:
             # else, we assume it is a path and we look for it
-            if not Path(os.environ['RGT_NODE_LOCATION_FILE']).exists():
-                raise DatabaseEnvironmentError(f"An RGT_NODE_LOCATION_FILE does not exist at {os.environ['RGT_NODE_LOCATION_FILE']}")
+            if not Path(self.othctl_runtime_config.node_metadata_file).exists():
+                raise ValueError(
+                    f"An OTHCTL_NODE_LOCATION_FILE does not exist at {self.othctl_runtime_config.node_metadata_file}"
+                )
 
         node_locations = {}
-        # Check if it's a file in valid JSON format -- if it fails, then the rgt_db_logger class will catch it
+        # Check if it's a file in valid JSON format -- if it fails, then the oth_db_logger class will catch it
         if use_node_location_file:
-            with open(f"{os.environ['RGT_NODE_LOCATION_FILE']}", 'r') as f:
+            with open(self.othctl_runtime_config.node_metadata_file, 'r') as f:
                 # if this generates an exception, it will be caught by parent class
                 node_locations = json.loads(f.read())
 
         # for each node found in the nodecheck.txt
         for node_name in node_health_dict.keys():
             # Node health & test info
-            # Version 9 has the nice and clean pipe operator to merge 2 dictionaries
+            # Version 3.9 has the nice and clean pipe operator to merge 2 dictionaries
             if sys.version_info[0] == 3 and sys.version_info[1] >= 9:
                 query_dict = node_health_dict[node_name] | {k: test_info_dict[k] for k in self.KAFKA_COMMON_TEST_FIELDS}
             else:
@@ -374,7 +353,7 @@ class KafkaLogger(BaseDBLogger):
         if self.db_type.upper() == 'DRUID':
             return self._query_druid(query)
         else:
-            self.__logger.log_critical("The Kafka db_logger backend does not support the query() method for any database backend except Druid yet. Support is enabled for Druid via the RGT_KAFKA_DB_TYPE=Druid and RGT_KAFKA_DB_URI fields.")
+            self.__logger.log_critical("The Kafka db_logger backend does not support the query() method for any database backend except Druid yet. Support is enabled for Druid via the OTHCTL_KAFKA_DB_TYPE=Druid and OTHCTL_KAFKA_DB_URI fields.")
             return []
 
 
@@ -392,13 +371,13 @@ class KafkaLogger(BaseDBLogger):
 
     def _validate_uri(self):
         """
-        Parses environment variables set for RGT_KAFKA_* and tests the connection
+        Parses environment variables set for OTHCTL_KAFKA_* and tests the connection
         """
 
         # The only Kafka variable that isn't parsed by the parent database handler is dryrun
         # All other fields are allowed to be semicolon-separated (for multiple instances),
         # so they must be parsed outside of here
-        if self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
+        if self.othctl_runtime_config.kafka_disable == "1":
             self.dryrun = True
 
         # Even though we don't set self.topics here, we can still check that it's non-empty
@@ -406,7 +385,7 @@ class KafkaLogger(BaseDBLogger):
         # then it is disabled, and a warning will be printed
         if (len(self.topics) == 0):
             message = f'No Kafka topics could be found in the harness Kafka configurations.'
-            raise DatabaseInitError(message)
+            raise ValueError(message)
 
     def _send_message(self, topic : str, payload : dict, synchronous : bool = True):
         """
@@ -414,17 +393,12 @@ class KafkaLogger(BaseDBLogger):
         """
 
         if self.dryrun:
-            self.__logger.log_info(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
-            return True
-        elif self.kw['dryrun'] in os.environ and os.environ[self.kw['dryrun']] == '1':
-            # A Harness utility may set the environment variable after DB init time
-            self.dryrun = True
-            self.__logger.log_info(f'Kafka dry-run is set via the {self.kw["dryrun"]} environment variable. Message: {payload}')
+            self.__logger.log_info(f'Kafka dry-run is set. Message: {payload}')
             return True
 
         # validate the payload dict to make sure certain fields exist:
         if not 'timestamp' in payload.keys():
-            raise DatabaseDataError(f"Payload dictionary does not contain a 'timestamp' field when sending to Kafka topic {topic}: {payload}")
+            raise ValueError(f"Payload dictionary does not contain a 'timestamp' field when sending to Kafka topic {topic}: {payload}")
 
         self.__logger.log_debug(f"Sending message to Kafka topic {topic}: {payload}")
 
@@ -494,7 +468,7 @@ class KafkaLogger(BaseDBLogger):
             # YYYY-MM-DDTHH:MM:SSZ
             log_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
         else:
-            raise DatabaseDataError(f"Unrecognized time format in string {event_time}.")
+            raise ValueError(f"Unrecognized time format in string {event_time}.")
 
         # Kafka wants timestamps in seconds, for indexing only (not unique identifiers)
         return int(datetime.timestamp(log_time))
