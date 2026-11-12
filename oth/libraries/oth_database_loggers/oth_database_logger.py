@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 """
 This module implements the database logging capability of the harness.
 
@@ -8,22 +6,22 @@ This module implements the database logging capability of the harness.
 import os
 from pathlib import Path
 
-class OthDatabaseLogger:
 
+class OthDatabaseLogger:
     # This class depends solely on the dictionaries provided to the log_* methods
     # There is no dependence on the subtest or statusfile classes
 
     # Information required in the log_* methods to be able to send the test information to any database
-    REQUIRED_TEST_INFO = ['test_id', 'app', 'test', 'runtag', 'machine']
+    REQUIRED_TEST_INFO = ["test_id", "app", "test", "runtag", "machine"]  # noqa: RUF012
 
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # Public methods.                                                 @
     #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     def __init__(self, logger=None, only=None):
-        """ 
+        """
         Parameters
         ----------
         logger : oth_logger
@@ -34,19 +32,20 @@ class OthDatabaseLogger:
         """
 
         from oth.config import othctl_runtime_config
+
         self.othctl_runtime_config = othctl_runtime_config
 
         if not logger:
             print("Invalid call to oth_database_logger constructor: no logger provided")
             return
         self.logger = logger
-        self.disabled_backends = [] # strings -- 'influxdb', 'kafka', etc
-        self.disabled_backends_filenames = [] # strings -- '.disable_influxdb', etc
+        self.disabled_backends = []  # strings -- "influxdb", "kafka", etc
+        self.disabled_backends_filenames = []  # strings -- ".disable_influxdb", etc
         self._find_disabled_backends()
-        self.enabled_backends = [] # database logger objects
+        self.enabled_backends = []  # database logger objects
         self._add_db_backends(only=only)
 
-    def log_event(self, event_dict : dict, only=None):
+    def log_event(self, event_dict: dict, only=None):
         """
         Logs the provided event to all databases
         ----
@@ -62,11 +61,11 @@ class OthDatabaseLogger:
 
         # Go to the Run_Archive directory to be consistent with metrics & node health logging
         currentdir = os.getcwd()
-        runarchive_dir = event_dict['run_archive']
+        runarchive_dir = event_dict["run_archive"]
         os.chdir(runarchive_dir)
 
         # Use event file name to match the logging_start event
-        if event_dict['event_name'] == 'logging_start':
+        if event_dict["event_name"] == "logging_start":
             # Make sure that any explicitly-disabled backends create the dot-file
             for dotfile in self.disabled_backends_filenames:
                 if not Path(dotfile).exists():
@@ -78,21 +77,24 @@ class OthDatabaseLogger:
             try:
                 if not self._check_test_disabled_backend(backend):
                     if not backend.send_event(event_dict):
-                        self.logger.log_error(f"An error occurred while logging an event to {backend.url}. Please see log files for more details.")
+                        self.logger.log_error(
+                            f"An error occurred while logging an event to {backend.url}. Please see log files for more details."
+                        )
                         num_failed += 1
-                    elif event_dict['event_name'] == 'check_end':
+                    elif event_dict["event_name"] == "check_end":
                         # If we just successfully logged check_end, then we add a dot-file to indicate logging completed
                         if not Path(backend.successful_file_name).exists():
                             os.mknod(backend.successful_file_name)
-            except Exception as e:
-                self.logger.log_error(f"The following exception occurred while logging an event to {backend.url}: {e}.")
+            except Exception as e:  # noqa: BLE001
+                self.logger.log_error(
+                    f"The following exception occurred while logging an event to {backend.url}: {e}."
+                )
                 num_failed += 1
-                pass
 
         os.chdir(currentdir)
         return num_failed == 0
 
-    def log_metrics(self, test_info_dict : dict, metrics_dict : dict, only=None):
+    def log_metrics(self, test_info_dict: dict, metrics_dict: dict, only=None):
         """
         Logs the provided metrics data to all databases
         ----
@@ -118,17 +120,22 @@ class OthDatabaseLogger:
 
         for backend in self._make_db_target_list(only):
             try:
-                if not self._check_test_disabled_backend(backend):
-                    if not backend.send_metrics(test_info_dict, metrics_dict):
-                        self.logger.log_error(f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details.")
-                        num_failed += 1
-            except Exception as e:
-                self.logger.log_error(f"The following exception occurred while logging metrics to {backend.url}: {e}.")
+                if not (
+                    self._check_test_disabled_backend(backend)
+                    or backend.send_metrics(test_info_dict, metrics_dict)
+                ):
+                    self.logger.log_error(
+                        f"An error occurred while logging an metrics to {backend.url}. Please see log files for more details."
+                    )
+                    num_failed += 1
+            except Exception as e:  # noqa: BLE001
+                self.logger.log_error(
+                    f"The following exception occurred while logging metrics to {backend.url}: {e}."
+                )
                 num_failed += 1
-                pass
         return num_failed == 0
 
-    def log_node_health(self, test_info_dict : dict, node_health_dict : dict, only=None):
+    def log_node_health(self, test_info_dict: dict, node_health_dict: dict, only=None):
         """
         Logs the provided event to all databases
         ----
@@ -153,17 +160,26 @@ class OthDatabaseLogger:
         num_failed = 0
         for backend in self._make_db_target_list(only):
             try:
-                if not self._check_test_disabled_backend(backend):
-                    if not backend.send_node_health_results(test_info_dict, node_health_dict):
-                        self.logger.log_error(f"An error occurred while logging node health data to {backend.url}. Please see log files for more details.")
-                        num_failed += 1
-            except Exception as e:
-                self.logger.log_error(f"The following exception occurred while logging node health results to {backend.url}: {e}.")
+                if not (
+                    self._check_test_disabled_backend(backend)
+                    or backend.send_node_health_results(
+                        test_info_dict, node_health_dict
+                    )
+                ):
+                    self.logger.log_error(
+                        f"An error occurred while logging node health data to {backend.url}. Please see log files for more details."
+                    )
+                    num_failed += 1
+            except Exception as e:  # noqa: BLE001
+                self.logger.log_error(
+                    f"The following exception occurred while logging node health results to {backend.url}: {e}."
+                )
                 num_failed += 1
-                pass
         return num_failed == 0
 
-    def log_external_metrics(self, table : str, tags : dict, values : dict, log_time : str, only=None):
+    def log_external_metrics(
+        self, table: str, tags: dict, values: dict, log_time: str, only=None
+    ):
         """
         Logs the provided external metrics to the databases
         ----
@@ -190,28 +206,30 @@ class OthDatabaseLogger:
         for backend in self._make_db_target_list(only):
             try:
                 if not backend.send_external_metrics(table, tags, values, log_time):
-                    self.logger.log_error(f"An error occurred while logging external metrics to {backend.url}. Please see log files for more details.")
+                    self.logger.log_error(
+                        f"An error occurred while logging external metrics to {backend.url}. Please see log files for more details."
+                    )
                     num_failed += 1
-            except Exception as e:
-                self.logger.log_error(f"The following exception occurred while logging external metrics to {backend.url}: {e}.")
+            except Exception as e:  # noqa: BLE001
+                self.logger.log_error(
+                    f"The following exception occurred while logging external metrics to {backend.url}: {e}."
+                )
                 num_failed += 1
-                pass
         return num_failed == 0
 
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of public methods.                                          @
     #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # Private methods.                                                @
     #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def _check_test_info_exists(self, test_info_dict : dict):
+    def _check_test_info_exists(self, test_info_dict: dict):
         """
         Checks that all required information exits in the provided test_info_dict
         Parameters
@@ -226,7 +244,9 @@ class OthDatabaseLogger:
         provided_keys = list(test_info_dict.keys())
         for key in self.REQUIRED_TEST_INFO:
             if not key in provided_keys:
-                self.logger.log_error(f'Missing key in provided test info for database logging: {key}')
+                self.logger.log_error(
+                    f"Missing key in provided test info for database logging: {key}"
+                )
                 return False
         return True
 
@@ -259,7 +279,9 @@ class OthDatabaseLogger:
         # possible that a test previously had InfluxDB disabled, but was not explicitly
         # disabled in the current environment. We want to enforce the past disabling
         if Path(db_logger.disable_file_name).exists():
-            self.logger.log_debug(f'Found {db_logger.disable_file_name} in {os.getcwd()}. Disabling {db_logger.name}.')
+            self.logger.log_debug(
+                f"Found {db_logger.disable_file_name} in {os.getcwd()}. Disabling {db_logger.name}."
+            )
             return True
 
         return False
@@ -285,7 +307,9 @@ class OthDatabaseLogger:
             if db.url == only:
                 db_list.append(db)
         if len(db_list) == 0:
-            self.logger.log_warning(f"Found no database backends matching the URL {only}")
+            self.logger.log_warning(
+                f"Found no database backends matching the URL {only}"
+            )
         return db_list
 
     def _find_disabled_backends(self):
@@ -299,17 +323,18 @@ class OthDatabaseLogger:
         # Load InfluxDB now, because we use templated env-vars
         influxdb_loaded = False
         try:
-            from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
+            from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import (
+                InfluxDBLogger,
+            )
+
             influxdb_loaded = True
         except ImportError as e:
             self.logger.log_error(f"Failed to import InfluxDB backend: {e}.")
-            pass
 
-        if influxdb_loaded and self.othctl_runtime_config.influxdb_disable == '1':
-            self.logger.log_info(f"InfluxDB logging is explicitly disabled.")
-            self.disabled_backends.append('influxdb')
+        if influxdb_loaded and self.othctl_runtime_config.influxdb_disable == "1":
+            self.logger.log_info("InfluxDB logging is explicitly disabled.")
+            self.disabled_backends.append("influxdb")
             self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
-        return
 
     def _add_db_backends(self, only=None):
         """
@@ -328,102 +353,135 @@ class OthDatabaseLogger:
         influxdb_loaded = False
         kafka_loaded = False
 
-        if any(k.startswith('OTHCTL_INFLUX') for k in os.environ):
+        if any(k.startswith("OTHCTL_INFLUX") for k in os.environ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
-                from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
+                from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import (
+                    InfluxDBLogger,
+                )
+
                 influxdb_loaded = True
             except ImportError as e:
                 self.logger.log_error(f"Failed to import InfluxDB backend: {e}")
-                pass
 
-        if any(k.startswith('OTHCTL_KAFKA') for k in os.environ):
+        if any(k.startswith("OTHCTL_KAFKA") for k in os.environ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
-                from oth.libraries.oth_database_loggers.db_backends.oth_kafka import KafkaLogger
+                from oth.libraries.oth_database_loggers.db_backends.oth_kafka import (
+                    KafkaLogger,
+                )
+
                 kafka_loaded = True
             except ImportError as e:
                 self.logger.log_error(f"Failed to import Kafka backend: {e}")
-                pass
 
-        if influxdb_loaded and not 'influxdb' in self.disabled_backends \
-                and ( self.othctl_runtime_config.influxdb_uri and self.othctl_runtime_config.influxdb_token):
+        if (
+            influxdb_loaded
+            and not "influxdb" in self.disabled_backends
+            and (
+                self.othctl_runtime_config.influxdb_uri
+                and self.othctl_runtime_config.influxdb_token
+            )
+        ):
             # Then we enable InfluxDB
             # Fields for multiple InfluxDB databases can be separated by semicolons
-            influxdb_uris = self.othctl_runtime_config.influxdb_uri.split(';')
-            influxdb_tokens = self.othctl_runtime_config.influxdb_token.split(';')
-            if not len(influxdb_uris) == len(influxdb_tokens):
-                self.logger.log_error("The number of InfluxDB URI's provided does not match the number of InfluxDB tokens. Skpping.")
+            influxdb_uris = self.othctl_runtime_config.influxdb_uri.split(";")
+            influxdb_tokens = self.othctl_runtime_config.influxdb_token.split(";")
+            if len(influxdb_uris) != len(influxdb_tokens):
+                self.logger.log_error(
+                    "The number of InfluxDB URI's provided does not match the number of InfluxDB tokens. Skpping."
+                )
             elif influxdb_loaded:
-                for i in range(0,len(influxdb_uris)):
+                for i in range(len(influxdb_uris)):
                     try:
                         # If you use multiple InfluxDB instances, you must not use the OTHCTL_INFLUXDB_BUCKET or OTHCTL_INFLUXDB_ORG variables
                         # unless the same bucket and org name apply to all InfluxDB instances
                         # Otherwise, you should let the InfluxDB logger backend parse the bucket & org from the URL
-                        influxdb_backend = InfluxDBLogger(uri=influxdb_uris[i], token=influxdb_tokens[i], logger=self.logger)
-                        if not only:
-                            self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
+                        influxdb_backend = InfluxDBLogger(
+                            uri=influxdb_uris[i],
+                            token=influxdb_tokens[i],
+                            logger=self.logger,
+                        )
+                        if not only or influxdb_backend.url == only:
+                            self.logger.log_debug(
+                                f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}."
+                            )
                             self.enabled_backends.append(influxdb_backend)
-                        elif influxdb_backend.url == only:
-                            self.logger.log_debug(f"Enabling the {influxdb_backend.name} database logger from URL {influxdb_uris[i]}.")
-                            self.enabled_backends.append(influxdb_backend)
-                    except Exception as e:
-                        self.logger.log_error(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
-        if kafka_loaded and (not 'kafka' in self.disabled_backends) \
-            and (self.othctl_runtime_config.kafka_uri
-            and self.othctl_runtime_config.kafka_username
-            and self.othctl_runtime_config.kafka_password
-            and self.othctl_runtime_config.kafka_events_topic
+                    except Exception as e:  # noqa: BLE001
+                        self.logger.log_error(
+                            f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}"
+                        )
+        if (
+            kafka_loaded
+            and (not "kafka" in self.disabled_backends)
+            and (
+                self.othctl_runtime_config.kafka_uri
+                and self.othctl_runtime_config.kafka_username
+                and self.othctl_runtime_config.kafka_password
+                and self.othctl_runtime_config.kafka_events_topic
+            )
         ):
             # Then we enable Kafka
             # Fields for multiple Kafka databases can be separated by semicolons
             # the length of kafka_uris is the authoritative source of how many sources are expected
 
             # required fields:
-            kafka_uris = self.othctl_runtime_config.kafka_uri.split(';')
-            kafka_usernames = self.othctl_runtime_config.kafka_username.split(';')
-            kafka_passwords = self.othctl_runtime_config.kafka_password.split(';')
-            kafka_topic_events = self.othctl_runtime_config.kafka_events_topic.split(';')
+            kafka_uris = self.othctl_runtime_config.kafka_uri.split(";")
+            kafka_usernames = self.othctl_runtime_config.kafka_username.split(";")
+            kafka_passwords = self.othctl_runtime_config.kafka_password.split(";")
+            kafka_topic_events = self.othctl_runtime_config.kafka_events_topic.split(
+                ";"
+            )
             # metrics & node health topics are optional
             kafka_topic_metrics = None
             kafka_topic_node_healths = None
             if self.othctl_runtime_config.kafka_metrics_topic:
-                kafka_topic_metrics = self.othctl_runtime_config.kafka_metrics_topic.split(';')
+                kafka_topic_metrics = (
+                    self.othctl_runtime_config.kafka_metrics_topic.split(";")
+                )
             if self.othctl_runtime_config.kafka_node_health_topic:
-                kafka_topic_node_healths = self.othctl_runtime_config.kafka_node_health_topic.split(';')
-            kafka_db_type = self.othctl_runtime_config.kafka_db_type.split(';')
-            kafka_db_uri = self.othctl_runtime_config.kafka_db_uri.split(';')
-            kafka_ssl_ca_loc = self.othctl_runtime_config.kafka_ssl_ca_location.split(';')
-            kafka_ssl_cert_locs = self.othctl_runtime_config.kafka_ssl_certificate_location.split(';')
+                kafka_topic_node_healths = (
+                    self.othctl_runtime_config.kafka_node_health_topic.split(";")
+                )
+            kafka_db_type = self.othctl_runtime_config.kafka_db_type.split(";")
+            kafka_db_uri = self.othctl_runtime_config.kafka_db_uri.split(";")
+            kafka_ssl_ca_loc = self.othctl_runtime_config.kafka_ssl_ca_location.split(
+                ";"
+            )
+            kafka_ssl_cert_locs = (
+                self.othctl_runtime_config.kafka_ssl_certificate_location.split(";")
+            )
 
-            for i in range(0,len(kafka_uris)):
+            for i in range(len(kafka_uris)):
                 try:
                     # Kafka requires way more parameterization than InfluxDB...
-                    kafka_backend = KafkaLogger(uri=kafka_uris[i],
-                                                username=kafka_usernames[i],
-                                                password=kafka_passwords[i],
-                                                topics={
-                                                    'events': kafka_topic_events[i],
-                                                    'metrics': kafka_topic_metrics[i],
-                                                    'node_health': kafka_topic_node_healths[i],
-                                                },
-                                                db_type=kafka_db_type[i],
-                                                db_uri=kafka_db_uri[i],
-                                                ssl_ca_loc=kafka_ssl_ca_loc[i],
-                                                ssl_cert_loc=kafka_ssl_cert_locs[i],
-                                                logger=self.logger)
-                    if not only:
-                        self.logger.log_debug(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
+                    kafka_backend = KafkaLogger(
+                        uri=kafka_uris[i],
+                        username=kafka_usernames[i],
+                        password=kafka_passwords[i],
+                        topics={
+                            "events": kafka_topic_events[i],
+                            "metrics": kafka_topic_metrics[i],
+                            "node_health": kafka_topic_node_healths[i],
+                        },
+                        db_type=kafka_db_type[i],
+                        db_uri=kafka_db_uri[i],
+                        ssl_ca_loc=kafka_ssl_ca_loc[i],
+                        ssl_cert_loc=kafka_ssl_cert_locs[i],
+                        logger=self.logger,
+                    )
+                    if not only or kafka_backend.url == only:
+                        self.logger.log_debug(
+                            f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}."
+                        )
                         self.enabled_backends.append(kafka_backend)
-                    elif kafka_backend.url == only:
-                        self.logger.log_debug(f"Enabling the {kafka_backend.name} database logger from URL {kafka_uris[i]}.")
-                        self.enabled_backends.append(kafka_backend)
-                except Exception as e:
-                    self.logger.log_error(f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}")
-        return
+                except Exception as e:  # noqa: BLE001
+                    self.logger.log_error(
+                        f"Failed to enable the database logger from URL {kafka_uris[i]}: {e}"
+                    )
 
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of private methods.                                         @
     #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

@@ -1,32 +1,28 @@
-#! /usr/bin/env python3
-
-from abc import ABC, abstractmethod, ABCMeta
-import os
-from datetime import datetime
 import re
+from abc import ABC, ABCMeta, abstractmethod
+
 
 class BaseDBLogger(ABC):
-
     """
     An abstract base class that implements the database logging interface.
     """
-    __metaclass__ = ABCMeta
 
+    __metaclass__ = ABCMeta
 
     def __init__(self):
         # Import the othctl_runtime_config for all DB implementations to use
         from oth.config import othctl_runtime_config
+
         self.othctl_runtime_config = othctl_runtime_config
 
         # Define what string to use if no value present, matches StatusFile.NO_VALUE
-        self.NO_VALUE = '[NO_VALUE]'
-        return
+        self.NO_VALUE = "[NO_VALUE]"
 
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # Public methods.                                                 @
     #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # The name of the dot-file that disables this backend
     @property
@@ -52,19 +48,21 @@ class BaseDBLogger(ABC):
         return
 
     @abstractmethod
-    def send_event(self, event_dict : dict):
+    def send_event(self, event_dict: dict):
         return
 
     @abstractmethod
-    def send_metrics(self, test_info_dict : dict, metrics_dict : dict):
+    def send_metrics(self, test_info_dict: dict, metrics_dict: dict):
         return
 
     @abstractmethod
-    def send_node_health_results(self, test_info_dict : dict, node_health_dict : dict):
+    def send_node_health_results(self, test_info_dict: dict, node_health_dict: dict):
         return
 
     @abstractmethod
-    def send_external_metrics(self, table : str, tags : dict, values : dict, log_time : str):
+    def send_external_metrics(
+        self, table: str, tags: dict, values: dict, log_time: str
+    ):
         return
 
     @abstractmethod
@@ -75,17 +73,13 @@ class BaseDBLogger(ABC):
     def query(self, query):
         return
 
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
     # End of public methods.                                          @
     #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def _is_numeric(self, s : str):
-        """ Checks if a string is an OTH-recognized numeric format """
-        number_regex = re.compile(r'^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$')
-        if number_regex.match(s):
-            return True
-        else:
-            return False
-
+    def _is_numeric(self, s: str):
+        """Checks if a string is an OTH-recognized numeric format"""
+        number_regex = re.compile(r"^[-]?([0-9]*\.)?[0-9]+([eE]{1}[+-]?[0-9]+)?$")
+        return bool(number_regex.match(s))

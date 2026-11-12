@@ -48,6 +48,7 @@ include = [
     "oth/config.py",
     "oth/libraries/output_hub/*",
     "oth/libraries/repositories/*",
+    "oth/libraries/oth_database_loggers/*",
     "oth/libraries/input_files.py",
     "oth/libraries/rgt_test.py",
     "oth/schedulers/*"
@@ -64,6 +65,7 @@ files = [
     "oth/cli",
     "oth/libraries/output_hub",
     "oth/libraries/repositories",
+    "oth/libraries/oth_database_loggers",
     "oth/schedulers"
 ]
 ignore_missing_imports = true

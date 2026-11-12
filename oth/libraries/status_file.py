@@ -269,7 +269,7 @@ class StatusFile:
         """
         self.__logger = logger
         self.__test_id = test_id
-        self.__db_logger = create_oth_db_logger(logger=logger)
+        self.__db_logger = OthDatabaseLogger(logger=logger)
 
         # The first task is set the path to status file.
         self.__status_file_path = path_to_status_file
