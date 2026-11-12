@@ -414,15 +414,13 @@ def test_harness_driver(argv=None):
     workspace = othctl_runtime_config.path_to_sspace
     apptest.create_test_workspace(workspace)
 
-    # Implement the RGT_REUSE_BUILD_FROM environment variable
-    # Requires implementation in base_machine.py and layout_of_apps_directory.py
-    # Environment variable set by user or by runtests.py
     build_dir = apptest.get_path_to_workspace_build()
-    if 'RGT_REUSE_BUILD_FROM' in os.environ and Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
-        build_dir = os.environ['RGT_REUSE_BUILD_FROM']
-    elif 'RGT_REUSE_BUILD_FROM' in os.environ:
+    if othctl_runtime_config.reuse_build_from and Path(othctl_runtime_config.reuse_build_from).exists():
+        build_dir = othctl_runtime_config.reuse_build_from
+    elif othctl_runtime_config.reuse_build_from:
         # otherwise, update this envvar to the current build directory
-        os.environ['RGT_REUSE_BUILD_FROM'] = build_dir
+        os.environ['OTHCTL_REUSE_BUILD_FROM'] = build_dir
+        othctl_runtime_config.reuse_build_from = build_dir
 
     # Update environment with the paths to test directories
     apptest_env_vars = {

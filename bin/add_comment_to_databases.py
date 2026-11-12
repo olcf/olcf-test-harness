@@ -116,7 +116,7 @@ def influxdb_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtInfluxdbLogger)
+        db : an instantiation of base_db class (ie, OthInfluxdbLogger)
     """
 
     def build_query():
@@ -165,7 +165,7 @@ def kafka_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtKafkaLogger)
+        db : an instantiation of base_db class (ie, OthKafkaLogger)
     """
 
     def build_query():
@@ -195,7 +195,7 @@ def kafka_get_results(db):
         field_selector = f'{",".join(groupby_fields)},{",".join([f"LATEST({e}) as {e}" for e in KafkaLogger.KAFKA_EVENT_FIELDS if not (e in groupby_fields or e in fields_sql_kw)])}'
         field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
 
-        query = f'SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id'
+        query = f'SELECT {field_selector} FROM "{othctl_runtime_config.kafka_events_topic}" WHERE {" AND ".join(filters)} GROUP BY test_id'
         logger.log_debug(f"SQL query: {query}")
         return query
 

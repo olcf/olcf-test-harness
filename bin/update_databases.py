@@ -61,7 +61,7 @@ parser.add_argument('--kafka-grace-period', type=int, default=1800, action='stor
 # Parse command-line arguments #################################################
 args = parser.parse_args()
 
-# Create rgt_logger
+# Create oth_logger
 logger = OutputHub(
     name="update_db",
     log_level=args.loglevel,
@@ -80,8 +80,8 @@ for db in db_logger.enabled_backends:
     if db.name == "influxdb":
         continue
     elif db.name == "kafka":
-        if not 'RGT_KAFKA_EVENTS_TOPIC' in os.environ:
-            self.log_error(f"The Kafka backend requires RGT_KAFKA_EVENTS_TOPIC to be set in the environment.")
+        if not othctl_runtime_config.kafka_events_topic:
+            self.log_error(f"The Kafka backend requires OTHCTL_KAFKA_EVENTS_TOPIC to be set in the environment.")
             exit(1)
         continue
     else:
@@ -163,7 +163,7 @@ def influxdb_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtInfluxdbLogger)
+        db : an instantiation of base_db class (ie, OthInfluxdbLogger)
     """
 
     def build_query():
@@ -225,7 +225,7 @@ def kafka_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtKafkaLogger)
+        db : an instantiation of base_db class (ie, OthKafkaLogger)
     """
 
     def build_query():
@@ -267,8 +267,7 @@ def kafka_get_results(db):
         field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
         unfinished_conditional = 'event_name = \'job_queued\' or (event_name != \'check_end\' and (event_value = \'0\' or event_value = \'[NO_VALUE]\'))'
 
-        #query = f'SELECT * FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} WHERE timestamp = (SELECT MAX(timestamp) FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} AS subq WHERE subq.test_id = test_id) AND {" AND ".join(filters)} GROUP BY test_id,machine,app,test HAVING event_name = "job_queued" or (event_name != "check_end" and (event_value = "0" or event_value = "[NO_VALUE]"))'
-        query = f'SELECT * FROM (SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id,machine,app,test) WHERE {unfinished_conditional}'
+        query = f'SELECT * FROM (SELECT {field_selector} FROM "{othctl_runtime_config.kafka_events_topic}" WHERE {" AND ".join(filters)} GROUP BY test_id,machine,app,test) WHERE {unfinished_conditional}'
         logger.log_debug(f"SQL query: {query}")
         return query
 
