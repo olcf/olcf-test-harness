@@ -78,7 +78,9 @@ class GitRepository(BaseRepository):
             self.get_application_parent_directory_from_env() + "/" + machine_name
         )
 
-        data_transfer_protocol: str = str(os.getenv("OTHCTL_GIT_DATA_TRANSFER_PROTOCOL"))
+        data_transfer_protocol: str = str(
+            os.getenv("OTHCTL_GIT_DATA_TRANSFER_PROTOCOL")
+        )
 
         app_url: str = ""
         if data_transfer_protocol == "ssh":

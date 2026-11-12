@@ -1,5 +1,4 @@
 import argparse as ap
-import os
 import sys
 from pathlib import Path
 

@@ -369,7 +369,7 @@ class OthDatabaseLogger:
                             self.enabled_backends.append(influxdb_backend)
                     except Exception as e:
                         self.logger.log_error(f"Failed to enable the database logger from URL {influxdb_uris[i]}: {e}")
-        if kafka_loaded and (not 'kafka' in self.disabled_backends)
+        if kafka_loaded and (not 'kafka' in self.disabled_backends) \
             and (self.othctl_runtime_config.kafka_uri
             and self.othctl_runtime_config.kafka_username
             and self.othctl_runtime_config.kafka_password

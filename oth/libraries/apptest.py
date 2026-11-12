@@ -451,7 +451,7 @@ class subtest(base_apptest, apptest_layout):
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
-            'runtag': self.othctl_runtime_config.system_log_tag
+            'runtag': self.othctl_runtime_config.system_log_tag,
             'machine': machine_name,
             'test_id': self.get_harness_id(),
             'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),
