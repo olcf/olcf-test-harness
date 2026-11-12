@@ -132,11 +132,12 @@ int main(int argc, char **argv) {
 
 def create(args: ap.Namespace) -> None:
     oh: OutputHub = OutputHub(__name__)
+    from oth.config import othctl_runtime_config
 
-    if "RGT_PATH_TO_TESTS" in os.environ:
-        path_to_tests: Path = Path(str(os.getenv("RGT_PATH_TO_TESTS"))).absolute()
+    if othctl_runtime_config.path_to_tests:
+        path_to_tests: Path = Path(othctl_runtime_config.path_to_tests).absolute()
     else:
-        oh.log_critical("RGT_PATH_TO_TESTS is not set")
+        oh.log_critical("OTHCTL_PATH_TO_TESTS is not set")
         sys.exit(1)
 
     path_to_application: Path = path_to_tests.joinpath(args.application)

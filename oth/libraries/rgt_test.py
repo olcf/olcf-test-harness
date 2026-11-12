@@ -500,13 +500,13 @@ class RgtTest:
             raise ValueError(err_msg)
 
     def _print_user_parameters(self, logger):
-        logger.log_info("RGT Test Parameters - User")
+        logger.log_info("OTHCTL Test Parameters - User")
         logger.log_info("==========================")
         for k, v in (self.user_parameters).items():
             logger.log_info(f"{k}={v}")
 
     def _print_builtin_parameters(self, logger):
-        logger.log_info("RGT Test Parameters - Builtin")
+        logger.log_info("OTHCTL Test Parameters - Builtin")
         logger.log_info("=============================")
         for k, v in (self.builtin_parameters).items():
             logger.log_info(f"{k}={v}")

@@ -5,12 +5,6 @@ import sys
 import time
 
 #
-# Author: Arnold Tharrington (arnoldt@ornl.gov)
-# National Center for Computational Sciences, Scientific Computing Group.
-# Oak Ridge National Laboratory
-#
-
-#
 # The package provides utilities for the regression test harness.
 #
 
@@ -24,15 +18,14 @@ def unique_harness_id():
 
 class work_space_generator:
     def __init__(self):
-        self.__workspace = None
+        from oth.config import othctl_runtime_config
 
-        ws = os.getenv('RGT_PATH_TO_SSPACE')
-        if ws == None:
-            sys.exit("HARNESS ERROR: Please set RGT_PATH_TO_SSPACE in the environment!")
+        self.__workspace = othctl_runtime_config.path_to_sspace
+        if self.__workspace == None:
+            raise ValueError("OTHCTL_PATH_TO_SSPACE must be set in the environment!")
 
         # Create workspace if necessary.
-        self.__workspace = ws
-        os.makedirs(ws, exist_ok=True)
+        os.makedirs(self.__workspace, exist_ok=True)
 
     ########################################################################
     #
@@ -63,7 +56,7 @@ def try_symlink(target, link_name):
         # Allow interrupt from command line.
         raise
     except:
-        print(f'HARNESS ERROR: Failed to create symlink {link_name} to {target}.')
+        print(f'Failed to create symlink {link_name} to {target}.')
 
 ########################################################################
 # Set environment variables that control harness behavior.

@@ -17,14 +17,14 @@ def create_repository(
         repo = GitRepository(application, url, branch)
     else:
         raise TypeError(
-            f"The repository type {_type} is not supported. This error is generally due to the environmental variable 'RGT_TYPE_OF_REPOSITORY' not being set correctly"
+            f"The repository type {_type} is not supported. This error is generally due to the environmental variable 'OTHCTL_TYPE_OF_REPOSITORY' not being set correctly"
         )
 
     return repo
 
 
 def get_type_of_repository() -> Optional[str]:
-    return os.getenv("RGT_TYPE_OF_REPOSITORY")
+    return os.getenv("OTHCTL_TYPE_OF_REPOSITORY")
 
 
 __all__ = ["create_repository", "get_type_of_repository"]

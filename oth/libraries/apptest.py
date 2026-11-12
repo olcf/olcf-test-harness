@@ -372,13 +372,14 @@ class subtest(base_apptest, apptest_layout):
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
  
-        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        # if reusing first build & OTHCTL_REUSE_BUILD_FROM not already set, set it
         if reuse_first_build:
-            if not 'RGT_REUSE_BUILD_FROM' in os.environ:
+            if not self.othctl_runtime_config.reuse_build_from:
                 # Set a dummy value so that test_harness_driver.py knows to update the value
-                os.environ['RGT_REUSE_BUILD_FROM'] = 'SETME'
+                os.environ['OTHCTL_REUSE_BUILD_FROM'] = "SETME"
+                self.othctl_runtime_config.reuse_build_from = "SETME"
 
-        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        # if reusing first build & OTHCTL_REUSE_BUILD_FROM not already set, set it
         if reuse_build_from_id:
             # Check if test_id exists in Run_Archive
             target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
@@ -391,7 +392,8 @@ class subtest(base_apptest, apptest_layout):
                 self.logger.log_critical(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
                 return 1
             # if all checks pass, we're good to set it
-            os.environ['RGT_REUSE_BUILD_FROM'] = target_builddir_path
+            os.environ['OTHCTL_REUSE_BUILD_FROM'] = target_builddir_path
+            self.othctl_runtime_config = target_builddir_path
             self.logger.log_info(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
 
         pathtoscripts = self.get_path_to_scripts()
@@ -429,14 +431,13 @@ class subtest(base_apptest, apptest_layout):
         """
         Enables the harness database logging extensions for Metrics and Node Health
         """
-        from oth.config import othctl_runtime_config
         currentdir = os.getcwd()
         self.logger.log_debug(f"Current directory in apptest: {currentdir}")
         runarchive_dir = self.get_path_to_runarchive()
         os.chdir(runarchive_dir)
         self.logger.log_info(f"Starting the harness database extensions in apptest: {os.getcwd()}")
 
-        machine_name = othctl_runtime_config.machine_name
+        machine_name = self.othctl_runtime_config.machine_name
 
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
@@ -450,7 +451,7 @@ class subtest(base_apptest, apptest_layout):
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
-            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
+            'runtag': self.othctl_runtime_config.system_log_tag
             'machine': machine_name,
             'test_id': self.get_harness_id(),
             'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),
