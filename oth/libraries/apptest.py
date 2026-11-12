@@ -26,7 +26,7 @@ from oth.libraries.status_file import parse_status_file2
 from oth.libraries.status_file import summarize_status_file
 from oth.libraries.status_file import StatusFile
 
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
 #
 # Inherits "apptest_layout".
@@ -71,7 +71,7 @@ class subtest(base_apptest, apptest_layout):
         self.__myLogger = logger
 
         if db_logger == None:
-            self.__db_logger = create_rgt_db_logger(logger=logger)
+            self.__db_logger = OthDatabaseLogger(logger=logger)
         else:
             self.__db_logger = db_logger
 

@@ -55,10 +55,10 @@ class SubtestFactory():
         name_of_subtest : str
             The name of test within the application. 
 
-        logger : A rgt_logger object.
+        logger : A oth_logger object.
             A logger object
 
-        db_logger : A rgt_database_logger object
+        db_logger : A oth_database_logger object
             A database logger object.
 
         tag : str

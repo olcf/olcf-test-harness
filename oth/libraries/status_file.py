@@ -20,7 +20,7 @@ import subprocess
 from pathlib import Path
 
 from oth.libraries.layout_of_apps_directory import apptest_layout
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""
@@ -122,13 +122,13 @@ class StatusFile:
     #---Field identifiers.
 
     FIELDS_PER_TEST_INSTANCE = [
-        'rgt_system_log_tag',
+        'oth_system_log_tag',
         'user',
         'hostname',
         'job_account_id',
-        'rgt_path_to_sspace',
+        'oth_path_to_sspace',
         'machine',
-        'path_to_rgt_package',
+        'path_to_oth_package',
         'build_directory',
         'workdir',
         'run_archive',
@@ -269,7 +269,7 @@ class StatusFile:
         """
         self.__logger = logger
         self.__test_id = test_id
-        self.__db_logger = create_rgt_db_logger(logger=logger)
+        self.__db_logger = create_oth_db_logger(logger=logger)
 
         # The first task is set the path to status file.
         self.__status_file_path = path_to_status_file
@@ -509,10 +509,6 @@ class StatusFile:
         # THAT THE EVENT OCCURRED.
         os.rename(file_path_partial, file_path)
 
-        # Put the same event data on the system log.
-
-        write_system_log(self.__test_id, status_info)
-
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
             self.__status_file_add_result(event_value, mode="Add_Build_Result")
@@ -676,10 +672,10 @@ def get_status_info(test_id, event_type, event_subtype,
     run_archive_all = os.path.join(dir_head1, apptest_layout.test_run_archive_dirname)
     test_instance_info['run_archive'] = os.path.join(run_archive_all, test_id)
 
-    test_instance_info['rgt_path_to_sspace'] = othctl_runtime_config.path_to_sspace
+    test_instance_info['oth_path_to_sspace'] = othctl_runtime_config.path_to_sspace
 
     test_instance_info['build_directory'] = os.path.join(
-        test_instance_info['rgt_path_to_sspace'],
+        test_instance_info['oth_path_to_sspace'],
         test_instance_info['app'],
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_build_dirname)
@@ -687,7 +683,7 @@ def get_status_info(test_id, event_type, event_subtype,
     test_instance_info['machine'] = othctl_runtime_config.machine_name
 
     test_instance_info['workdir'] = os.path.join(
-        test_instance_info['rgt_path_to_sspace'],
+        test_instance_info['oth_path_to_sspace'],
         test_instance_info['app'],
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_run_dirname)
@@ -698,8 +694,8 @@ def get_status_info(test_id, event_type, event_subtype,
     elif 'OTHCTL_ACCT_ID' in os.environ:
         job_account = os.environ['OTHCTL_ACCT_ID']
     test_instance_info['job_account_id'] = job_account
-    test_instance_info['path_to_rgt_package'] = str(Path(__file__).resolve().parent.parent)
-    test_instance_info['rgt_system_log_tag'] = othctl_runtime_config.system_log_tag
+    test_instance_info['path_to_oth_package'] = str(Path(__file__).resolve().parent.parent)
+    test_instance_info['oth_system_log_tag'] = othctl_runtime_config.system_log_tag
 
     #---
 
@@ -787,64 +783,9 @@ def get_status_info_from_file(event_filename):
 
 #------------------------------------------------------------------------------
 
-def write_system_log(test_id, status_info):
-    """Write a system log entry for an event."""
-
-    #---Use Unix logger command unless (valid) directory requested.
-
-    rgt_system_log_dir = (os.environ['RGT_SYSTEM_LOG_DIR']
-        if 'RGT_SYSTEM_LOG_DIR' in os.environ else '')
-
-    is_using_unix_logger = False
-    if rgt_system_log_dir == '':
-        is_using_unix_logger = True
-    elif not Path(rgt_system_log_dir).exists():
-        is_using_unix_logger = True
-
-    rgt_system_log_tag = (os.environ['RGT_SYSTEM_LOG_TAG']
-        if 'RGT_SYSTEM_LOG_TAG' in os.environ else '')
-
-    if rgt_system_log_tag == '':
-        return
-
-    #---Construct log string.
-
-    #TODO: make quote a function ...
-
-    quote = '\\"' if is_using_unix_logger else '"'
-
-    log_string = ''
-
-    for key_value in status_info:
-        if log_string != '':
-            log_string += ' '
-        log_string += key_value[0] + '=' + quote + key_value[1] + quote
-
-    #---Write log.
-
-    if is_using_unix_logger:
-        os.system('logger -p local0.notice "' + log_string + '"')
-
-    else:
-        dir_head1 = os.path.split(os.getcwd())[0]
-        (dir_head2, test) = os.path.split(dir_head1)
-        app = os.path.split(dir_head2)[1]
-
-        log_file = (app + '_#_' +
-                    test + '_#_' +
-                    test_id + #---Alt: could use uuid.uuid1()
-                    '.txt')
-        log_path = os.path.join(rgt_system_log_dir, log_file)
-
-        file_ = open(log_path, 'a')
-        file_.write(log_string + '\n')
-        file_.close()
-
-#------------------------------------------------------------------------------
-
 def parse_status_file(path_to_status_file, startdate, enddate,
                       mycomputer_with_events_record):
-    """Function: parse_status_file. Parser for rgt_status_file.txt"""
+    """Function: parse_status_file. Parser for oth_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
@@ -913,7 +854,7 @@ def parse_status_file(path_to_status_file, startdate, enddate,
 #------------------------------------------------------------------------------
 
 def parse_status_file2(path_to_status_file):
-    """Function: parse_status_file2. Parser for rgt_status_file.txt"""
+    """Function: parse_status_file2. Parser for oth_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
@@ -974,7 +915,7 @@ def parse_status_file2(path_to_status_file):
 
 def summarize_status_file(path_to_status_file, startdate, enddate,
                           mycomputer_with_events_record):
-    """Parse, collect summary info from rgt_status.txt."""
+    """Parse, collect summary info from oth_status.txt."""
     sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()

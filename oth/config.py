@@ -78,6 +78,8 @@ class OthctlRuntimeConfig:
         self.submit_queue = get_from_environ("OTHCTL_SUBMIT_QUEUE")
         self.submit_acct = get_from_environ("OTHCTL_SUBMIT_ACCT")
 
+        self.reuse_build_from = get_from_environ("OTHCTL_REUSE_BUILD_FROM")
+
         self.node_metadata_file = get_from_environ(
             "OTHCTL_NODE_LOCATION_FILE", default="NONE"
         )
@@ -85,6 +87,7 @@ class OthctlRuntimeConfig:
         # Kafka variables
         self.kafka_uri = get_from_environ("OTHCTL_KAFKA_URI")
         self.kafka_username = get_from_environ("OTHCTL_KAFKA_USERNAME")
+        self.kafka_password = get_from_environ("OTHCTL_KAFKA_PASSWORD")
         self.kafka_events_topic = get_from_environ("OTHCTL_KAFKA_EVENTS_TOPIC")
         self.kafka_metrics_topic = get_from_environ("OTHCTL_KAFKA_METRICS_TOPIC")
         self.kafka_node_health_topic = get_from_environ(
@@ -95,8 +98,12 @@ class OthctlRuntimeConfig:
         self.kafka_ssl_certificate_location = get_from_environ(
             "OTHCTL_KAFKA_SSL_CERTIFICATE_LOCATION"
         )
-        self.kafka_dry_run = get_from_environ("OTHCTL_KAFKA_DRY_RUN")
-        self.kafka_disable = get_from_environ("OTHCTL_KAFKA_DISABLE")
+        self.kafka_dry_run = get_from_environ(
+            "OTHCTL_KAFKA_DRY_RUN", default="0", regex=r"^[0-1]$"
+        )
+        self.kafka_disable = get_from_environ(
+            "OTHCTL_KAFKA_DISABLE", default="0", regex=r"^[0-1]$"
+        )
 
         # InfluxDB variables
         self.influxdb_uri = get_from_environ("OTHCTL_INFLUXDB_URI")
@@ -106,8 +113,12 @@ class OthctlRuntimeConfig:
         self.influxdb_precision = get_from_environ(
             "OTHCTL_INFLUXDB_PRECISION", default="ns"
         )
-        self.influxdb_dry_run = get_from_environ("OTHCTL_INFLUXDB_DRY_RUN")
-        self.influxdb_disable = get_from_environ("OTHCTL_INFLUXDB_DISABLE")
+        self.influxdb_dry_run = get_from_environ(
+            "OTHCTL_INFLUXDB_DRY_RUN", default="0", regex=r"^[0-1]$"
+        )
+        self.influxdb_disable = get_from_environ(
+            "OTHCTL_INFLUXDB_DISABLE", default="0", regex=r"^[0-1]$"
+        )
 
         # Make work dir -- set to /dev/null for unit tests
         if self.path_to_sspace != "/dev/null":
