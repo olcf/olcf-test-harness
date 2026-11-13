@@ -17,14 +17,17 @@ def test_multiple_influxdb(monkeypatch):
         file_log_level="DEBUG",
     )
 
-    logger.log_error("Logger initialized!")
-
     with monkeypatch.context() as mp:
-        mp.setenv(
-            "OTHCTL_INFLUXDB_URI",
-            "https://a.com:1234/api/v2/write?org=myorg&bucket=mybucket&precision=ns;https://b.com/api/v2/write?org=myorg&bucket=mybucket",
-        )
-        mp.setenv("OTHCTL_INFLUXDB_TOKEN", "mytoken1234;mytoken5678")
+        test_uri = "https://a.com:1234/api/v2/write?org=myorg&bucket=mybucket&precision=ns;https://b.com/api/v2/write?org=myorg&bucket=mybucket"
+        test_token = "mytoken1234;mytoken5678"
+        mp.setenv("OTHCTL_INFLUXDB_URI", test_uri)
+        mp.setenv("OTHCTL_INFLUXDB_TOKEN", test_token)
+
+        from oth.config import othctl_runtime_config
+
+        othctl_runtime_config.influxdb_uri = test_uri
+        othctl_runtime_config.influxdb_token = test_token
+
         othdb_logger = OthDatabaseLogger(logger, check_health=False)
         assert len(othdb_logger.enabled_backends) == 2
 
