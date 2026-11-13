@@ -81,10 +81,12 @@ class OthDatabaseLogger:
                             f"An error occurred while logging an event to {backend.url}. Please see log files for more details."
                         )
                         num_failed += 1
-                    elif event_dict["event_name"] == "check_end":
+                    elif (
+                        event_dict["event_name"] == "check_end"
+                        and not Path(backend.successful_file_name).exists()
+                    ):
                         # If we just successfully logged check_end, then we add a dot-file to indicate logging completed
-                        if not Path(backend.successful_file_name).exists():
-                            os.mknod(backend.successful_file_name)
+                        os.mknod(backend.successful_file_name)
             except Exception as e:  # noqa: BLE001
                 self.logger.log_error(
                     f"The following exception occurred while logging an event to {backend.url}: {e}."
