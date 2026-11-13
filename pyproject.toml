@@ -58,6 +58,9 @@ include = [
 ignore = [
     "FA100"
 ]
+extend-select = [
+    "DTZ"
+]
 
 [tool.mypy]
 files = [
