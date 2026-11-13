@@ -20,7 +20,7 @@ class OthDatabaseLogger:
     #                                                                 @
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def __init__(self, logger=None, only=None):
+    def __init__(self, logger=None, only=None, check_health=True):
         """
         Parameters
         ----------
@@ -43,7 +43,7 @@ class OthDatabaseLogger:
         self.disabled_backends_filenames = []  # strings -- ".disable_influxdb", etc
         self._find_disabled_backends()
         self.enabled_backends = []  # database logger objects
-        self._add_db_backends(only=only)
+        self._add_db_backends(only=only, check_health=check_health)
 
     def log_event(self, event_dict: dict, only=None):
         """
@@ -338,7 +338,7 @@ class OthDatabaseLogger:
             self.disabled_backends.append("influxdb")
             self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
 
-    def _add_db_backends(self, only=None):
+    def _add_db_backends(self, only=None, check_health=True):
         """
         Parses the available environment variables to enable specific backends
 
@@ -403,6 +403,7 @@ class OthDatabaseLogger:
                             uri=influxdb_uris[i],
                             token=influxdb_tokens[i],
                             logger=self.logger,
+                            check_health=check_health,
                         )
                         if not only or influxdb_backend.url == only:
                             self.logger.log_debug(
@@ -471,6 +472,7 @@ class OthDatabaseLogger:
                         ssl_ca_loc=kafka_ssl_ca_loc[i],
                         ssl_cert_loc=kafka_ssl_cert_locs[i],
                         logger=self.logger,
+                        check_health=check_health,
                     )
                     if not only or kafka_backend.url == only:
                         self.logger.log_debug(

@@ -70,6 +70,7 @@ class KafkaLogger(BaseDBLogger):
         ssl_ca_loc="",
         ssl_cert_loc="",
         logger=None,
+        check_health=True,
     ):
 
         # Initialize parent so that config vars are accessible
@@ -89,6 +90,7 @@ class KafkaLogger(BaseDBLogger):
         self.ssl_ca_loc = ssl_ca_loc
         self.ssl_cert_loc = ssl_cert_loc
         self.dryrun = False
+        self.check_health = check_health
 
         self._validate_uri()
 
@@ -102,10 +104,11 @@ class KafkaLogger(BaseDBLogger):
             "ssl.certificate.location": self.ssl_cert_loc,
         }
 
-        alive_msg = self.is_alive()
-        if alive_msg:
-            message = f"The Kafka server at {self.uri} is not alive or does not have all expected topics: {alive_msg}"
-            raise ValueError(message)
+        if self.check_health:
+            alive_msg = self.is_alive()
+            if alive_msg:
+                message = f"The Kafka server at {self.uri} is not alive or does not have all expected topics: {alive_msg}"
+                raise ValueError(message)
 
         self.producer = Producer(self.conf)
 

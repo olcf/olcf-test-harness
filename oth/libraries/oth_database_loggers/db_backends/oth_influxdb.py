@@ -58,7 +58,7 @@ class InfluxDBLogger(BaseDBLogger):
     #                                                                 @
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    def __init__(self, uri="", token="", logger=None):
+    def __init__(self, uri="", token="", logger=None, check_health=True):
 
         # Initialize parent so that config vars are accessible
         super().__init__()
@@ -68,6 +68,7 @@ class InfluxDBLogger(BaseDBLogger):
         self.__logger = logger
         self.full_uri = uri
         self.token = token
+        self.check_health = check_health
 
         self.url = None
         self.bucket = None
@@ -79,10 +80,11 @@ class InfluxDBLogger(BaseDBLogger):
 
         self._validate_uri()
 
-        alive_msg = self.is_alive()
-        if alive_msg:
-            message = f"An InfluxDB server at {self.url} is not alive: {alive_msg}"
-            raise ValueError(message)
+        if self.check_health:
+            alive_msg = self.is_alive()
+            if alive_msg:
+                message = f"An InfluxDB server at {self.url} is not alive: {alive_msg}"
+                raise ValueError(message)
 
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -501,7 +503,8 @@ class InfluxDBLogger(BaseDBLogger):
                 self.bucket = arg_split[1]
             elif arg_split[0] == "org" and not self.org:
                 self.org = arg_split[1]
-            elif arg_split[0] == "precision" and not self.precision:
+            elif arg_split[0] == "precision":
+                # Overrides default precision
                 self.precision = arg_split[1]
             else:
                 message = f"Unrecognized URL-encoded keyword argument: {arg_split[0]}"
