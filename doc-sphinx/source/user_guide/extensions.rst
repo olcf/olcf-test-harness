@@ -21,20 +21,20 @@ To enable InfluxDB, add the following variables to your environment (ie, **expor
 .. hlist::
     :columns: 1
 
-    * RGT_INFLUXDB_URI : the URL for your InfluxDB instance (ie, ``https://my-influxdb.domain.com/api/v2/write?org=my-org&bucket=my-bucket&precision=ns``)
-    * RGT_INFLUXDB_TOKEN : the token for your InfluxDB instance
+    * OTHCTL_INFLUXDB_URI : the URL for your InfluxDB instance (ie, ``https://my-influxdb.domain.com/api/v2/write?org=my-org&bucket=my-bucket&precision=ns``)
+    * OTHCTL_INFLUXDB_TOKEN : the token for your InfluxDB instance
 
 To enable Kafka, add the following variables to your environment (ie, **export** in **bash**):
 
 .. hlist::
     :columns: 1
 
-    * RGT_KAFKA_URI : the URL for your Kafka instance (ie, ``https://my-kafka.domain.com:22222``)
-    * RGT_KAFKA_USERNAME : the username for your Kafka account
-    * RGT_KAFKA_PASSWORD : the password for your Kafka account
-    * RGT_KAFKA_EVENTS_TOPIC : the name of the topic to use for Events logging
-    * RGT_KAFKA_SSL_CA_LOCATION : absolute path to the certificate authority file for the Kafka instance.
-    * RGT_KAFKA_SSL_CERTIFICATE_LOCATION : absolute path to the certificate file for the Kafka instance.
+    * OTHCTL_KAFKA_URI : the URL for your Kafka instance (ie, ``https://my-kafka.domain.com:22222``)
+    * OTHCTL_KAFKA_USERNAME : the username for your Kafka account
+    * OTHCTL_KAFKA_PASSWORD : the password for your Kafka account
+    * OTHCTL_KAFKA_EVENTS_TOPIC : the name of the topic to use for Events logging
+    * OTHCTL_KAFKA_SSL_CA_LOCATION : absolute path to the certificate authority file for the Kafka instance.
+    * OTHCTL_KAFKA_SSL_CERTIFICATE_LOCATION : absolute path to the certificate file for the Kafka instance.
 
 Note that this is a minimal configuration.
 Multiple InfluxDB or Kafka instances can be logged to by supplying a semicolon-separated list to each of the variables.
@@ -46,11 +46,11 @@ Events are logged using the following data as tags in the InfluxDB measurement:
     :columns: 1
 
     * **time**
-    * **runtag** : system log tag for this harness launch, equal to **RGT_SYSTEM_LOG_TAG**
+    * **runtag** : system log tag for this harness launch, equal to **OTHCTL_SYSTEM_LOG_TAG**
     * **app** : name of the application
     * **test** : name of the test
     * **test_id** : test identifier of this test instance
-    * **machine** : machine name, equal to **RGT_MACHINE_NAME**
+    * **machine** : machine name, equal to **OTHCTL_MACHINE_NAME**
 
 Tags are a set of unique identifiers used by InfluxDB to index records.
 If you write 2 records to InfluxDB using the same set of tags, only the most recent will be kept.
@@ -64,7 +64,7 @@ Event fields logged to InfluxDB are:
     * **build_directory** : path to the build directory
     * **run_archive** : path to the Run_Archive directory
     * **workdir** : path to the work directory for this test
-    * **rgt_path_to_sspace** : path to the scratch space derived from the **RGT_PATH_TO_SSPACE** environment variable
+    * **rgt_path_to_sspace** : path to the scratch space derived from the **OTHCTL_PATH_TO_SSPACE** environment variable
     * **event_filename** : name of the event file that this information is mirrored in
     * **event_name** : name of the event (ie, 'build_start')
     * **event_subtype** : specifies whether the event is start/end
@@ -100,7 +100,7 @@ This requires that the database's event logging described above is enabled.
 
 To enable this extension, simply create a file named *metrics.txt* in the Run_Archive directory of a test launch (ie, */Path/to/Tests/$app/$test/Run_Archive/$test_id/metrics.txt*).
 For InfluxDB, no further steps are required to enable metrics logging.
-For Kafka, you must also set the environment variable ``RGT_KAFKA_METRICS_TOPIC`` (or set **kafka_metrics_topic** in the *machine.ini* file).
+For Kafka, you must also set the environment variable ``OTHCTL_KAFKA_METRICS_TOPIC`` (or set **kafka_metrics_topic** in the *machine.ini* file).
 This environment variable provides the Kafka topic for the harness to send metrics to.
 
 The *metrics.txt* file must exist by the end of the **report_cmd** execution (**report_cmd** is defined in the test's *rgt_test_input.ini* file).
@@ -131,7 +131,7 @@ Monitoring the health of individual nodes
 In many-node systems, it can be very difficult to monitor the health of each node.
 To address this, the OTH supports sending the status of each node to a database.
 Similar to metrics logging, this extension requires that database's event logging is enabled, and this extension is triggered by the presence of a *nodecheck.txt* file in the Run_Archive directory of a test launch.
-For Kafka, similar to metrics, the environment variable ``RGT_KAFKA_NODE_HEALTH_TOPIC`` is required (or set **kafka_node_health_topic** in the *machine.ini* file).
+For Kafka, similar to metrics, the environment variable ``OTHCTL_KAFKA_NODE_HEALTH_TOPIC`` is required (or set **kafka_node_health_topic** in the *machine.ini* file).
 This extension also requires geospatial information about the node, by default.
 This is discussed later in this section.
 Each line of *nodecheck.txt* must have the following format:
@@ -164,8 +164,8 @@ Kafka logs the same test information that it does for metrics: **test_id**, **ap
 By default, this extension also requires geospatial information about each node (ie, cabinet number, board number, row number).
 For Kafka, due to fixed-column formatting requirements, the only acceptable/required geospatial metadata is **xname**, which typically encodes the cabinet, board, and row numbers in a single string, e.g. ``a36n21``.
 InfluxDB allows for flexible-column formatting, so any number of geospatial metadata may be provided.
-To bypass this feature (common for single-cabinet systems), set the **RGT_NODE_LOCATION_FILE** environment variable to ``none`` (not case-sensitive).
-To utilize this feature, provide the absolute path to a JSON file containing the desired information by using the **RGT_NODE_LOCATION_FILE** environment variable.
+To bypass this feature (common for single-cabinet systems), set the **OTHCTL_NODE_LOCATION_FILE** environment variable to ``none`` (not case-sensitive).
+To utilize this feature, provide the absolute path to a JSON file containing the desired information by using the **OTHCTL_NODE_LOCATION_FILE** environment variable.
 An example portion from this file may look like:
 
 .. code-block::

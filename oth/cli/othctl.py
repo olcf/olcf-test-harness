@@ -1,9 +1,9 @@
 import argparse as ap
+import os
 import sys
 from typing import List
 
 from oth import __version__
-from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
 
 from .create import create
@@ -39,7 +39,6 @@ def main() -> None:
     arg_parser.add_argument(
         "-c",
         "--config-file",
-        default=rgt_config_file.get_default_config_file_name(),
         type=str,
         required=False,
         help="machine configuration file",
@@ -160,8 +159,12 @@ def main() -> None:
     oh.log_info("starting harness")
     oh.log_info(f"invoked with: '{' '.join(sys.argv[1:])}'")
 
+    # Set config file envvar, if set
+    if args.config_file:
+        os.environ["OTHCTL_CONFIG_FILE"] = args.config_file
+
     oh.log_debug(f"parsed command line options: {args}")
-    oh.print(f"Using machine config: {args.config_file}")
+    oh.log_info(f"Using machine config: {args.config_file}")
 
     # branch to sub-command
     if args.subcommand == "create":

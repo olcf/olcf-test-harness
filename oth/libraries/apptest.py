@@ -26,36 +26,27 @@ from oth.libraries.status_file import parse_status_file2
 from oth.libraries.status_file import summarize_status_file
 from oth.libraries.status_file import StatusFile
 
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
 #
 # Inherits "apptest_layout".
 #
 class subtest(base_apptest, apptest_layout):
-    """Encapsulates the application-test layout.
-
-    Only one method is public and it exposes the doing of harness tasks:
-        * do_tasks.
-
-    The class is derived from classes base_apptest and apptest_layout.
-
-
     """
-
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    #                                                                 @
-    # Special methods                                                 @
-    #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    An instantiation of a single app+test to run.
+    The class is derived from classes base_apptest and apptest_layout.
+    """
 
     def __init__(self,
                  name_of_application=None,
                  name_of_subtest=None,
-                 local_path_to_tests=None,
                  number_of_iterations=-1,
                  logger=None,
                  tag=None,
                  db_logger=None):
+
+        from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
 
         # Ensure that tag is not None.
         if (tag == None):
@@ -66,35 +57,23 @@ class subtest(base_apptest, apptest_layout):
         base_apptest.__init__(self,
                               name_of_application,
                               name_of_subtest,
-                              local_path_to_tests,
+                              self.othctl_runtime_config.path_to_tests,
                               tag)
 
         apptest_layout.__init__(self,
-                                local_path_to_tests,
+                                self.othctl_runtime_config.path_to_tests,
                                 name_of_application,
                                 name_of_subtest,
                                 logger=logger,
                                 harness_id=tag)
 
-        # Format of data is [<local_path_to_tests>, <application>, <test>]
-        self.__apps_test_checked_out = []
-        self.__apps_test_checked_out.append([self.getLocalPathToTests(),
-                                             self.getNameOfApplication(),
-                                             name_of_subtest])
         self.__number_of_iterations = -1
         self.__myLogger = logger
 
         if db_logger == None:
-            self.__db_logger = create_rgt_db_logger(logger=logger)
+            self.__db_logger = OthDatabaseLogger(logger=logger)
         else:
             self.__db_logger = db_logger
-
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    #                                                                 @
-    # End of special methods                                          @
-    #                                                                 @
-    #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @
@@ -233,69 +212,6 @@ class subtest(base_apptest, apptest_layout):
         efile_obj.write(bheader)
         efile_obj.close()
 
-    #
-    # Displays the status of the tests.
-    #
-    def display_status2(self,taskwords,mycomputer_with_events_record):
-        failed_jobs = []
-        log_message =  "Testing status of: " + self.getNameOfApplication() +self.getNameOfSubtest()
-        print(log_message)
-
-        starttimestring = taskwords[0]
-        starttimestring = starttimestring.strip()
-        starttimewords = starttimestring.split("_")
-        startdate = datetime(int(starttimewords[0]),int(starttimewords[1]),int(starttimewords[2]),
-                                      int(starttimewords[3]),int(starttimewords[4]))
-        log_message =  "The startdate is " + startdate.ctime()
-        print (log_message)
-
-        endtimestring = taskwords[1]
-        endtimestring = endtimestring.strip()
-        endtimewords = endtimestring.split("_")
-        enddate = datetime(int(endtimewords[0]),int(endtimewords[1]),int(endtimewords[2]),
-                                      int(endtimewords[3]),int(endtimewords[4]))
-        log_message = "The enddate is " + enddate.ctime()
-        print(log_message)
-
-        #Parse the status file.
-        path_to_status_file = self.get_path_to_status_file()
-        (self.__status,failed_jobs) = parse_status_file(path_to_status_file,startdate,enddate,mycomputer_with_events_record)
-
-        currenttime = time.localtime()
-        time1 = time.strftime("%Y %b %d %H:%M:%S\n",currenttime)
-        theader = "\n--------------------\n"
-        appname = "%s, %s\n" % (self.getNameOfApplication(), self.getNameOfSubtest())
-        w1 = "Warning: No tests passed!!\n"
-        s1 = "%20s %20s %20s %20s\n" % ("Total tests","Test passed", "Test failed", "Test inconclusive")
-        s2 = "%20s %20s %20s %20s\n" % (str(self.__status["number_of_tests"]),
-                                        str(self.__status["number_of_passed_tests"]),
-                                        str(self.__status["number_of_failed_tests"]),
-                                        str(self.__status["number_of_inconclusive_tests"])
-                                       )
-        bheader = "\n====================\n"
-
-
-        filename= apptest_layout.test_status_filename
-        dfile_obj = open(filename,"a")
-        dfile_obj.write(theader)
-        dfile_obj.write(time1)
-        dfile_obj.write(appname)
-        dfile_obj.write(s1)
-        dfile_obj.write(s2)
-        dfile_obj.write(bheader)
-        dfile_obj.close()
-
-        efile_obj = open("failed_jobs.txt","a")
-        efile_obj.write(theader)
-        efile_obj.write(time1)
-        efile_obj.write(appname)
-        for job in failed_jobs:
-            s3 = "%20s %20s %20s\n" % (job[0],job[1],job[2])
-            efile_obj.write(s3)
-        efile_obj.write(bheader)
-        efile_obj.close()
-
-
     def generateReport(self,logfile,taskwords):
         #Parse the status file.
 
@@ -357,19 +273,6 @@ class subtest(base_apptest, apptest_layout):
                 "Number_inconclusive" : self.__summary["number_of_inconclusive_tests"],
                 "Failed_jobs" : self.__summary["failed_jobs"],
                 "Inconclusive_jobs" : self.__summary["inconclusive_jobs"]}
-
-
-    #
-    # Debug apptest.
-    #
-    def debug_apptest(self):
-        print ("\n\n")
-        print ("================================================================")
-        print ("Debugging apptest ")
-        print ("================================================================")
-        for tmp_test in self.__apps_test_checked_out:
-            print( "%-20s  %-20s %-20s" % (tmp_test[0], tmp_test[1], tmp_test[2]))
-        print( "================================================================\n\n")
 
     def waitForAllJobsToCompleteQueue(self, harness_config, timeout):
         """Waits for subtest cycle to end.
@@ -469,13 +372,14 @@ class subtest(base_apptest, apptest_layout):
         if separate_build_stdio:
             starttestcomand += "--separate-build-stdio"
  
-        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        # if reusing first build & OTHCTL_REUSE_BUILD_FROM not already set, set it
         if reuse_first_build:
-            if not 'RGT_REUSE_BUILD_FROM' in os.environ:
+            if not self.othctl_runtime_config.reuse_build_from:
                 # Set a dummy value so that test_harness_driver.py knows to update the value
-                os.environ['RGT_REUSE_BUILD_FROM'] = 'SETME'
+                os.environ['OTHCTL_REUSE_BUILD_FROM'] = "SETME"
+                self.othctl_runtime_config.reuse_build_from = "SETME"
 
-        # if reusing first build & RGT_REUSE_BUILD_FROM not already set, set it
+        # if reusing first build & OTHCTL_REUSE_BUILD_FROM not already set, set it
         if reuse_build_from_id:
             # Check if test_id exists in Run_Archive
             target_build_runarchive_path = os.path.join(self.get_path_to_test(), self.test_run_archive_dirname, reuse_build_from_id)
@@ -488,7 +392,8 @@ class subtest(base_apptest, apptest_layout):
                 self.logger.log_critical(f"Could not find build_directory from test_id {reuse_build_from_id} in {target_builddir_path}.")
                 return 1
             # if all checks pass, we're good to set it
-            os.environ['RGT_REUSE_BUILD_FROM'] = target_builddir_path
+            os.environ['OTHCTL_REUSE_BUILD_FROM'] = target_builddir_path
+            self.othctl_runtime_config = target_builddir_path
             self.logger.log_info(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
 
         pathtoscripts = self.get_path_to_scripts()
@@ -532,12 +437,7 @@ class subtest(base_apptest, apptest_layout):
         os.chdir(runarchive_dir)
         self.logger.log_info(f"Starting the harness database extensions in apptest: {os.getcwd()}")
 
-        # Find the machine name, or give a best-guess
-        if not 'RGT_MACHINE_NAME' in os.environ:
-            machine_name = subprocess.check_output(['hostname', '--long'])
-            self.logger.log_warning(f"WARNING: RGT_MACHINE_NAME not found in os.environ, setting to {machine_name}")
-        else:
-            machine_name = os.environ['RGT_MACHINE_NAME']
+        machine_name = self.othctl_runtime_config.machine_name
 
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
@@ -551,7 +451,7 @@ class subtest(base_apptest, apptest_layout):
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
-            'runtag': os.environ['RGT_SYSTEM_LOG_TAG'] if 'RGT_SYSTEM_LOG_TAG' in os.environ else 'unknown',
+            'runtag': self.othctl_runtime_config.system_log_tag,
             'machine': machine_name,
             'test_id': self.get_harness_id(),
             'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),
@@ -740,12 +640,6 @@ class subtest(base_apptest, apptest_layout):
                     if len(line_splt) >= 3:
                         node_healths[node_name]['message'] = ' '.join(line_splt[2:])
         return node_healths
-
-    def __name_of_current_function(self):
-        classname = self.__class__.__name__
-        functionname = sys._getframe(1).f_code.co_name
-        my_name = classname + "." + functionname
-        return my_name
 
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     #                                                                 @

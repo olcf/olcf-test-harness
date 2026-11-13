@@ -5,7 +5,6 @@ import os
 import sys
 import subprocess
 import getopt
-import string
 from pathlib import Path
 
 prefix = Path(__file__).resolve().parent.parent
@@ -113,7 +112,6 @@ def main():
 
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,
-                                          local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=testid)
 

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 ################################################################################
-# Author: Nick Hagerty
-# Date modified: 2025-05-30
-################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
 #   Kafka with the Druid database backend.
@@ -25,13 +22,13 @@ from pathlib import Path
 prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
-from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-from oth.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
+from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
+from oth.libraries.oth_database_loggers.db_backends.oth_kafka import KafkaLogger
 from oth.libraries.subtest_factory import SubtestFactory
 from oth.libraries.status_file import StatusFile, get_status_info_from_file
-from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
+from oth.config import othctl_runtime_config
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Add a comment to a specific test ID in the events database")
@@ -47,9 +44,6 @@ parser.add_argument('--event', type=str, action='store', choices=['logging_start
 # Parse command-line arguments #################################################
 args = parser.parse_args()
 
-# Read in the <machine>.ini configuration file #################################
-# uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
-config = rgt_config_file()
 logger = OutputHub(
     name="add_comment_db",
     log_level=args.loglevel,
@@ -58,7 +52,7 @@ logger = OutputHub(
     file_log_level=args.loglevel,
 )
 
-db_logger = create_rgt_db_logger(logger=logger)
+db_logger = OthDatabaseLogger(logger=logger)
 
 # db_logger is ready
 
@@ -122,7 +116,7 @@ def influxdb_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtInfluxdbLogger)
+        db : an instantiation of base_db class (ie, OthInfluxdbLogger)
     """
 
     def build_query():
@@ -171,7 +165,7 @@ def kafka_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtKafkaLogger)
+        db : an instantiation of base_db class (ie, OthKafkaLogger)
     """
 
     def build_query():
@@ -201,7 +195,7 @@ def kafka_get_results(db):
         field_selector = f'{",".join(groupby_fields)},{",".join([f"LATEST({e}) as {e}" for e in KafkaLogger.KAFKA_EVENT_FIELDS if not (e in groupby_fields or e in fields_sql_kw)])}'
         field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
 
-        query = f'SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id'
+        query = f'SELECT {field_selector} FROM "{othctl_runtime_config.kafka_events_topic}" WHERE {" AND ".join(filters)} GROUP BY test_id'
         logger.log_debug(f"SQL query: {query}")
         return query
 
@@ -209,7 +203,7 @@ def kafka_get_results(db):
     return results
 
 for db in db_logger.enabled_backends:
-    single_db_logger = create_rgt_db_logger(logger=logger, only=db.url)
+    single_db_logger = OthDatabaseLogger(logger=logger, only=db.url)
     results = []
     if db.name == "influxdb":
         results.extend(influxdb_get_results(db))

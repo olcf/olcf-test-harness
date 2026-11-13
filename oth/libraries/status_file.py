@@ -16,13 +16,11 @@ import re
 import socket
 import pprint
 import abc
-import urllib
-import dateutil.parser
 import subprocess
 from pathlib import Path
 
 from oth.libraries.layout_of_apps_directory import apptest_layout
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
 class StatusFile:
     """Perform operations pertaining to logging the status of jobs."""
@@ -124,13 +122,13 @@ class StatusFile:
     #---Field identifiers.
 
     FIELDS_PER_TEST_INSTANCE = [
-        'rgt_system_log_tag',
+        'oth_system_log_tag',
         'user',
         'hostname',
         'job_account_id',
-        'rgt_path_to_sspace',
+        'oth_path_to_sspace',
         'machine',
-        'path_to_rgt_package',
+        'path_to_oth_package',
         'build_directory',
         'workdir',
         'run_archive',
@@ -256,16 +254,6 @@ class StatusFile:
 
         return result
 
-    @classmethod
-    def validate_mode(cls,mode):
-        """Validates that we are using a valid mode."""
-        if mode == cls.MODE_NEW :
-            pass
-        elif mode == cls.MODE_OLD:
-            pass
-        else:
-            raise
-
     ###################
     # Special methods #
     ###################
@@ -281,7 +269,7 @@ class StatusFile:
         """
         self.__logger = logger
         self.__test_id = test_id
-        self.__db_logger = create_rgt_db_logger(logger=logger)
+        self.__db_logger = OthDatabaseLogger(logger=logger)
 
         # The first task is set the path to status file.
         self.__status_file_path = path_to_status_file
@@ -352,22 +340,6 @@ class StatusFile:
             event_filename = 'Event__UNKNOWN_EVENT_ENCOUNTERED_'
             event_type = ''
             event_subtype = ''
-
-        return self.__log_event(event_id, event_filename,
-                                event_type, event_subtype, str(event_value))
-
-    def log_custom_event(self, event_type, event_subtype, event_value=NO_VALUE):
-        """Log the occurrence of a harness event.
-           This version logs a custom user event not in the dictionary.
-        """
-
-        event_name = (event_type + '_' + event_subtype
-                      if event_type != '' and event_subtype != ''
-                      else event_type + event_subtype)
-
-        event_id = 'EVENT_CUSTOM'
-
-        event_filename = 'Event_' + event_name + '.txt'
 
         return self.__log_event(event_id, event_filename,
                                 event_type, event_subtype, str(event_value))
@@ -489,23 +461,6 @@ class StatusFile:
 
         return record
 
-    def __get_all_harness_id(self):
-        with open(self.__status_file_path, 'r') as status_file_obj:
-            records = status_file_obj.readlines()
-
-        unique_col = StatusFile.STATUS_COLUMNS[StatusFile.STATUS_COLUMN_UNIQUE]
-
-        harness_ids = []
-        for index, line in enumerate(records):
-            if self.ignore_line(line):
-                continue
-            words = line.rstrip().split()
-            if len(words) > unique_col:
-                test_id = words[unique_col]
-                harness_ids.append(test_id)
-
-        return harness_ids
-
     def __log_event(self, event_id, event_filename, event_type, event_subtype,
                     event_value, event_time = None):
         """Official function to log the occurrence of a harness event.
@@ -553,10 +508,6 @@ class StatusFile:
         # THE FOLLOWING CREATES THE OFFICIAL MASTER INDICATOR DENOTING
         # THAT THE EVENT OCCURRED.
         os.rename(file_path_partial, file_path)
-
-        # Put the same event data on the system log.
-
-        write_system_log(self.__test_id, status_info)
 
         # Update the status file appropriately.
         if event_id == StatusFile.EVENT_BUILD_END:
@@ -688,6 +639,7 @@ class StatusFile:
 def get_status_info(test_id, event_type, event_subtype,
                     event_value, event_time, event_filename):
     """Create a data structure with verbose info for an event."""
+    from oth.config import othctl_runtime_config
 
     no_value = StatusFile.NO_VALUE
 
@@ -720,36 +672,30 @@ def get_status_info(test_id, event_type, event_subtype,
     run_archive_all = os.path.join(dir_head1, apptest_layout.test_run_archive_dirname)
     test_instance_info['run_archive'] = os.path.join(run_archive_all, test_id)
 
-    test_instance_info['rgt_path_to_sspace'] = os.environ['RGT_PATH_TO_SSPACE']
+    test_instance_info['oth_path_to_sspace'] = othctl_runtime_config.path_to_sspace
 
     test_instance_info['build_directory'] = os.path.join(
-        test_instance_info['rgt_path_to_sspace'],
+        test_instance_info['oth_path_to_sspace'],
         test_instance_info['app'],
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_build_dirname)
 
-    test_instance_info['machine'] = os.environ['RGT_MACHINE_NAME'] if 'RGT_MACHINE_NAME' in os.environ else no_value
+    test_instance_info['machine'] = othctl_runtime_config.machine_name
 
     test_instance_info['workdir'] = os.path.join(
-        test_instance_info['rgt_path_to_sspace'],
+        test_instance_info['oth_path_to_sspace'],
         test_instance_info['app'],
         test_instance_info['test'],
         test_instance_info['test_id'], apptest_layout.test_run_dirname)
 
     job_account = no_value
-    if 'RGT_PROJECT_ID' in os.environ:
-        job_account = os.environ['RGT_PROJECT_ID']
-    elif 'RGT_ACCT_ID' in os.environ:
-        job_account = os.environ['RGT_ACCT_ID']
+    if 'OTHCTL_PROJECT_ID' in os.environ:
+        job_account = os.environ['OTHCTL_PROJECT_ID']
+    elif 'OTHCTL_ACCT_ID' in os.environ:
+        job_account = os.environ['OTHCTL_ACCT_ID']
     test_instance_info['job_account_id'] = job_account
-
-    test_instance_info['path_to_rgt_package'] = (
-        os.environ['PATH_TO_RGT_PACKAGE']
-        if 'PATH_TO_RGT_PACKAGE' in os.environ else str(Path(__file__).resolve().parent.parent))
-
-    test_instance_info['rgt_system_log_tag'] = (
-        os.environ['RGT_SYSTEM_LOG_TAG']
-        if 'RGT_SYSTEM_LOG_TAG' in os.environ else no_value)
+    test_instance_info['path_to_oth_package'] = str(Path(__file__).resolve().parent.parent)
+    test_instance_info['oth_system_log_tag'] = othctl_runtime_config.system_log_tag
 
     #---
 
@@ -761,7 +707,7 @@ def get_status_info(test_id, event_type, event_subtype,
     event_info['event_value'] = (
         str(event_value) if event_value else no_value)
 
-    event_info['runtag'] = test_instance_info['rgt_system_log_tag']
+    event_info['runtag'] = othctl_runtime_config.system_log_tag
 
     file_check_alias = os.path.join(run_archive_all, test_id, 'check_alias.txt')
     if Path(file_check_alias).exists():
@@ -837,64 +783,9 @@ def get_status_info_from_file(event_filename):
 
 #------------------------------------------------------------------------------
 
-def write_system_log(test_id, status_info):
-    """Write a system log entry for an event."""
-
-    #---Use Unix logger command unless (valid) directory requested.
-
-    rgt_system_log_dir = (os.environ['RGT_SYSTEM_LOG_DIR']
-        if 'RGT_SYSTEM_LOG_DIR' in os.environ else '')
-
-    is_using_unix_logger = False
-    if rgt_system_log_dir == '':
-        is_using_unix_logger = True
-    elif not Path(rgt_system_log_dir).exists():
-        is_using_unix_logger = True
-
-    rgt_system_log_tag = (os.environ['RGT_SYSTEM_LOG_TAG']
-        if 'RGT_SYSTEM_LOG_TAG' in os.environ else '')
-
-    if rgt_system_log_tag == '':
-        return
-
-    #---Construct log string.
-
-    #TODO: make quote a function ...
-
-    quote = '\\"' if is_using_unix_logger else '"'
-
-    log_string = ''
-
-    for key_value in status_info:
-        if log_string != '':
-            log_string += ' '
-        log_string += key_value[0] + '=' + quote + key_value[1] + quote
-
-    #---Write log.
-
-    if is_using_unix_logger:
-        os.system('logger -p local0.notice "' + log_string + '"')
-
-    else:
-        dir_head1 = os.path.split(os.getcwd())[0]
-        (dir_head2, test) = os.path.split(dir_head1)
-        app = os.path.split(dir_head2)[1]
-
-        log_file = (app + '_#_' +
-                    test + '_#_' +
-                    test_id + #---Alt: could use uuid.uuid1()
-                    '.txt')
-        log_path = os.path.join(rgt_system_log_dir, log_file)
-
-        file_ = open(log_path, 'a')
-        file_.write(log_string + '\n')
-        file_.close()
-
-#------------------------------------------------------------------------------
-
 def parse_status_file(path_to_status_file, startdate, enddate,
                       mycomputer_with_events_record):
-    """Function: parse_status_file. Parser for rgt_status_file.txt"""
+    """Function: parse_status_file. Parser for oth_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
@@ -963,7 +854,7 @@ def parse_status_file(path_to_status_file, startdate, enddate,
 #------------------------------------------------------------------------------
 
 def parse_status_file2(path_to_status_file):
-    """Function: parse_status_file2. Parser for rgt_status_file.txt"""
+    """Function: parse_status_file2. Parser for oth_status_file.txt"""
 
     number_of_tests = 0
     number_of_passed_tests = 0
@@ -1024,7 +915,7 @@ def parse_status_file2(path_to_status_file):
 
 def summarize_status_file(path_to_status_file, startdate, enddate,
                           mycomputer_with_events_record):
-    """Parse, collect summary info from rgt_status.txt."""
+    """Parse, collect summary info from oth_status.txt."""
     sfile_obj = open(path_to_status_file, 'r')
     sfile_lines = sfile_obj.readlines()
     sfile_obj.close()
@@ -1115,78 +1006,3 @@ def summarize_status_file(path_to_status_file, startdate, enddate,
              "inconclusive_jobs": ilist}
 
     return shash
-
-#------------------------------------------------------------------------------
-
-#-----------------------------------------------------
-#                                                    -
-# Start of defining errors classes for this module.  -
-#                                                    -
-#-----------------------------------------------------
-
-class StatusFileError(Exception):
-    """Base class for exceptions of the StatusFile"""
-    def __init__(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def message(self):
-        pass
-
-class IncompatibleStatusFileModeError(StatusFileError):
-    """Exception raised for errors of incompatible modes for various StatusFile tasks."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-
-class InvalidStatusFileModeError(StatusFileError):
-    """Exception raised for error of invalid mode for StatusFile."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-
-class StatusFileMissingError(StatusFileError):
-    """Exception raised for missing status file."""
-    def __init__(self,message):
-        """The class constructor
-
-        Parameters
-        ----------
-        message : string
-            The error message for this exception.
-        """
-        self._message = message
-
-    @property
-    def message(self):
-        """str: The error message."""
-        return self._message
-
-#-----------------------------------------------------
-#                                                    -
-# End of defining errors classes for this module.    -
-#                                                    -
-#-----------------------------------------------------

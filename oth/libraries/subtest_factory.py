@@ -38,7 +38,6 @@ class SubtestFactory():
     @staticmethod
     def make_subtest(name_of_application=None,
                      name_of_subtest=None,
-                     local_path_to_tests=None,
                      logger=None,
                      db_logger=None,
                      tag=None):
@@ -56,13 +55,10 @@ class SubtestFactory():
         name_of_subtest : str
             The name of test within the application. 
 
-        local_path_to_tests : str
-            The path to to the subtest.
-
-        logger : A rgt_logger object.
+        logger : A oth_logger object.
             A logger object
 
-        db_logger : A rgt_database_logger object
+        db_logger : A oth_database_logger object
             A database logger object.
 
         tag : str
@@ -72,7 +68,6 @@ class SubtestFactory():
         
         a_subtest = subtest(name_of_application=name_of_application,
                             name_of_subtest=name_of_subtest,
-                            local_path_to_tests=local_path_to_tests,
                             logger=logger,
                             db_logger=db_logger,
                             tag=tag)

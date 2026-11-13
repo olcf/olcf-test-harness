@@ -30,16 +30,16 @@ class GitRepository(BaseRepository):
 
     @classmethod
     def get_application_parent_directory_from_env(cls) -> str:
-        apd = os.getenv("RGT_GIT_SERVER_APPLICATION_PARENT_DIR")
+        apd = os.getenv("OTHCTL_GIT_SERVER_APPLICATION_PARENT_DIR")
         if not apd:
             raise ValueError(
-                "variable RGT_GIT_SERVER_APPLICATION_PARENT_DIR is not set"
+                "variable OTHCTL_GIT_SERVER_APPLICATION_PARENT_DIR is not set"
             )
         return str(apd)
 
     @classmethod
     def get_repository_branch_from_env(cls) -> Optional[str]:
-        return os.getenv("RGT_GIT_REPS_BRANCH")
+        return os.getenv("OTHCTL_GIT_REPS_BRANCH")
 
     def _check_for_existing_clone(self, path: Path) -> GitCloneStatus:
         repo_status: GitCloneStatus = GitCloneStatus.NOT_CLONED
@@ -73,23 +73,25 @@ class GitRepository(BaseRepository):
         return repo_status
 
     def _build_repository_url_from_env(self) -> str:
-        machine_name: str = str(os.getenv("RGT_GIT_MACHINE_NAME"))
+        machine_name: str = str(os.getenv("OTHCTL_GIT_MACHINE_NAME"))
         parent_dir: str = (
             self.get_application_parent_directory_from_env() + "/" + machine_name
         )
 
-        data_transfer_protocol: str = str(os.getenv("RGT_GIT_DATA_TRANSFER_PROTOCOL"))
+        data_transfer_protocol: str = str(
+            os.getenv("OTHCTL_GIT_DATA_TRANSFER_PROTOCOL")
+        )
 
         app_url: str = ""
         if data_transfer_protocol == "ssh":
             app_url = "{}:{}/{}.git".format(
-                os.getenv("RGT_GIT_SSH_SERVER_URL"),
+                os.getenv("OTHCTL_GIT_SSH_SERVER_URL"),
                 parent_dir,
                 self.application,
             )
         elif data_transfer_protocol == "https":
             app_url = "{}/{}/{}.git".format(
-                os.getenv("RGT_GIT_HTTPS_SERVER_URL"),
+                os.getenv("OTHCTL_GIT_HTTPS_SERVER_URL"),
                 parent_dir,
                 self.application,
             )

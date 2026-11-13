@@ -43,8 +43,10 @@ class BaseMachine(metaclass=ABCMeta):
 
     # The constructor of class base_machine.
     def __init__(self, name, scheduler_type,
-                 numNodes, numSockets, numCoresPerSocket,
                  apptest, separate_build_stdio=False, use_jinja2=False):
+
+        from oth.config import othctl_runtime_config
+        self.othctl_runtime_config = othctl_runtime_config
 
         self.__name = name
 
@@ -52,9 +54,6 @@ class BaseMachine(metaclass=ABCMeta):
         """An object of type BaseScheduler : This object is the job resource scheduler. See the
            classs SchedulerFactory for more details."""
 
-        self.__numNodes = numNodes
-        self.__numSockets = numSockets
-        self.__numCoresPerSocket = numCoresPerSocket
         self.__apptest = apptest
         self.__separate_build_stdio = separate_build_stdio
 
@@ -147,9 +146,6 @@ class BaseMachine(metaclass=ABCMeta):
     def get_scheduler_template_file_name(self):
         """ Return a string with the name of the scheduler's template file."""
         return self.scheduler.batch_script_template_file
-
-    def set_numNodes(self,numNodes):
-        self.__numNodes = numNodes
 
     def submit_batch_script(self):
         """Submits the batch script to the job resource manager of scheduler.
@@ -256,9 +252,9 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.log_error(f"Path to Build: {path_to_build_directory}")
         self.logger.log_error(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
-        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
-            self.logger.log_info(f"Skipping build, re-using the build from {os.environ['RGT_REUSE_BUILD_FROM']}")
+        if self.othctl_runtime_config.reuse_build_from and \
+                Path(self.othctl_runtime_config.reuse_build_from).exists():
+            self.logger.log_info(f"Skipping build, re-using the build from {self.othctl_runtime_config.reuse_build_from}")
             return 0
 
         # Copy the source to the build directory.
@@ -395,18 +391,14 @@ class BaseMachine(metaclass=ABCMeta):
         bstatus = linux_utilities.make_batch_script_for_linux(self)
         return bstatus
    
-    def _submit_batch_script(self,new_env):
-        exit_status = linux_utilities.submit_batch_script(self,new_env)
-        return exit_status
-    
     def _copy_source_to_build_directory(self):
         path_to_source = self.apptest.get_path_to_source()
         path_to_test_source = self.apptest.get_path_to_test_source()
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
 
-        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
-            self.logger.log_info("RGT_REUSE_BUILD_FROM set, skipping copying Source.")
+        if self.othctl_runtime_config.reuse_build_from and \
+                Path(self.othctl_runtime_config.reuse_build_from).exists():
+            self.logger.log_info("OTHCTL_REUSE_BUILD_FROM set, skipping copying Source.")
             return 0
 
         shutil.copytree(src=path_to_source,
@@ -437,13 +429,6 @@ class BaseMachine(metaclass=ABCMeta):
             file_obj.write(str(cstatus))
         return
 
-    def _name_of_current_function(self):
-        import sys
-        classname = self.__class__.__name__
-        functionname = sys._getframe(1).f_code.co_name
-        my_name = classname + "." + functionname
-        return my_name
-
     def _start_report_script(self, reportcmd):
         """ Check if results are correct. """
         currentdir = os.getcwd()
@@ -472,10 +457,6 @@ class BaseMachine(metaclass=ABCMeta):
     # End of private methods.                                         @
     #                                                                 @
     #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-class BaseMachineError(Exception):
-    """Base class for exceptions in this module"""
-    pass
 
 if __name__ == "__main__":
     print("This is the BaseMachine class!")
