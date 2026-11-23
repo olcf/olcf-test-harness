@@ -1,6 +1,8 @@
 import subprocess
 from typing import List
 
+from oth.config import othctl_runtime_config
+
 from .base import BaseScheduler, SchedulerJob
 
 
@@ -11,8 +13,6 @@ class Slurm(BaseScheduler):
     submit_executable: str = "sbatch"
 
     def submit_job(self, job: SchedulerJob) -> int:
-
-        from oth.config import othctl_runtime_config
 
         self._logger.log_info(
             f"Submitting job from Slurm class using batchfilename {job.batch_script}"

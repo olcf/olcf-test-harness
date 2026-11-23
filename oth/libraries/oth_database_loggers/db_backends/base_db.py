@@ -10,11 +10,6 @@ class BaseDBLogger(ABC):
     __metaclass__ = ABCMeta
 
     def __init__(self):
-        # Import the othctl_runtime_config for all DB implementations to use
-        from oth.config import othctl_runtime_config
-
-        self.othctl_runtime_config = othctl_runtime_config
-
         # Define what string to use if no value present, matches StatusFile.NO_VALUE
         self.NO_VALUE = "[NO_VALUE]"
 

@@ -15,6 +15,7 @@ from pathlib import Path
 from string import Template
 
 # NCCS Test Harness Package Imports
+from oth.config import othctl_runtime_config
 from oth.libraries.rgt_utilities import try_symlink, unique_harness_id
 
 class apptest_layout:
@@ -93,8 +94,6 @@ class apptest_layout:
                  name_of_subtest,
                  logger=None,
                  harness_id=None):
-        from oth.config import othctl_runtime_config
-        self.othctl_runtime_config = othctl_runtime_config
         self.__applications_root = applications_rootdir
         self.__appname = name_of_application
         self.__testname = name_of_subtest
@@ -214,9 +213,9 @@ class apptest_layout:
         if not self.__workspace:
             return None
         # Redirect path to build if reusing from a existing test directory
-        if self.othctl_runtime_config.reuse_build_from and \
-                Path(self.othctl_runtime_config.reuse_build_from).exists():
-            return self.othctl_runtime_config.reuse_build_from
+        if othctl_runtime_config.reuse_build_from and \
+                Path(othctl_runtime_config.reuse_build_from).exists():
+            return othctl_runtime_config.reuse_build_from
         else:
             return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
 
@@ -300,11 +299,11 @@ class apptest_layout:
         try_symlink(ra_dir, os.path.join(ws_dir, apptest_layout.test_run_archive_dirname))
         # if reusing a build, and the build directory doesn't exist
         # if it does exist, it's probably set to the current test, and we can ignore it
-        if self.othctl_runtime_config.reuse_build_from and \
-                Path(self.othctl_runtime_config.reuse_build_from).exists() and \
+        if othctl_runtime_config.reuse_build_from and \
+                Path(othctl_runtime_config.reuse_build_from).exists() and \
                 not Path(ws_dir, apptest_layout.test_build_dirname).exists():
             # If re-using a build, also create a sym-link to the source build in the workspace
-            try_symlink(self.othctl_runtime_config.reuse_build_from, os.path.join(ws_dir, apptest_layout.test_build_dirname))
+            try_symlink(othctl_runtime_config.reuse_build_from, os.path.join(ws_dir, apptest_layout.test_build_dirname))
         try_symlink(build_dir, os.path.join(ra_dir, apptest_layout.test_build_dirname))
         try_symlink(run_dir, os.path.join(ra_dir, apptest_layout.test_run_dirname))
         try_symlink(st_dir, os.path.join(ra_dir, apptest_layout.test_status_dirname))

@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 
 import requests
 
+from oth.config import othctl_runtime_config
+
 from .base_db import BaseDBLogger
 
 
@@ -73,10 +75,10 @@ class InfluxDBLogger(BaseDBLogger):
         self.url = None
         self.bucket = None
         self.org = None
-        self.bucket = self.othctl_runtime_config.influxdb_bucket
-        self.org = self.othctl_runtime_config.influxdb_org
-        self.precision = self.othctl_runtime_config.influxdb_precision
-        self.dryrun = self.othctl_runtime_config.influxdb_dry_run == "1"
+        self.bucket = othctl_runtime_config.influxdb_bucket
+        self.org = othctl_runtime_config.influxdb_org
+        self.precision = othctl_runtime_config.influxdb_precision
+        self.dryrun = othctl_runtime_config.influxdb_dry_run == "1"
 
         self._validate_uri()
 
@@ -303,13 +305,13 @@ class InfluxDBLogger(BaseDBLogger):
         # find and read node location file -- json file
         use_node_location_file = True
 
-        if self.othctl_runtime_config.node_metadata_file.lower() == "none":
+        if othctl_runtime_config.node_metadata_file.lower() == "none":
             use_node_location_file = False
         else:
             # else, we assume it is a path and we look for it
-            if not Path(self.othctl_runtime_config.node_metadata_file).exists():
+            if not Path(othctl_runtime_config.node_metadata_file).exists():
                 raise ValueError(
-                    f"The OTHCTL_NODE_LOCATION_FILE does not exist at {self.othctl_runtime_config.node_metadata_file}"
+                    f"The OTHCTL_NODE_LOCATION_FILE does not exist at {othctl_runtime_config.node_metadata_file}"
                 )
 
         node_locations = {}
@@ -317,7 +319,7 @@ class InfluxDBLogger(BaseDBLogger):
         # check if it's a file in valid JSON format
         # each entry is node_name: { 'status': 'FAILED'|'SUCCESS', 'message': '' }
         if use_node_location_file:
-            with open(self.othctl_runtime_config.node_metadata_file, "r") as f:
+            with open(othctl_runtime_config.node_metadata_file, "r") as f:
                 # if this generates an exception, it will be caught by parent class
                 node_locations = json.loads(f.read())
         # collect all node health lines, then post in one single batch

@@ -18,6 +18,8 @@ def unique_harness_id():
 
 class work_space_generator:
     def __init__(self):
+
+        # Must be inside this class to prevent circular import
         from oth.config import othctl_runtime_config
 
         self.__workspace = othctl_runtime_config.path_to_sspace

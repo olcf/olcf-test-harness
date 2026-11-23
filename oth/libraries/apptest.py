@@ -17,6 +17,7 @@ from types import *
 from pathlib import Path
 
 # NCCS Test Harness Package Imports
+from oth.config import othctl_runtime_config
 from oth.libraries.harness_internal_config import harness_modes
 from oth.libraries.base_apptest import base_apptest
 from oth.libraries.base_apptest import BaseApptestError
@@ -45,9 +46,6 @@ class subtest(base_apptest, apptest_layout):
                  tag=None,
                  db_logger=None):
 
-        from oth.config import othctl_runtime_config
-        self.othctl_runtime_config = othctl_runtime_config
-
         # Ensure that tag is not None.
         if (tag == None):
             keywords = {"timestamp" : tag}
@@ -57,11 +55,11 @@ class subtest(base_apptest, apptest_layout):
         base_apptest.__init__(self,
                               name_of_application,
                               name_of_subtest,
-                              self.othctl_runtime_config.path_to_tests,
+                              othctl_runtime_config.path_to_tests,
                               tag)
 
         apptest_layout.__init__(self,
-                                self.othctl_runtime_config.path_to_tests,
+                                othctl_runtime_config.path_to_tests,
                                 name_of_application,
                                 name_of_subtest,
                                 logger=logger,
@@ -374,10 +372,10 @@ class subtest(base_apptest, apptest_layout):
  
         # if reusing first build & OTHCTL_REUSE_BUILD_FROM not already set, set it
         if reuse_first_build:
-            if not self.othctl_runtime_config.reuse_build_from:
+            if not othctl_runtime_config.reuse_build_from:
                 # Set a dummy value so that test_harness_driver.py knows to update the value
                 os.environ['OTHCTL_REUSE_BUILD_FROM'] = "SETME"
-                self.othctl_runtime_config.reuse_build_from = "SETME"
+                othctl_runtime_config.reuse_build_from = "SETME"
 
         # if reusing first build & OTHCTL_REUSE_BUILD_FROM not already set, set it
         if reuse_build_from_id:
@@ -393,7 +391,7 @@ class subtest(base_apptest, apptest_layout):
                 return 1
             # if all checks pass, we're good to set it
             os.environ['OTHCTL_REUSE_BUILD_FROM'] = target_builddir_path
-            self.othctl_runtime_config = target_builddir_path
+            othctl_runtime_config.reuse_build_from = target_builddir_path
             self.logger.log_info(f"Re-using build from test_id {reuse_build_from_id}, found in {target_builddir_path}.")
 
         pathtoscripts = self.get_path_to_scripts()
@@ -437,7 +435,7 @@ class subtest(base_apptest, apptest_layout):
         os.chdir(runarchive_dir)
         self.logger.log_info(f"Starting the harness database extensions in apptest: {os.getcwd()}")
 
-        machine_name = self.othctl_runtime_config.machine_name
+        machine_name = othctl_runtime_config.machine_name
 
         # this chunk of code to grab a job id taken from status_file.py
         job_id = StatusFile.NO_VALUE
@@ -451,7 +449,7 @@ class subtest(base_apptest, apptest_layout):
         test_info = {
             'app': self.getNameOfApplication(),
             'test': self.getNameOfSubtest(),
-            'runtag': self.othctl_runtime_config.system_log_tag,
+            'runtag': othctl_runtime_config.system_log_tag,
             'machine': machine_name,
             'test_id': self.get_harness_id(),
             'event_time': self._get_event_time(event=StatusFile.EVENT_CHECK_START),

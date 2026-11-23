@@ -12,6 +12,8 @@ from pathlib import Path
 from confluent_kafka import KafkaException, Producer
 from confluent_kafka.admin import AdminClient
 
+from oth.config import othctl_runtime_config
+
 from .base_db import BaseDBLogger
 
 
@@ -270,7 +272,7 @@ class KafkaLogger(BaseDBLogger):
         )
 
         # Required environment variable: OTHCTL_NODE_LOCATION_FILE
-        if not self.othctl_runtime_config.node_metadata_file:
+        if not othctl_runtime_config.node_metadata_file:
             raise ValueError(
                 "OTHCTL_NODE_LOCATION_FILE required to enable node health logging"
             )
@@ -281,19 +283,19 @@ class KafkaLogger(BaseDBLogger):
         # find and read node location file -- json file
         use_node_location_file = True
 
-        if self.othctl_runtime_config.node_metadata_file.lower() == "none":
+        if othctl_runtime_config.node_metadata_file.lower() == "none":
             use_node_location_file = False
         else:
             # else, we assume it is a path and we look for it
-            if not Path(self.othctl_runtime_config.node_metadata_file).exists():
+            if not Path(othctl_runtime_config.node_metadata_file).exists():
                 raise ValueError(
-                    f"An OTHCTL_NODE_LOCATION_FILE does not exist at {self.othctl_runtime_config.node_metadata_file}"
+                    f"An OTHCTL_NODE_LOCATION_FILE does not exist at {othctl_runtime_config.node_metadata_file}"
                 )
 
         node_locations = {}
         # Check if it's a file in valid JSON format -- if it fails, then the oth_db_logger class will catch it
         if use_node_location_file:
-            with open(self.othctl_runtime_config.node_metadata_file, "r") as f:
+            with open(othctl_runtime_config.node_metadata_file, "r") as f:
                 # if this generates an exception, it will be caught by parent class
                 node_locations = json.loads(f.read())
 
@@ -428,7 +430,7 @@ class KafkaLogger(BaseDBLogger):
         # The only Kafka variable that isn't parsed by the parent database handler is dryrun
         # All other fields are allowed to be semicolon-separated (for multiple instances),
         # so they must be parsed outside of here
-        if self.othctl_runtime_config.kafka_disable == "1":
+        if othctl_runtime_config.kafka_disable == "1":
             self.dryrun = True
 
         # Even though we don't set self.topics here, we can still check that it's non-empty

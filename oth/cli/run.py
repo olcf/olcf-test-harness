@@ -1,13 +1,15 @@
 import argparse as ap
 import sys
 
-from oth.libraries.input_files import oth_input_file
 from oth.libraries.output_hub import OutputHub
-from oth.libraries.regression_test import Harness
 
 
 def run(args: ap.Namespace) -> None:
     oh: OutputHub = OutputHub(__name__)
+
+    # Imports of OTH classes here so that envvars are parsed at the correct time
+    from oth.libraries.input_files import oth_input_file
+    from oth.libraries.regression_test import Harness
 
     oh.log_info("reading the harness input file")
     input_file = oth_input_file(

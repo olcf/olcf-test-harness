@@ -6,6 +6,8 @@ This module implements the database logging capability of the harness.
 import os
 from pathlib import Path
 
+from oth.config import othctl_runtime_config
+
 
 class OthDatabaseLogger:
     # This class depends solely on the dictionaries provided to the log_* methods
@@ -30,10 +32,6 @@ class OthDatabaseLogger:
         only : str
             (Optional) a string URL for a specific database backend to initialize
         """
-
-        from oth.config import othctl_runtime_config
-
-        self.othctl_runtime_config = othctl_runtime_config
 
         if not logger:
             print("Invalid call to oth_database_logger constructor: no logger provided")
@@ -333,7 +331,7 @@ class OthDatabaseLogger:
         except ImportError as e:
             self.logger.log_error(f"Failed to import InfluxDB backend: {e}.")
 
-        if influxdb_loaded and self.othctl_runtime_config.influxdb_disable == "1":
+        if influxdb_loaded and othctl_runtime_config.influxdb_disable == "1":
             self.logger.log_info("InfluxDB logging is explicitly disabled.")
             self.disabled_backends.append("influxdb")
             self.disabled_backends_filenames.append(InfluxDBLogger.DISABLE_DOTFILE_NAME)
@@ -381,14 +379,14 @@ class OthDatabaseLogger:
             influxdb_loaded
             and not "influxdb" in self.disabled_backends
             and (
-                self.othctl_runtime_config.influxdb_uri
-                and self.othctl_runtime_config.influxdb_token
+                othctl_runtime_config.influxdb_uri
+                and othctl_runtime_config.influxdb_token
             )
         ):
             # Then we enable InfluxDB
             # Fields for multiple InfluxDB databases can be separated by semicolons
-            influxdb_uris = self.othctl_runtime_config.influxdb_uri.split(";")
-            influxdb_tokens = self.othctl_runtime_config.influxdb_token.split(";")
+            influxdb_uris = othctl_runtime_config.influxdb_uri.split(";")
+            influxdb_tokens = othctl_runtime_config.influxdb_token.split(";")
             if len(influxdb_uris) != len(influxdb_tokens):
                 self.logger.log_error(
                     "The number of InfluxDB URI's provided does not match the number of InfluxDB tokens. Skpping."
@@ -418,10 +416,10 @@ class OthDatabaseLogger:
             kafka_loaded
             and (not "kafka" in self.disabled_backends)
             and (
-                self.othctl_runtime_config.kafka_uri
-                and self.othctl_runtime_config.kafka_username
-                and self.othctl_runtime_config.kafka_password
-                and self.othctl_runtime_config.kafka_events_topic
+                othctl_runtime_config.kafka_uri
+                and othctl_runtime_config.kafka_username
+                and othctl_runtime_config.kafka_password
+                and othctl_runtime_config.kafka_events_topic
             )
         ):
             # Then we enable Kafka
@@ -429,30 +427,26 @@ class OthDatabaseLogger:
             # the length of kafka_uris is the authoritative source of how many sources are expected
 
             # required fields:
-            kafka_uris = self.othctl_runtime_config.kafka_uri.split(";")
-            kafka_usernames = self.othctl_runtime_config.kafka_username.split(";")
-            kafka_passwords = self.othctl_runtime_config.kafka_password.split(";")
-            kafka_topic_events = self.othctl_runtime_config.kafka_events_topic.split(
-                ";"
-            )
+            kafka_uris = othctl_runtime_config.kafka_uri.split(";")
+            kafka_usernames = othctl_runtime_config.kafka_username.split(";")
+            kafka_passwords = othctl_runtime_config.kafka_password.split(";")
+            kafka_topic_events = othctl_runtime_config.kafka_events_topic.split(";")
             # metrics & node health topics are optional
             kafka_topic_metrics = None
             kafka_topic_node_healths = None
-            if self.othctl_runtime_config.kafka_metrics_topic:
-                kafka_topic_metrics = (
-                    self.othctl_runtime_config.kafka_metrics_topic.split(";")
+            if othctl_runtime_config.kafka_metrics_topic:
+                kafka_topic_metrics = othctl_runtime_config.kafka_metrics_topic.split(
+                    ";"
                 )
-            if self.othctl_runtime_config.kafka_node_health_topic:
+            if othctl_runtime_config.kafka_node_health_topic:
                 kafka_topic_node_healths = (
-                    self.othctl_runtime_config.kafka_node_health_topic.split(";")
+                    othctl_runtime_config.kafka_node_health_topic.split(";")
                 )
-            kafka_db_type = self.othctl_runtime_config.kafka_db_type.split(";")
-            kafka_db_uri = self.othctl_runtime_config.kafka_db_uri.split(";")
-            kafka_ssl_ca_loc = self.othctl_runtime_config.kafka_ssl_ca_location.split(
-                ";"
-            )
+            kafka_db_type = othctl_runtime_config.kafka_db_type.split(";")
+            kafka_db_uri = othctl_runtime_config.kafka_db_uri.split(";")
+            kafka_ssl_ca_loc = othctl_runtime_config.kafka_ssl_ca_location.split(";")
             kafka_ssl_cert_locs = (
-                self.othctl_runtime_config.kafka_ssl_certificate_location.split(";")
+                othctl_runtime_config.kafka_ssl_certificate_location.split(";")
             )
 
             for i in range(len(kafka_uris)):

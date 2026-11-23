@@ -1,5 +1,7 @@
 import subprocess
 
+from oth.config import othctl_runtime_config
+
 from .base import BaseScheduler, SchedulerJob
 
 
@@ -10,8 +12,6 @@ class LSF(BaseScheduler):
     submit_executable: str = "bsub"
 
     def submit_job(self, job: SchedulerJob) -> int:
-
-        from oth.config import othctl_runtime_config
 
         self._logger.log_info(
             f"Submitting job from LSF class using batchfilename {job.batch_script}"

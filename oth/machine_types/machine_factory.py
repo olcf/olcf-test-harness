@@ -2,6 +2,8 @@
 import os
 import sys
 
+from oth.config import othctl_runtime_config
+
 # Local package imports
 from .linux_x86_64 import Linux_x86_64
 
@@ -15,7 +17,6 @@ class MachineFactory:
                        separate_build_stdio=False):
 
         # Uses the app_subtest's logger to print errors
-        from oth.config import othctl_runtime_config
         oth_machine_name = othctl_runtime_config.machine_name
         oth_machine_type = othctl_runtime_config.machine_type
         oth_scheduler = othctl_runtime_config.scheduler_type

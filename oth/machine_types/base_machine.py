@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 # Harness imports
+from oth.config import othctl_runtime_config
 from oth.libraries.apptest import subtest
 from oth.schedulers import SchedulerJob, create_scheduler
 from oth.machine_types import linux_utilities
@@ -44,9 +45,6 @@ class BaseMachine(metaclass=ABCMeta):
     # The constructor of class base_machine.
     def __init__(self, name, scheduler_type,
                  apptest, separate_build_stdio=False, use_jinja2=False):
-
-        from oth.config import othctl_runtime_config
-        self.othctl_runtime_config = othctl_runtime_config
 
         self.__name = name
 
@@ -252,9 +250,9 @@ class BaseMachine(metaclass=ABCMeta):
         self.logger.log_error(f"Path to Build: {path_to_build_directory}")
         self.logger.log_error(f"Path to Run_Archive: {path_to_runarchive_directory}")
 
-        if self.othctl_runtime_config.reuse_build_from and \
-                Path(self.othctl_runtime_config.reuse_build_from).exists():
-            self.logger.log_info(f"Skipping build, re-using the build from {self.othctl_runtime_config.reuse_build_from}")
+        if othctl_runtime_config.reuse_build_from and \
+                Path(othctl_runtime_config.reuse_build_from).exists():
+            self.logger.log_info(f"Skipping build, re-using the build from {othctl_runtime_config.reuse_build_from}")
             return 0
 
         # Copy the source to the build directory.
@@ -396,8 +394,8 @@ class BaseMachine(metaclass=ABCMeta):
         path_to_test_source = self.apptest.get_path_to_test_source()
         path_to_build_directory = self.apptest.get_path_to_workspace_build()
 
-        if self.othctl_runtime_config.reuse_build_from and \
-                Path(self.othctl_runtime_config.reuse_build_from).exists():
+        if othctl_runtime_config.reuse_build_from and \
+                Path(othctl_runtime_config.reuse_build_from).exists():
             self.logger.log_info("OTHCTL_REUSE_BUILD_FROM set, skipping copying Source.")
             return 0
 

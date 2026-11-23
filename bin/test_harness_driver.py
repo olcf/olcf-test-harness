@@ -16,6 +16,7 @@ prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
 # Harness imports
+from oth.config import othctl_runtime_config
 from oth.libraries.subtest_factory import SubtestFactory
 from oth.libraries.layout_of_apps_directory import apptest_layout as layout
 from oth.libraries.layout_of_apps_directory import get_layout_from_scriptdir
@@ -128,8 +129,6 @@ def auto_generated_scripts(apptest,
     This function uses the machine_types library.
 
     """
-    from oth.config import othctl_runtime_config
-
     status_dir = apptest.get_path_to_status()
     ra_dir = apptest.get_path_to_runarchive()
 
@@ -332,9 +331,6 @@ def test_harness_driver(argv=None):
         'resubmit' : resubmit_count,
         'run_local': False
     }
-
-    # Create a harness config (which sets harness env vars)
-    from oth.config import othctl_runtime_config
 
     # Get the launch id for this test instance.
     launch_id = Vargs.launchid

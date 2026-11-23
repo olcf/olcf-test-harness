@@ -9,6 +9,7 @@ import time
 import random # for shuffle
 
 # Harness package imports.
+from oth.config import othctl_runtime_config
 from oth.libraries import apptest
 from oth.libraries.subtest_factory import SubtestFactory
 from oth.libraries.rgt_state import RgtState
@@ -34,10 +35,6 @@ class Harness:
                  reuse_first_build,
                  reuse_build_from_id,
                  shuffle=False):
-        # v4 implementation of the OTH machine config file
-        from oth.config import othctl_runtime_config
-        self.othctl_runtime_config = othctl_runtime_config
-
         self.__tests = oth_input_file.get_tests()
         self.__tasks = oth_input_file.get_harness_tasks()
         self.__apptests_dict = collections.OrderedDict()
@@ -62,7 +59,7 @@ class Harness:
         else:
             time_str = now_str
         user_str = getpass.getuser()
-        testshot_str = self.othctl_runtime_config.system_log_tag
+        testshot_str = othctl_runtime_config.system_log_tag
         self.__launch_id = f'{testshot_str}/{user_str}@{time_str}'
         self.__launched_tests = 0
         self.__failed_tests = 0
@@ -84,7 +81,7 @@ class Harness:
         )
 
     def __str__(self):
-        message = ( "\nPath to tests: " + self.othctl_runtime_config.path_to_tests  + "\n"
+        message = ( "\nPath to tests: " + othctl_runtime_config.path_to_tests  + "\n"
                     "Tests: " + str(self.__tests) + "\n"
                     "Tasks: " + str(self.__tasks) + "\n")
         return message

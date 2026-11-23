@@ -19,6 +19,7 @@ import abc
 import subprocess
 from pathlib import Path
 
+from oth.config import othctl_runtime_config
 from oth.libraries.layout_of_apps_directory import apptest_layout
 from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
@@ -639,7 +640,6 @@ class StatusFile:
 def get_status_info(test_id, event_type, event_subtype,
                     event_value, event_time, event_filename):
     """Create a data structure with verbose info for an event."""
-    from oth.config import othctl_runtime_config
 
     no_value = StatusFile.NO_VALUE
 
