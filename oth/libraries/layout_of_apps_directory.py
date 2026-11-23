@@ -15,6 +15,7 @@ from pathlib import Path
 from string import Template
 
 # NCCS Test Harness Package Imports
+from oth.config import othctl_runtime_config
 from oth.libraries.rgt_utilities import try_symlink, unique_harness_id
 
 class apptest_layout:
@@ -158,18 +159,6 @@ class apptest_layout:
         return self.__apptest_layout['status_logfile']
 
     #
-    # Debug function.
-    #
-    def debug_layout(self):
-        self.__logger.log_debug ("\n\n")
-        self.__logger.log_debug ("================================================================")
-        self.__logger.log_debug ("Debugging local layout " + self.__appname + self.__testname)
-        self.__logger.log_debug ("================================================================")
-        for key in self.__apptest_layout.keys():
-            self.__logger.log_debug ("%-20s = %-20s" % (key, self.__apptest_layout[key]))
-        self.__logger.log_debug ("================================================================\n\n")
-
-    #
     # Returns the path to the application directory.
     #
     def get_path_to_application(self):
@@ -224,9 +213,9 @@ class apptest_layout:
         if not self.__workspace:
             return None
         # Redirect path to build if reusing from a existing test directory
-        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists():
-            return os.environ['RGT_REUSE_BUILD_FROM']
+        if othctl_runtime_config.reuse_build_from and \
+                Path(othctl_runtime_config.reuse_build_from).exists():
+            return othctl_runtime_config.reuse_build_from
         else:
             return os.path.join(self.__workspace, apptest_layout.test_build_dirname)
 
@@ -310,11 +299,11 @@ class apptest_layout:
         try_symlink(ra_dir, os.path.join(ws_dir, apptest_layout.test_run_archive_dirname))
         # if reusing a build, and the build directory doesn't exist
         # if it does exist, it's probably set to the current test, and we can ignore it
-        if 'RGT_REUSE_BUILD_FROM' in os.environ and \
-                Path(os.environ['RGT_REUSE_BUILD_FROM']).exists() and \
+        if othctl_runtime_config.reuse_build_from and \
+                Path(othctl_runtime_config.reuse_build_from).exists() and \
                 not Path(ws_dir, apptest_layout.test_build_dirname).exists():
             # If re-using a build, also create a sym-link to the source build in the workspace
-            try_symlink(os.environ['RGT_REUSE_BUILD_FROM'], os.path.join(ws_dir, apptest_layout.test_build_dirname))
+            try_symlink(othctl_runtime_config.reuse_build_from, os.path.join(ws_dir, apptest_layout.test_build_dirname))
         try_symlink(build_dir, os.path.join(ra_dir, apptest_layout.test_build_dirname))
         try_symlink(run_dir, os.path.join(ra_dir, apptest_layout.test_run_dirname))
         try_symlink(st_dir, os.path.join(ra_dir, apptest_layout.test_status_dirname))

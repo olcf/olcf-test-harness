@@ -16,7 +16,7 @@ The following subsections define the constraints to the URL and directory struct
 Repository URL
 ^^^^^^^^^^^^^^
 
-If using the OTH to automatically clone an application from GitLab (e.g., ``--mode checkout``), the OTH requires one repository per application inside a subgroup matching **$RGT_GIT_MACHINE_NAME**.
+If using the OTH to automatically clone an application from GitLab (e.g., ``--mode checkout``), the OTH requires one repository per application inside a subgroup matching **$OTHCTL_GIT_MACHINE_NAME**.
 Since GitHub does not support subgroups, repositories hosted on GitHub must be cloned manually.
 If ``--mode checkout`` is not used, then the OTH does not enforce any specific Git repository constraints.
 
@@ -148,7 +148,7 @@ YAML is the preferred file format starting in v3.2 of the OTH.
         .. note::
 
             Setting a variable in the Replacements section to ``<obtain_from_environment>`` pulls in the value set by an environment variable.
-            For example, if you set ``nodes = <obtain_from_environment>`` and set *RGT_NODES=4* in your environment prior to running ``othctl run``, then *__nodes__* will be replaced with 4.
+            For example, if you set ``nodes = <obtain_from_environment>`` and set *OTHCTL_NODES=4* in your environment prior to running ``othctl run``, then *__nodes__* will be replaced with 4.
 
     .. tab-item:: YAML file format
 
@@ -304,11 +304,6 @@ In simple cases, there is little functional difference between the two templatin
             export BUILD_DIR="__build_dir__"
 
             export EXECUTABLE="__executable_path__"
-    
-            echo "Printing test directory environment variables:"
-            env | fgrep RGT_APP_SOURCE_
-            env | fgrep RGT_TEST_
-            echo
 
             # Placing the environment setup script in a shared location reduces code duplication
             # and ensures you have the same environment in building & running
@@ -381,11 +376,6 @@ In simple cases, there is little functional difference between the two templatin
 
             export EXECUTABLE="{{executable_path}}"
     
-            echo "Printing test directory environment variables:"
-            env | fgrep RGT_APP_SOURCE_
-            env | fgrep RGT_TEST_
-            echo
-
             # Placing the environment setup script in a shared location reduces code duplication
             # and ensures you have the same environment in building & running
             source $BUILD_DIR/Common_Scripts/setup_env.sh
@@ -440,7 +430,7 @@ In simple cases, there is little functional difference between the two templatin
 
 Using the job template above, the job will be submitted from the test *Run_Archive/* directory and starts from there.
 This is **$RESULTS_DIR** in the job template.
-The job script should call the executable from the **$WORK_DIR** directory, which is a scratch workspace derived from **$RGT_PATH_TO_SSPACE**.
+The job script should call the executable from the **$WORK_DIR** directory, which is a scratch workspace derived from **$OTHCTL_PATH_TO_SSPACE**.
 
 One can access or copy any files relative to the *Scripts/* directory using the **$SCRIPT_DIR** environment variable.
 For example, if a *CorrectResults* directory is stored at the same level as *Scripts* and *Run_Archive* for a test case,
@@ -652,11 +642,6 @@ Moving from 1 to 2 nodes shouldn't have to change much about the job template, s
 
     export EXECUTABLE="{{executable_path}}"
     
-    echo "Printing test directory environment variables:"
-    env | fgrep RGT_APP_SOURCE_
-    env | fgrep RGT_TEST_
-    echo
-    
     # Placing the environment setup script in a shared location reduces code duplication
     # and ensures you have the same environment in building & running
     source $BUILD_DIR/Common_Scripts/setup_env.sh
@@ -797,19 +782,19 @@ Then, within the job script template:
 
     export MY_ENV_VAR="__my_custom_variable__"
 
-If the job script template requires an environment variable that is set by the harness (ie, **RGT_MACHINE_NAME**, **RGT_CPUS_PER_NODE**),
+If the job script template requires an environment variable that is set by the harness (ie, **OTHCTL_MACHINE_NAME**),
 it may be best to define a replacement in the test input file that inherits the value of the environment variable using ``<obtain_from_environment>`` like so:
 
 .. code-block:: bash
 
-    # Internal name modification translates `machine_name` to `RGT_MACHINE_NAME`
-    machine_name = <obtain_from_environment>
+    # Internal name modification translates `machine_name` to `OTHCTL_MACHINE`
+    machine = <obtain_from_environment>
 
 Then, in the job script, re-define the environment variable:
 
 .. code-block:: bash
 
-    export RGT_MACHINE_NAME="__machine_name__"
+    export OTHCTL_MACHINE="__machine_name__"
 
 The same feature cannot be used in the build script, which leads to the next best practice, checking for expected environment variables.
 

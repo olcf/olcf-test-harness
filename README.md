@@ -1,5 +1,8 @@
 # OLCF Test Harness (OTH)
 
+> [!WARNING]
+> Version 4 of the OTH is underway, and the `devel` branch will not provide a stable interface. Please use the `release` branch for a stable copy of the OTH.
+
 This repository hosts the source code and documentation of the OLCF Test Harness (OTH).
 The full OTH documentation can be found [here](https://olcf.github.io/olcf-test-harness),
 or can be viewed locally by cloning this repository and launching a Python HTTP server in the `docs` directory:

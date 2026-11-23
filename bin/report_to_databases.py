@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 ################################################################################
-# Author: Nick Hagerty
-# Date modified: 2025-05-30
-################################################################################
 # Purpose:
 #   Send metrics from outside of the harness to the InfluxDB or Kafka database.
 #   For example, MTBF.
@@ -19,10 +16,10 @@ from pathlib import Path
 prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
-from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
-from oth.libraries.config_file import rgt_config_file
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
+from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
 from oth.libraries.output_hub import OutputHub
+from oth.config import othctl_runtime_config
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Post a custom metric to Databases")
@@ -36,9 +33,6 @@ parser.add_argument('--dry-run', action='store_true', help="When set, print the 
 # Parse command-line arguments #################################################
 args = parser.parse_args()
 
-# Read in the <machine>.ini configuration file #################################
-# uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
-config = rgt_config_file()
 logger = OutputHub(
     name="report_to_db",
     log_level=args.loglevel,
@@ -47,7 +41,7 @@ logger = OutputHub(
     file_log_level=args.loglevel,
 )
 
-db_logger = create_rgt_db_logger(logger=logger)
+db_logger = OthDatabaseLogger(logger=logger)
 
 # db_logger is ready
 

@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 
 ################################################################################
-# Author: Nick Hagerty
-# Date modified: 05-01-2025
-################################################################################
 # Purpose:
 #   Locates and archives tests within the OTH directory structure.
-#   This script was developed with the v3.0 release of the OLCF Test Harness
 ################################################################################
 
 from datetime import datetime
@@ -131,7 +127,7 @@ args = parser.parse_args()
 fh_log_level = 'DEBUG' if args.loglevel == 'DEBUG' else 'INFO'
 
 logger = OutputHub(
-    name="rgt_archive_test_utility",
+    name="oth_archive_test_utility",
     log_level=fh_log_level,
     log_file=args.logfile,
     console_log_level=args.loglevel,
@@ -209,7 +205,7 @@ def should_archive_test(test_path, test_id):
     if args.runtags:
         matched = False
         for runtag_regex in args.runtags:
-            if re.match(runtag_regex, event_info['rgt_system_log_tag']):
+            if re.match(runtag_regex, event_info['oth_system_log_tag']):
                 matched = True
         if not matched:
             logger.log_info(f"Excluding test_id {test_id} in {test_path} due to --runtags filter")

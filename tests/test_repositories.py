@@ -63,7 +63,7 @@ def test_get_application_parent_directory_from_env(monkeypatch):
     with pytest.raises(ValueError):
         GitRepository.get_application_parent_directory_from_env()
 
-    monkeypatch.setenv("RGT_GIT_SERVER_APPLICATION_PARENT_DIR", "somewhere/tests")
+    monkeypatch.setenv("OTHCTL_GIT_SERVER_APPLICATION_PARENT_DIR", "somewhere/tests")
     assert (
         GitRepository.get_application_parent_directory_from_env() == "somewhere/tests"
     )
@@ -72,7 +72,7 @@ def test_get_application_parent_directory_from_env(monkeypatch):
 def test_get_repository_branch_from_env(monkeypatch):
     assert GitRepository.get_repository_branch_from_env() is None
 
-    monkeypatch.setenv("RGT_GIT_REPS_BRANCH", "pytest")
+    monkeypatch.setenv("OTHCTL_GIT_REPS_BRANCH", "pytest")
     assert GitRepository.get_repository_branch_from_env() == "pytest"
 
 
@@ -98,24 +98,24 @@ def test_git_check_for_existing_clone():
 
 
 def test_build_repository_url_from_env(monkeypatch):
-    monkeypatch.setenv("RGT_GIT_MACHINE_NAME", "machine")
-    monkeypatch.setenv("RGT_GIT_SERVER_APPLICATION_PARENT_DIR", "somewhere/tests")
+    monkeypatch.setenv("OTHCTL_GIT_MACHINE_NAME", "machine")
+    monkeypatch.setenv("OTHCTL_GIT_SERVER_APPLICATION_PARENT_DIR", "somewhere/tests")
 
-    monkeypatch.setenv("RGT_GIT_DATA_TRANSFER_PROTOCOL", "ssh")
-    monkeypatch.setenv("RGT_GIT_SSH_SERVER_URL", "git@github.com")
+    monkeypatch.setenv("OTHCTL_GIT_DATA_TRANSFER_PROTOCOL", "ssh")
+    monkeypatch.setenv("OTHCTL_GIT_SSH_SERVER_URL", "git@github.com")
     assert (
         GitRepository("pytest")._build_repository_url_from_env()
         == "git@github.com:somewhere/tests/machine/pytest.git"
     )
 
-    monkeypatch.setenv("RGT_GIT_DATA_TRANSFER_PROTOCOL", "https")
-    monkeypatch.setenv("RGT_GIT_HTTPS_SERVER_URL", "https://github.com")
+    monkeypatch.setenv("OTHCTL_GIT_DATA_TRANSFER_PROTOCOL", "https")
+    monkeypatch.setenv("OTHCTL_GIT_HTTPS_SERVER_URL", "https://github.com")
     assert (
         GitRepository("pytest")._build_repository_url_from_env()
         == "https://github.com/somewhere/tests/machine/pytest.git"
     )
 
-    monkeypatch.setenv("RGT_GIT_DATA_TRANSFER_PROTOCOL", "proto")
+    monkeypatch.setenv("OTHCTL_GIT_DATA_TRANSFER_PROTOCOL", "proto")
     with pytest.raises(InvalidGitTransferProtocol):
         GitRepository("pytest")
 
@@ -163,5 +163,5 @@ def test_create_repository():
 def test_get_type_of_repository(monkeypatch):
     assert get_type_of_repository() is None
 
-    monkeypatch.setenv("RGT_TYPE_OF_REPOSITORY", "git")
+    monkeypatch.setenv("OTHCTL_TYPE_OF_REPOSITORY", "git")
     assert get_type_of_repository() == "git"

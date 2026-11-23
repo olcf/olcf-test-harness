@@ -91,18 +91,18 @@ First, create a launch directory where you will place the ``othctl run`` input f
 Prepare an input file of tests in this directory (e.g., *rgt.input.frontier*).
 Provide one or more tests to run in the format ``Test = <app-name> <test-name>``.
 In the example below, the application **hello_mpi** is used and we specify two tests: **c_n001** and **c_n002**.
-Either the *RGT_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be set, and provide a path to a directory that holds the application-test configurations (e.g., for ``othctl run --mode start -i rgt.inp``, ``$RGT_PATH_TO_TESTS/<app>/<test>`` should exist).
+Either the *OTHCTL_PATH_TO_TESTS* environment variable or ``Path_to_tests`` in the input file must be set, and provide a path to a directory that holds the application-test configurations (e.g., for ``othctl run --mode start -i rgt.inp``, ``$OTHCTL_PATH_TO_TESTS/<app>/<test>`` should exist).
 
 .. note::
 
-    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``/*RGT_PATH_TO_TESTS*.
+    Tests may be hosted in GitHub/GitLab repositories, or may be placed on the file system in the directory specified by ``Path_to_tests``/*OTHCTL_PATH_TO_TESTS*.
     The OTH can also automatically clone Git repositories from remote servers.
     Configuration settings for Git repositories are in the *$OLCF_HARNESS_MACHINE.ini* file (see :ref:`section_new_machine` or :ref:`env_vars_config`).
     Applications not hosted in GitHub/GitLab should be manually placed in ``Path_to_tests``.
 
 .. code-block:: bash
 
-    # Path_to_tests can be specified here instead of the RGT_PATH_TO_TESTS environment variable, if desired
+    # Path_to_tests can be specified here instead of the OTHCTL_PATH_TO_TESTS environment variable, if desired
     #Path_to_tests = /some/path/to/my/applications
     
     Test = hello_mpi c_n001
@@ -123,9 +123,9 @@ Second, set a scratch area for this specific instance of the harness (a default 
 
 .. code-block:: bash
 
-    export RGT_PATH_TO_SSPACE=/some/path/to/my/Scratch
+    export OTHCTL_PATH_TO_SSPACE=/some/path/to/my/Scratch
     # optional (in place of Path_to_tests in input file):
-    #export RGT_PATH_TO_TESTS=/some/path/to/my/applications
+    #export OTHCTL_PATH_TO_TESTS=/some/path/to/my/applications
 
 
 The harness supports providing tasks/modes on the command-line or in the input file.
@@ -214,11 +214,11 @@ Run-time environment parameters
 The OTH is designed to automatically ingest some parameters from user-set environment variables at launch time.
 Nearly all parameters in the *$OLCF_HARNESS_MACHINE.ini* file can be directly overridden by a corresponding environment variable.
 For example, *git_reps_branch* is a parameter in *$OLCF_HARNESS_MACHINE.ini* that specifies the branch of the remote repository to clone.
-The *RGT_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
+The *OTHCTL_GIT_REPS_BRANCH* environment variable can be used to override this value at launch time.
 The general precedence of configuration options from lowest to highest is:
 
 1. *$OLCF_HARNESS_MACHINE.ini* (lowest priority)
-2. User-set environment variables (ie, *RGT_GIT_REPS_BRANCH*, *RGT_PROJECT_ID*)
+2. User-set environment variables (ie, *OTHCTL_GIT_REPS_BRANCH*, *OTHCTL_PROJECT_ID*)
 3. *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini* (highest priority)
 
 The specific parameters are defined in :ref:`section_new_test` and :ref:`section_new_machine`.
@@ -226,9 +226,9 @@ The specific parameters are defined in :ref:`section_new_test` and :ref:`section
 The exception to this is setting the batch queue and project ID used for submission.
 The precedence of configuration options for the batch queue and project ID from lowest to highest is:
 
-1. **batch_queue** and **project_id** from *$OLCF_HARNESS_MACHINE.ini* (overridden by setting **RGT_BATCH_QUEUE** and **RGT_PROJECT_ID** at launch)
+1. **batch_queue** and **project_id** from *$OLCF_HARNESS_MACHINE.ini* (overridden by setting **OTHCTL_BATCH_QUEUE** and **OTCTL_PROJECT_ID** at launch)
 2. **batch_queue** and **project_id** from *<Path_to_tests>/<app-name>/<test-name>/Scripts/rgt_test_input.ini*
-3. A big hammer to override all test-specific settings: environment variables **RGT_SUBMIT_QUEUE** and **RGT_SUBMIT_ACCT**
+3. A big hammer to override all test-specific settings: environment variables **OTHCTL_SUBMIT_QUEUE** and **OTHCTL_SUBMIT_ACCT**
 
 
 .. understanding_output:
@@ -239,8 +239,8 @@ Finding Test Output
 This section details where all output files can be found once a harness run completes.
 There are 4 directories referenced in this section:
 
-- **$BUILD_DIR** - the build directory, equal to **$RGT_PATH_TO_SSPACE/<app>/<test>/<test-id>/build_directory**
-- **$WORK_DIR** - equal to **$RGT_PATH_TO_SSPACE/<app>/<test>/<test-id>/workdir**
+- **$BUILD_DIR** - the build directory, equal to **$OTHCTL_PATH_TO_SSPACE/<app>/<test>/<test-id>/build_directory**
+- **$WORK_DIR** - equal to **$OTHCTL_PATH_TO_SSPACE/<app>/<test>/<test-id>/workdir**
 - **$RESULTS_DIR** - the directory used to launch the job and store relevant output, equal to **<Path_to_tests>/<app>/<test>/Run_Archive/<test-id>**
 - **$STATUS_DIR** - the directory used to store harness status files, equal to **<Path_to_tests>/<app>/<test>/Status/<test-id>**
 

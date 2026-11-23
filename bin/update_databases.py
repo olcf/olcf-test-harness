@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 ################################################################################
-# Author: Nick Hagerty
-# Date modified: 2025-08-12
-################################################################################
 # Purpose:
 #   This script currently only has support for Slurm systems and InfluxDB and
 #   Kafka with the Druid database backend.
@@ -28,23 +25,23 @@ from pathlib import Path
 prefix = Path(__file__).resolve().parent.parent
 sys.path = [str(prefix)] + sys.path
 
-from oth.libraries.rgt_database_loggers.rgt_database_logger_factory import create_rgt_db_logger
+from oth.libraries.oth_database_loggers.oth_database_logger import OthDatabaseLogger
 
-# Silently wrapped in try/except so errors are handled by rgt_db_logger class
+# Silently wrapped in try/except so errors are handled by oth_db_logger class
 try:
-    from oth.libraries.rgt_database_loggers.db_backends.rgt_influxdb import InfluxDBLogger
+    from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import InfluxDBLogger
 except ImportError as e:
     pass
 
 try:
-    from oth.libraries.rgt_database_loggers.db_backends.rgt_kafka import KafkaLogger
+    from oth.libraries.oth_database_loggers.db_backends.oth_kafka import KafkaLogger
 except ImportError as e:
     pass
 
 from oth.libraries.subtest_factory import SubtestFactory
 from oth.libraries.status_file import StatusFile, get_status_info_from_file
-from oth.libraries.config_file import rgt_config_file
 from oth.libraries.output_hub import OutputHub
+from oth.config import othctl_runtime_config
 
 # Initialize argparse ##########################################################
 parser = argparse.ArgumentParser(description="Updates harness runs in database backends using event and Slurm data")
@@ -64,7 +61,7 @@ parser.add_argument('--kafka-grace-period', type=int, default=1800, action='stor
 # Parse command-line arguments #################################################
 args = parser.parse_args()
 
-# Create rgt_logger
+# Create oth_logger
 logger = OutputHub(
     name="update_db",
     log_level=args.loglevel,
@@ -73,11 +70,7 @@ logger = OutputHub(
     file_log_level=args.loglevel,
 )
 
-# Read in the <machine>.ini configuration file #################################
-# uses the getDefaultConfigName, which keys off of OLCF_HARNESS_MACHINE
-config = rgt_config_file(logger=logger)
-
-db_logger = create_rgt_db_logger(logger=logger)
+db_logger = OthDatabaseLogger(logger=logger)
 
 # db_logger is ready
 
@@ -87,8 +80,8 @@ for db in db_logger.enabled_backends:
     if db.name == "influxdb":
         continue
     elif db.name == "kafka":
-        if not 'RGT_KAFKA_EVENTS_TOPIC' in os.environ:
-            self.log_error(f"The Kafka backend requires RGT_KAFKA_EVENTS_TOPIC to be set in the environment.")
+        if not othctl_runtime_config.kafka_events_topic:
+            self.log_error(f"The Kafka backend requires OTHCTL_KAFKA_EVENTS_TOPIC to be set in the environment.")
             exit(1)
         continue
     else:
@@ -170,7 +163,7 @@ def influxdb_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtInfluxdbLogger)
+        db : an instantiation of base_db class (ie, OthInfluxdbLogger)
     """
 
     def build_query():
@@ -232,7 +225,7 @@ def kafka_get_results(db):
 
     Inherits logger and db_logger from the parent scope
     Parameters:
-        db : an instantiation of base_db class (ie, RgtKafkaLogger)
+        db : an instantiation of base_db class (ie, OthKafkaLogger)
     """
 
     def build_query():
@@ -274,8 +267,7 @@ def kafka_get_results(db):
         field_selector += f',LATEST("user") as "user",MAX(__time) as event_time'
         unfinished_conditional = 'event_name = \'job_queued\' or (event_name != \'check_end\' and (event_value = \'0\' or event_value = \'[NO_VALUE]\'))'
 
-        #query = f'SELECT * FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} WHERE timestamp = (SELECT MAX(timestamp) FROM {os.environ["RGT_KAFKA_EVENTS_TOPIC"]} AS subq WHERE subq.test_id = test_id) AND {" AND ".join(filters)} GROUP BY test_id,machine,app,test HAVING event_name = "job_queued" or (event_name != "check_end" and (event_value = "0" or event_value = "[NO_VALUE]"))'
-        query = f'SELECT * FROM (SELECT {field_selector} FROM "{os.environ["RGT_KAFKA_EVENTS_TOPIC"]}" WHERE {" AND ".join(filters)} GROUP BY test_id,machine,app,test) WHERE {unfinished_conditional}'
+        query = f'SELECT * FROM (SELECT {field_selector} FROM "{othctl_runtime_config.kafka_events_topic}" WHERE {" AND ".join(filters)} GROUP BY test_id,machine,app,test) WHERE {unfinished_conditional}'
         logger.log_debug(f"SQL query: {query}")
         return query
 
@@ -393,7 +385,7 @@ if args.dry_run:
 # results
 for db in db_logger.enabled_backends:
     # Create a local db_logger with ONLY the current database
-    single_db_logger = create_rgt_db_logger(logger=logger, only=db.url)
+    single_db_logger = OthDatabaseLogger(logger=logger, only=db.url)
     results = []
     if db.name == "influxdb":
         results.extend(influxdb_get_results(db))

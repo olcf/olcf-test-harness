@@ -57,29 +57,6 @@ class base_apptest(object):
     def getNameOfSubtest(self):
         return self.__testName
 
-    def getLocalPathToTests(self):
-        return self.__localPathToTests
-
-    def getPathToApplicationTestLogFile(self,test_name):
-        return self.__appTestLogFilePath
-
-    def getPathToAppCheckoutLogFiles(self):
-        return {"stdout":self.__appCheckOutLogFilePathStdOut,
-                "stderr":self.__appCheckOutLogFilePathStdErr}
-
-    def getPathToTestCheckoutLogFiles(self):
-        return {"stdout":self.__appTestCheckOutLogFilePathStdOut,
-                "stderr":self.__appTestCheckOutLogFilePathStdErr}
-
-    def getPathToSourceUpdateLogFiles(self):
-        return {"stdout":self.__appTestUpdateSourceOutLogFilePathStdOut,
-                "stderr":self.__appTestUpdateSourceOutLogFilePathStdErr}
-
-    def getPathToStartTestLogFiles(self):
-        return {"stdout":self.__appStartTestLogFilePathStdOut,
-                "stderr":self.__appStartTestLogFilePathStdErr}
-
-
     @property
     @abc.abstractmethod
     def logger(self):
@@ -90,19 +67,11 @@ class base_apptest(object):
         return
 
     @abc.abstractmethod
-    def check_out_test(self):
-        return
-
-    @abc.abstractmethod
     def display_status(self):
         return
 
     @abc.abstractmethod
     def generateReport(self,logfile,taskwords,mycomputer_with_events_record):
-        return
-
-    @abc.abstractmethod
-    def debug_apptest(self):
         return
 
     @abc.abstractmethod

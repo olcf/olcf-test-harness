@@ -92,7 +92,6 @@ def main():
     (apps_root, app, test) = get_layout_from_scriptdir(scriptsdir)
     apptest = SubtestFactory.make_subtest(name_of_application=app,
                                           name_of_subtest=test,
-                                          local_path_to_tests=apps_root,
                                           logger=a_logger,
                                           tag=unique_id)
     path_to_status_file = apptest.get_path_to_status_file()

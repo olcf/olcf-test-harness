@@ -45,14 +45,21 @@ target-version = "py37"
 include = [
     "tests/*",
     "oth/cli/*",
+    "oth/config.py",
     "oth/libraries/output_hub/*",
     "oth/libraries/repositories/*",
+    "oth/libraries/oth_database_loggers/*",
+    "oth/libraries/input_files.py",
+    "oth/libraries/rgt_test.py",
     "oth/schedulers/*"
 ]
 
 [tool.ruff.lint]
 ignore = [
     "FA100"
+]
+extend-select = [
+    "DTZ"
 ]
 
 [tool.mypy]
@@ -61,9 +68,13 @@ files = [
     "oth/cli",
     "oth/libraries/output_hub",
     "oth/libraries/repositories",
+    "oth/libraries/oth_database_loggers",
     "oth/schedulers"
 ]
 ignore_missing_imports = true
+
+[tool.pytest_env]
+OTHCTL_MACHINE = "minimal_machine"
 
 [tool.pytest.ini_options]
 testpaths = [
