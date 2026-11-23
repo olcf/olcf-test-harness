@@ -355,7 +355,7 @@ class OthDatabaseLogger:
 
         if (
             any(k.startswith("OTHCTL_INFLUX") for k in os.environ)
-            and not othctl_runtime_config.influxdb_disable
+            and othctl_runtime_config.influxdb_disable != "1"
         ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
@@ -369,7 +369,7 @@ class OthDatabaseLogger:
 
         if (
             any(k.startswith("OTHCTL_KAFKA") for k in os.environ)
-            and not othctl_runtime_config.kafka_disable
+            and othctl_runtime_config.kafka_disable != "1"
         ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
