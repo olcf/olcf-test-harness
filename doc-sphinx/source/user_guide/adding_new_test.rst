@@ -261,6 +261,8 @@ Additionally, the OTH automatically provides several replacement keywords for th
 * ``build_dir``: absolute path to the test's *build_directory* directory
 * ``scripts_dir``: absolute path to the test's *Scripts* directory
 * ``harness_id``: the test's unique ID, derived from the timestamp that the test is launched at
+* ``log_execute_start``: the command to generate the ``binary_execute_start`` event
+* ``log_execute_end``: the command to generate the ``binary_execute_end`` event
 
 Generally, these should be used to set environment variables, as shown in the template below.
 

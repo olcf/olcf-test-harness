@@ -50,6 +50,12 @@ class Linux_x86_64(BaseMachine):
         harness_parameters['build_dir'] = self.apptest.get_path_to_workspace_build()
         harness_parameters['scripts_dir'] = self.apptest.get_path_to_scripts()
         harness_parameters['harness_id'] = self.apptest.get_harness_id()
+        harness_parameters['log_execute_start'] = (
+            f"log_binary_execution_time.py --scriptsdir {self.apptest.get_path_to_scripts()} --uniqueid {self.apptest.get_harness_id()} --mode start"
+        )
+        harness_parameters['log_execute_end'] = (
+            f"log_binary_execution_time.py --scriptsdir {self.apptest.get_path_to_scripts()} --uniqueid {self.apptest.get_harness_id()} --mode final"
+        )
         self._rgt_test.harness_parameters.update(harness_parameters)
         self._rgt_test.print_test_parameters(self.logger)
 

@@ -29,6 +29,8 @@ class RgtTest:
         "application_test_build_dir": "build_dir",
         "application_test_scripts_dir": "scripts_dir",
         "application_test_harness_id": "harness_id",
+        "log_binary_execute_start": "log_execute_start",
+        "log_binary_execute_end": "log_execute_end",
     }
     """Valid key values for the Harness parameter dictionary."""
 
