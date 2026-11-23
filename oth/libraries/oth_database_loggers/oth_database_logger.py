@@ -353,7 +353,10 @@ class OthDatabaseLogger:
         influxdb_loaded = False
         kafka_loaded = False
 
-        if any(k.startswith("OTHCTL_INFLUX") for k in os.environ):
+        if (
+            any(k.startswith("OTHCTL_INFLUX") for k in os.environ)
+            and othctl_runtime_config.influxdb_disable != "1"
+        ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
                 from oth.libraries.oth_database_loggers.db_backends.oth_influxdb import (
@@ -364,7 +367,10 @@ class OthDatabaseLogger:
             except ImportError as e:
                 self.logger.log_error(f"Failed to import InfluxDB backend: {e}")
 
-        if any(k.startswith("OTHCTL_KAFKA") for k in os.environ):
+        if (
+            any(k.startswith("OTHCTL_KAFKA") for k in os.environ)
+            and othctl_runtime_config.kafka_disable != "1"
+        ):
             try:
                 # Can fail for a number of reasons. Mostly if `requests` module is not installed
                 from oth.libraries.oth_database_loggers.db_backends.oth_kafka import (
