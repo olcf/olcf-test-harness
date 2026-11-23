@@ -76,11 +76,11 @@ scontrol show hostnames > job.nodes
 ldd ${BUILD_DIR}/hello_world > ldd.txt
 
 # Run the executable.
-log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode start
+{{log_execute_start}}
 
 srun -N {{nodes}} -n {{(nodes | int)*(ppn | int)}} --ntasks-per-node={{ppn}} ${BUILD_DIR}/hello_world | tee output.txt
 
-log_binary_execution_time.py --scriptsdir $SCRIPTS_DIR --uniqueid $HARNESS_ID --mode final
+{{log_execute_end}}
 
 # Ensure we return to the starting directory.
 cd $SCRIPTS_DIR
