@@ -1,29 +1,18 @@
-# Ignore python bytecode file.
-# *.pyc
-**/__pycache__
+# Sphinx documentation build output
+doc-sphinx/build/
 
-#Ignore all html files.
-#*.html
+# Python
+.venv/
+dist/
+__pycache__/
 
-# Ignore all *.doctree files. These files are
-# generated when sphinx-doc creates python documentation.
-*.doctree
-
-# Ignore all files in the sphinx documentation build directory.
-doc-sphinx/build
-
-# Ignore all files with *.orig suffix
-*.orig"
-
-# Ignore all vim temporary files.
+# Editor / IDE files
+.vscode/
 *.swp
 *.swo
 
-# Ignore git hooks
-.githooks
+# Backup files
+*.orig
 
-# Ignore build files
-dist
-
-# Ignore venvs
-.venv
+# Git hooks
+.githooks/
